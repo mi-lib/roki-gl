@@ -1,3 +1,5 @@
+2019. 1.17. Reflected changes of specifications in rk_seq and rk_pen. [app]
+2019. 1.17. Disabled terrain animation in rk_anim. [app]
 2019. 1.17. Renamed model files following the change of default suffix. [example]
 2019. 1.16. Included data converted from the Stanford 3D Scanning Repository. [example]
 2019. 1.16. Modified rkglTorus, rkglNURBS and rkglArrow not to specify optical info. [rkgl_shape, rkgl_terra]

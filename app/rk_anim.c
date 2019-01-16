@@ -4,7 +4,6 @@
 #include <roki-gl/rkgl_glx.h>
 #include <zx11/zximage_png.h>
 #include <liw/liw_paction.h>
-#include <roki-gl/rkgl_nurbs3d.h>
 
 #define RK_ANIM_TITLE "RK-ANIM"
 
@@ -26,8 +25,8 @@ enum{
   OPT_INVALID
 };
 zOption opt[] = {
-  { "title", NULL, "<title name>", "title of sequence", (char *)"anim", false },
-  { "env", NULL, "<.z3d/.zkc file>", "environment model file", NULL, false },
+  { "title", NULL, "<title name>", "title of sequence", (char *)"robot animation", false },
+  { "env", NULL, "<.ztk file>", "environment model file", NULL, false },
   { "pan", NULL, "<pan value>", "set camera pan angle", (char *)"0", false },
   { "tilt", NULL, "<tilt value>", "set camera tilt angle", (char *)"0", false },
   { "roll", NULL, "<roll value>", "set camera roll angle", (char *)"0", false },
@@ -101,19 +100,6 @@ zListClass( rkAnimCellList, rkAnimCell, rkAnimSet );
 
 static rkAnimCellList anim_cell_list;
 
-/* for terra */
-typedef struct{
-  zTerra terra;
-  rkglNURBS3D glns;
-  zNURBS3DSeq nseq;
-  zNURBS3DSeqListCell *nseq_now;
-  char seqfilebase[RK_ANIM_BUFSIZ];
-  double t_now;
-} rkAnimSetTerra;
-zListClass( rkAnimCellListTerra, rkAnimCellTerra, rkAnimSetTerra );
-
-static rkAnimCellListTerra anim_cell_list_terra;
-
 /* ************************************************************************* */
 /* chain */
 bool rkAnimCellLoadChain(char chainfile[], rkglChainAttr *attr)
@@ -179,74 +165,12 @@ void rkAnimCellListDestroy(void)
 }
 
 /* ************************************************************************* */
-/* terra */
-bool rkAnimCellLoadTerra(char *terrafile)
-{
-  rkAnimCellTerra *cell;
-
-  if( !( cell = zAlloc( rkAnimCellTerra, 1 ) ) ){
-    ZALLOCERROR();
-    return false;
-  }
-  rkglNURBS3DCreate( &cell->data.glns );
-  if( !zTerraReadFile( &cell->data.terra, terrafile ) ||
-      !rkglNURBS3DLoad( &cell->data.glns, zTerraNURBS3D(&cell->data.terra) ) ){
-    ZOPENERROR( terrafile );
-    zFree( cell );
-    return false;
-  }
-  rkglNURBS3DSetOpticalInfo( &cell->data.glns, zTerraOpticalInfo(&cell->data.terra) );
-  zNURBS3DSeqInit( &cell->data.nseq );
-  cell->data.nseq_now = NULL;
-  cell->data.t_now = 0;
-  zListInsertHead( &anim_cell_list_terra, cell );
-  return true;
-}
-
-bool rkAnimCellLoadNURBS3DSeq(char *nseqfile)
-{
-  rkAnimCellTerra *cell;
-
-  if( !nseqfile ) return false;
-  zListForEach( &anim_cell_list_terra, cell )
-    if( zListIsEmpty( &cell->data.nseq ) ) break;
-  if( cell == zListRoot(&anim_cell_list_terra) ) return false;
-  if( nseqfile ){
-    if( !zNURBS3DSeqBReadFile( &cell->data.nseq, nseqfile ) ) return false;
-    zGetBasename( nseqfile, cell->data.seqfilebase, RK_ANIM_BUFSIZ );
-  }
-  cell->data.nseq_now = zListHead(&cell->data.nseq);
-  cell->data.t_now = 0;
-  return true;
-}
-
-void rkAnimCellTerraDestroy(rkAnimCellTerra *cell)
-{
-  rkglNURBS3DDestroy( &cell->data.glns );
-  zTerraDestroy( &cell->data.terra );
-  zNURBS3DSeqFree( &cell->data.nseq );
-  zFree( cell );
-}
-
-void rkAnimCellListTerraDestroy(void)
-{
-  rkAnimCellTerra *cell;
-
-  while( !zListIsEmpty( &anim_cell_list_terra ) ){
-    zListDeleteHead( &anim_cell_list_terra, &cell );
-    rkAnimCellTerraDestroy( cell );
-  }
-}
-
-/* ************************************************************************* */
 void rkAnimUsage(void)
 {
-  eprintf( "Usage: rk_anim <.zkc file> <.zvs/.zkcs file> [options]\n" );
-  eprintf( "<.zkc file>\tkinematic chain model file\n" );
+  eprintf( "Usage: rk_anim <.ztk file> <.zvs/.zkcs file> [options]\n" );
+  eprintf( "<.ztk file>\tkinematic chain model file\n" );
   eprintf( "<.zvs file>\tjoint displacement sequence file\n" );
   eprintf( "<.zkcs file>\tfull configuration sequence file\n" );
-  eprintf( "<.ztr file>\tterra model file\n" );
-  eprintf( "<.zn3dsb file>\tnurbs3d sequence file for terra surface\n" );
   eprintf( "[options]\n" );
   zOptionHelp( opt );
   eprintf( "\n[operations]\n" );
@@ -292,7 +216,7 @@ bool rkAnimCellListCreate(zStrList *arglist)
   zListInit( &anim_cell_list );
   rkAnimCreateChainAttr( &attr );
   zListForEach( arglist, cell ){
-    if( strcmp( zGetSuffix( cell->data ), RK_CHAIN_SUFFIX ) == 0 ){
+    if( strcmp( zGetSuffix( cell->data ), ZEDA_ZTK_SUFFIX ) == 0 ){
       cp = zListCellPrev(cell);
       zListPurge( arglist, cell );
       if( !rkAnimCellLoadChain( cell->data, &attr ) ) ret = false;
@@ -312,36 +236,6 @@ bool rkAnimCellListCreate(zStrList *arglist)
   return true;
 }
 
-/* for terra */
-bool rkAnimCellListTerraCreate(zStrList *arglist)
-{
-  zStrListCell *cell, *cp;
-  bool ret = true;
-
-  zListInit( &anim_cell_list_terra );
-  zListForEach( arglist, cell ){
-    if( strcmp( zGetSuffix( cell->data ), ZTERRA_SUFFIX ) == 0 ){
-      cp = zListCellPrev(cell);
-      zListPurge( arglist, cell );
-      if( !rkAnimCellLoadTerra( cell->data ) ) ret = false;
-      zStrListCellFree( cell, false );
-      cell = cp;
-    }
-  }
-  if( !ret ) return false;
-  ret = true;
-  zListForEach( arglist, cell ){
-    if( strcmp( zGetSuffix( cell->data ), ZNURBS3DSEQB_SUFFIX ) == 0 ){
-      cp = zListCellPrev(cell);
-      zListPurge( arglist, cell );
-      if( !rkAnimCellLoadNURBS3DSeq( cell->data ) ) ret =  false;
-      zStrListCellFree( cell, false );
-      cell = cp;
-    }
-  }
-  return ret;
-}
-
 void rkAnimCapture(void)
 {
   zxImage img;
@@ -357,7 +251,6 @@ void rkAnimCapture(void)
 void rkAnimForward(int sig)
 {
   rkAnimCell *cell;
-  rkAnimCellTerra *celltr;
   bool is_checked = false;
   double t_resume_tmp;
 
@@ -373,17 +266,6 @@ void rkAnimForward(int sig)
       }
     }
   }
-  zListForEach( &anim_cell_list_terra, celltr ){
-    if( celltr->data.nseq_now != zListTail(&celltr->data.nseq) ){
-      is_checked = true;
-      while( celltr->data.t_now < t_resume_tmp &&
-             celltr->data.nseq_now != zListTail(&celltr->data.nseq) ){
-        celltr->data.nseq_now = zListCellPrev(celltr->data.nseq_now);
-        celltr->data.t_now += celltr->data.nseq_now->data.dt * skew;
-      }
-    }
-  }
-
   if( is_checked )
     t_resume = t_resume_tmp;
   seq_in_process = false;
@@ -392,7 +274,6 @@ void rkAnimForward(int sig)
 void rkAnimBackward(int sig)
 {
   rkAnimCell *cell;
-  rkAnimCellTerra *celltr;
   bool is_checked = false;
   double t_resume_tmp;
 
@@ -408,16 +289,6 @@ void rkAnimBackward(int sig)
       }
     }
   }
-  zListForEach( &anim_cell_list_terra, celltr ){
-    if( celltr->data.nseq_now != zListHead(&celltr->data.nseq) ){
-      is_checked = true;
-      while( celltr->data.t_now > t_resume_tmp &&
-             celltr->data.nseq_now != zListHead(&celltr->data.nseq) ){
-        celltr->data.nseq_now = zListCellNext(celltr->data.nseq_now);
-        celltr->data.t_now -= celltr->data.nseq_now->data.dt * skew;
-      }
-    }
-  }
   if( is_checked )
     t_resume = t_resume_tmp;
   seq_in_process = false;
@@ -426,16 +297,11 @@ void rkAnimBackward(int sig)
 void rkAnimRewind(int sig)
 {
   rkAnimCell *cell;
-  rkAnimCellTerra *celltr;
 
   seq_in_process = true;
   zListForEach( &anim_cell_list, cell ){
     cell->data.t_now = 0;
     cell->data.seq_now = zListHead(&cell->data.seq);
-  }
-  zListForEach( &anim_cell_list_terra, celltr ){
-    celltr->data.t_now = 0;
-    celltr->data.nseq_now = zListHead(&celltr->data.nseq);
   }
   t_resume = 0;
   seq_in_process = false;
@@ -464,12 +330,12 @@ void _rkAnimCamOptWrite(char *name, double val)
 
 void rkAnimCamOptWrite(zVec3D *v, zVec3D *ptr)
 {
-  _rkAnimCamOptWrite( "x", zVec3DElem(v,0) );
-  _rkAnimCamOptWrite( "y", zVec3DElem(v,1) );
-  _rkAnimCamOptWrite( "z", zVec3DElem(v,2) );
-  _rkAnimCamOptWrite( "pan",  zRad2Deg( zVec3DElem(ptr,0) ) );
-  _rkAnimCamOptWrite( "tilt", zRad2Deg( zVec3DElem(ptr,1) ) );
-  _rkAnimCamOptWrite( "roll", zRad2Deg( zVec3DElem(ptr,2) ) );
+  _rkAnimCamOptWrite( "x", v->e[0] );
+  _rkAnimCamOptWrite( "y", v->e[1] );
+  _rkAnimCamOptWrite( "z", v->e[2] );
+  _rkAnimCamOptWrite( "pan",  zRad2Deg( ptr->e[0] ) );
+  _rkAnimCamOptWrite( "tilt", zRad2Deg( ptr->e[1] ) );
+  _rkAnimCamOptWrite( "roll", zRad2Deg( ptr->e[2] ) );
   fflush( stdout );
 }
 
@@ -480,21 +346,21 @@ void rkAnimGetCamFrame()
 
   rkglCALoad( &cam );
   zMat3DCreate( &m,
-                cam.ca[0], cam.ca[1], cam.ca[2],
-                cam.ca[4], cam.ca[5], cam.ca[6],
-                cam.ca[8], cam.ca[9], cam.ca[10] );
+    cam.ca[0], cam.ca[1], cam.ca[2],
+    cam.ca[4], cam.ca[5], cam.ca[6],
+    cam.ca[8], cam.ca[9], cam.ca[10] );
   zMat3DCreate( &m0,
-                0, 0, 1,
-                1, 0, 0,
-                0, 1, 0 );
+    0, 0, 1,
+    1, 0, 0,
+    0, 1, 0 );
   zVec3DCreate( &v, cam.ca[12], cam.ca[13], cam.ca[14] );
 
   /* position */
   zVec3DRevDRC( &v );
-  zMulMatVec3DDRC( &m, &v );
+  zMulMat3DVec3DDRC( &m, &v );
 
   /* pan, tilt and roll angle */
-  zMulMatMatT3DDRC( &m, &m0 );
+  zMulMat3DMat3DTDRC( &m, &m0 );
   _zMat3DToPTR( &m, &ptr );
 
   rkAnimCamOptWrite( &v, &ptr );
@@ -505,10 +371,7 @@ void rkAnimGetCamFrame()
 void rkAnimDraw(void)
 {
   rkAnimCell *cell;
-  rkAnimCellTerra *celltr;
 
-  zListForEach( &anim_cell_list_terra, celltr )
-    rkglNURBS3DDraw( &celltr->data.glns );
   zListForEach( &anim_cell_list, cell ){
     rkglChainDraw( &cell->data.gc );
     if( opt[OPT_COM].flag )
@@ -548,16 +411,12 @@ void rkAnimRedisplay(void)
 void rkAnimLoadEnv(void)
 {
   rkglChainAttr attr;
-  char *sfx;
 
   rkglChainAttrInit( &attr );
   if( opt[OPT_WIREFRAME].flag ) attr.disptype = RKGL_WIREFRAME;
   if( opt[OPT_BB].flag )        attr.disptype = RKGL_BB;
 
-  sfx = zGetSuffix( opt[OPT_ENVFILE].arg );
-  if( !( strcmp( sfx, RK_CHAIN_SUFFIX ) == 0 ?
-         rkChainReadFile( &chain_env, opt[OPT_ENVFILE].arg ) :
-         rkChainMShape3DReadFile( &chain_env, opt[OPT_ENVFILE].arg ) ) ){
+  if( !rkChainMShape3DReadFile( &chain_env, opt[OPT_ENVFILE].arg ) ){
     ZOPENERROR( opt[OPT_ENVFILE].arg );
     rkAnimUsage();
     exit( 1 );
@@ -638,7 +497,6 @@ bool rkAnimCommandArgs(int argc, char *argv[])
     return false;
   }
   rkAnimInit();
-  if( !rkAnimCellListTerraCreate( &arglist ) ) return false;
   if( !rkAnimCellListCreate( &arglist ) ) return false;
   zStrListDestroy( &arglist, false );
   return true;
@@ -647,7 +505,6 @@ bool rkAnimCommandArgs(int argc, char *argv[])
 void rkAnimExit(void)
 {
   rkAnimCellListDestroy();
-  rkAnimCellListTerraDestroy();
   if( env ) rkChainDestroy( &chain_env );
   rkglWindowCloseGLX( glwin );
   rkglCloseGLX();
@@ -823,26 +680,18 @@ void rkAnimDrawTimestamp(void)
 void rkAnimFK(void)
 {
   rkAnimCell *cell;
-  rkAnimCellTerra *celltr;
 
   zListForEach( &anim_cell_list, cell )
     cell->data.kf( &cell->data.chain, cell->data.seq_now->data.v );
-  zListForEach( &anim_cell_list_terra, celltr ){
-    rkglNURBS3DSetNURBS( &celltr->data.glns, &celltr->data.nseq_now->data.ns );
-  }
 }
 
 bool rkAnimIsTerminated(void)
 {
   rkAnimCell *cell;
-  rkAnimCellTerra *celltr;
   bool ret = true;
 
   zListForEach( &anim_cell_list, cell )
     if( cell->data.seq_now != zListTail(&cell->data.seq) )
-      ret = false;
-  zListForEach( &anim_cell_list_terra, celltr )
-    if( celltr->data.nseq_now != zListTail(&celltr->data.nseq) )
       ret = false;
   return ret;
 }

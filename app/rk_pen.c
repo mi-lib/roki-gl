@@ -261,7 +261,7 @@ void rk_penSetRootFrame(void)
   zFrame3DWrite( rkChainLinkOrgFrame(&chain,0) );
   rk_penPos( &p[0], &p[1], &p[2] );
   rk_penZYX( &a[0], &a[1], &a[2] );
-  zFrame3DZYX( rkChainLinkOrgFrame(&chain,0),
+  zFrame3DFromZYX( rkChainLinkOrgFrame(&chain,0),
     p[0], p[1], p[2], a[0], a[1], a[2] );
   rkChainUpdateFK( &chain );
 }
@@ -307,7 +307,7 @@ void rk_penExportInit(void)
   printf( "enter file name: " );
   if( !fgets( filename, BUFSIZ, stdin ) ) return;
   zCutNL( filename );
-  zAddSuffix( filename, RK_CHAIN_INIT_SUFFIX, filename, BUFSIZ );
+  zAddSuffix( filename, ZEDA_ZTK_SUFFIX, filename, BUFSIZ );
   rkChainInitWriteFile( &chain, filename );
 }
 

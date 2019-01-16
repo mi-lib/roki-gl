@@ -14,7 +14,7 @@ CHKDEP=`which zeda-chkdep`
 all:
 	@$(CHKDEP) $(DEPENDENCY) || exit 1
 	@cd $(SRCDIR); make
-#	@cd $(APPDIR); make
+	@cd $(APPDIR); make
 
 
 doc:
@@ -23,7 +23,7 @@ clean:
 	-@rm -f $(ROOTDIR)/*~ $(INCDIR)/*~
 	@cd $(SRCDIR); make clean
 	-@rm -f $(LIBDIR)/*.so
-#	@cd $(APPDIR); make clean
+	@cd $(APPDIR); make clean
 	@cd $(DOCDIR); make clean
 	@cd $(SAMPLEDIR); ./allclean.sh
 install:
@@ -32,5 +32,5 @@ install:
 	@echo " INSTALL	header files"
 	-@install -m 755 -d $(PREFIX)/include/$(PROJNAME)
 	-@install -m 644 $(INCDIR)/*.h $(PREFIX)/include/$(PROJNAME)/
-#	@echo " INSTALL	applications"
-#	@cd $(APPDIR); make install
+	@echo " INSTALL	applications"
+	@cd $(APPDIR); make install

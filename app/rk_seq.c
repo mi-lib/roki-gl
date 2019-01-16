@@ -1,9 +1,8 @@
 /* rk_seq - afterimage of a sequence of robot motion */
 
-#include <cure/cure_option.h>
 #include <zm/zm_seq.h>
-#include <roki/rokigl.h>
-#include <roki/rkgl_glx.h>
+#include <roki-gl/roki-gl.h>
+#include <roki-gl/rkgl_glx.h>
 #include <zx11/zximage_png.h>
 
 #define RK_SEQ_TITLE "RK-SEQ"
@@ -137,7 +136,7 @@ void rk_seqDraw(void)
   register int i;
 
   if( env ) glCallList( env );
-  for( i=0; i<zArrayNum(poselist); i++ )
+  for( i=0; i<zArraySize(poselist); i++ )
     glCallList( zIndexElem(poselist,i) );
 }
 
@@ -220,7 +219,7 @@ void rk_seqExit(void)
 {
   register int i;
 
-  for( i=0; i<zArrayNum(poselist); i++ )
+  for( i=0; i<zArraySize(poselist); i++ )
     glDeleteLists( zIndexElem(poselist,i), 1 );
   zIndexFree( poselist );
   rkglChainUnload( &gc );
