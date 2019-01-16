@@ -1,0 +1,63 @@
+[optic]
+name: white
+ambient: 0.8 0.8 0.8
+diffuse: 0.8 0.8 0.8
+specular: 0.0 0.0 0.0
+alpha: 0.8
+exp: 1.0
+
+[shape]
+name: prism
+type: polyhedron
+optic: white
+vert 0: { 0, 0, 0 }
+vert 1: { -0.1, 0.1, 0 }
+vert 2: { -0.1, 0.2, 0 }
+vert 3: { 0.1, 0.2, 0 }
+vert 4: { 0.2, 0.4, 0 }
+vert 5: { 0.1, 0.5, 0 }
+vert 6: { 0.1, 0.6, 0 }
+vert 7: { 0.3, 0.6, 0 }
+vert 8: { 0.3, 0, 0 }
+vert 9: { 0, 0.1, 0.5 }
+vert 10: { -0.1, 0.2, 0.5 }
+vert 11: { -0.1, 0.3, 0.5 }
+vert 12: { 0.1, 0.3, 0.5 }
+vert 13: { 0.2, 0.5, 0.5 }
+vert 14: { 0.1, 0.6, 0.5 }
+vert 15: { 0.1, 0.7, 0.5 }
+vert 16: { 0.3, 0.7, 0.5 }
+vert 17: { 0.3, 0.1, 0.5 }
+face 8 0 1
+face 8 1 2
+face 8 2 3
+face 8 3 4
+face 4 5 6
+face 4 6 7
+face 8 4 7
+face 17 10 9
+face 17 11 10
+face 17 12 11
+face 17 13 12
+face 13 15 14
+face 13 16 15
+face 17 16 13
+face 0 10 1
+face 0 9 10
+face 1 11 2
+face 1 10 11
+face 2 12 3
+face 2 11 12
+face 3 13 4
+face 3 12 13
+face 4 14 5
+face 4 13 14
+face 5 15 6
+face 5 14 15
+face 6 16 7
+face 6 15 16
+face 7 17 8
+face 7 16 17
+face 8 9 0
+face 8 17 9
+

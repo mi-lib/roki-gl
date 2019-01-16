@@ -1,0 +1,20 @@
+[optic]
+name: yellow
+ambient: 0.4, 0.4, 0.0
+diffuse: 0.6, 0.6, 0.0
+specular: 0.0, 0.0, 0.0
+alpha: 1, 1, 1
+exp: 1
+
+[shape]
+name : ellipsoid
+type : ellipsoid
+optic: yellow
+center: 0 0 0
+ax: 1 0 0
+ay: 0 1 0
+az: 0 0 1
+rx: 0.2
+ry: 0.3
+rz: 0.15
+div: 32

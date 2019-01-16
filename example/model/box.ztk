@@ -1,0 +1,18 @@
+[optic]
+name: gray
+ambient: 0.4, 0.4, 0.4
+diffuse: 0.6, 0.6, 0.6
+specular: 0.0, 0.0, 0.0
+alpha: 1, 1, 1
+exp: 1
+
+[shape]
+name : box
+type : box
+optic: gray
+ax: 1 0 0
+ay: 0 1 0
+az: 0 0 1
+width: 0.2
+height: 0.1
+depth: 0.3
