@@ -335,13 +335,12 @@ int rk_seqEvent(void)
 {
   switch( zxDequeueEvent() ){
   case Expose:
-  case ConfigureNotify: rk_seqReshape();        break;
-  case ButtonPress:     rk_seqMousePress();     break;
-  case MotionNotify:    rk_seqMouseDrag();      break;
-  case ButtonRelease:   rk_seqMouseRelease();   break;
-  case KeyPress:
-    if( rk_seqKeyPress() < 0 ) return -1;       break;
-  case KeyRelease: zxModkeyOff( zxKeySymbol() ); break;
+  case ConfigureNotify: rk_seqReshape();            break;
+  case ButtonPress:     rk_seqMousePress();         break;
+  case MotionNotify:    rk_seqMouseDrag();          break;
+  case ButtonRelease:   rk_seqMouseRelease();       break;
+  case KeyPress:        if( rk_seqKeyPress() >= 0 ) break; return -1;
+  case KeyRelease: zxModkeyOff( zxKeySymbol() );    break;
   default: ;
   }
   return 0;

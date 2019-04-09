@@ -658,8 +658,7 @@ int rkAnimEvent(void)
   case ButtonPress:     rkAnimMousePress();           break;
   case MotionNotify:    rkAnimMouseDrag();            break;
   case ButtonRelease:   rkAnimMouseRelease();         break;
-  case KeyPress:
-    if( rkAnimKeyPress() < 0 ) return -1;             break;
+  case KeyPress:        if( rkAnimKeyPress() >= 0 )   break; return -1;
   case KeyRelease:      zxModkeyOff( zxKeySymbol() ); break;
   default: ;
   }

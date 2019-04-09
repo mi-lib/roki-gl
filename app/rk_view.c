@@ -273,8 +273,7 @@ int rk_viewEvent(void)
   case ButtonPress:     rk_viewMousePress();          break;
   case MotionNotify:    rk_viewMouseDrag();           break;
   case ButtonRelease:   rk_viewMouseRelease();        break;
-  case KeyPress:
-    if( rk_viewKeyPress() < 0 ) return -1;            break;
+  case KeyPress:        if( rk_viewKeyPress() >= 0 )  break; return -1;
   case KeyRelease:      zxModkeyOff( zxKeySymbol() ); break;
   default: ;
   }
