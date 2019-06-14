@@ -32,7 +32,7 @@ void init(void)
   rkglLightCreate( &light, 0, 0.4, 0.4, 0.4, 1, 1, 1, 0, 0, 0, 0 );
   rkglLightSetPos( &light, 1, 3, 6 );
 
-  zMShape3DReadFile( &ms, "../model/scc.tkf" );
+  zMShape3DScanFile( &ms, "../model/scc.tkf" );
   ms_id = rkglMShapeEntry( &ms, RKGL_FACE );
 }
 

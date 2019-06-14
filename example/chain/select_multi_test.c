@@ -115,9 +115,9 @@ void init(void)
   rkglLightSetPos( &light, 1, 3, 6 );
 
   rkglChainAttrInit( &attr );
-  rkChainReadFile( &chain[0], "../model/puma.zkc" );
+  rkChainScanFile( &chain[0], "../model/puma.ztk" );
   rkglChainLoad( &gr[0], &chain[0], &attr );
-  rkChainReadFile( &chain[1], "../model/puma.zkc" );
+  rkChainScanFile( &chain[1], "../model/puma.ztk" );
   rkglChainLoad( &gr[1], &chain[1], &attr );
 
   zVec3DCreate( rkChainLinkOrgPos(&chain[1],0), 0, 0.2, 0 );

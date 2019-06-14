@@ -33,7 +33,7 @@ void mouse(int button, int state, int x, int y)
     if( state == GLUT_DOWN ){
       printf( "pressed at (%d,%d)\n", x, y );
       rkglPickAndUnproject( &cam, x, y, &pxy );
-      zVec3DWrite( &pxy );
+      zVec3DPrint( &pxy );
       rkglProject( &cam, &pxy, &x, &y );
       printf( "projected to (%d,%d)\n", x, y );
     }

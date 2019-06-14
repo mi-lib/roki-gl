@@ -87,7 +87,7 @@ void init(void)
   rkglLightSetPos( &light, 10, 0, 10 );
 
   fp = fopen( "test.ztr", "r" );
-  zTerraFRead( fp, &terra );
+  zTerraFScan( fp, &terra );
   fclose( fp );
   /* points */
   zRGBSet( &rgb1, 1, 0, 0 );

@@ -61,7 +61,7 @@ void generate_pc(char *filename)
   register int i;
 
   zListInit( &pc );
-  if( !zMShape3DReadFile( &ms, filename ) )
+  if( !zMShape3DScanFile( &ms, filename ) )
     exit( EXIT_FAILURE );
   s = zMShape3DShape( &ms, 0 );
   for( i=0; i<zShape3DFaceNum(s); i++ ){

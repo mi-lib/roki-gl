@@ -115,7 +115,7 @@ void init(void)
   rkglLightSetPos( &light, 1, 3, 6 );
 
   rkglChainAttrInit( &attr );
-  rkChainReadFile( &chain, "../model/puma.zkc" );
+  rkChainScanFile( &chain, "../model/puma" );
   rkglChainLoad( &gr, &chain, &attr );
 }
 

@@ -1,9 +1,3 @@
-# default suffices
-# .z3d : 3D shape model
-# .zrb : robot model
-# .zri : robot initial state
-# .zvs : vector sequence
-
 include ../config
 
 INCLUDE=-I. -I../include -I$(PREFIX)/include
@@ -11,11 +5,12 @@ LIB=-L../lib -L$(PREFIX)/lib
 BINDIR=$(PREFIX)/bin
 
 CC=gcc
-CFLAGS=-Wall -O3 $(INCLUDE) $(LIB) -D__USE_GLEW
+#CFLAGS=-Wall -O3 $(INCLUDE) $(LIB) -D__USE_GLEW
+CFLAGS=-Wall -O3 $(INCLUDE) $(LIB)
 
-GLLINK=-lGLEW -lglut -lGLU -lGL
+#GLLINK=-lGLEW -lglut -lGLU -lGL
+GLLINK=-lglut -lGLU -lGL
 
-#LINK=-lroki-gl $(GLLINK) `zx11-config -l` `liw-config -l` `roki-config -l` `terra-config -l`
 LINK=-lroki-gl $(GLLINK) `zx11-config -l` `liw-config -l` `roki-config -l`
 
 COMPILE=$(CC) $(CFLAGS) -o $@ $< $(LINK)

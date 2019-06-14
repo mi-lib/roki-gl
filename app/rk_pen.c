@@ -103,7 +103,7 @@ void rk_penShowLinkList(void)
 
 void rk_penShowConnect(void)
 {
-  rkChainConnectionWrite( &chain );
+  rkChainConnectionPrint( &chain );
 }
 
 void rk_penShowJointDis(void)
@@ -128,9 +128,9 @@ void rk_penShowLinkFrame(void)
   if( !( l = rk_penLink() ) ) return;
   printf( "[link:%s]\n", zName(l) );
   printf( "with respect to the parent frame\n" );
-  zFrame3DWrite( rkLinkAdjFrame(l) );
+  zFrame3DPrint( rkLinkAdjFrame(l) );
   printf( "with respect to the world frame\n" );
-  zFrame3DWrite( rkLinkWldFrame(l) );
+  zFrame3DPrint( rkLinkWldFrame(l) );
 }
 
 void rk_penShowLinkMass(void)
@@ -189,7 +189,7 @@ void rk_penSetLinkPos(void)
 
   if( !( l = rk_penLink() ) ) return;
   printf( "[link:%s] frame\n", zName(l) );
-  zVec3DWrite( rkLinkWldPos(l) );
+  zVec3DPrint( rkLinkWldPos(l) );
   rk_penPos( &p[0], &p[1], &p[2] );
   dis = zVecAlloc( rkChainJointSize(&chain) );
 
@@ -211,7 +211,7 @@ void rk_penSetLinkPos(void)
   rkChainFK( &chain, dis );
   rkIKDestroy( &ik );
   zVecFree( dis );
-  zFrame3DWrite( rkLinkWldFrame(l) );
+  zFrame3DPrint( rkLinkWldFrame(l) );
 }
 
 void rk_penSetLinkFrame(void)
@@ -225,7 +225,7 @@ void rk_penSetLinkFrame(void)
 
   if( !( l = rk_penLink() ) ) return;
   printf( "[link:%s] frame\n", zName(l) );
-  zFrame3DWrite( rkLinkWldFrame(l) );
+  zFrame3DPrint( rkLinkWldFrame(l) );
   rk_penPos( &p[0], &p[1], &p[2] );
   rk_penZYX( &a[0], &a[1], &a[2] );
   dis = zVecAlloc( rkChainJointSize(&chain) );
@@ -250,7 +250,7 @@ void rk_penSetLinkFrame(void)
   rkChainFK( &chain, dis );
   rkIKDestroy( &ik );
   zVecFree( dis );
-  zFrame3DWrite( rkLinkWldFrame(l) );
+  zFrame3DPrint( rkLinkWldFrame(l) );
 }
 
 void rk_penSetRootFrame(void)
@@ -258,7 +258,7 @@ void rk_penSetRootFrame(void)
   double p[3], a[3];
 
   printf( "root frame\n" );
-  zFrame3DWrite( rkChainLinkOrgFrame(&chain,0) );
+  zFrame3DPrint( rkChainLinkOrgFrame(&chain,0) );
   rk_penPos( &p[0], &p[1], &p[2] );
   rk_penZYX( &a[0], &a[1], &a[2] );
   zFrame3DFromZYX( rkChainLinkOrgFrame(&chain,0),
@@ -282,7 +282,7 @@ void rk_penCalcLinkCOM(void)
   while( ( l = rk_penLink() ) ){
     printf( "link %s asserted.\n", zName(l) );
     printf( "mass=%f, COM=", rkLinkMass(l) );
-    zVec3DWrite( rkLinkWldCOM(l) );
+    zVec3DPrint( rkLinkWldCOM(l) );
     mass += rkLinkMass(l);
     zVec3DCatDRC( &com, rkLinkMass(l), rkLinkWldCOM(l) );
   }
@@ -291,13 +291,13 @@ void rk_penCalcLinkCOM(void)
 
   printf( "grouped mass and COM with respect to the world frame\n" );
   printf( "mass=%.10g, COM=", mass );
-  zVec3DWrite( &com );
+  zVec3DPrint( &com );
 }
 
 void rk_penCalcChainCOM(void)
 {
   printf( "chain COM with respect to the world frame\n" );
-  zVec3DWrite( rkChainWldCOM( &chain ) );
+  zVec3DPrint( rkChainWldCOM( &chain ) );
 }
 
 void rk_penExportInit(void)
@@ -308,7 +308,7 @@ void rk_penExportInit(void)
   if( !fgets( filename, BUFSIZ, stdin ) ) return;
   zCutNL( filename );
   zAddSuffix( filename, ZEDA_ZTK_SUFFIX, filename, BUFSIZ );
-  rkChainInitWriteFile( &chain, filename );
+  rkChainInitPrintFile( &chain, filename );
 }
 
 void rk_penCapture(void)
@@ -396,12 +396,12 @@ void rk_penInit(void)
     attr.disptype = RKGL_ELLIPS;
     attr.ellips_mag = atof( opt[OPT_ELLIPS].arg );
   }
-  if( !rkChainReadFile( &chain, opt[OPT_MODELFILE].arg ) ||
+  if( !rkChainScanFile( &chain, opt[OPT_MODELFILE].arg ) ||
       !rkglChainLoad( &gr, &chain, &attr ) )
     exit( 1 );
 
   if( opt[OPT_ENVFILE].flag ){
-    if( !zMShape3DReadFile( &envshape, opt[OPT_ENVFILE].arg ) ){
+    if( !zMShape3DScanFile( &envshape, opt[OPT_ENVFILE].arg ) ){
       ZOPENERROR( opt[OPT_ENVFILE].arg );
       rk_penUsage();
       exit( 1 );
@@ -413,7 +413,7 @@ void rk_penInit(void)
     if( env < 0 ) exit( 1 );
   }
   if( opt[OPT_INITFILE].flag &&
-      !rkChainInitReadFile( &chain, opt[OPT_INITFILE].arg ) )
+      !rkChainInitScanFile( &chain, opt[OPT_INITFILE].arg ) )
     exit( 1 );
   if( opt[OPT_SMOOTH].flag ) glEnable( GL_LINE_SMOOTH );
   if( opt[OPT_FOG].flag ) glEnable( GL_FOG );

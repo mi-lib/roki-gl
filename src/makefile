@@ -16,7 +16,6 @@ OBJ=rkgl_misc.o rkgl_camera.o\
 	rkgl_shadow.o\
 	rkgl_select.o\
 	rkgl_terra.o
-# rkgl_nurbs3d.o
 DLIB=libroki-gl.so
 
 ifeq ($(CONFIG_USE_GLX),y)
