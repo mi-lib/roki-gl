@@ -30,7 +30,7 @@ void rkglTranslate(zVec3D *v)
   glTranslated( v->e[zX], v->e[zY], v->e[zZ] );
 }
 
-void rkglXfer(zFrame3D *f)
+void rkglXform(zFrame3D *f)
 {
   GLdouble m[16];
 
@@ -239,7 +239,7 @@ void rkglEllips(zEllips3D *ellips)
       tmp.e[zX] *= zEllips3DRadiusX(ellips);
       tmp.e[zY] *= zEllips3DRadiusY(ellips);
       tmp.e[zZ] *= zEllips3DRadiusZ(ellips);
-      zXfer3D( &ellips->f, &tmp, &vert[i][j] );
+      zXform3D( &ellips->f, &tmp, &vert[i][j] );
     }
   glShadeModel( GL_SMOOTH );
   for( i=1; i<=zEllips3DDiv(ellips); i++ )

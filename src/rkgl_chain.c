@@ -182,7 +182,7 @@ void rkglChainLinkDraw(rkglChain *gc, int id)
 {
   if( !gc->info[id].visible ) return;
   glPushMatrix();
-  rkglXfer( rkChainLinkWldFrame(gc->chain,id) );
+  rkglXform( rkChainLinkWldFrame(gc->chain,id) );
   glCallList( gc->info[id].list );
   glPopMatrix();
 }
@@ -224,7 +224,7 @@ int rkglChainDrawSeethru(rkglChain *gc, double alpha)
     l = rkChainLink( gc->chain , i );
     if( !gc->info[i].visible || rkLinkShapeIsEmpty(l) ) continue;
     glPushMatrix();
-    rkglXfer( rkLinkWldFrame(l) );
+    rkglXform( rkLinkWldFrame(l) );
     zListForEach( rkLinkShapeList(l), sp ){
       zOpticalInfoCopy( zShape3DOptic(zShapeListCellShape(sp)), &oi );
       oi.alpha = alpha;

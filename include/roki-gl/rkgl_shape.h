@@ -25,7 +25,7 @@ void rkglDeleteList(int id);
 /* 3D object drawing */
 
 void rkglTranslate(zVec3D *v);
-void rkglXfer(zFrame3D *f);
+void rkglXform(zFrame3D *f);
 
 #define rkglVertex(v)  glVertex3dv( (v)->e )
 #define rkglNormal(n)  glNormal3dv( (n)->e )

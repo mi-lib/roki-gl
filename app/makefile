@@ -19,7 +19,6 @@ INSTALL=install -m 755
 
 CONFIGGEN=zeda-config-gen
 CONFIG=roki-gl-config
-#TARGET=$(CONFIG) rk_view rk_anim rk_seq rk_pen rk_terra
 TARGET=$(CONFIG) rk_view rk_anim rk_seq rk_pen
 
 #####################################################################
