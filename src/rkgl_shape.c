@@ -559,8 +559,8 @@ void rkglAxis(zDir axis, double d, double w, GLfloat color[])
   if( ( lighting_is_enabled = glIsEnabled( GL_LIGHTING ) ) )
     glDisable( GL_LIGHTING );
   glLineWidth( w );
-  zVec3DClear( &e1 );
-  zVec3DClear( &e2 );
+  zVec3DZero( &e1 );
+  zVec3DZero( &e2 );
   zEdge3DCreate( &edge, &e1, &e2 );
   zEdge3DVert(&edge,0)->e[axis] = d;
   zEdge3DVert(&edge,1)->e[axis] =-d;
@@ -579,8 +579,8 @@ void rkglGauge(zDir axis1, double d1, zDir axis2, double d2, double w, double st
   double d;
   bool lighting_is_enabled;
 
-  zVec3DClear( &e1 );
-  zVec3DClear( &e2 );
+  zVec3DZero( &e1 );
+  zVec3DZero( &e2 );
   zEdge3DCreate( &edge, &e1, &e2 );
 
   if( ( lighting_is_enabled = glIsEnabled( GL_LIGHTING ) ) )
@@ -619,11 +619,11 @@ void rkglChecker(zVec3D *pc0, zVec3D *pc1, zVec3D *pc2, int div1, int div2, zOpt
   glBegin( GL_QUADS );
   rkglNormal( &d11 );
 
-  zVec3DClear( &d12 );
+  zVec3DZero( &d12 );
   for( i=1; i<=div1; i++ ){
     zVec3DCopy( &d12, &d11 );
     zVec3DMul( &d1, (double)i/div1, &d12 );
-    zVec3DClear( &d22 );
+    zVec3DZero( &d22 );
     for( j=1; j<=div2; j++ ){
       zVec3DCopy( &d22, &d21 );
       zVec3DMul( &d2, (double)j/div2, &d22 );

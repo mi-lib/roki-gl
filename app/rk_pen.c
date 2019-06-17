@@ -201,7 +201,7 @@ void rk_penSetLinkPos(void)
     }
   attr.id = l - rkChainRoot(&chain);
   printf( "IK of link [%s].\n", rkChainLinkName(&chain,attr.id) );
-  zVec3DClear( &attr.ap );
+  zVec3DZero( &attr.ap );
   cell = rkIKCellRegWldPos( &ik, &attr, RK_IK_CELL_ATTR_ID | RK_IK_CELL_ATTR_AP );
   rkIKDeactivate( &ik );
   rkIKBind( &ik );
@@ -238,7 +238,7 @@ void rk_penSetLinkFrame(void)
     }
   attr.id = l - rkChainRoot(&chain);
   printf( "IK of link [%s].\n", rkChainLinkName(&chain,attr.id) );
-  zVec3DClear( &attr.ap );
+  zVec3DZero( &attr.ap );
   cell_pos = rkIKCellRegWldPos( &ik, &attr, RK_IK_CELL_ATTR_ID | RK_IK_CELL_ATTR_AP );
   cell_att = rkIKCellRegWldAtt( &ik, &attr, RK_IK_CELL_ATTR_ID );
   rkIKDeactivate( &ik );
@@ -278,7 +278,7 @@ void rk_penCalcLinkCOM(void)
   zVec3D com;
 
   mass = 0;
-  zVec3DClear( &com );
+  zVec3DZero( &com );
   while( ( l = rk_penLink() ) ){
     printf( "link %s asserted.\n", zName(l) );
     printf( "mass=%f, COM=", rkLinkMass(l) );

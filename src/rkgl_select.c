@@ -21,7 +21,7 @@ int rkglProject(rkglCamera *c, zVec3D *p, int *x, int *y)
 
 int rkglUnproject(rkglCamera *c, int x, int y, double depth, zVec3D *p)
 {
-  zVec3DClear( p );
+  zVec3DZero( p );
   return gluUnProject( x, c->vp[3]-y, depth, c->ca, c->vv, c->vp,
     &p->e[zX], &p->e[zY], &p->e[zZ] );
 }

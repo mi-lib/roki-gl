@@ -1,4 +1,5 @@
-2019. 6.16. Reflected renaming of *Xfer* to *Xform*. [rkgl_shape, rkgl_chain]
+2019. 6.17. Reflected renaming of *Clear to *Zero in Zeo. [rkgl_shape, rkgl_select, app]
+2019. 6.16. Reflected renaming of *Xfer* to *Xform*. [rkgl_shape, rkgl_chain, app]
 2019. 6.14. Reflected renaming of *Read/Write to *Scan/Print. [app]
 2019. 4. 9. Modified rk_viewEvent in rk_view, rkAnimEvent in rk_anim and rk_seqEvent in rk_seq in response to a change of specification of gcc. [app]
 2019. 1.17. Reflected changes of specifications in rk_seq and rk_pen. [app]
