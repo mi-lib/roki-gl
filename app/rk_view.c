@@ -138,7 +138,7 @@ void rk_viewInit(void)
 
 bool rk_viewCommandArgs(int argc, char *argv[])
 {
-  zStrList arglist;
+  zStrAddrList arglist;
   char *modelfile;
 
   if( argc <= 1 ) rk_viewUsage();
@@ -154,7 +154,7 @@ bool rk_viewCommandArgs(int argc, char *argv[])
     return false;
   }
   rk_viewInit();
-  zStrListDestroy( &arglist, false );
+  zStrAddrListDestroy( &arglist );
   return true;
 }
 

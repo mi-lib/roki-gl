@@ -1,3 +1,4 @@
+2019. 6.28. Reflected new specifications of zStrList and zStrAddrList. [app]
 2019. 6.17. Reflected renaming of *Clear to *Zero in Zeo. [rkgl_shape, rkgl_select, app]
 2019. 6.16. Reflected renaming of *Xfer* to *Xform*. [rkgl_shape, rkgl_chain, app]
 2019. 6.14. Reflected renaming of *Read/Write to *Scan/Print. [app]

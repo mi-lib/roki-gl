@@ -209,7 +209,7 @@ void rkAnimCreateChainAttr(rkglChainAttr *attr)
 
 bool rkAnimCellListCreate(zStrList *arglist)
 {
-  zStrListCell *cell, *cp;
+  zStrAddrListCell *cell, *cp;
   rkglChainAttr attr;
   bool ret = true;
 
@@ -220,7 +220,7 @@ bool rkAnimCellListCreate(zStrList *arglist)
       cp = zListCellPrev(cell);
       zListPurge( arglist, cell );
       if( !rkAnimCellLoadChain( cell->data, &attr ) ) ret = false;
-      zStrListCellFree( cell, false );
+      free( cell );
       cell = cp;
     }
   }
@@ -484,7 +484,7 @@ void rkAnimInit(void)
 
 bool rkAnimCommandArgs(int argc, char *argv[])
 {
-  zStrList arglist;
+  zStrAddrList arglist;
 
   if( argc <= 1 ) rkAnimUsage();
   zOptionRead( opt, argv, &arglist );
@@ -498,7 +498,7 @@ bool rkAnimCommandArgs(int argc, char *argv[])
   }
   rkAnimInit();
   if( !rkAnimCellListCreate( &arglist ) ) return false;
-  zStrListDestroy( &arglist, false );
+  zStrAddrListDestroy( &arglist );
   return true;
 }
 
