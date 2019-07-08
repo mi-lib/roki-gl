@@ -26,8 +26,8 @@ void rkglTerraPoint(zTerra *terra, zRGB *rgb_travs, zRGB *rgb_untravs)
   glPointSize( 0.1 * zMin( terra->dx, terra->dy ) );
   glDisable( GL_LIGHTING );
   glBegin( GL_POINTS );
-  for( i=0; i<terra->_nx; i++ )
-    for( j=0; j<terra->_ny; j++ ){
+  for( i=0; i<zTerraXSize(terra); i++ )
+    for( j=0; j<zTerraYSize(terra); j++ ){
       rkglRGB( zTerraGridNC(terra,i,j)->travs ? rgb_travs : rgb_untravs );
       _rkglTerraVertex( terra, i, j );
     }
@@ -46,12 +46,12 @@ void rkglTerraPointNet(zTerra *terra, zRGB *rgb)
   glDisable( GL_LIGHTING );
   rkglRGB( rgb );
   glBegin( GL_POINTS );
-  for( i=0; i<terra->_nx; i++ )
-    for( j=0; j<terra->_ny; j++ )
+  for( i=0; i<zTerraXSize(terra); i++ )
+    for( j=0; j<zTerraYSize(terra); j++ )
       _rkglTerraVertex( terra, i, j );
   glEnd();
-  for( i=0; i<terra->_nx; i++ )
-    for( j=0; j<terra->_ny; j++ ){
+  for( i=0; i<zTerraXSize(terra); i++ )
+    for( j=0; j<zTerraYSize(terra); j++ ){
       if( i > 0 ){
         glBegin(GL_LINES);
         _rkglTerraVertex( terra, i, j );
@@ -92,8 +92,8 @@ void rkglTerraNorm(zTerra *terra, zOpticalInfo *oi)
   double scale;
 
   scale = sqrt( zSqr(terra->dx) + zSqr(terra->dy) );
-  for( i=0; i<terra->_nx; i++ )
-    for( j=0; j<terra->_ny; j++ )
+  for( i=0; i<zTerraXSize(terra); i++ )
+    for( j=0; j<zTerraYSize(terra); j++ )
       _rkglTerraCellNorm( zTerraGridNC(terra,i,j), zTerraX(terra,i), zTerraY(terra,j), scale, oi );
 }
 
@@ -120,8 +120,8 @@ void rkglTerraVar(zTerra *terra, zOpticalInfo *oi)
 {
   register int i, j;
 
-  for( i=0; i<terra->_nx; i++ )
-    for( j=0; j<terra->_ny; j++ )
+  for( i=0; i<zTerraXSize(terra); i++ )
+    for( j=0; j<zTerraYSize(terra); j++ )
       _rkglTerraCellVar( zTerraGridNC(terra,i,j), zTerraX(terra,i), zTerraY(terra,j), terra->dx, terra->dy, oi );
 }
 
@@ -152,8 +152,8 @@ void rkglTerraMesh(zTerra *terra, zOpticalInfo *oi_zmin, zOpticalInfo *oi_zmax)
 
   zTerraZRange( terra, &zmin, &zmax );
   glShadeModel( GL_SMOOTH );
-  for( i=1; i<terra->_nx; i++ )
-    for( j=1; j<terra->_ny; j++ ){
+  for( i=1; i<zTerraXSize(terra); i++ )
+    for( j=1; j<zTerraYSize(terra); j++ ){
       glBegin( GL_QUADS );
       _rkglTerraMeshGrid( terra, i-1, j-1, zmin, zmax, oi_zmin, oi_zmax );
       _rkglTerraMeshGrid( terra, i,   j-1, zmin, zmax, oi_zmin, oi_zmax );
@@ -171,20 +171,20 @@ void rkglTerraMeshSmooth(zTerra *terra, int xslice, int yslice, zOpticalInfo *oi
   register int i, j;
   zVec3D *grid, *gp;
 
-  if( !( grid = zAlloc( zVec3D, terra->_nx * terra->_ny ) ) ){
+  if( !( grid = zAlloc( zVec3D, zTerraXSize(terra) * zTerraYSize(terra) ) ) ){
     ZALLOCERROR();
     return;
   }
   gp = grid;
-  for( i=0; i<terra->_nx; i++ )
-    for( j=0; j<terra->_ny; j++ )
+  for( i=0; i<zTerraXSize(terra); i++ )
+    for( j=0; j<zTerraYSize(terra); j++ )
       zVec3DCreate( gp++, zTerraX(terra,i), zTerraY(terra,j), zTerraGridNC(terra,i,j)->z );
   rkglMaterial( oi );
   glEnable( GL_AUTO_NORMAL );
   glDisable( GL_CULL_FACE );
   glMap2d( GL_MAP2_VERTEX_3,
-    0, 1, terra->_ny*3, terra->_nx,
-    0, 1,            3, terra->_ny,
+    0, 1, zTerraYSize(terra)*3, zTerraXSize(terra),
+    0, 1,                    3, zTerraYSize(terra),
     (GLdouble *)grid );
   glMapGrid2d( xslice, 0, 1, yslice, 0, 1 );
   glEnable( GL_MAP2_VERTEX_3 );
@@ -222,7 +222,7 @@ void rkglTerraPatch(zTerra *terra, zOpticalInfo *oi)
   dy = 0.5 * terra->dy;
   glShadeModel( GL_FLAT );
   rkglMaterial( oi );
-  for( i=0; i<terra->_nx; i++ )
-    for( j=0; j<terra->_ny; j++ )
+  for( i=0; i<zTerraXSize(terra); i++ )
+    for( j=0; j<zTerraYSize(terra); j++ )
       _rkglTerraCellPatch( zTerraGridNC(terra,i,j), zTerraX(terra,i), zTerraY(terra,j), dx, dy );
 }

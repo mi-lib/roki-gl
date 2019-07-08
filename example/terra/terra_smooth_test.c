@@ -18,8 +18,8 @@ void refresh(void)
 
   rkglDeleteList( id_curve );
   rkglDeleteList( id_cp );
-  for( i=1; i<terra._nx-1; i++ )
-    for( j=1; j<terra._ny-1; j++ )
+  for( i=1; i<zTerraXSize(&terra)-1; i++ )
+    for( j=1; j<zTerraYSize(&terra)-1; j++ )
       zTerraGridNC(&terra,i,j)->z = zRandI(-1,1);
   zOpticalInfoCreateSimple( &oi, zRandF(0.0,1.0), zRandF(0.0,1.0), zRandF(0.0,1.0), NULL );
   /* curve */
