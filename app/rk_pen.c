@@ -401,7 +401,7 @@ void rk_penInit(void)
     exit( 1 );
 
   if( opt[OPT_ENVFILE].flag ){
-    if( !zMShape3DScanFile( &envshape, opt[OPT_ENVFILE].arg ) ){
+    if( !zMShape3DReadZTK( &envshape, opt[OPT_ENVFILE].arg ) ){
       ZOPENERROR( opt[OPT_ENVFILE].arg );
       rk_penUsage();
       exit( 1 );

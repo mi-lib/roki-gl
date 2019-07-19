@@ -1,3 +1,4 @@
+2019. 7.19. Reflected renaming of zMShape3DScanFile to zMShape3DReadZTK. [app]
 2019. 7. 8. Reflected modified specification of zTerra. [rkgl_terra]
 2019. 6.28. Reflected new specifications of zStrList and zStrAddrList. [app]
 2019. 6.17. Reflected renaming of *Clear to *Zero in Zeo. [rkgl_shape, rkgl_select, app]
