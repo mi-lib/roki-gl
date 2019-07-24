@@ -6,6 +6,7 @@
 
 #include <stdarg.h>
 #include <roki-gl/rkgl_shape.h>
+#include <zeo/zeo_bv.h>
 
 /* display list */
 
@@ -104,70 +105,7 @@ void rkglPolygon(zVec3D v[], int n, ...)
   glEnd();
 }
 
-void rkglPH(zPH3D *ph, rkglDisplayType disptype)
-{
-  register int i;
-
-  if( disptype == RKGL_WIREFRAME )
-    glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
-
-  for( i=0; i<zPH3DFaceNum(ph); i++ )
-    rkglTri( zPH3DFace(ph,i) );
-}
-
-void rkglShape(zShape3D *s, zOpticalInfo *oi_alt, rkglDisplayType disptype)
-{
-  if( oi_alt ){
-    rkglMaterial( oi_alt );
-  } else
-  if( zShape3DOptic(s) )
-    rkglMaterial( zShape3DOptic(s) );
-
-  if( disptype == RKGL_BB )
-    rkglBox( zShape3DBB(s) );
-  else switch( zShape3DType(s) ){
-  case ZSHAPE_PH:       return rkglPH( zShape3DPH(s), disptype );
-  case ZSHAPE_BOX:      return rkglBox( zShape3DBox(s) );
-  case ZSHAPE_SPHERE:   return rkglSphere( zShape3DSphere(s) );
-  case ZSHAPE_ELLIPS:   return rkglEllips( zShape3DEllips(s) );
-  case ZSHAPE_CYLINDER: return rkglCyl( zShape3DCyl(s) );
-  case ZSHAPE_ELLIPTICCYLINDER: return rkglECyl( zShape3DECyl(s) );
-  case ZSHAPE_CONE:     return rkglCone( zShape3DCone(s) );
-  case ZSHAPE_NURBS:    return rkglNURBS( zShape3DNURBS(s) );
-  default: ;
-  }
-}
-
-int rkglShapeEntry(zShape3D *s, zOpticalInfo *oi_alt, rkglDisplayType disptype)
-{
-  int result;
-
-  if( s == NULL ) return -1;
-  result = rkglBeginList();
-  rkglShape( s, oi_alt, disptype );
-  glEndList();
-  return result;
-}
-
-void rkglMShape(zMShape3D *s, rkglDisplayType disptype)
-{
-  register int i;
-
-  for( i=0; i<zMShape3DShapeNum(s); i++ )
-    rkglShape( zMShape3DShape(s,i), NULL, disptype );
-}
-
-int rkglMShapeEntry(zMShape3D *s, rkglDisplayType disptype)
-{
-  int result;
-
-  result = rkglBeginList();
-  rkglMShape( s, disptype );
-  glEndList();
-  return result;
-}
-
-void rkglBox(zBox3D *box)
+void rkglBox(zBox3D *box, int disptype)
 {
   zVec3D vert[8];
   register int i;
@@ -183,8 +121,9 @@ void rkglBox(zBox3D *box)
   rkglPolygon( vert, 4, 0, 4, 5, 1 );
   rkglPolygon( vert, 4, 2, 6, 7, 3 );
 }
+static void _rkglBox(void *box, int disptype){ rkglBox( box, disptype ); }
 
-void rkglSphere(zSphere3D *sphere)
+void rkglSphere(zSphere3D *sphere, int disptype)
 {
   register int i, j, i1, j1, n2=zSphere3DDiv(sphere)*2;
   zVec3D vert[zSphere3DDiv(sphere)+1][n2+1], v;
@@ -209,6 +148,7 @@ void rkglSphere(zSphere3D *sphere)
       glEnd();
     }
 }
+static void _rkglSphere(void *sphere, int disptype){ rkglSphere( sphere, disptype ); }
 
 static zVec3D *_rkglEllipsNormal(zEllips3D *ellips, zVec3D *v, zVec3D *n);
 zVec3D *_rkglEllipsNormal(zEllips3D *ellips, zVec3D *v, zVec3D *n)
@@ -224,7 +164,7 @@ zVec3D *_rkglEllipsNormal(zEllips3D *ellips, zVec3D *v, zVec3D *n)
   return n;
 }
 
-void rkglEllips(zEllips3D *ellips)
+void rkglEllips(zEllips3D *ellips, int disptype)
 {
   register int i, j, i1, j1, n2=zEllips3DDiv(ellips)*2;
   zVec3D vert[zEllips3DDiv(ellips)+1][n2+1];
@@ -253,6 +193,7 @@ void rkglEllips(zEllips3D *ellips)
       glEnd();
     }
 }
+static void _rkglEllips(void *ellips, int disptype){ rkglEllips( ellips, disptype ); }
 
 static zVec3D *_rkglRadial(zVec3D *d, zVec3D *s);
 zVec3D *_rkglRadial(zVec3D *d, zVec3D *s)
@@ -265,7 +206,7 @@ zVec3D *_rkglRadial(zVec3D *d, zVec3D *s)
   return s;
 }
 
-void rkglCyl(zCyl3D *cyl)
+void rkglCyl(zCyl3D *cyl, int disptype)
 {
   zVec3D norm[zCyl3DDiv(cyl)+1], vert[2][zCyl3DDiv(cyl)+1], d, s, aa;
   double l;
@@ -310,8 +251,9 @@ void rkglCyl(zCyl3D *cyl)
   }
   glEnd();
 }
+static void _rkglCyl(void *cyl, int disptype){ rkglCyl( cyl, disptype ); }
 
-void rkglECyl(zECyl3D *ecyl)
+void rkglECyl(zECyl3D *ecyl, int disptype)
 {
   zVec3D norm[zECyl3DDiv(ecyl)+1], vert[2][zECyl3DDiv(ecyl)+1], d;
   double l, s, c;
@@ -353,8 +295,9 @@ void rkglECyl(zECyl3D *ecyl)
   }
   glEnd();
 }
+static void _rkglECyl(void *ecyl, int disptype){ rkglECyl( ecyl, disptype ); }
 
-void rkglCone(zCone3D *cone)
+void rkglCone(zCone3D *cone, int disptype)
 {
   zVec3D norm[zCone3DDiv(cone)+1], vert[zCone3DDiv(cone)+1], d, s, tmp, v;
   double l;
@@ -395,8 +338,9 @@ void rkglCone(zCone3D *cone)
   }
   glEnd();
 }
+static void _rkglCone(void *cone, int disptype){ rkglCone( cone, disptype ); }
 
-void rkglTorus(zVec3D *c, zVec3D *n, double r1, double r2, int div1, int div2)
+void rkglTorus(zVec3D *c, zVec3D *n, double r1, double r2, int div1, int div2, int disptype)
 {
   register int i, j;
   zVec3D d, aa1, aa2, s, sr, dr, tmp, t;
@@ -435,7 +379,7 @@ void rkglTorus(zVec3D *c, zVec3D *n, double r1, double r2, int div1, int div2)
   }
 }
 
-void rkglNURBS(zNURBS3D *nurbs)
+void rkglNURBS(zNURBS3D *nurbs, int disptype)
 {
   register int i, j, k;
   zVec3D *vert, *v1, *v2;
@@ -474,6 +418,7 @@ void rkglNURBS(zNURBS3D *nurbs)
   free( vert );
   free( norm );
 }
+static void _rkglNURBS(void *nurbs, int disptype){ rkglNURBS( nurbs, disptype ); }
 
 void rkglNURBSCP(zNURBS3D *nurbs, GLfloat size, zRGB *rgb)
 {
@@ -503,6 +448,83 @@ void rkglNURBSCP(zNURBS3D *nurbs, GLfloat size, zRGB *rgb)
       }
     }
   glEnable( GL_LIGHTING );
+}
+
+void rkglPH(zPH3D *ph, int disptype)
+{
+  register int i;
+
+  if( disptype == RKGL_WIREFRAME )
+    glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+
+  for( i=0; i<zPH3DFaceNum(ph); i++ )
+    rkglTri( zPH3DFace(ph,i) );
+}
+static void _rkglPH(void *ph, int disptype){ rkglPH( ph, disptype ); }
+
+void rkglShape(zShape3D *s, zOpticalInfo *oi_alt, int disptype)
+{
+  struct{
+    const char *typestr;
+    void (* draw)(void*,int);
+  } shapelist[] = {
+    { "box", _rkglBox },
+    { "sphere", _rkglSphere },
+    { "ellipsoid", _rkglEllips },
+    { "cylinder", _rkglCyl },
+    { "ellipticcylinder", _rkglECyl },
+    { "cone", _rkglCone },
+    { "polyhedron", _rkglPH },
+    { "nurbs", _rkglNURBS },
+    { NULL, NULL },
+  };
+  register int i;
+
+  if( oi_alt ){
+    rkglMaterial( oi_alt );
+  } else
+  if( zShape3DOptic(s) )
+    rkglMaterial( zShape3DOptic(s) );
+
+  if( disptype == RKGL_BB ){
+    zBox3D box;
+    zOBB( &box, zShape3DVertBuf(s), zShape3DVertNum(s) );
+    rkglBox( &box, disptype );
+  }
+  for( i=0; shapelist[i].typestr; i++ )
+    if( strcmp( s->com->typestr, shapelist[i].typestr ) == 0 ){
+      shapelist[i].draw( s->body, disptype );
+      break;
+    }
+}
+
+int rkglShapeEntry(zShape3D *s, zOpticalInfo *oi_alt, int disptype)
+{
+  int result;
+
+  if( s == NULL ) return -1;
+  result = rkglBeginList();
+  rkglShape( s, oi_alt, disptype );
+  glEndList();
+  return result;
+}
+
+void rkglMShape(zMShape3D *s, int disptype)
+{
+  register int i;
+
+  for( i=0; i<zMShape3DShapeNum(s); i++ )
+    rkglShape( zMShape3DShape(s,i), NULL, disptype );
+}
+
+int rkglMShapeEntry(zMShape3D *s, int disptype)
+{
+  int result;
+
+  result = rkglBeginList();
+  rkglMShape( s, disptype );
+  glEndList();
+  return result;
 }
 
 void rkglPointCloud(zVec3DList *pc, zVec3D *center, short size)
@@ -546,8 +568,8 @@ void rkglArrow(zVec3D *bot, zVec3D *vec, double mag)
   zCyl3DCreate( &cyl, bot, &neck, RKGL_ARROW_BOTTOM_RAD * mag, RKGL_ARROW_DIV );
   zCone3DCreate( &cone, &neck, &tip, RKGL_ARROW_NECK_RAD * mag, RKGL_ARROW_DIV );
 
-  rkglCyl( &cyl );
-  rkglCone( &cone );
+  rkglCyl( &cyl, RKGL_FACE );
+  rkglCone( &cone, RKGL_FACE );
 }
 
 void rkglAxis(zDir axis, double d, double w, GLfloat color[])

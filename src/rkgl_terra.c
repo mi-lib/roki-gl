@@ -110,7 +110,7 @@ void _rkglTerraCellVar(zTerraCell *cell, double x, double y, double dx, double d
   zVec3DCreate( &center, x, y, cell->z );
   zBox3DCreateAlign( &point, &center, dx, dy, cell->var );
   rkglMaterial( oi );
-  rkglBox( &point );
+  rkglBox( &point, RKGL_FACE );
 }
 
 /* rkglTerraVar
