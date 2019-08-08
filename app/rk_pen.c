@@ -156,14 +156,13 @@ void rk_penSetJointDis(void)
   printf( "enter values [1-%d]> ", rkLinkJointSize(l) );
   for( i=0; i<rkLinkJointSize(l); i++ )
     dis[i] = zFDouble( stdin );
-  switch( rkLinkJointType(l) ){
-  case RK_JOINT_REVOL:
-  case RK_JOINT_CYLIN:
-    dis[0] = zDeg2Rad( dis[0] ); break;
-  case RK_JOINT_HOOKE:
+  if( rkLinkJoint(l)->com == &rk_joint_revol ||
+      rkLinkJoint(l)->com == &rk_joint_cylin ){
     dis[0] = zDeg2Rad( dis[0] );
-    dis[1] = zDeg2Rad( dis[1] ); break;
-  default: ;
+  } else
+  if( rkLinkJoint(l)->com == &rk_joint_hooke ){
+    dis[0] = zDeg2Rad( dis[0] );
+    dis[1] = zDeg2Rad( dis[1] );
   }
   rkLinkSetJointDis( l, dis );
   rkChainUpdateFK( &chain );
@@ -195,7 +194,7 @@ void rk_penSetLinkPos(void)
 
   rkIKCreate( &ik, &chain );
   for( lp=l; lp!=rkChainRoot(&chain); lp=rkLinkParent(lp) )
-    if( rkLinkJointType(lp) != RK_JOINT_FIXED ){
+    if( rkLinkJointSize(lp) > 0 ){
       printf( "register joint [%s].\n", zName(lp) );
       rkIKJointReg( &ik, lp - rkChainRoot(&chain), 0.001 );
     }
@@ -232,7 +231,7 @@ void rk_penSetLinkFrame(void)
 
   rkIKCreate( &ik, &chain );
   for( lp=l; lp!=rkChainRoot(&chain); lp=rkLinkParent(lp) )
-    if( rkLinkJointType(lp) != RK_JOINT_FIXED ){
+    if( rkLinkJointSize(lp) > 0 ){
       printf( "register joint [%s].\n", zName(lp) );
       rkIKJointReg( &ik, lp - rkChainRoot(&chain), 0.001 );
     }
