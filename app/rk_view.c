@@ -122,7 +122,7 @@ void rk_viewInit(void)
     atof(opt[OPT_LX].arg), atof(opt[OPT_LY].arg), atof(opt[OPT_LZ].arg) );
   rkglShadowInit( &shadow, 512, 512, 1.5, 0.2 );
 
-  if( !zMShape3DReadZTK( &ms, opt[OPT_MODELFILE].arg ) ){
+  if( !zMShape3DScanZTK( &ms, opt[OPT_MODELFILE].arg ) ){
     ZOPENERROR( opt[OPT_MODELFILE].arg );
     rk_viewUsage();
     exit( 1 );

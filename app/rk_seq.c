@@ -201,7 +201,7 @@ void rk_seqInit(void)
     exit( 1 );
   }
   if( opt[OPT_ENVFILE].flag ){
-    if( !zMShape3DReadZTK( &envshape, opt[OPT_ENVFILE].arg ) ){
+    if( !zMShape3DScanZTK( &envshape, opt[OPT_ENVFILE].arg ) ){
       ZOPENERROR( opt[OPT_ENVFILE].arg );
       rk_seqUsage();
       exit( 1 );

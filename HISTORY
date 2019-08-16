@@ -1,3 +1,5 @@
+2019. 8.16. Reflected implementation of rkChainInitPrintZTK instead of rkChainInitPrintFile. [app]
+2019. 8.12. Reflected renaming of zMShape3DReadZTK to zMShape3DScanZTK. [app]
 2019. 8. 8. Modified rkglLinkStick. [rkgl_chain]
 2019. 8. 8. Reflected abolishment of rkJointType. [rkgl_chain, app]
 2019. 7.23. Modified rkglShape. [rkgl_shape]
