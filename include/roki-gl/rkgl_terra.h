@@ -8,7 +8,7 @@
 #define __RKGL_TERRA_H__
 
 #include <roki-gl/rkgl_shape.h>
-#include <zeo/zeo_terra.h>
+#include <zeo/zeo_mapnet.h>
 
 __BEGIN_DECLS
 
