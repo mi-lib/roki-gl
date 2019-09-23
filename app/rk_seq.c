@@ -107,7 +107,7 @@ bool rk_seqLoadSequence(void)
     }
     zGetBasename( opt[OPT_ZVSFILE].arg, seqfilebase, BUFSIZ );
   }
-  if( !( poselist = zIndexCreate( zListNum(&seq) ) ) ){
+  if( !( poselist = zIndexCreate( zListSize(&seq) ) ) ){
     zSeqFree( &seq );
     return false;
   }

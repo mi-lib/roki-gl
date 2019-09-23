@@ -225,9 +225,9 @@ bool rkAnimCellListCreate(zStrList *arglist)
     }
   }
   if( !ret ) return false;
-  if( zListNum(&anim_cell_list) == 1 && zListIsEmpty(arglist) )
+  if( zListSize(&anim_cell_list) == 1 && zListIsEmpty(arglist) )
     if( !rkAnimCellLoadSeq( NULL ) ) return false;
-  if( zListNum(&anim_cell_list) != zListNum(arglist) ){
+  if( zListSize(&anim_cell_list) != zListSize(arglist) ){
     ZRUNERROR( "sequence not specified" );
     return false;
   }

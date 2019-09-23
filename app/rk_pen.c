@@ -97,7 +97,7 @@ void rk_penShowLinkList(void)
 {
   int i;
 
-  for( i=0; i<rkChainNum(&chain); i++ )
+  for( i=0; i<rkChainLinkNum(&chain); i++ )
     printf( "[%2d] %s\n", i, zName(rkChainLink(&chain,i)) );
 }
 
@@ -112,7 +112,7 @@ void rk_penShowJointDis(void)
   double dis[6];
 
   printf( "*** joint displacements ***\n" );
-  for( i=0; i<rkChainNum(&chain); i++ ){
+  for( i=0; i<rkChainLinkNum(&chain); i++ ){
     printf( "[link:%d:%s] \t", i, rkChainLinkName(&chain,i) );
     rkChainLinkGetJointDis( &chain, i, dis );
     for( j=0; j<rkChainLinkJointSize(&chain,i); j++ )
@@ -172,7 +172,7 @@ void rk_penResetJointDis(void)
 {
   int i;
 
-  for( i=0; i<rkChainNum(&chain); i++ )
+  for( i=0; i<rkChainLinkNum(&chain); i++ )
     rkJointNeutral( rkChainLinkJoint( &chain, i ) );
   rkChainUpdateFK( &chain );
 }

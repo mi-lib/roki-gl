@@ -36,11 +36,11 @@ bool rkglChainLoad(rkglChain *gc, rkChain *c, rkglChainAttr *attr)
 
   rkglChainAttrCopy( attr, &gc->attr );
   gc->chain = c;
-  if( !( gc->info = zAlloc( rkglLinkInfo, rkChainNum(gc->chain) ) ) ){
+  if( !( gc->info = zAlloc( rkglLinkInfo, rkChainLinkNum(gc->chain) ) ) ){
     ZALLOCERROR();
     return false;
   }
-  for( i=0; i<rkChainNum(gc->chain); i++ ){
+  for( i=0; i<rkChainLinkNum(gc->chain); i++ ){
     gc->info[i].list = rkglLinkEntry( rkChainLink(gc->chain,i), NULL, &gc->attr );
     gc->info[i].list_alt = -1;
     gc->info[i].visible = ( gc->info[i].list >= 0 ) ? true : false;
@@ -52,7 +52,7 @@ void rkglChainUnload(rkglChain *gc)
 {
   register int i;
 
-  for( i=0; i<rkChainNum(gc->chain); i++ )
+  for( i=0; i<rkChainLinkNum(gc->chain); i++ )
     if( gc->info[i].list >= 0 )
       glDeleteLists( gc->info[i].list, 1 );
   zFree( gc->info );
@@ -192,7 +192,7 @@ void rkglChainDraw(rkglChain *gc)
 {
   register int i;
 
-  for( i=0; i<rkChainNum(gc->chain); i++ ){
+  for( i=0; i<rkChainLinkNum(gc->chain); i++ ){
     glLoadName( i );
     rkglChainLinkDraw( gc, i );
   }
@@ -205,7 +205,7 @@ void rkglChainNamedDraw(rkglChain *gc, GLuint name)
   gc->name = name;
   glLoadName( name );
   glPushName( 0 ); /* dummy name */
-  for( i=0; i<rkChainNum(gc->chain); i++ ){
+  for( i=0; i<rkChainLinkNum(gc->chain); i++ ){
     glLoadName( i );
     rkglChainLinkDraw( gc, i );
   }
@@ -221,7 +221,7 @@ int rkglChainDrawSeethru(rkglChain *gc, double alpha)
   register int i;
 
   result = rkglBeginList();
-  for( i=0; i<rkChainNum(gc->chain); i++ ){
+  for( i=0; i<rkChainLinkNum(gc->chain); i++ ){
     l = rkChainLink( gc->chain , i );
     if( !gc->info[i].visible || rkLinkShapeIsEmpty(l) ) continue;
     glPushMatrix();
