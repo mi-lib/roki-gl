@@ -16,6 +16,7 @@ LINK=-lroki-gl $(GLLINK) `zx11-config -l` `liw-config -l` `roki-config -l`
 COMPILE=$(CC) $(CFLAGS) -o $@ $< $(LINK)
 
 INSTALL=install -m 755
+UNINSTALL=rm -f
 
 CONFIGGEN=zeda-config-gen
 CONFIG=roki-gl-config
@@ -39,3 +40,6 @@ install: $(TARGET)
 clean:
 	@echo " CLEAN"
 	-@rm -f *.o *~ core $(TARGET)
+uninstall:
+	@echo " UNINSTALL	" $(TARGET)
+	@cd $(BINDIR); $(UNINSTALL) $(TARGET); cd -
