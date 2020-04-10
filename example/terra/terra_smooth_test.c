@@ -54,7 +54,7 @@ void keyboard(unsigned char key, int x, int y)
 {
   switch( key ){
   case 'q':
-    zTerraFree( &terra );
+    zTerraDestroy( &terra );
     exit( 1 );
     break;
   case 'i':

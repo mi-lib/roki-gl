@@ -1,3 +1,6 @@
+[map]
+name: terrain
+type: terra
 origin: 0 0
 resolution: 0.1 0.1
 size: 65 48

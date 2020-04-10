@@ -21,11 +21,11 @@ void display(void)
   glRotated( r, 0, 1, 0 );
   rkglClear();
   rkglMaterial( &red );
-  rkglSphere( &sphere[0] ); rkglSphere( &sphere[1] ); rkglSphere( &sphere[2] );
+  rkglSphere( &sphere[0], RKGL_FACE ); rkglSphere( &sphere[1], RKGL_FACE ); rkglSphere( &sphere[2], RKGL_FACE );
   rkglMaterial( &cyan );
-  rkglCyl( &cylinder[0] );  rkglCyl( &cylinder[1] );  rkglCyl( &cylinder[2] );
+  rkglCyl( &cylinder[0], RKGL_FACE );  rkglCyl( &cylinder[1], RKGL_FACE );  rkglCyl( &cylinder[2], RKGL_FACE );
   rkglMaterial( &yellow );
-  rkglCone( &cone[0] );     rkglCone( &cone[1] );     rkglCone( &cone[2] );
+  rkglCone( &cone[0], RKGL_FACE );     rkglCone( &cone[1], RKGL_FACE );     rkglCone( &cone[2], RKGL_FACE );
   glPopMatrix();
   glutSwapBuffers();
 }

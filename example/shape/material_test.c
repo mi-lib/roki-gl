@@ -60,7 +60,7 @@ void init(void)
 
   zOpticalInfoCreateSimple( &opt, 0.8, 0, 0, NULL );
   zShape3DInit( &shape );
-  zShape3DCreateBoxAlign( &shape, ZVEC3DZERO, 5, 3, 4 );
+  zShape3DBoxCreateAlign( &shape, ZVEC3DZERO, 5, 3, 4 );
   zShape3DSetOptic( &shape, &opt );
 }
 

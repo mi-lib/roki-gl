@@ -51,7 +51,7 @@ void display(void)
   glPushMatrix();
 
   rkglMaterial( &oi );
-  rkglNURBS( &nurbs );
+  rkglNURBS( &nurbs, RKGL_FACE );
   if( show_ctl )
     rkglNURBSCP( &nurbs, 5.0, &rgb );
 

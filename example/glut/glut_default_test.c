@@ -16,9 +16,9 @@ void display(void)
   rkglCALoad( &cam );
   rkglLightPut( &light );
   glPushMatrix();
-    rkglMaterial( &red );    rkglSphere( &sphere );
-    rkglMaterial( &cyan );   rkglCyl( &cylinder );
-    rkglMaterial( &yellow ); rkglCone( &cone );
+    rkglMaterial( &red );    rkglSphere( &sphere, RKGL_FACE );
+    rkglMaterial( &cyan );   rkglCyl( &cylinder, RKGL_FACE );
+    rkglMaterial( &yellow ); rkglCone( &cone, RKGL_FACE );
   glPopMatrix();
   glutSwapBuffers();
 }

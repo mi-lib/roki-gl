@@ -6,19 +6,13 @@
 
 #include <roki-gl/rkgl_terra.h>
 
-/* (static)
- * _rkglTerraVertex
- * - register a vertex on an elevation map.
- */
-static void _rkglTerraVertex(zTerra *terra, int i, int j);
-void _rkglTerraVertex(zTerra *terra, int i, int j)
+/* register a vertex on an elevation map. */
+static void _rkglTerraVertex(zTerra *terra, int i, int j)
 {
   glVertex3f( zTerraX(terra,i), zTerraY(terra,j), zTerraGridNC(terra,i,j)->z );
 }
 
-/* rkglTerraPoint
- * - draw grid points of an elevation map.
- */
+/* draw grid points of an elevation map. */
 void rkglTerraPoint(zTerra *terra, zRGB *rgb_travs, zRGB *rgb_untravs)
 {
   register int i, j;
@@ -35,9 +29,7 @@ void rkglTerraPoint(zTerra *terra, zRGB *rgb_travs, zRGB *rgb_untravs)
   glEnable( GL_LIGHTING );
 }
 
-/* rkglTerraPointNet
- * - draw net of grid points of an elevation map.
- */
+/* draw net of grid points of an elevation map. */
 void rkglTerraPointNet(zTerra *terra, zRGB *rgb)
 {
   register int i, j;
@@ -68,12 +60,8 @@ void rkglTerraPointNet(zTerra *terra, zRGB *rgb)
   glEnable( GL_LIGHTING );
 }
 
-/* (static)
- * _rkglTerraCellNorm
- * - draw the normal vector associated with a specified grid on an elevation map.
- */
-static void _rkglTerraCellNorm(zTerraCell *cell, double x, double y, double scale, zOpticalInfo *oi);
-void _rkglTerraCellNorm(zTerraCell *cell, double x, double y, double scale, zOpticalInfo *oi)
+/* draw the normal vector associated with a specified grid on an elevation map. */
+static void _rkglTerraCellNorm(zTerraCell *cell, double x, double y, double scale, zOpticalInfo *oi)
 {
   zVec3D center, vec;
 
@@ -83,9 +71,7 @@ void _rkglTerraCellNorm(zTerraCell *cell, double x, double y, double scale, zOpt
   rkglArrow( &center, &vec, scale );
 }
 
-/* rkglTerraNorm
- * - draw normal vectors associated with grids of an elevation map.
- */
+/* draw normal vectors associated with grids of an elevation map. */
 void rkglTerraNorm(zTerra *terra, zOpticalInfo *oi)
 {
   register int i, j;
@@ -97,12 +83,8 @@ void rkglTerraNorm(zTerra *terra, zOpticalInfo *oi)
       _rkglTerraCellNorm( zTerraGridNC(terra,i,j), zTerraX(terra,i), zTerraY(terra,j), scale, oi );
 }
 
-/* (static)
- * _rkglTerraCellVar
- * - draw variance of estimated height at a specified grid of an elevation map.
- */
-static void _rkglTerraCellVar(zTerraCell *cell, double x, double y, double dx, double dy, zOpticalInfo *oi);
-void _rkglTerraCellVar(zTerraCell *cell, double x, double y, double dx, double dy, zOpticalInfo *oi)
+/* draw variance of estimated height at a specified grid of an elevation map. */
+static void _rkglTerraCellVar(zTerraCell *cell, double x, double y, double dx, double dy, zOpticalInfo *oi)
 {
   zBox3D point;
   zVec3D center;
@@ -113,9 +95,7 @@ void _rkglTerraCellVar(zTerraCell *cell, double x, double y, double dx, double d
   rkglBox( &point, RKGL_FACE );
 }
 
-/* rkglTerraVar
- * - draw variance of estimate height at grids of an elevation map.
- */
+/* draw variance of estimate height at grids of an elevation map. */
 void rkglTerraVar(zTerra *terra, zOpticalInfo *oi)
 {
   register int i, j;
@@ -125,12 +105,8 @@ void rkglTerraVar(zTerra *terra, zOpticalInfo *oi)
       _rkglTerraCellVar( zTerraGridNC(terra,i,j), zTerraX(terra,i), zTerraY(terra,j), terra->dx, terra->dy, oi );
 }
 
-/* (static)
- * _rkglTerraMeshGrid
- * - register a grid of an elevation map to draw mesh.
- */
-static void _rkglTerraMeshGrid(zTerra *terra, int i, int j, double zmin, double zmax, zOpticalInfo *oi_zmin, zOpticalInfo *oi_zmax);
-void _rkglTerraMeshGrid(zTerra *terra, int i, int j, double zmin, double zmax, zOpticalInfo *oi_zmin, zOpticalInfo *oi_zmax)
+/* register a grid of an elevation map to draw mesh. */
+static void _rkglTerraMeshGrid(zTerra *terra, int i, int j, double zmin, double zmax, zOpticalInfo *oi_zmin, zOpticalInfo *oi_zmax)
 {
   zOpticalInfo oi;
   zTerraCell *grid;
@@ -142,9 +118,7 @@ void _rkglTerraMeshGrid(zTerra *terra, int i, int j, double zmin, double zmax, z
   rkglNormal( &grid->norm );
 }
 
-/* rkglTerraMesh
- * - draw mesh of an elevation map.
- */
+/* draw mesh of an elevation map. */
 void rkglTerraMesh(zTerra *terra, zOpticalInfo *oi_zmin, zOpticalInfo *oi_zmax)
 {
   register int i, j;
@@ -163,9 +137,7 @@ void rkglTerraMesh(zTerra *terra, zOpticalInfo *oi_zmin, zOpticalInfo *oi_zmax)
     }
 }
 
-/* rkglTerraMeshSmooth
- * - draw mesh of an elevation map smoothed by Bezier interpolation.
- */
+/* draw mesh of an elevation map smoothed by Bezier interpolation. */
 void rkglTerraMeshSmooth(zTerra *terra, int xslice, int yslice, zOpticalInfo *oi)
 {
   register int i, j;
@@ -192,12 +164,8 @@ void rkglTerraMeshSmooth(zTerra *terra, int xslice, int yslice, zOpticalInfo *oi
   zFree( grid );
 }
 
-/* (static)
- * _rkglTerraCellPatch
- * - draw a patch at a specified grid of an elevation map.
- */
-static void _rkglTerraCellPatch(zTerraCell *cell, double x, double y, double dx, double dy);
-void _rkglTerraCellPatch(zTerraCell *cell, double x, double y, double dx, double dy)
+/* draw a patch at a specified grid of an elevation map. */
+static void _rkglTerraCellPatch(zTerraCell *cell, double x, double y, double dx, double dy)
 {
   double _x, _y;
 
@@ -210,9 +178,7 @@ void _rkglTerraCellPatch(zTerraCell *cell, double x, double y, double dx, double
   glEnd();
 }
 
-/* rkglTerraPatch
- * - draw patches of an elevation map.
- */
+/* draw patches of an elevation map. */
 void rkglTerraPatch(zTerra *terra, zOpticalInfo *oi)
 {
   register int i, j;

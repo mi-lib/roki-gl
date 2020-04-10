@@ -73,8 +73,8 @@ void keyboard(unsigned char key, int x, int y)
 
 void init(void)
 {
-  FILE *fp;
-  zTerra terra;
+  zMapNet mn;
+  zTerra *terra;
   zOpticalInfo oi1, oi2;
   zRGB rgb1, rgb2;
 
@@ -86,38 +86,37 @@ void init(void)
   rkglLightCreate( &light, 0, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0, 0 );
   rkglLightSetPos( &light, 10, 0, 10 );
 
-  fp = fopen( "test.ztr", "r" );
-  zTerraFScan( fp, &terra );
-  fclose( fp );
+  zMapNetReadZTK( &mn, "test.ztk" );
+  terra = zMapNetMap( &mn, 0 )->body;
   /* points */
   zRGBSet( &rgb1, 1, 0, 0 );
   zRGBSet( &rgb2, 0, 0, 1 );
   terra_id[0] = rkglBeginList();
-  rkglTerraPoint( &terra, &rgb1, &rgb2 );
+  rkglTerraPoint( terra, &rgb1, &rgb2 );
   glEndList();
   /* normal vectors */
   zOpticalInfoCreate( &oi1, 0, 0, 0, 0.6, 0.4, 0, 0, 0, 0, 0, 0, 0.8, NULL );
   terra_id[1] = rkglBeginList();
-  rkglTerraNorm( &terra, &oi1 );
+  rkglTerraNorm( terra, &oi1 );
   glEndList();
   /* height variance */
   terra_id[2] = rkglBeginList();
   zOpticalInfoCreate( &oi1, 0, 0, 0, 0, 0.8, 0, 0, 0, 0, 0, 0, 0.6, NULL );
-  rkglTerraVar( &terra, &oi1 );
+  rkglTerraVar( terra, &oi1 );
   glEndList();
   /* mesh */
   zOpticalInfoCreate( &oi1, 0, 0, 0, 0, 0.4, 0, 0, 0, 0, 0, 0, 1, NULL );
   zOpticalInfoCreate( &oi2, 0, 0, 0, 0.7, 0.7, 0, 0, 0, 0, 0, 0, 1, NULL );
   terra_id[3] = rkglBeginList();
-  rkglTerraMesh( &terra, &oi1, &oi2 );
+  rkglTerraMesh( terra, &oi1, &oi2 );
   glEndList();
   /* patch */
   zOpticalInfoCreate( &oi1, 0, 0, 0, 0.4, 0.8, 0, 0, 0, 0, 0, 0, 0.8, NULL );
   terra_id[4] = rkglBeginList();
-  rkglTerraPatch( &terra, &oi1 );
+  rkglTerraPatch( terra, &oi1 );
   glEndList();
 
-  zTerraFree( &terra );
+  zMapNetDestroy( &mn );
   terra_entry_sw = ENTRY_MESH;
 }
 

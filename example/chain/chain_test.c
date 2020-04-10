@@ -96,7 +96,7 @@ void keyboard(unsigned char key, int x, int y)
     exit( EXIT_SUCCESS );
   default:
     id = key - '0';
-    if( id >=0 && id < rkChainNum(&chain) && gr.info[id].list >= 0 ){
+    if( id >=0 && id < rkChainLinkNum(&chain) && gr.info[id].list >= 0 ){
       gr.info[id].visible = 1 - gr.info[id].visible;
       glutPostRedisplay();
     }
@@ -115,7 +115,7 @@ void init(void)
   rkglLightSetPos( &light, 1, 3, 6 );
 
   rkglChainAttrInit( &attr );
-  rkChainScanFile( &chain, "../model/puma" );
+  rkChainReadZTK( &chain, "../model/puma" );
   rkglChainLoad( &gr, &chain, &attr );
 }
 

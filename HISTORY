@@ -1,3 +1,5 @@
+2020. 4.11. Reflected new specifications of zMapNet. [example]
+2020. 4.11. Reflected new specifications of rkglBox/Spher/Ellips/Cyl/ECyl/Cone. [example]
 2020. 3.28. Modified .ztk files in examples to be ready for respecification of ZTK format. [example]
 2019.11.22. Rewrote README as a markdown file. [README]
 2019.10. 1. Enabled make uninstall. [makefile]

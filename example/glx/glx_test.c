@@ -26,13 +26,13 @@ void enter(void)
   obj = rkglBeginList();
   /* cylinder */
   rkglMaterial( &cyl_oi );
-  rkglCyl( &cyl );
+  rkglCyl( &cyl, RKGL_FACE );
   /* cone */
   rkglMaterial( &con_oi );
-  rkglCone( &con );
+  rkglCone( &con, RKGL_FACE );
   /* box */
   rkglMaterial( &box_oi );
-  rkglBox( &box );
+  rkglBox( &box, RKGL_FACE );
 
   glEndList();
 }

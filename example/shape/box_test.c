@@ -19,9 +19,9 @@ void display(void)
   glRotated( r, 0, 0, 1 );
   rkglClear();
   rkglMaterial( &red );
-  rkglBox( &box1 );
+  rkglBox( &box1, RKGL_FACE );
   rkglMaterial( &blue );
-  rkglBox( &box2 );
+  rkglBox( &box2, RKGL_FACE );
   glPopMatrix();
   glutSwapBuffers();
 }

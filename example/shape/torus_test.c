@@ -69,7 +69,7 @@ void init(void)
   zVec3DCreate( &d, 0, 1, 1 );
   torus = rkglBeginList();
   rkglMaterial( &white );
-  rkglTorus( &c, &d, 1.0, 0.5, 32, 16 );
+  rkglTorus( &c, &d, 1.0, 0.5, 32, 16, RKGL_FACE );
   glEndList();
 }
 

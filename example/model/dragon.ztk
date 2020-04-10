@@ -1,4 +1,4 @@
-[optics]
+[optic]
 name: white
 ambient: 1.0 1.0 1.0
 diffuse: 1.0 1.0 1.0

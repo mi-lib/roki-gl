@@ -19,7 +19,7 @@ void display(void)
   glRotated( r, 0, 1, 0 );
   rkglClear();
   rkglMaterial( &yellow );
-  rkglEllips( &el );
+  rkglEllips( &el, RKGL_FACE );
   glPopMatrix();
   glutSwapBuffers();
 }

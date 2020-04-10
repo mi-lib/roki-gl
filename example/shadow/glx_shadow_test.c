@@ -58,7 +58,7 @@ void init(void)
     zVec3DCreate( &c1, 0, 0, 0 );
     zSphere3DCreate( &sphere3d, &c1, 1, 0 );
     rkglMaterial( &red );
-    rkglSphere( &sphere3d );
+    rkglSphere( &sphere3d, RKGL_FACE );
   glEndList();
 
   cylinder = rkglBeginList();
@@ -67,7 +67,7 @@ void init(void)
     zVec3DCreate( &c2, 0, 1, 1.5 );
     zCyl3DCreate( &cylinder3d, &c1, &c2, 0.5, 0 );
     rkglMaterial( &cyan );
-    rkglCyl( &cylinder3d );
+    rkglCyl( &cylinder3d, RKGL_FACE );
   glEndList();
 
   cone = rkglBeginList();
@@ -76,7 +76,7 @@ void init(void)
     zVec3DCreate( &c2, 0,-1, 1 );
     zCone3DCreate( &cone3d, &c1, &c2, 1, 0 );
     rkglMaterial( &yellow );
-    rkglCone( &cone3d );
+    rkglCone( &cone3d, RKGL_FACE );
   glEndList();
 
   box = rkglBeginList();
@@ -84,7 +84,7 @@ void init(void)
     zVec3DCreate( &c1, 0, 0,-3 );
     zBox3DCreateAlign( &box3d, &c1, 5, 8, 0.5 );
     rkglMaterial( &brown );
-    rkglBox( &box3d );
+    rkglBox( &box3d, RKGL_FACE );
   glEndList();
 }
 
