@@ -109,6 +109,7 @@ void rkglSpecialFuncGLUT(int key, int x, int y)
 
 static int _glut_mouse_button, _glut_mouse_x, _glut_mouse_y;
 static int _glut_key_mod;
+
 void rkglSaveInputStatusGLUT(int button, int state, int x, int y)
 {
   _glut_mouse_button = state == GLUT_DOWN ? button : -1;

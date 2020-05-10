@@ -243,7 +243,7 @@ void rkAnimCapture(void)
 
   sprintf( imgfile, "%s%0.3f.png", opt[OPT_TITLE].arg, t_resume );
   zxImageAllocDefault( &img, zxWindowWidth(&win), zxWindowHeight(&win) );
-  zxImageFromPixmap( &img, zxCanvas(&win), img.width, img.height );
+  zxImageFromPixmap( &img, zxWindowCanvas(&win), img.width, img.height );
   zxImageWritePNGFile( &img, imgfile );
   zxImageDestroy( &img );
 }
@@ -450,10 +450,9 @@ void rkAnimInit(void)
   }
   zxWindowSetTitle( &win, RK_ANIM_TITLE );
   zxWindowOpen( &win );
-  zxWindowSetBG( &win, (char *)"lightgray" );
-  zxWindowSetFG( &win, (char *)"black" );
-  zxWindowClear( &win );
-  zxSetFont( &win, "-misc-fixed-medium-r-normal-*-40-*-*-*-*-*-*-*" );
+  zxWindowSetBGColorByName( &win, "lightgray" );
+  zxWindowSetColorByName( &win, "black" );
+  zxWindowSetFont( &win, "-misc-fixed-medium-r-normal-*-40-*-*-*-*-*-*-*" );
 
   if( opt[OPT_NOTIMESTAMP].flag )
     glwin = rkglWindowCreateGLX( &win, 0, 0, width, height, NULL );

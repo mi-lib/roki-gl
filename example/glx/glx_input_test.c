@@ -74,7 +74,7 @@ GLvoid mainloop(Window win)
     switch( ( event = zxGetEvent() ) ){
     case ButtonPress:
     case ButtonRelease:
-      rkglMouseFuncGLX( zxMouseButton, event, zxMouseX, zxMouseY );
+      rkglMouseFuncGLX( &cam, zxMouseButton, event, zxMouseX, zxMouseY );
       break;
     case MotionNotify:
       rkglMouseDragFuncGLX( &cam, zxMouseX, zxMouseY );

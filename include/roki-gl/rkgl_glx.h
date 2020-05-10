@@ -45,7 +45,7 @@ void rkglWindowAddEventGLX(Window win, long event);
 
 void rkglReshapeGLX(rkglCamera *cam, int w, int h, double vvwidth, double vvnear, double vvfar);
 int rkglKeyFuncGLX(rkglCamera *cam, KeySym key, int x, int y, double dl, double da);
-void rkglMouseFuncGLX(int button, int state, int x, int y);
+void rkglMouseFuncGLX(rkglCamera *cam, int button, int state, int x, int y);
 int rkglMouseDragFuncGLX(rkglCamera *cam, int x, int y);
 
 __END_DECLS

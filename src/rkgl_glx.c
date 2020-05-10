@@ -101,8 +101,7 @@ void rkglWindowAddEventGLX(Window win, long event)
   XWindowAttributes attr;
 
   XGetWindowAttributes( zxdisplay, win, &attr );
-  XSelectInput( zxdisplay, win,
-    attr.all_event_masks | attr.your_event_mask | event );
+  XSelectInput( zxdisplay, win, attr.all_event_masks | attr.your_event_mask | event );
 }
 
 /* default callback functions */
@@ -150,12 +149,21 @@ int rkglKeyFuncGLX(rkglCamera *cam, KeySym key, int x, int y, double dl, double 
 static int _glx_mouse_button, _glx_mouse_x, _glx_mouse_y;
 static int _glx_key_mod;
 
-void rkglMouseFuncGLX(int button, int state, int x, int y)
+void rkglMouseFuncGLX(rkglCamera *cam, int button, int state, int x, int y)
 {
   _glx_mouse_button = state == ButtonPress ? button : -1;
   _glx_mouse_x = x;
   _glx_mouse_y = y;
   _glx_key_mod = zxModkey();
+
+  switch( _glx_mouse_button ){
+  case Button4:
+    rkglCARelMove( cam, 0.1, 0, 0 );
+    break;
+  case Button5:
+    rkglCARelMove( cam,-0.1, 0, 0 );
+    break;
+  }
 }
 
 int rkglMouseDragFuncGLX(rkglCamera *cam, int x, int y)
@@ -168,18 +176,18 @@ int rkglMouseDragFuncGLX(rkglCamera *cam, int x, int y)
   case Button1:
     r = 180 * sqrt( dx*dx + dy*dy );
     _glx_key_mod & ZX_MODKEY_CTRL ?
-      rkglCALockonRotate( cam, r, -dy, dx, 0 ) :
-      rkglCARotate( cam, r, -dy, dx, 0 );
+      rkglCARotate( cam, r, -dy, dx, 0 ) :
+      rkglCALockonRotate( cam, r, -dy, dx, 0 );
     break;
   case Button3:
     _glx_key_mod & ZX_MODKEY_CTRL ?
-      rkglCARelMove( cam, 0, dx, dy ) :
-      rkglCAMove( cam, 0, dx, dy );
+      rkglCAMove( cam, 0, dx, dy ) :
+      rkglCARelMove( cam, 0, dx, dy );
     break;
   case Button2:
     _glx_key_mod & ZX_MODKEY_CTRL ?
-      rkglCARelMove( cam, -dy, 0, 0 ) :
-      rkglCAMove( cam, -dy, 0, 0 );
+      rkglCAMove( cam, -dy, 0, 0 ) :
+      rkglCARelMove( cam, -dy, 0, 0 );
     break;
   default: ;
   }
