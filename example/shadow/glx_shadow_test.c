@@ -18,9 +18,9 @@ rkglShadow shadow;
 
 void display(Window win)
 {
-  rkglActivateGLX( win );
+  rkglWindowActivateGLX( win );
   rkglShadowDraw( &shadow, &cam, &light, scene );
-  rkglSwapBuffersGLX( win );
+  rkglWindowSwapBuffersGLX( win );
   rkglFlushGLX();
 }
 
@@ -95,7 +95,7 @@ GLvoid mainloop(Window win)
     case KeyPress:
       switch( zxKeySymbol() ){
       case XK_q:
-        rkglCloseGLX();
+        rkglExitGLX();
         exit( 0 );
       }
       break;

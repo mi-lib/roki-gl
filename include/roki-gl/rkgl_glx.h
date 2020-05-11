@@ -8,7 +8,7 @@
 #define __RKGL_GLX_H__
 
 #include <zx11/zxinput.h>
-#include <roki-gl/rkgl_camera.h>
+#include <roki-gl/rkgl_input.h>
 #include <GL/glx.h>
 
 __BEGIN_DECLS
@@ -16,18 +16,18 @@ __BEGIN_DECLS
 extern GLXContext rkgl_ctx;
 
 int rkglInitGLX(void);
-void rkglCloseGLX(void);
+void rkglExitGLX(void);
 
 Window rkglWindowCreateGLX(zxWindow *parent, int x, int y, int w, int h, const char *title);
-#define rkglWindowOpenGLX(w)    XMapWindow( zxdisplay, w )
-#define rkglWindowCloseGLX(w)   XUnmapWindow( zxdisplay, w )
-#define rkglWindowDestroyGLX(w) XDestroyWindow( zxdisplay, w )
+#define rkglWindowOpenGLX(win)    XMapWindow( zxdisplay, win )
+#define rkglWindowCloseGLX(win)   XUnmapWindow( zxdisplay, win )
+#define rkglWindowDestroyGLX(win) XDestroyWindow( zxdisplay, win )
 
 #define rkglWindowMoveGLX(win,x,y)   XMoveWindow( zxdisplay, win, x, y )
 #define rkglWindowResizeGLX(win,w,h) XResizeWindow( zxdisplay, win, w, h )
 
-#define rkglActivateGLX(w)    glXMakeCurrent( zxdisplay, w, rkgl_ctx )
-#define rkglSwapBuffersGLX(w) glXSwapBuffers( zxdisplay, w )
+#define rkglWindowActivateGLX(win)    glXMakeCurrent( zxdisplay, win, rkgl_ctx )
+#define rkglWindowSwapBuffersGLX(win) glXSwapBuffers( zxdisplay, win )
 
 #define rkglFlushGLX() do{\
   glFlush();\
@@ -36,17 +36,17 @@ Window rkglWindowCreateGLX(zxWindow *parent, int x, int y, int w, int h, const c
 
 void rkglWindowAddEventGLX(Window win, long event);
 
-#define rkglKeyEnableGLX(win) \
+#define rkglWindowKeyEnableGLX(win) \
   rkglWindowAddEventGLX( (win), KeyPressMask | KeyReleaseMask )
-#define rkglMouseEnableGLX(win) \
-  rkglWindowAddEventGLX( (win), ButtonPressMask | ButtonReleaseMask | PointerMotionMask )
+#define rkglWindowMouseEnableGLX(win) \
+  rkglWindowAddEventGLX( (win), ButtonPressMask | ButtonReleaseMask | PointerMotionMask | ButtonMotionMask )
 
 /* default callback functions */
 
 void rkglReshapeGLX(rkglCamera *cam, int w, int h, double vvwidth, double vvnear, double vvfar);
-int rkglKeyFuncGLX(rkglCamera *cam, KeySym key, int x, int y, double dl, double da);
-void rkglMouseFuncGLX(rkglCamera *cam, int button, int state, int x, int y);
-int rkglMouseDragFuncGLX(rkglCamera *cam, int x, int y);
+int rkglKeyFuncGLX(rkglCamera *cam, double dl, double da);
+void rkglMouseFuncGLX(rkglCamera *cam, int event, double dl);
+void rkglMouseDragFuncGLX(rkglCamera *cam);
 
 __END_DECLS
 

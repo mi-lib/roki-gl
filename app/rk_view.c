@@ -83,7 +83,7 @@ void rk_viewDraw(void)
 
 void rk_viewDisplay(void)
 {
-  rkglActivateGLX( win );
+  rkglWindowActivateGLX( win );
   if( opt[OPT_SHADOW].flag ){
     /* shadow-map rendering */
     rkglShadowDraw( &shadow, &cam, &light, rk_viewDraw );
@@ -92,9 +92,9 @@ void rk_viewDisplay(void)
     rkglClear();
     rkglCALoad( &cam );
     rkglLightPut( &light );
-      rk_viewDraw();
+    rk_viewDraw();
   }
-  rkglSwapBuffersGLX( win );
+  rkglWindowSwapBuffersGLX( win );
   rkglFlushGLX();
 }
 
@@ -104,8 +104,8 @@ void rk_viewInit(void)
   zMShape3D ms;
 
   win = rkglWindowCreateGLX( NULL, 0, 0, atoi(opt[OPT_WIDTH].arg), atoi(opt[OPT_HEIGHT].arg), RK_VIEW_TITLE );
-  rkglKeyEnableGLX( win );
-  rkglMouseEnableGLX( win );
+  rkglWindowKeyEnableGLX( win );
+  rkglWindowMouseEnableGLX( win );
   rkglWindowOpenGLX( win );
 
   zRGBDec( &rgb, opt[OPT_BG].arg );
@@ -161,7 +161,7 @@ bool rk_viewCommandArgs(int argc, char *argv[])
 void rk_viewExit(void)
 {
   rkglWindowCloseGLX( win );
-  rkglCloseGLX();
+  rkglExitGLX();
 }
 
 /**********************************************************/
@@ -175,67 +175,6 @@ void rk_viewReshape(void)
   rkglVPCreate( &cam, 0, 0, reg.width, reg.height );
   y = x / rkglVPAspect(&cam);
   rkglFrustum( &cam, -x, x, -y, y, 1, 20 );
-}
-
-enum{ RK_VIEW_CAM_ROT, RK_VIEW_CAM_PAN, RK_VIEW_CAM_ZOOM };
-
-static int mouse_button = -1;
-static int mousex, mousey;
-static byte cammode = RK_VIEW_CAM_ROT;
-
-void rk_viewStoreMouseInfo(byte mode)
-{
-  mouse_button = zxMouseButton;
-  mousex = zxMouseX;
-  mousey = zxMouseY;
-  cammode = mode;
-}
-
-void rk_viewMousePress(void)
-{
-  switch( zxMouseButton ){
-  case Button1: rk_viewStoreMouseInfo( RK_VIEW_CAM_ROT );  break;
-  case Button3: rk_viewStoreMouseInfo( RK_VIEW_CAM_PAN );  break;
-  case Button2: rk_viewStoreMouseInfo( RK_VIEW_CAM_ZOOM ); break;
-  case Button4: rkglCARelMove( &cam,-0.1, 0, 0 );          break;
-  case Button5: rkglCARelMove( &cam, 0.1, 0, 0 );          break;
-  default: ;
-  }
-}
-
-void rk_viewMouseRelease(void)
-{
-  mouse_button = -1;
-}
-
-void rk_viewMouseDrag(void)
-{
-  double dx, dy, r;
-
-  if( mouse_button == -1 ) return;
-  dx = (double)( zxMouseX - mousex ) / cam.vp[3];
-  dy =-(double)( zxMouseY - mousey ) / cam.vp[2];
-  switch( cammode ){
-  case RK_VIEW_CAM_ROT:
-    r = 180 * sqrt( dx*dx + dy*dy );
-    zxModkeyCtrlIsOn() ?
-      rkglCARotate( &cam, r, -dy, dx, 0 ) :
-      rkglCALockonRotate( &cam, r, -dy, dx, 0 );
-    break;
-  case RK_VIEW_CAM_PAN:
-    zxModkeyCtrlIsOn() ?
-      rkglCAMove( &cam, 0, dx, dy ) :
-      rkglCARelMove( &cam, 0, dx, dy );
-    break;
-  case RK_VIEW_CAM_ZOOM:
-    zxModkeyCtrlIsOn() ?
-      rkglCAMove( &cam, -dy, 0, 0 ) :
-      rkglCARelMove( &cam, -2*dy, 0, 0 );
-    break;
-  default: ;
-  }
-  mousex = zxMouseX;
-  mousey = zxMouseY;
 }
 
 int rk_viewKeyPress(void)
@@ -267,12 +206,14 @@ int rk_viewKeyPress(void)
 
 int rk_viewEvent(void)
 {
-  switch( zxDequeueEvent() ){
+  int event;
+
+  switch( ( event = zxDequeueEvent() ) ){
   case Expose:
   case ConfigureNotify: rk_viewReshape();             break;
-  case ButtonPress:     rk_viewMousePress();          break;
-  case MotionNotify:    rk_viewMouseDrag();           break;
-  case ButtonRelease:   rk_viewMouseRelease();        break;
+  case ButtonPress:
+  case ButtonRelease:   rkglMouseFuncGLX( &cam, event, 1.0 ); break;
+  case MotionNotify:    rkglMouseDragFuncGLX( &cam ); break;
   case KeyPress:        if( rk_viewKeyPress() >= 0 )  break; return -1;
   case KeyRelease:      zxModkeyOff( zxKeySymbol() ); break;
   default: ;

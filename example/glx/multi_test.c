@@ -1,7 +1,6 @@
 #include <zx11/zxwidget.h>
-#include <roki-gl/rkgl_glx.h>
-#include <roki-gl/rkgl_camera.h>
 #include <roki-gl/rkgl_shape.h>
+#include <roki-gl/rkgl_glx.h>
 
 Window glwin[2];
 rkglCamera cam[2];
@@ -98,14 +97,14 @@ void resize(zxWindow *win)
 
 GLvoid draw(Window win, rkglCamera *cam, rkglLight *light)
 {
-  rkglActivateGLX( win );
+  rkglWindowActivateGLX( win );
   rkglClear();
   rkglCALoad( cam );
   rkglLightPut( light );
   glPushMatrix();
     glCallList( obj );
   glPopMatrix();
-  rkglSwapBuffersGLX( win );
+  rkglWindowSwapBuffersGLX( win );
   rkglFlushGLX();
 }
 
@@ -118,7 +117,7 @@ GLvoid mainloop(zxWindow *win)
     case KeyPress:
       switch( zxKeySymbol() ){
       case XK_q:
-        rkglCloseGLX();
+        rkglExitGLX();
         exit( 0 );
       }
       break;
@@ -144,9 +143,8 @@ int main(int argc, char **argv)
 
   rkglInitGLX();
   zxWindowCreate( &mainwin, 0, 0, WIDTH, HEIGHT );
-  zxWindowSetBG( &mainwin, "lightgray" );
-  zxWindowClear( &mainwin );
-  zxKeyEnable( &mainwin );
+  zxWindowSetBGColorByName( &mainwin, "lightgray" );
+  zxWindowKeyEnable( &mainwin );
   zxWindowSetTitle( &mainwin, "glx test" );
   zxWindowOpen( &mainwin );
 

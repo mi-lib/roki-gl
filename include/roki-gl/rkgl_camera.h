@@ -74,6 +74,23 @@ void rkglCARelMove(rkglCamera *c, double x, double y, double z);
 
 void rkglCALookAt(rkglCamera *c, GLdouble eyex, GLdouble eyey, GLdouble eyez, GLdouble centerx, GLdouble centery, GLdouble centerz, GLdouble upx, GLdouble upy, GLdouble upz);
 
+void rkglCARelMoveLeft(rkglCamera *cam, double d);
+void rkglCARelMoveRight(rkglCamera *cam, double d);
+void rkglCARelMoveUp(rkglCamera *cam, double d);
+void rkglCARelMoveDown(rkglCamera *cam, double d);
+void rkglCAZoomIn(rkglCamera *cam, double d);
+void rkglCAZoomOut(rkglCamera *cam, double d);
+
+void rkglCATiltUp(rkglCamera *cam, double angle);
+void rkglCATiltDown(rkglCamera *cam, double angle);
+void rkglCAPanLeft(rkglCamera *cam, double angle);
+void rkglCAPanRight(rkglCamera *cam, double angle);
+
+void rkglCAAngleUp(rkglCamera *cam, double angle);
+void rkglCAAngleDown(rkglCamera *cam, double angle);
+void rkglCARoundLeft(rkglCamera *cam, double angle);
+void rkglCARoundRight(rkglCamera *cam, double angle);
+
 /*
 void rkglCameraFRead(FILE *fp, rkglCamera *cam);
 */

@@ -31,17 +31,17 @@ static rkglCamera *_glut_cam;
 static double _glut_vv_width;
 static double _glut_vv_near;
 static double _glut_vv_far;
-static double _glut_dl_key;
-static double _glut_da_key;
+static double _glut_dl;
+static double _glut_da;
 
-void rkglSetCallbackParamGLUT(rkglCamera *c, double vv_width, double vv_near, double vv_far, double dl_key, double da_key)
+void rkglSetCallbackParamGLUT(rkglCamera *c, double vv_width, double vv_near, double vv_far, double dl, double da)
 {
   _glut_cam = c;
   _glut_vv_width = vv_width;
   _glut_vv_near = vv_near;
   _glut_vv_far = vv_far;
-  _glut_dl_key = dl_key;
-  _glut_da_key = da_key;
+  _glut_dl = dl;
+  _glut_da = da;
 }
 
 void rkglReshapeFuncGLUT(int w, int h)
@@ -62,16 +62,12 @@ void rkglIdleFuncGLUT(void)
 void rkglKeyFuncGLUT(unsigned char key, int x, int y)
 {
   switch( key ){
-  case 'h': rkglCARelMove( _glut_cam, 0,-_glut_dl_key, 0 ); break;
-  case 'l': rkglCARelMove( _glut_cam, 0, _glut_dl_key, 0 ); break;
-  case 'k': rkglCARelMove( _glut_cam, 0, 0, _glut_dl_key ); break;
-  case 'j': rkglCARelMove( _glut_cam, 0, 0,-_glut_dl_key ); break;
-  case 'z': rkglCARelMove( _glut_cam,-_glut_dl_key, 0, 0 ); break;
-  case 'Z': rkglCARelMove( _glut_cam, _glut_dl_key, 0, 0 ); break;
-  case 'h'-0x60: rkglCAMove( _glut_cam, 0,-_glut_dl_key, 0 ); break;
-  case 'l'-0x60: rkglCAMove( _glut_cam, 0, _glut_dl_key, 0 ); break;
-  case 'k'-0x60: rkglCAMove( _glut_cam, 0, 0, _glut_dl_key ); break;
-  case 'j'-0x60: rkglCAMove( _glut_cam, 0, 0,-_glut_dl_key ); break;
+  case 'h': rkglCARelMoveLeft(  _glut_cam, _glut_dl ); break;
+  case 'l': rkglCARelMoveRight( _glut_cam, _glut_dl ); break;
+  case 'k': rkglCARelMoveUp(    _glut_cam, _glut_dl ); break;
+  case 'j': rkglCARelMoveDown(  _glut_cam, _glut_dl ); break;
+  case 'z': rkglCAZoomIn(       _glut_cam, _glut_dl ); break;
+  case 'Z': rkglCAZoomOut(      _glut_cam, _glut_dl ); break;
   case 'q': case 'Q': case '\033':
     raise( SIGTERM );
     exit( EXIT_SUCCESS );
@@ -86,69 +82,37 @@ void rkglSpecialFuncGLUT(int key, int x, int y)
 
   c = glutGetModifiers() & GLUT_ACTIVE_CTRL;
   switch( key ){
-  case GLUT_KEY_UP:
-    c ? rkglCALockonPTR( _glut_cam, 0,-_glut_da_key, 0 ) :
-        rkglCAPTR( _glut_cam, 0, _glut_da_key, 0 );
-    break;
-  case GLUT_KEY_DOWN:
-    c ? rkglCALockonPTR( _glut_cam, 0, _glut_da_key, 0 ) :
-        rkglCAPTR( _glut_cam, 0,-_glut_da_key, 0 );
-    break;
-  case GLUT_KEY_LEFT:
-    c ? rkglCALockonPTR( _glut_cam,-_glut_da_key, 0, 0 ) :
-        rkglCAPTR( _glut_cam, _glut_da_key, 0, 0 );
-    break;
-  case GLUT_KEY_RIGHT:
-    c ? rkglCALockonPTR( _glut_cam, _glut_da_key, 0, 0 ) :
-        rkglCAPTR( _glut_cam,-_glut_da_key, 0, 0 );
-    break;
+  case GLUT_KEY_UP:    rkglKeyCARotateUp(   _glut_cam, _glut_da, c ); break;
+  case GLUT_KEY_DOWN:  rkglKeyCARotateDown( _glut_cam, _glut_da, c ); break;
+  case GLUT_KEY_LEFT:  rkglKeyCARotateLeft(  _glut_cam, _glut_da, c ); break;
+  case GLUT_KEY_RIGHT: rkglKeyCARotateRight( _glut_cam, _glut_da, c ); break;
   default: ;
   }
   glutPostRedisplay();
 }
 
-static int _glut_mouse_button, _glut_mouse_x, _glut_mouse_y;
-static int _glut_key_mod;
-
-void rkglSaveInputStatusGLUT(int button, int state, int x, int y)
+void rkglMouseFuncGLUT(int button, int event, int x, int y)
 {
-  _glut_mouse_button = state == GLUT_DOWN ? button : -1;
-  _glut_mouse_x = x;
-  _glut_mouse_y = y;
-  _glut_key_mod = glutGetModifiers();
-}
-
-void rkglMouseFuncGLUT(int button, int state, int x, int y)
-{
-  rkglSaveInputStatusGLUT( button, state, x, y );
+  rkglMouseStoreInput( button, event, GLUT_DOWN, x, y, glutGetModifiers() );
+  switch( rkgl_mouse_button ){
+  case GLUT_WHEEL_UP:   rkglCAZoomOut( _glut_cam, _glut_dl ); break;
+  case GLUT_WHEEL_DOWN: rkglCAZoomIn(  _glut_cam, _glut_dl ); break;
+  default: ;
+  }
 }
 
 void rkglMouseDragFuncGLUT(int x, int y)
 {
-  int c;
-  double dx, dy, r;
+  double dx, dy;
 
-  dx = (double)( x - _glut_mouse_x ) / _glut_cam->vp[3];
-  dy =-(double)( y - _glut_mouse_y ) / _glut_cam->vp[2];
-  c = _glut_key_mod & GLUT_ACTIVE_CTRL;
-  switch( _glut_mouse_button ){
-  case GLUT_LEFT_BUTTON:
-    r = 180 * sqrt( dx*dx + dy*dy );
-    c ? rkglCALockonRotate( _glut_cam, r, -dy, dx, 0 ) :
-        rkglCARotate( _glut_cam, r, -dy, dx, 0 );
-    break;
-  case GLUT_RIGHT_BUTTON:
-    c ? rkglCARelMove( _glut_cam, 0, dx, dy ) :
-        rkglCAMove( _glut_cam, 0, dx, dy );
-    break;
-  case GLUT_MIDDLE_BUTTON:
-    c ? rkglCARelMove( _glut_cam, -dy, 0, 0 ) :
-        rkglCAMove( _glut_cam, -dy, 0, 0 );
-    break;
+  rkglMouseDragGetIncrementer( _glut_cam, x, y, &dx, &dy );
+  switch( rkgl_mouse_button ){
+  case GLUT_LEFT_BUTTON:   rkglMouseDragCARotate(    _glut_cam, dx, dy, GLUT_ACTIVE_CTRL ); break;
+  case GLUT_RIGHT_BUTTON:  rkglMouseDragCATranslate( _glut_cam, dx, dy, GLUT_ACTIVE_CTRL ); break;
+  case GLUT_MIDDLE_BUTTON: rkglMouseDragCAZoom(      _glut_cam, dx, dy, GLUT_ACTIVE_CTRL ); break;
   default: ;
   }
-  _glut_mouse_x = x;
-  _glut_mouse_y = y;
+  rkglMouseStoreXY( x, y );
   glutPostRedisplay();
 }
 

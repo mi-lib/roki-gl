@@ -10,7 +10,7 @@ LD=gcc
 LDFLAGS=-shared
 SIGNUP=echo "RoKi-GL ver."$(VERSION)" Copyright (C) 2000 Tomomichi Sugihara (Zhidao)" >>
 
-OBJ=rkgl_misc.o rkgl_camera.o\
+OBJ=rkgl_misc.o rkgl_camera.o rkgl_input.o\
 	rkgl_optic.o\
 	rkgl_shape.o rkgl_chain.o\
 	rkgl_shadow.o\

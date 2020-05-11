@@ -204,3 +204,20 @@ void rkglCALookAt(rkglCamera *c, GLdouble eyex, GLdouble eyey, GLdouble eyez, GL
   gluLookAt( eyex, eyey, eyez, centerx, centery, centerz, upx, upy, upz );
   rkglCAGet( c );
 }
+
+void rkglCARelMoveLeft(rkglCamera *cam, double d){  rkglCARelMove( cam, 0,-d, 0 ); }
+void rkglCARelMoveRight(rkglCamera *cam, double d){ rkglCARelMove( cam, 0, d, 0 ); }
+void rkglCARelMoveUp(rkglCamera *cam, double d){    rkglCARelMove( cam, 0, 0, d ); }
+void rkglCARelMoveDown(rkglCamera *cam, double d){  rkglCARelMove( cam, 0, 0,-d ); }
+void rkglCAZoomIn(rkglCamera *cam, double d){       rkglCARelMove( cam,-d, 0, 0 ); }
+void rkglCAZoomOut(rkglCamera *cam, double d){      rkglCARelMove( cam, d, 0, 0 ); }
+
+void rkglCATiltUp(rkglCamera *cam, double angle){   rkglCARotate( cam, angle,-1, 0, 0 ); }
+void rkglCATiltDown(rkglCamera *cam, double angle){ rkglCARotate( cam, angle, 1, 0, 0 ); }
+void rkglCAPanLeft(rkglCamera *cam, double angle){  rkglCARotate( cam, angle, 0,-1, 0 ); }
+void rkglCAPanRight(rkglCamera *cam, double angle){ rkglCARotate( cam, angle, 0, 1, 0 ); }
+
+void rkglCAAngleUp(rkglCamera *cam, double angle){    rkglCALockonRotate( cam, angle, 1, 0, 0 ); }
+void rkglCAAngleDown(rkglCamera *cam, double angle){  rkglCALockonRotate( cam, angle,-1, 0, 0 ); }
+void rkglCARoundLeft(rkglCamera *cam, double angle){  rkglCALockonRotate( cam, angle, 0, 1, 0 ); }
+void rkglCARoundRight(rkglCamera *cam, double angle){ rkglCALockonRotate( cam, angle, 0,-1, 0 ); }

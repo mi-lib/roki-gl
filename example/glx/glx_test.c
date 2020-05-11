@@ -1,4 +1,3 @@
-#include <roki-gl/rkgl_camera.h>
 #include <roki-gl/rkgl_shape.h>
 #include <roki-gl/rkgl_glx.h>
 
@@ -45,8 +44,6 @@ GLvoid init(GLsizei width, GLsizei height)
   enter();
 
   rkglBGSet( &cam, 0.1, 0.1, 0.1 );
-  rkglVPCreate( &cam, 0, 0, width, height );
-  rkglFrustumScale( &cam, 1.0/640, 1, 20 );
   rkglCALookAt( &cam, 5,-3, 3, 0, 0, 0, 0, 0, 1 );
 
   glEnable( GL_LIGHTING );
@@ -55,7 +52,7 @@ GLvoid init(GLsizei width, GLsizei height)
 
 GLvoid draw(Window win)
 {
-  rkglActivateGLX( win );
+  rkglWindowActivateGLX( win );
   rkglClear();
   rkglCALoad( &cam );
   rkglLightSetPos( &light,
@@ -63,28 +60,43 @@ GLvoid draw(Window win)
   glPushMatrix();
   glCallList( obj );
   glPopMatrix();
-  rkglSwapBuffersGLX( win );
+  rkglWindowSwapBuffersGLX( win );
   rkglFlushGLX();
 }
 
 GLvoid mainloop(Window win)
 {
+  int event;
+  zxRegion reg;
+  int count = 0;
+
   while( 1 ){
-    switch( zxGetEvent() ){
-    case KeyPress:
-      switch( zxKeySymbol() ){
-      case XK_q:
-        rkglCloseGLX();
-        exit( 0 );
-      }
+    switch( ( event = zxGetEvent() ) ){
+    case ButtonPress:
+    case ButtonRelease:
+      rkglMouseFuncGLX( &cam, event, 1.0 );
       break;
+    case MotionNotify:
+      rkglMouseDragFuncGLX( &cam );
+      break;
+    case KeyPress:
+      if( rkglKeyFuncGLX( &cam, 1.0, 5.0 ) < 0 )
+        return;
+      break;
+    case KeyRelease:
+      zxModkeyOff( zxKeySymbol() );
+      break;
+    case Expose:
     case ConfigureNotify:
-      /* NOTE: this careless resize is only valid in single window programs. */
-      rkglVPCreate( &cam, 0, 0, zxevent.xconfigure.width, zxevent.xconfigure.height );
+      zxGetGeometry( win, &reg );
+      rkglReshapeGLX( &cam, reg.width, reg.height, 2.0, 2, 20 );
       break;
     default: ;
     }
-    draw( win );
+    if( ++count > 5 ){
+      draw( win );
+      count = 0;
+    }
   }
 }
 
@@ -97,10 +109,13 @@ int main(int argc, char **argv)
 
   rkglInitGLX();
   win = rkglWindowCreateGLX( NULL, 0, 0, WIDTH,  HEIGHT, "glx test" );
-  rkglWindowAddEventGLX( win, KeyPressMask | KeyReleaseMask );
+  rkglWindowKeyEnableGLX( win );
+  rkglWindowMouseEnableGLX( win );
   rkglWindowOpenGLX( win );
 
   init( WIDTH, HEIGHT );
   mainloop( win );
+  rkglWindowCloseGLX( win );
+  rkglExitGLX();
   return 0;
 }
