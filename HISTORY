@@ -1,3 +1,5 @@
+2020. 5.13. Added rkgl_texture. [rkgl_texture]
+2020. 5.13. Modified rkglMouseFuncGLUT and rkglMouseFuncGLX to revert the zooming direction with respect to the wheel action. [rkgl_glut, rkgl_glx]
 2020. 5.11. Modified rk_view, rk_anim and rk_seq using the new implementation of GLX event functions. [app]
 2020. 5.11. Added rkglCATiltUp, rkglCATiltDown, rkglCAPanLeft, rkglCAPanRight, rkglCAAngleUp, rkglCAAngleDown, rkglCARoundLeft and rkglCARoundRight. [rkgl_camera]
 2020. 5.11. Added rkglCARelMoveLeft, rkglCARelMoveRight, rkglCARelMoveUp, rkglCARelMoveDown, rkglCAZoomIn and rkglCAZoomOut. [rkgl_camera]

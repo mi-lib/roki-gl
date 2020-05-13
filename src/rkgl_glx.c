@@ -124,7 +124,7 @@ int rkglKeyFuncGLX(rkglCamera *cam, double dl, double da)
   case XK_k:     rkglCARelMoveUp(    cam, dl ); break;
   case XK_j:     rkglCARelMoveDown(  cam, dl ); break;
   case XK_z: zxModkeyShiftIsOn() ?
-                 rkglCAZoomIn( cam, dl ) : rkglCAZoomOut( cam, dl );  break;
+                 rkglCAZoomOut( cam, dl ) : rkglCAZoomIn( cam, dl );  break;
   case XK_Up:    rkglKeyCARotateUp(    cam, da, zxModkeyCtrlIsOn() ); break;
   case XK_Down:  rkglKeyCARotateDown(  cam, da, zxModkeyCtrlIsOn() ); break;
   case XK_Left:  rkglKeyCARotateLeft(  cam, da, zxModkeyCtrlIsOn() ); break;
@@ -142,8 +142,8 @@ void rkglMouseFuncGLX(rkglCamera *cam, int event, double dl)
 {
   rkglMouseStoreInput( zxMouseButton, event, ButtonPress, zxMouseX, zxMouseY, zxModkey() );
   switch( rkgl_mouse_button ){
-  case Button4: rkglCAZoomOut( cam, dl ); break;
-  case Button5: rkglCAZoomIn(  cam, dl ); break;
+  case Button4: rkglCAZoomIn( cam, dl ); break;
+  case Button5: rkglCAZoomOut(  cam, dl ); break;
   default: ;
   }
 }

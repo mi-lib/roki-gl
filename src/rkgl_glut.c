@@ -95,8 +95,8 @@ void rkglMouseFuncGLUT(int button, int event, int x, int y)
 {
   rkglMouseStoreInput( button, event, GLUT_DOWN, x, y, glutGetModifiers() );
   switch( rkgl_mouse_button ){
-  case GLUT_WHEEL_UP:   rkglCAZoomOut( _glut_cam, _glut_dl ); break;
-  case GLUT_WHEEL_DOWN: rkglCAZoomIn(  _glut_cam, _glut_dl ); break;
+  case GLUT_WHEEL_UP:   rkglCAZoomIn( _glut_cam, _glut_dl ); break;
+  case GLUT_WHEEL_DOWN: rkglCAZoomOut(  _glut_cam, _glut_dl ); break;
   default: ;
   }
 }
