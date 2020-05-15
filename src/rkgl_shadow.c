@@ -31,8 +31,7 @@ void rkglShadowInit(rkglShadow *shadow, int width, int height, double radius, do
 
   glGenTextures( 1, &shadow->tex );
   glBindTexture( GL_TEXTURE_2D, shadow->tex );
-  glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
-    width, height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0 );
+  glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0 );
 
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
@@ -59,12 +58,10 @@ void rkglShadowInit(rkglShadow *shadow, int width, int height, double radius, do
   /* initialize framebuffer */
   glGenFramebuffersEXT( 1, &shadow->fb );
   glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, shadow->fb );
-  glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,
-    GL_TEXTURE_2D, shadow->tex, 0 );
+  glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, shadow->tex, 0 );
   glDrawBuffer( GL_NONE );
   glReadBuffer( GL_NONE );
-  if( glCheckFramebufferStatusEXT( GL_FRAMEBUFFER_EXT )
-      != GL_FRAMEBUFFER_COMPLETE_EXT )
+  if( glCheckFramebufferStatusEXT( GL_FRAMEBUFFER_EXT ) != GL_FRAMEBUFFER_COMPLETE_EXT )
     ZRUNWARN( "the current framebuffer status is unsupported");
   glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, 0 );
 
@@ -89,8 +86,7 @@ void rkglShadowSetLight(rkglShadow *shadow, rkglLight *light)
     upx = 0.0;
     upz = 1.0;
   }
-  gluLookAt( light->pos[0], light->pos[1], light->pos[2],
-    0.0, 0.0, 0.0, upx, 0.0, upz );
+  gluLookAt( light->pos[0], light->pos[1], light->pos[2], 0.0, 0.0, 0.0, upx, 0.0, upz );
   glGetDoublev( GL_MODELVIEW_MATRIX, shadow->_lightview );
 }
 
