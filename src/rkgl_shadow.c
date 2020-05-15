@@ -7,12 +7,6 @@
 #define GL_GLEXT_PROTOTYPES
 #include <roki-gl/rkgl_shadow.h>
 
-static void _rkglShadowMap(rkglShadow *shadow, rkglCamera *cam, rkglLight *light, void (* scene)(void));
-static void _rkglShadowPut(rkglShadow *shadow, rkglCamera *cam, rkglLight *light, void (* scene)(void));
-static void _rkglShadowSunnyside(rkglShadow *shadow, rkglCamera* cam, rkglLight *light, void (* scene)(void));
-static void _rkglShadowEnable(void);
-static void _rkglShadowDisable(void);
-
 void rkglShadowInit(rkglShadow *shadow, int width, int height, double radius, double ratio)
 {
   const GLdouble genfunc[][4] = {
@@ -90,7 +84,7 @@ void rkglShadowSetLight(rkglShadow *shadow, rkglLight *light)
   glGetDoublev( GL_MODELVIEW_MATRIX, shadow->_lightview );
 }
 
-void _rkglShadowMap(rkglShadow *shadow, rkglCamera *cam, rkglLight *light, void (* scene)(void))
+static void _rkglShadowMap(rkglShadow *shadow, rkglCamera *cam, rkglLight *light, void (* scene)(void))
 {
   glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, shadow->fb );
 
@@ -124,7 +118,7 @@ void _rkglShadowMap(rkglShadow *shadow, rkglCamera *cam, rkglLight *light, void 
   glCullFace( GL_BACK );
 }
 
-void _rkglShadowPut(rkglShadow *shadow, rkglCamera *cam, rkglLight *light, void (* scene)(void))
+static void _rkglShadowPut(rkglShadow *shadow, rkglCamera *cam, rkglLight *light, void (* scene)(void))
 {
   GLfloat dim[4], blk[4];
 
@@ -146,7 +140,7 @@ void _rkglShadowPut(rkglShadow *shadow, rkglCamera *cam, rkglLight *light, void 
   scene();
 }
 
-void _rkglShadowEnable(void)
+static void _rkglShadowEnable(void)
 {
   glEnable( GL_TEXTURE_2D );
   glEnable( GL_TEXTURE_GEN_S );
@@ -158,7 +152,7 @@ void _rkglShadowEnable(void)
   glDepthFunc( GL_LEQUAL );
 }
 
-void _rkglShadowDisable(void)
+static void _rkglShadowDisable(void)
 {
   glDepthFunc( GL_LESS );
   glDisable( GL_ALPHA_TEST );
@@ -169,7 +163,7 @@ void _rkglShadowDisable(void)
   glDisable( GL_TEXTURE_2D );
 }
 
-void _rkglShadowSunnyside(rkglShadow *shadow, rkglCamera* cam, rkglLight *light, void (* scene)(void))
+static void _rkglShadowSunnyside(rkglShadow *shadow, rkglCamera* cam, rkglLight *light, void (* scene)(void))
 {
   glMatrixMode( GL_TEXTURE );
   glLoadIdentity();

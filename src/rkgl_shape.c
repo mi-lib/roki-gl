@@ -510,7 +510,7 @@ void rkglShape(zShape3D *s, zOpticalInfo *oi_alt, int disptype)
   };
   register int i;
 
-  if( zShape3DTexture(s) && disptype == RKGL_FACE && strcmp( s->com->typestr, "polyhedron" ) == 0 ){
+  if( zShape3DTexture(s) && zShape3DTexture(s)->id != 0 && disptype == RKGL_FACE && strcmp( s->com->typestr, "polyhedron" ) == 0 ){
     rkglPHTexture( (zPH3D*)s->body, zShape3DOptic(s), zShape3DTexture(s) );
     return;
   }

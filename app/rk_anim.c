@@ -475,6 +475,7 @@ void rkAnimInit(void)
   rkglLightSetPos( &light,
     atof(opt[OPT_LX].arg), atof(opt[OPT_LY].arg), atof(opt[OPT_LZ].arg) );
   rkglShadowInit( &shadow, atoi(opt[OPT_SHADOW_SIZE].arg), atoi(opt[OPT_SHADOW_SIZE].arg), atof(opt[OPT_SHADOW_AREA].arg), 0.2 );
+  rkglTextureEnable();
 
   if( opt[OPT_ENVFILE].flag ) rkAnimLoadEnv();
   if( opt[OPT_SMOOTH].flag ) glEnable( GL_LINE_SMOOTH );

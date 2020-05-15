@@ -383,6 +383,7 @@ void rk_penInit(void)
   rkglLightSetPos( &light,
     atof(opt[OPT_LX].arg), atof(opt[OPT_LY].arg), atof(opt[OPT_LZ].arg) );
   rkglShadowInit( &shadow, 1024, 1024, 2, 0.2 );
+  rkglTextureEnable();
 
   rkglChainAttrInit( &attr );
   if( opt[OPT_WIREFRAME].flag ) attr.disptype = RKGL_WIREFRAME;

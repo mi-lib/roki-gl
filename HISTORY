@@ -1,3 +1,5 @@
+2020. 5.15. Enabled texture mapping in rk_view, rk_anim, rk_seq and rk_pen. [app]
+2020. 5.15. Added rkglTextureEnable. [rkgl_texture]
 2020. 5.15. Modified rkglShadowInit. [rkgl_shadow]
 2020. 5.15. Added rkglTriTexture and rkglPHTexture, and modified rkglShape. [rkgl_shape]
 2020. 5.15. Abolished rkglTexture and reimplemented texture mapping using zTexture class. [rkgl_texture]

@@ -192,6 +192,7 @@ void rk_seqInit(void)
   rkglLightSetPos( &light,
     atof(opt[OPT_LX].arg), atof(opt[OPT_LY].arg), atof(opt[OPT_LZ].arg) );
   rkglShadowInit( &shadow, atoi(opt[OPT_SHADOW_SIZE].arg), atoi(opt[OPT_SHADOW_SIZE].arg), atof(opt[OPT_SHADOW_AREA].arg), 0.2 );
+  rkglTextureEnable();
 
   rkglChainAttrInit( &attr );
   if( !rkChainReadZTK( &chain, opt[OPT_MODELFILE].arg ) ||

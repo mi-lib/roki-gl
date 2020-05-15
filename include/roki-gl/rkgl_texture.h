@@ -16,6 +16,8 @@ __BEGIN_DECLS
 /*! \brief read an image file and make a texture data. */
 bool rkglTextureReadFile(zTexture *texture, char *filename);
 
+#define rkglTextureEnable() zTextureSetReadFunc( rkglTextureReadFile )
+
 #define rkglCoord(coord)      glTexCoord2d( (coord)->c.x, (coord)->c.y )
 
 #define rkglTextureCoord(t,i) rkglCoord( zTextureCoord(t,i) )
