@@ -75,6 +75,16 @@ void rkglTri(zTri3D *t)
   glEnd();
 }
 
+void rkglTriTexture(zTri3D *t, zTri2D *f)
+{
+  glBegin( GL_TRIANGLES );
+    rkglNormal( zTri3DNorm(t) );
+    rkglCoord( zTri2DVert(f,0) ); rkglVertex( zTri3DVert(t,0) );
+    rkglCoord( zTri2DVert(f,1) ); rkglVertex( zTri3DVert(t,1) );
+    rkglCoord( zTri2DVert(f,2) ); rkglVertex( zTri3DVert(t,2) );
+  glEnd();
+}
+
 void rkglPolygon(zVec3D v[], int n, ...)
 {
   zVec3D v0, v1, v2, norm;
@@ -462,6 +472,26 @@ void rkglPH(zPH3D *ph, int disptype)
 }
 static void _rkglPH(void *ph, int disptype){ rkglPH( ph, disptype ); }
 
+void rkglPHTexture(zPH3D *ph, zOpticalInfo *oi, zTexture *texture)
+{
+  GLfloat white[] = { 1.0, 1.0, 1.0, 1.0 };
+  register int i;
+
+  glBindTexture( GL_TEXTURE_2D, texture->id );
+  glEnable( GL_POLYGON_OFFSET_FILL );
+  glPolygonOffset( -1.1, 4.0 ); /* magic numbers to prevent z-fighting */
+  glEnable( GL_TEXTURE_2D );
+  if( oi )
+    rkglMaterial( oi );
+  else
+    glMaterialfv( GL_FRONT, GL_AMBIENT_AND_DIFFUSE, white );
+  for( i=0; i<zPH3DFaceNum(ph); i++ )
+    rkglTriTexture( zPH3DFace(ph,i), zTextureFace(texture,i) );
+  glDisable( GL_TEXTURE_2D );
+  glDisable( GL_POLYGON_OFFSET_FILL );
+  glBindTexture( GL_TEXTURE_2D, 0 );
+}
+
 void rkglShape(zShape3D *s, zOpticalInfo *oi_alt, int disptype)
 {
   struct{
@@ -480,12 +510,16 @@ void rkglShape(zShape3D *s, zOpticalInfo *oi_alt, int disptype)
   };
   register int i;
 
+  if( zShape3DTexture(s) && disptype == RKGL_FACE && strcmp( s->com->typestr, "polyhedron" ) == 0 ){
+    rkglPHTexture( (zPH3D*)s->body, zShape3DOptic(s), zShape3DTexture(s) );
+    return;
+  }
+
   if( oi_alt ){
     rkglMaterial( oi_alt );
   } else
   if( zShape3DOptic(s) )
     rkglMaterial( zShape3DOptic(s) );
-
   if( disptype == RKGL_BB ){
     zBox3D box;
     zOBB( &box, zShape3DVertBuf(s), zShape3DVertNum(s) );

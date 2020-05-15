@@ -1,26 +1,10 @@
-#include <roki-gl/rkgl_texture.h>
+#include <roki-gl/rkgl_shape.h>
 #include <roki-gl/rkgl_glut.h>
-
-zOpticalInfo red;
-zBox3D box;
 
 rkglCamera cam;
 rkglLight light;
 
-rkglTexture texture1, texture2;
-
-zVec3D vert1[] = {
-  { { 1.0,-2.0,-2.0 } },
-  { { 1.0, 2.0,-2.0 } },
-  { { 1.0, 2.0, 2.0 } },
-  { { 1.0,-2.0, 2.0 } },
-};
-zVec3D vert2[] = {
-  { {-1.0, 2.0,-2.0 } },
-  { {-1.0,-2.0,-2.0 } },
-  { {-1.0,-2.0, 2.0 } },
-  { {-1.0, 2.0, 2.0 } },
-};
+zMShape3D ms;
 
 void display(void)
 {
@@ -28,10 +12,7 @@ void display(void)
   rkglCALoad( &cam );
   rkglLightPut( &light );
   glPushMatrix();
-    rkglMaterial( &red );
-    rkglBox( &box, RKGL_FACE );
-    rkglTextureDraw( &texture1 );
-    rkglTextureDraw( &texture2 );
+  rkglMShape( &ms, RKGL_FACE );
   glPopMatrix();
   glutSwapBuffers();
 }
@@ -47,12 +28,9 @@ void init(void)
   rkglLightCreate( &light, 0, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0, 0 );
   rkglLightSetPos( &light, 10, 3, 10 );
 
-  zOpticalInfoCreate( &red, 0.3, 0.3, 0.3, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.5, 1.0, NULL );
-  zBox3DCreateAlign( &box, ZVEC3DZERO, 2.0, 4.0, 4.0 );
-
-  zxInit();
-  rkglTextureCreate( &texture1, "lena_mini.jpg", vert1 );
-  rkglTextureCreate( &texture2, "lena_flop_mini.jpg", vert2 );
+  /* following calls are mandatory. */
+  zTextureSetReadFunc( rkglTextureReadFile );
+  zMShape3DReadZTK( &ms, "texture_test.ztk" );
 }
 
 int main(int argc, char *argv[])

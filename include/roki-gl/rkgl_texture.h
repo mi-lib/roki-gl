@@ -7,23 +7,18 @@
 #ifndef __RKGL_TEXTURE_H__
 #define __RKGL_TEXTURE_H__
 
-#include <roki-gl/rkgl_shape.h>
+#include <roki-gl/rkgl_misc.h>
+#include <zeo/zeo_texture.h>
 #include <zx11/zximage.h>
 
 __BEGIN_DECLS
 
-typedef struct{
-  uint id;
-  zVec3D *v[4];
-  zVec3D normal;
-  int width;
-  int height;
-  ubyte *buf;
-} rkglTexture;
+/*! \brief read an image file and make a texture data. */
+bool rkglTextureReadFile(zTexture *texture, char *filename);
 
-bool rkglTextureCreate(rkglTexture *texture, char *filename, zVec3D *v);
-void rkglTextureDestroy(rkglTexture *texture);
-void rkglTextureDraw(rkglTexture *texture);
+#define rkglCoord(coord)      glTexCoord2d( (coord)->c.x, (coord)->c.y )
+
+#define rkglTextureCoord(t,i) rkglCoord( zTextureCoord(t,i) )
 
 __END_DECLS
 

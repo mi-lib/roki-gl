@@ -1,0 +1,60 @@
+[optic]
+name: red
+ambient: 0.2, 0.2, 0.2
+diffuse: 1.0, 0.2, 0.2
+specular: 0.0, 0.0, 0.0
+alpha: 1, 1, 1
+exp: 1
+
+[texture]
+name: lena
+file: lena_mini.jpg
+coord: 0 ( 0, 1 )
+coord: 1 ( 1, 1 )
+coord: 2 ( 1, 0 )
+coord: 3 ( 0, 0 )
+face: 0 1 2
+face: 0 2 3
+
+[texture]
+name: lena_flop
+file: lena_flop_mini.jpg
+coord: 0 ( 0, 1 )
+coord: 1 ( 1, 1 )
+coord: 2 ( 1, 0 )
+coord: 3 ( 0, 0 )
+face: 0 1 2
+face: 0 2 3
+
+[shape]
+name: box
+type: box
+optic: red
+ax: 1 0 0
+ay: 0 1 0
+az: 0 0 1
+width: 4.0
+height: 4.0
+depth: 2.0
+
+[shape]
+name: board1
+type: polyhedron
+texture: lena
+vert: 0 ( 1, -2, -2 )
+vert: 1 ( 1,  2, -2 )
+vert: 2 ( 1,  2,  2 )
+vert: 3 ( 1, -2,  2 )
+face: 0 1 2
+face: 0 2 3
+
+[shape]
+name: board2
+type: polyhedron
+texture: lena_flop
+vert: 0 ( -1,  2, -2 )
+vert: 1 ( -1, -2, -2 )
+vert: 2 ( -1, -2,  2 )
+vert: 3 ( -1,  2,  2 )
+face: 0 1 2
+face: 0 2 3
