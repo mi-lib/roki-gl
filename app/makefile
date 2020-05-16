@@ -4,11 +4,11 @@ INCLUDE=-I. -I../include -I$(PREFIX)/include
 LIB=-L../lib -L$(PREFIX)/lib
 BINDIR=$(PREFIX)/bin
 
-CC=gcc
-#CFLAGS=-Wall -O3 $(INCLUDE) $(LIB) -D__USE_GLEW
-CFLAGS=-Wall -O3 $(INCLUDE) $(LIB)
+DEF=`zx11-config -D`
 
-#GLLINK=-lGLEW -lglut -lGLU -lGL
+CC=gcc
+CFLAGS=-Wall -O3 $(INCLUDE) $(LIB) $(DEF)
+
 GLLINK=-lglut -lGLU -lGL
 
 LINK=-lroki-gl $(GLLINK) `zx11-config -l` `liw-config -l` `roki-config -l`
@@ -28,7 +28,7 @@ all: $(TARGET)
 $(CONFIG):
 	@echo " GENERATE" $@
 	-@rm -f $@
-	@$(CONFIGGEN) -I $(PREFIX)/include -L $(PREFIX)/lib -l "$(LINK)" -v $(VERSION) > $@
+	@$(CONFIGGEN) -I $(PREFIX)/include -L $(PREFIX)/lib -D "$(DEF)" -l "$(LINK)" -v $(VERSION) > $@
 
 %: %.c
 	@echo " CC	" $<

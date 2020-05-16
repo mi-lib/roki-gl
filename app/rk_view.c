@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <roki-gl/roki-gl.h>
 #include <roki-gl/rkgl_glx.h>
-#include <zx11/zximage_png.h>
+#include <zx11/zximage.h>
 
 #define RK_VIEW_TITLE "RK-VIEW"
 

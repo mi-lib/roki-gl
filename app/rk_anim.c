@@ -2,7 +2,7 @@
 
 #include <roki-gl/roki-gl.h>
 #include <roki-gl/rkgl_glx.h>
-#include <zx11/zximage_png.h>
+#include <zx11/zximage.h>
 #include <liw/liw_paction.h>
 
 #define RK_ANIM_TITLE "RK-ANIM"
