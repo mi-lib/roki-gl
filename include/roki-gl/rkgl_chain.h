@@ -35,22 +35,22 @@ typedef struct{
   rkglChainAttr attr; /* display attribute */
 } rkglChain;
 
-bool rkglChainLoad(rkglChain *gc, rkChain *c, rkglChainAttr *attr);
+bool rkglChainLoad(rkglChain *gc, rkChain *c, rkglChainAttr *attr, rkglLight *light);
 void rkglChainUnload(rkglChain *gc);
 
 void rkglLinkStick(rkLink *l, rkglChainAttr *attr);
 void rkglLinkCOM(rkLink *l, rkglChainAttr *attr);
 void rkglLinkInertiaEllips(rkLink *l, rkglChainAttr *attr);
-int rkglLinkEntry(rkLink *l, zOpticalInfo *oi_alt, rkglChainAttr *attr);
+int rkglLinkEntry(rkLink *l, zOpticalInfo *oi_alt, rkglChainAttr *attr, rkglLight *light);
 
-void rkglChainLinkAlt(rkglChain *gc, int id, zOpticalInfo *oi_alt, rkglChainAttr *attr);
+void rkglChainLinkAlt(rkglChain *gc, int id, zOpticalInfo *oi_alt, rkglChainAttr *attr, rkglLight *light);
 void rkglChainLinkReset(rkglChain *gc, int id);
 
 void rkglChainLinkDraw(rkglChain *gc, int id);
 void rkglChainDraw(rkglChain *gc);
 void rkglChainNamedDraw(rkglChain *gc, GLuint name);
 
-int rkglChainDrawSeethru(rkglChain *gc, double alpha);
+int rkglChainDrawSeethru(rkglChain *gc, double alpha, rkglLight *light);
 
 void rkglChainCOMDraw(rkglChain *gc, double r);
 

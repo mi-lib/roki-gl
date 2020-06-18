@@ -1,7 +1,7 @@
 /* RoKi-GL - Robot Kinetics library: visualization using OpenGL
  * Copyright (C) 2000 Tomomichi Sugihara (Zhidao)
  *
- * rkgl_texture - texture map
+ * rkgl_texture - texture mapping.
  */
 
 #ifndef __RKGL_TEXTURE_H__
@@ -13,14 +13,29 @@
 
 __BEGIN_DECLS
 
+/* texture units for rendering by multiple textures */
+#define RKGL_TEXTURE_BASE   GL_TEXTURE0
+#define RKGL_TEXTURE_BUMP   GL_TEXTURE1
+#define RKGL_TEXTURE_SHADOW GL_TEXTURE2
+#define RKGL_TEXTURE_COLOR  GL_TEXTURE3
+
+/* color texture mapping */
+
 /*! \brief read an image file and make a texture data. */
 bool rkglTextureReadFile(zTexture *texture, char *filename);
 
-#define rkglTextureEnable() zTextureSetReadFunc( rkglTextureReadFile )
+#define rkglTextureEnable()   zTextureSetReadFunc( rkglTextureReadFile )
 
 #define rkglCoord(coord)      glTexCoord2d( (coord)->c.x, (coord)->c.y )
 
 #define rkglTextureCoord(t,i) rkglCoord( zTextureCoord(t,i) )
+
+/* bump mapping */
+
+/*! \brief read an image file and make a bump map. */
+bool rkglTextureBumpReadFile(zTexture *bump, char *filename);
+
+#define rkglTextureBumpEnable() zTextureSetBumpReadFunc( rkglTextureBumpReadFile )
 
 __END_DECLS
 

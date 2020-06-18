@@ -111,7 +111,7 @@ bool rkAnimCellLoadChain(char chainfile[], rkglChainAttr *attr)
     return false;
   }
   if( !rkChainReadZTK( &cell->data.chain, chainfile ) ||
-      !rkglChainLoad( &cell->data.gc, &cell->data.chain, attr ) ){
+      !rkglChainLoad( &cell->data.gc, &cell->data.chain, attr, &light ) ){
     ZOPENERROR( chainfile );
     zFree( cell );
     return false;
@@ -421,7 +421,7 @@ void rkAnimLoadEnv(void)
     rkAnimUsage();
     exit( 1 );
   }
-  if( !rkglChainLoad( &ge, &chain_env, &attr ) ) exit( 1 );
+  if( !rkglChainLoad( &ge, &chain_env, &attr, &light ) ) exit( 1 );
 
   env = rkglBeginList();
   rkglChainDraw( &ge );

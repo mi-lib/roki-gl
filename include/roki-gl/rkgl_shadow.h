@@ -9,6 +9,7 @@
 
 #include <roki-gl/rkgl_optic.h>
 #include <roki-gl/rkgl_camera.h>
+#include <roki-gl/rkgl_texture.h>
 
 __BEGIN_DECLS
 
@@ -18,7 +19,7 @@ typedef struct{
   double radius; /* radius of bounding sphere */
   bool antizfighting; /* flag to work out anti-Z-fighting */
   /*! @cond */
-  GLuint tex; /* texture name */
+  GLuint texid; /* texture name */
   GLuint fb; /* framebuffer name */
   double _lightview[16];
   /*! @endcond */

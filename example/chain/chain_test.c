@@ -53,7 +53,7 @@ void keyboard(unsigned char key, int x, int y)
       eprintf( ">>> clone!\n" );
       rkChainLinkOrgPos(&chain,0)->e[zY] += 0.5;
       rkChainUpdateFK( &chain );
-      clone_id = rkglChainDrawSeethru( &gr, 0.5 );
+      clone_id = rkglChainDrawSeethru( &gr, 0.5, &light );
       rkChainLinkOrgPos(&chain,0)->e[zY] -= 0.5;
       rkChainUpdateFK( &chain );
     }
@@ -70,7 +70,7 @@ void keyboard(unsigned char key, int x, int y)
     break;
   case 'r':
     gr.attr.disptype = RKGL_FACE;
-    rkglChainLinkAlt( &gr, 3, &oi_alt, &gr.attr );
+    rkglChainLinkAlt( &gr, 3, &oi_alt, &gr.attr, &light );
     break;
   case 'R':
     rkglChainLinkReset( &gr, 3 );
@@ -78,17 +78,17 @@ void keyboard(unsigned char key, int x, int y)
   case 'b':
     gr.attr.disptype = RKGL_BB;
     rkglChainUnload( &gr );
-    rkglChainLoad( &gr, &chain, &gr.attr );
+    rkglChainLoad( &gr, &chain, &gr.attr, &light );
     break;
   case 's':
     gr.attr.disptype = RKGL_STICK;
     rkglChainUnload( &gr );
-    rkglChainLoad( &gr, &chain, &gr.attr );
+    rkglChainLoad( &gr, &chain, &gr.attr, &light );
     break;
   case 'f':
     gr.attr.disptype = RKGL_FACE;
     rkglChainUnload( &gr );
-    rkglChainLoad( &gr, &chain, &gr.attr );
+    rkglChainLoad( &gr, &chain, &gr.attr, &light );
     break;
   case 'q': case 'Q': case '\033':
     rkglChainUnload( &gr );
@@ -116,7 +116,7 @@ void init(void)
 
   rkglChainAttrInit( &attr );
   rkChainReadZTK( &chain, "../model/puma" );
-  rkglChainLoad( &gr, &chain, &attr );
+  rkglChainLoad( &gr, &chain, &attr, &light );
 }
 
 int main(int argc, char *argv[])

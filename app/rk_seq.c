@@ -196,7 +196,7 @@ void rk_seqInit(void)
 
   rkglChainAttrInit( &attr );
   if( !rkChainReadZTK( &chain, opt[OPT_MODELFILE].arg ) ||
-      !rkglChainLoad( &gc, &chain, &attr ) ){
+      !rkglChainLoad( &gc, &chain, &attr, &light ) ){
     ZOPENERROR( opt[OPT_MODELFILE].arg );
     rk_seqUsage();
     exit( 1 );
@@ -207,7 +207,7 @@ void rk_seqInit(void)
       rk_seqUsage();
       exit( 1 );
     }
-    env = rkglMShapeEntry( &envshape, attr.disptype );
+    env = rkglMShapeEntry( &envshape, attr.disptype, &light );
     zMShape3DDestroy( &envshape );
     if( env < 0 ) exit( 1 );
   }

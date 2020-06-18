@@ -129,7 +129,7 @@ void rk_viewInit(void)
     exit( 1 );
   }
   model = rkglMShapeEntry( &ms,
-    opt[OPT_WIREFRAME].flag ? RKGL_WIREFRAME : RKGL_FACE );
+    opt[OPT_WIREFRAME].flag ? RKGL_WIREFRAME : RKGL_FACE, &light );
   zMShape3DDestroy( &ms );
   if( model < 0 ) exit( 1 );
 

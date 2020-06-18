@@ -8,7 +8,9 @@
  - visualization of shape
  - visualization of kinematic chain
  - object selection
- - shadow map
+ - texture mapping
+ - bump mapping
+ - shadow mapping
  - GLUT (OpenGL utility toolkit) wrapper
  - X11/OpenGL wrapper
  */

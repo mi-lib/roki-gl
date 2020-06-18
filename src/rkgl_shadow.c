@@ -23,8 +23,9 @@ void rkglShadowInit(rkglShadow *shadow, int width, int height, double radius, do
   rkglVVInit();
   rkglCAInit();
 
-  glGenTextures( 1, &shadow->tex );
-  glBindTexture( GL_TEXTURE_2D, shadow->tex );
+  glActiveTexture( RKGL_TEXTURE_SHADOW );
+  glGenTextures( 1, &shadow->texid );
+  glBindTexture( GL_TEXTURE_2D, shadow->texid );
   glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0 );
 
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
@@ -48,11 +49,12 @@ void rkglShadowInit(rkglShadow *shadow, int width, int height, double radius, do
   glTexGendv( GL_Q, GL_EYE_PLANE, genfunc[3] );
 
   glBindTexture( GL_TEXTURE_2D, 0 );
+  glActiveTexture( RKGL_TEXTURE_BASE );
 
   /* initialize framebuffer */
   glGenFramebuffersEXT( 1, &shadow->fb );
   glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, shadow->fb );
-  glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, shadow->tex, 0 );
+  glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, shadow->texid, 0 );
   glDrawBuffer( GL_NONE );
   glReadBuffer( GL_NONE );
   if( glCheckFramebufferStatusEXT( GL_FRAMEBUFFER_EXT ) != GL_FRAMEBUFFER_COMPLETE_EXT )
@@ -69,11 +71,11 @@ void rkglShadowSetLight(rkglShadow *shadow, rkglLight *light)
 
   rkglVVInit();
   rkglCAInit();
-  d = sqrt( zSqr(light->pos[0])+zSqr(light->pos[1])+zSqr(light->pos[2]) );
+  d = sqrt( zSqr(light->pos[0]) + zSqr(light->pos[1]) + zSqr(light->pos[2]) );
   gluPerspective( 2*zRad2Deg(asin(shadow->radius/d)),
     (GLdouble)shadow->width/(GLdouble)shadow->height,
     d > shadow->radius ? d-shadow->radius : d*0.9, d+shadow->radius );
-  if( zIsTiny(light->pos[0]) && zIsTiny(light->pos[1]) ){
+  if( zIsTiny( light->pos[0] ) && zIsTiny( light->pos[1] ) ){
     upx = 1.0;
     upz = 0.0;
   } else{
@@ -165,6 +167,7 @@ static void _rkglShadowDisable(void)
 
 static void _rkglShadowSunnyside(rkglShadow *shadow, rkglCamera* cam, rkglLight *light, void (* scene)(void))
 {
+  glActiveTexture( RKGL_TEXTURE_SHADOW );
   glMatrixMode( GL_TEXTURE );
   glLoadIdentity();
   glTranslated( 0.5, 0.5, 0.5 );
@@ -175,11 +178,12 @@ static void _rkglShadowSunnyside(rkglShadow *shadow, rkglCamera* cam, rkglLight 
   glMatrixMode( GL_MODELVIEW );
   rkglLightLoad( light );
 
-  glBindTexture( GL_TEXTURE_2D, shadow->tex );
+  glBindTexture( GL_TEXTURE_2D, shadow->texid );
   _rkglShadowEnable();
   scene();
   _rkglShadowDisable();
   glBindTexture( GL_TEXTURE_2D, 0 );
+  glActiveTexture( RKGL_TEXTURE_BASE );
 }
 
 void rkglShadowDraw(rkglShadow *shadow, rkglCamera* cam, rkglLight *light, void (* scene)(void))

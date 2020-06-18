@@ -85,6 +85,24 @@ void rkglTriTexture(zTri3D *t, zTri2D *f)
   glEnd();
 }
 
+void rkglTriBump(zTri3D *t, zTri2D *f, zVec3D *lp)
+{
+  zVec3D r, lv, v;
+  register int i;
+
+  glBegin( GL_TRIANGLES );
+  rkglNormal( zTri3DNorm(t) );
+  zVec3DAAError( zTri3DNorm(t), ZVEC3DZ, &r );
+  for( i=0; i<3; i++ ){
+    glTexCoord2dv( zTri2DVert(f,i)->e );
+    zVec3DSub( lp, zTri3DVert(t,i), &lv );
+    zVec3DRot( &lv, &r, &v );
+    glMultiTexCoord3dv( RKGL_TEXTURE_BUMP, v.e );
+    rkglVertex( zTri3DVert(t,i) );
+  }
+  glEnd();
+}
+
 void rkglPolygon(zVec3D v[], int n, ...)
 {
   zVec3D v0, v1, v2, norm;
@@ -492,7 +510,37 @@ void rkglPHTexture(zPH3D *ph, zOpticalInfo *oi, zTexture *texture)
   glBindTexture( GL_TEXTURE_2D, 0 );
 }
 
-void rkglShape(zShape3D *s, zOpticalInfo *oi_alt, int disptype)
+void rkglPHBump(zPH3D *ph, zOpticalInfo *oi, zTexture *bump, rkglLight *light)
+{
+  GLfloat white[] = { 1.0, 1.0, 1.0, 1.0 };
+  zVec3D lp;
+  register int i;
+
+  _zVec3DCreate( &lp, light->pos[0], light->pos[1], light->pos[2] );
+  glEnable( GL_TEXTURE_2D );
+  glEnable( GL_BLEND );
+  glBlendFunc( GL_ONE_MINUS_SRC_ALPHA, GL_SRC_COLOR );
+  glActiveTexture( RKGL_TEXTURE_BUMP );
+  glBindTexture( GL_TEXTURE_2D, bump->id );
+  glEnable( GL_POLYGON_OFFSET_FILL );
+  glPolygonOffset( -1.1, 4.0 ); /* magic numbers to prevent z-fighting */
+  if( oi )
+    rkglMaterial( oi );
+  else
+    glMaterialfv( GL_FRONT, GL_AMBIENT_AND_DIFFUSE, white );
+
+  glEnable( GL_TEXTURE_CUBE_MAP );
+  for( i=0; i<zPH3DFaceNum(ph); i++ )
+    rkglTriBump( zPH3DFace(ph,i), zTextureFace(bump,i), &lp );
+  glDisable( GL_TEXTURE_CUBE_MAP );
+  glDisable( GL_POLYGON_OFFSET_FILL );
+  glBindTexture( GL_TEXTURE_2D, 0 );
+  glActiveTexture( RKGL_TEXTURE_BASE );
+  glDisable( GL_BLEND );
+  glDisable( GL_TEXTURE_2D );
+}
+
+void rkglShape(zShape3D *s, zOpticalInfo *oi_alt, int disptype, rkglLight *light)
 {
   struct{
     const char *typestr;
@@ -511,7 +559,10 @@ void rkglShape(zShape3D *s, zOpticalInfo *oi_alt, int disptype)
   register int i;
 
   if( zShape3DTexture(s) && zShape3DTexture(s)->id != 0 && disptype == RKGL_FACE && strcmp( s->com->typestr, "polyhedron" ) == 0 ){
-    rkglPHTexture( (zPH3D*)s->body, zShape3DOptic(s), zShape3DTexture(s) );
+    if( zShape3DTexture(s)->type == ZTEXTURE_BUMP )
+      rkglPHBump( (zPH3D*)s->body, zShape3DOptic(s), zShape3DTexture(s), light );
+    else
+      rkglPHTexture( (zPH3D*)s->body, zShape3DOptic(s), zShape3DTexture(s) );
     return;
   }
 
@@ -532,31 +583,31 @@ void rkglShape(zShape3D *s, zOpticalInfo *oi_alt, int disptype)
     }
 }
 
-int rkglShapeEntry(zShape3D *s, zOpticalInfo *oi_alt, int disptype)
+int rkglShapeEntry(zShape3D *s, zOpticalInfo *oi_alt, int disptype, rkglLight *light)
 {
   int result;
 
   if( s == NULL ) return -1;
   result = rkglBeginList();
-  rkglShape( s, oi_alt, disptype );
+  rkglShape( s, oi_alt, disptype, light );
   glEndList();
   return result;
 }
 
-void rkglMShape(zMShape3D *s, int disptype)
+void rkglMShape(zMShape3D *s, int disptype, rkglLight *light)
 {
   register int i;
 
   for( i=0; i<zMShape3DShapeNum(s); i++ )
-    rkglShape( zMShape3DShape(s,i), NULL, disptype );
+    rkglShape( zMShape3DShape(s,i), NULL, disptype, light );
 }
 
-int rkglMShapeEntry(zMShape3D *s, int disptype)
+int rkglMShapeEntry(zMShape3D *s, int disptype, rkglLight *light)
 {
   int result;
 
   result = rkglBeginList();
-  rkglMShape( s, disptype );
+  rkglMShape( s, disptype, light );
   glEndList();
   return result;
 }

@@ -18,7 +18,7 @@ void display(void)
   glPushMatrix();
   glRotated( r, 0, 0, 1 );
   rkglClear();
-  rkglShape( &shape, NULL, RKGL_FACE );
+  rkglShape( &shape, NULL, RKGL_FACE, &light );
   glPopMatrix();
   glutSwapBuffers();
 }

@@ -33,7 +33,7 @@ void init(void)
   rkglLightSetPos( &light, 1, 3, 6 );
 
   zMShape3DReadZTK( &ms, "../model/scc.ztk" );
-  ms_id = rkglMShapeEntry( &ms, RKGL_FACE );
+  ms_id = rkglMShapeEntry( &ms, RKGL_FACE, &light );
 }
 
 int main(int argc, char *argv[])
