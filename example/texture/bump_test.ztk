@@ -1,9 +1,17 @@
 [optic]
+name: white
+ambient: 0.2, 0.2, 0.2
+diffuse: 1.0, 1.0, 1.0
+specular: 0.0, 0.0, 0.0
+alpha: 1
+exp: 1
+
+[optic]
 name: red
 ambient: 0.2, 0.2, 0.2
 diffuse: 1.0, 0.2, 0.2
 specular: 0.0, 0.0, 0.0
-alpha: 1, 1, 1
+alpha: 1
 exp: 1
 
 [texture]
@@ -11,6 +19,18 @@ name: bump
 type: bump
 depth: 0.05
 file: bump.bmp
+coord: 0 ( 0, 1 )
+coord: 1 ( 1, 1 )
+coord: 2 ( 1, 0 )
+coord: 3 ( 0, 0 )
+face: 0 1 2
+face: 0 2 3
+
+[texture]
+name: lena
+type: bump
+depth: 0.05
+file: lena_mini.jpg
 coord: 0 ( 0, 1 )
 coord: 1 ( 1, 1 )
 coord: 2 ( 1, 0 )
@@ -44,8 +64,8 @@ face: 0 2 3
 [shape]
 name: board2
 type: polyhedron
-texture: bump
-optic: red
+texture: lena
+optic: white
 vert: 0 ( 1, -1,  1 )
 vert: 1 ( 1,  1,  1 )
 vert: 2 (-1,  1,  1 )

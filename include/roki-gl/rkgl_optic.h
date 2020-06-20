@@ -17,6 +17,9 @@ __BEGIN_DECLS
 #define rkglRGB(rgb) glColor3f( (rgb)->r, (rgb)->g, (rgb)->b )
 
 void rkglColor24(unsigned color);
+
+void rkglMaterialWhite(void);
+void rkglMaterialOpticalInfo(zOpticalInfo *oi);
 void rkglMaterial(zOpticalInfo *oi);
 
 /* lighting */

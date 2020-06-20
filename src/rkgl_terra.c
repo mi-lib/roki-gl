@@ -113,7 +113,7 @@ static void _rkglTerraMeshGrid(zTerra *terra, int i, int j, double zmin, double 
 
   grid = zTerraGridNC(terra,i,j);
   zOpticalInfoBlend( oi_zmin, oi_zmax, (zmax-grid->z)/(zmax-zmin), &oi, NULL );
-  rkglMaterial( &oi );
+  rkglMaterialOpticalInfo( &oi );
   glVertex3f( zTerraX(terra,i), zTerraY(terra,j), grid->z );
   rkglNormal( &grid->norm );
 }

@@ -15,7 +15,7 @@ static void init(char *filename)
   rkglCASet( &cam, 3, 0, 3, 0, -45, 0 );
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0, 0.5, 0.5, 0.5, 1, 1, 1, 0, 0, 0, 0 );
-  rkglLightSetPos( &light, 5, 5, 10 );
+  rkglLightSetPos( &light, 8, 5, 10 );
 
   rkglTextureBumpEnable();
   zMShape3DReadZTK( &ms, "bump_test.ztk" );

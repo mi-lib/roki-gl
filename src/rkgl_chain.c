@@ -70,7 +70,7 @@ void rkglLinkStick(rkLink *l, rkglChainAttr *attr)
   zSphere3D js;
 
   zOpticalInfoCreateSimple( &oi, 1.0, 1.0, 1.0, NULL );
-  rkglMaterial( &oi );
+  rkglMaterialOpticalInfo( &oi );
   if( rkLinkJoint(l)->com == &rk_joint_revol ){
     zVec3DCreate( &z1, 0, 0,-attr->bone_r * 4 );
     zVec3DCreate( &z2, 0, 0, attr->bone_r * 4 );
@@ -100,11 +100,11 @@ void rkglLinkCOM(rkLink *l, rkglChainAttr *attr)
   double br;
 
   zOpticalInfoCreateSimple( &oi, 0.4, 0.7, 1.0, NULL );
-  rkglMaterial( &oi );
+  rkglMaterialOpticalInfo( &oi );
   zSphere3DCreate( &com, rkLinkCOM(l), attr->com_r, 0 );
   rkglSphere( &com, RKGL_FACE );
   zOpticalInfoCreateSimple( &oi, 1.0, 1.0, 1.0, NULL );
-  rkglMaterial( &oi );
+  rkglMaterialOpticalInfo( &oi );
   br = attr->com_r / 3;
   for( child=rkLinkChild(l); child; child=rkLinkSibl(child) ){
     zCyl3DCreate( &bone, ZVEC3DZERO, rkLinkAdjPos(child), br, 0 );
@@ -118,7 +118,7 @@ void rkglLinkInertiaEllips(rkLink *l, rkglChainAttr *attr)
   zEllips3D e;
 
   zOpticalInfoCreateSimple( &oi, 1.0, 0.8, 0.4, NULL );
-  rkglMaterial( &oi );
+  rkglMaterialOpticalInfo( &oi );
   rkLinkInertiaEllips( l, &e );
   zEllips3DRadius(&e,0) *= attr->ellips_mag;
   zEllips3DRadius(&e,1) *= attr->ellips_mag;
@@ -243,7 +243,7 @@ void rkglChainCOMDraw(rkglChain *gc, double r)
   zSphere3D com;
 
   zOpticalInfoCreateSimple( &oi, 0.0, 0.0, 1.0, NULL );
-  rkglMaterial( &oi );
+  rkglMaterialOpticalInfo( &oi );
   zSphere3DCreate( &com, rkChainWldCOM(gc->chain), r, 0 );
   rkglSphere( &com, RKGL_FACE );
 }

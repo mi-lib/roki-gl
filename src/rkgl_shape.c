@@ -492,17 +492,13 @@ static void _rkglPH(void *ph, int disptype){ rkglPH( ph, disptype ); }
 
 void rkglPHTexture(zPH3D *ph, zOpticalInfo *oi, zTexture *texture)
 {
-  GLfloat white[] = { 1.0, 1.0, 1.0, 1.0 };
   register int i;
 
   glBindTexture( GL_TEXTURE_2D, texture->id );
   glEnable( GL_POLYGON_OFFSET_FILL );
-  glPolygonOffset( -1.1, 4.0 ); /* magic numbers to prevent z-fighting */
+  rkglAntiZFighting();
   glEnable( GL_TEXTURE_2D );
-  if( oi )
-    rkglMaterial( oi );
-  else
-    glMaterialfv( GL_FRONT, GL_AMBIENT_AND_DIFFUSE, white );
+  rkglMaterial( oi );
   for( i=0; i<zPH3DFaceNum(ph); i++ )
     rkglTriTexture( zPH3DFace(ph,i), zTextureFace(texture,i) );
   glDisable( GL_TEXTURE_2D );
@@ -512,7 +508,6 @@ void rkglPHTexture(zPH3D *ph, zOpticalInfo *oi, zTexture *texture)
 
 void rkglPHBump(zPH3D *ph, zOpticalInfo *oi, zTexture *bump, rkglLight *light)
 {
-  GLfloat white[] = { 1.0, 1.0, 1.0, 1.0 };
   zVec3D lp;
   register int i;
 
@@ -520,22 +515,22 @@ void rkglPHBump(zPH3D *ph, zOpticalInfo *oi, zTexture *bump, rkglLight *light)
   glEnable( GL_TEXTURE_2D );
   glEnable( GL_BLEND );
   glBlendFunc( GL_ONE_MINUS_SRC_ALPHA, GL_SRC_COLOR );
-  glActiveTexture( RKGL_TEXTURE_BUMP );
-  glBindTexture( GL_TEXTURE_2D, bump->id );
   glEnable( GL_POLYGON_OFFSET_FILL );
-  glPolygonOffset( -1.1, 4.0 ); /* magic numbers to prevent z-fighting */
-  if( oi )
-    rkglMaterial( oi );
-  else
-    glMaterialfv( GL_FRONT, GL_AMBIENT_AND_DIFFUSE, white );
+  rkglAntiZFighting();
+  rkglMaterial( oi );
 
+  glActiveTexture( RKGL_TEXTURE_BASE );
+  glBindTexture( GL_TEXTURE_2D, bump->id );
+
+  glActiveTexture( RKGL_TEXTURE_BUMP );
+  glBindTexture( GL_TEXTURE_2D, bump->id_bump );
   glEnable( GL_TEXTURE_CUBE_MAP );
   for( i=0; i<zPH3DFaceNum(ph); i++ )
     rkglTriBump( zPH3DFace(ph,i), zTextureFace(bump,i), &lp );
   glDisable( GL_TEXTURE_CUBE_MAP );
-  glDisable( GL_POLYGON_OFFSET_FILL );
   glBindTexture( GL_TEXTURE_2D, 0 );
   glActiveTexture( RKGL_TEXTURE_BASE );
+  glDisable( GL_POLYGON_OFFSET_FILL );
   glDisable( GL_BLEND );
   glDisable( GL_TEXTURE_2D );
 }

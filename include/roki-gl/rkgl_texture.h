@@ -19,6 +19,9 @@ __BEGIN_DECLS
 #define RKGL_TEXTURE_SHADOW GL_TEXTURE2
 #define RKGL_TEXTURE_COLOR  GL_TEXTURE3
 
+/* magic numbers to prevent z-fighting */
+#define rkglAntiZFighting() glPolygonOffset( -1.1, 4.0 )
+
 /* color texture mapping */
 
 /*! \brief read an image file and make a texture data. */

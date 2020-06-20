@@ -150,10 +150,10 @@ static void _rkglTextureBumpLightMap(zTexture *bump)
   wh = bump->width / 2;
   hh = bump->height / 2;
   for( k=0, i=0; i<hh; i++ ){
-    y = (double)( 2*i - hh ) / hh;
+    y = 2*(double)i/hh - 1;
     y2 = y*y + 1;
     for( j=0; j<wh; j++, k+=3 ){
-      x = (double)( 2*j - wh ) / wh;
+      x = 2*(double)j/wh - 1;
       zr = 1.0 / sqrt( x*x + y2 );
       xr = x * zr;
       yr = y * zr;
@@ -182,6 +182,9 @@ bool rkglTextureBumpReadFile(zTexture *bump, char *filename)
 
   if( !_rkglTextureBumpNormalMap( bump, filename ) ) return false;
 
+  glActiveTexture( RKGL_TEXTURE_BASE );
+  glGenTextures( 1, &bump->id );
+  glBindTexture( GL_TEXTURE_2D, bump->id );
   glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
   glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, bump->width, bump->height, 0, GL_RGB, GL_UNSIGNED_BYTE, bump->buf );
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
@@ -191,8 +194,8 @@ bool rkglTextureBumpReadFile(zTexture *bump, char *filename)
   glTexEnvi( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE );
 
   glActiveTexture( RKGL_TEXTURE_BUMP );
-  glGenTextures( 1, &bump->id );
-  glBindTexture( GL_TEXTURE_2D, bump->id );
+  glGenTextures( 1, &bump->id_bump );
+  glBindTexture( GL_TEXTURE_2D, bump->id_bump );
 
   _rkglTextureBumpLightMap( bump );
   for( i=0; i<6; i++ )
@@ -204,7 +207,7 @@ bool rkglTextureBumpReadFile(zTexture *bump, char *filename)
   glTexParameteri( GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
   glTexEnvi( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE );
   glTexEnvi( GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_DOT3_RGB );
-  glTexEnvi( GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PREVIOUS );
+  glTexEnvi( GL_TEXTURE_ENV, GL_SOURCE0_RGB, RKGL_TEXTURE_BASE );
   glTexEnvi( GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_TEXTURE );
 
   glBindTexture( GL_TEXTURE_2D, 0 );

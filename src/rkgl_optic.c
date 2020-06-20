@@ -20,7 +20,13 @@ void rkglColor24(unsigned color)
   glColor3ub( red, green, blue );
 }
 
-void rkglMaterial(zOpticalInfo *oi)
+void rkglMaterialWhite(void)
+{
+  GLfloat white[] = { 1.0, 1.0, 1.0, 1.0 };
+  glMaterialfv( GL_FRONT, GL_AMBIENT_AND_DIFFUSE, white );
+}
+
+void rkglMaterialOpticalInfo(zOpticalInfo *oi)
 {
   GLfloat color[4];
 
@@ -37,6 +43,11 @@ void rkglMaterial(zOpticalInfo *oi)
   /* shininess */
   color[0] = oi->sns;
   glMaterialfv( GL_FRONT, GL_SHININESS, color );
+}
+
+void rkglMaterial(zOpticalInfo *oi)
+{
+  oi ? rkglMaterialOpticalInfo( oi ) : rkglMaterialWhite();
 }
 
 /* lighting */

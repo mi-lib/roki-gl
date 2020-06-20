@@ -102,7 +102,7 @@ static void _rkglShadowMap(rkglShadow *shadow, rkglCamera *cam, rkglLight *light
 
   if( shadow->antizfighting ){
     glEnable( GL_POLYGON_OFFSET_FILL );
-    glPolygonOffset( 1.1, 4.0 ); /* magic numbers to prevent z-fighting */
+    rkglAntiZFighting();
     scene();
     glDisable( GL_POLYGON_OFFSET_FILL );
   } else{
