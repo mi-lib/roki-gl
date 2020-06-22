@@ -20,7 +20,7 @@ __BEGIN_DECLS
 #define RKGL_TEXTURE_COLOR  GL_TEXTURE3
 
 /* magic numbers to prevent z-fighting */
-#define rkglAntiZFighting() glPolygonOffset( -1.1, 4.0 )
+#define rkglAntiZFighting()   glPolygonOffset( -1.1, 4.0 )
 
 /* color texture mapping */
 
@@ -30,8 +30,6 @@ bool rkglTextureReadFile(zTexture *texture, char *filename);
 #define rkglTextureEnable()   zTextureSetReadFunc( rkglTextureReadFile )
 
 #define rkglCoord(coord)      glTexCoord2d( (coord)->c.x, (coord)->c.y )
-
-#define rkglTextureCoord(t,i) rkglCoord( zTextureCoord(t,i) )
 
 /* bump mapping */
 

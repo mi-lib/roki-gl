@@ -31,6 +31,7 @@ bool rkglTextureReadFile(zTexture *texture, char *filename)
   texture->height = img.height;
   zxImageDestroy( &img );
 
+  glActiveTexture( RKGL_TEXTURE_BASE );
   glGenTextures( 1, &texture->id );
   glBindTexture( GL_TEXTURE_2D, texture->id );
   glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );

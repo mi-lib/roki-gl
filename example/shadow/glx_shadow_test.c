@@ -90,8 +90,19 @@ void init(void)
 
 GLvoid mainloop(Window win)
 {
+  int event;
+  zxRegion reg;
+  int count = 0;
+
   while( 1 ){
-    switch( zxGetEvent() ){
+    switch( ( event = zxGetEvent() ) ){
+    case ButtonPress:
+    case ButtonRelease:
+      rkglMouseFuncGLX( &cam, event, 1.0 );
+      break;
+    case MotionNotify:
+      rkglMouseDragFuncGLX( &cam );
+      break;
     case KeyPress:
       switch( zxKeySymbol() ){
       case XK_q:
@@ -99,9 +110,17 @@ GLvoid mainloop(Window win)
         exit( 0 );
       }
       break;
+    case Expose:
+    case ConfigureNotify:
+      zxGetGeometry( win, &reg );
+      rkglReshapeGLX( &cam, reg.width, reg.height, 2.0, 2, 20 );
+      break;
     default: ;
     }
-    display( win );
+    if( ++count > 5 ){
+      display( win );
+      count = 0;
+    }
   }
 }
 
@@ -114,7 +133,8 @@ int main(int argc, char **argv)
 
   rkglInitGLX();
   win = rkglWindowCreateGLX( NULL, 0, 0, WIDTH, HEIGHT, "glx test" );
-  rkglWindowAddEventGLX( win, KeyPressMask | KeyReleaseMask );
+  rkglWindowKeyEnableGLX( win );
+  rkglWindowMouseEnableGLX( win );
   rkglWindowOpenGLX( win );
 
   init();

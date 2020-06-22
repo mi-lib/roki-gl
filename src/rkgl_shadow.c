@@ -61,18 +61,17 @@ void rkglShadowInit(rkglShadow *shadow, int width, int height, double radius, do
     ZRUNWARN( "the current framebuffer status is unsupported");
   glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, 0 );
 
-  /* enable anti-Z-fighting */
   rkglShadowEnableAntiZFighting( shadow );
 }
 
-void rkglShadowSetLight(rkglShadow *shadow, rkglLight *light)
+static void _rkglShadowSetLight(rkglShadow *shadow, rkglLight *light)
 {
   double d, upx, upz;
 
   rkglVVInit();
   rkglCAInit();
   d = sqrt( zSqr(light->pos[0]) + zSqr(light->pos[1]) + zSqr(light->pos[2]) );
-  gluPerspective( 2*zRad2Deg(asin(shadow->radius/d)),
+  gluPerspective( 2*zRad2Deg( asin(shadow->radius/d) ),
     (GLdouble)shadow->width/(GLdouble)shadow->height,
     d > shadow->radius ? d-shadow->radius : d*0.9, d+shadow->radius );
   if( zIsTiny( light->pos[0] ) && zIsTiny( light->pos[1] ) ){
@@ -93,13 +92,11 @@ static void _rkglShadowMap(rkglShadow *shadow, rkglCamera *cam, rkglLight *light
   glDisable( GL_SCISSOR_TEST );
   glClear( GL_DEPTH_BUFFER_BIT );
   glViewport( 0, 0, shadow->width, shadow->height );
-
-  rkglShadowSetLight( shadow, light );
+  _rkglShadowSetLight( shadow, light );
 
   glColorMask( GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE );
   glDisable( GL_LIGHTING );
   glCullFace( GL_FRONT );
-
   if( shadow->antizfighting ){
     glEnable( GL_POLYGON_OFFSET_FILL );
     rkglAntiZFighting();
@@ -108,7 +105,6 @@ static void _rkglShadowMap(rkglShadow *shadow, rkglCamera *cam, rkglLight *light
   } else{
     scene();
   }
-
   glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, 0 );
 
   /* reset projection and camera angle */
