@@ -239,6 +239,7 @@ bool rkAnimCellListCreate(zStrList *arglist)
 
 void rkAnimCapture(void)
 {
+#if 0
   zxImage img;
   static char imgfile[RK_ANIM_BUFSIZ];
   static int count = 0;
@@ -251,6 +252,20 @@ void rkAnimCapture(void)
   zxImageFromPixmap( &img, zxWindowCanvas(&win), img.width, img.height );
   zxImageWriteBMPFile( &img, imgfile );
   zxImageDestroy( &img );
+#else
+  static char imgfile[RK_ANIM_BUFSIZ];
+  static int count = 0;
+  char cmd[BUFSIZ];
+
+  if( opt[OPT_CAPTURESERIAL].flag )
+    sprintf( imgfile, "%s%05d.%s", opt[OPT_TITLE].arg, count++, opt[OPT_CAPTURE].arg );
+  else
+    sprintf( imgfile, "%s%0.3f.%s", opt[OPT_TITLE].arg, t_resume, opt[OPT_CAPTURE].arg );
+  sprintf( cmd, "xwd -name %s | convert xwd:- %s", RK_ANIM_TITLE, imgfile );
+  if( system( cmd ) < 0 ){
+    ZRUNERROR( "cannot run xwd" );
+  }
+#endif
 }
 
 void rkAnimForward(int sig)
