@@ -18,7 +18,7 @@ enum{
   OPT_LX, OPT_LY, OPT_LZ,
   OPT_SMOOTH, OPT_FOG,
   OPT_SHADOW, OPT_SHADOW_SIZE, OPT_SHADOW_AREA,
-  OPT_FRAME, OPT_CAPTURE, OPT_SECPERFRAME, OPT_SKEW,
+  OPT_FRAME, OPT_CAPTURE, OPT_CAPTURESERIAL, OPT_SECPERFRAME, OPT_SKEW,
   OPT_RESIZE,
   OPT_NOTIMESTAMP,
   OPT_HELP,
@@ -52,7 +52,8 @@ zOption opt[] = {
   { "shadowsize", NULL, "<value>", "shadow map size", (char *)"1024", false },
   { "shadowarea", NULL, "<value>", "radius of shadowing area", (char *)"2.0", false },
   { "k", NULL, NULL, "wait key-in at each step", NULL, false },
-  { "capture", NULL, "<suf>", "output image format suffix", (char *)"png", false },
+  { "capture", NULL, "<suf>", "output image format (suffix)", (char *)"png", false },
+  { "captureserial", NULL, "<suf>", "output images with serial numbers", NULL, false },
   { "secperframe", NULL, "<period [msec]>", "second per frame", NULL, false },
   { "skew", NULL, "<multiplier>", "set time skew multiplier", (char *)"1.0", false },
   { "resize", NULL, NULL, "enable to resize within the parent window", NULL, false },
@@ -240,11 +241,15 @@ void rkAnimCapture(void)
 {
   zxImage img;
   static char imgfile[RK_ANIM_BUFSIZ];
+  static int count = 0;
 
-  sprintf( imgfile, "%s%0.3f.png", opt[OPT_TITLE].arg, t_resume );
+  if( opt[OPT_CAPTURESERIAL].flag )
+    sprintf( imgfile, "%s%05d.bmp", opt[OPT_TITLE].arg, count++ );
+  else
+    sprintf( imgfile, "%s%0.3f.bmp", opt[OPT_TITLE].arg, t_resume );
   zxImageAllocDefault( &img, zxWindowWidth(&win), zxWindowHeight(&win) );
   zxImageFromPixmap( &img, zxWindowCanvas(&win), img.width, img.height );
-  zxImageWritePNGFile( &img, imgfile );
+  zxImageWriteBMPFile( &img, imgfile );
   zxImageDestroy( &img );
 }
 
