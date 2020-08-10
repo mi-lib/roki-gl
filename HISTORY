@@ -1,3 +1,4 @@
+2020. 8. 9. Modified rk_anim to enable serial numbering mode for capturing. [app]
 2020. 6.22. Abolished rkglTextureCoord. [rkgl_shadow]
 2020. 6.22. Modified rkglTriBump and rkglPHBump. [rkgl_shape]
 2020. 6.20. Modified rkglTextureBumpReadFile and rkglPHBump to assign base texture unit in order to handle multiple bump maps. [rkgl_texture, rkgl_shape]
