@@ -20,8 +20,8 @@ enum{
   OPT_INVALID
 };
 zOption opt[] = {
-  { "model", NULL, "<.zkc file>", "kinematic chain model file", NULL, false },
-  { "env", NULL, "<.z3d file>", "environment model file", NULL, false },
+  { "model", NULL, "<.ztk file>", "kinematic chain model file", NULL, false },
+  { "env", NULL, "<.ztk file>", "environment shape model file", NULL, false },
   { "init", NULL, "<.zkci file>", "initial state file", NULL, false },
   { "pan", NULL, "<pan value>", "set camera pan angle", (char *)"0", false },
   { "tilt", NULL, "<tilt value>", "set camera tilt angle", (char *)"0", false },

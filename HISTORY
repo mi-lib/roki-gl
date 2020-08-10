@@ -1,3 +1,4 @@
+2020. 8. 9. Corrected notations of suffices of command line options in applications. [app]
 2020. 8. 9. Modified rk_anim to enable serial numbering mode for capturing. [app]
 2020. 6.22. Abolished rkglTextureCoord. [rkgl_shadow]
 2020. 6.22. Modified rkglTriBump and rkglPHBump. [rkgl_shape]
