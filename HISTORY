@@ -1,3 +1,4 @@
+2021. 3.31. Modified makefile to separately make and install library and applications. [makefile]
 2020. 8. 9. Modified rk_anim to use xwd and ImageMagick for capturing. [app]
 2020. 8. 9. Corrected notations of suffices of command line options in applications. [app]
 2020. 8. 9. Modified rk_anim to enable serial numbering mode for capturing. [app]

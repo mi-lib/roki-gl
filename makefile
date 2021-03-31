@@ -11,9 +11,11 @@ SAMPLEDIR:=$(ROOTDIR)/example
 
 CHKDEP=`which zeda-chkdep`
 
-all:
+all: library install application
+library:
 	@$(CHKDEP) $(DEPENDENCY) || exit 1
 	@cd $(SRCDIR); make
+application:
 	@cd $(APPDIR); make
 
 
