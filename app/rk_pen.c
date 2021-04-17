@@ -145,17 +145,20 @@ void rk_penShowLinkMass(void)
   printf( "TODO\n" );
 }
 
-void rk_penSetJointDis(void)
+void rk_penRad2DegJointDis(rkLink *l, double dis[])
 {
-  int i;
-  double dis[6];
-  rkLink *l;
+  if( rkLinkJoint(l)->com == &rk_joint_revol ||
+      rkLinkJoint(l)->com == &rk_joint_cylin ){
+    dis[0] = zRad2Deg( dis[0] );
+  } else
+  if( rkLinkJoint(l)->com == &rk_joint_hooke ){
+    dis[0] = zRad2Deg( dis[0] );
+    dis[1] = zRad2Deg( dis[1] );
+  }
+}
 
-  if( !( l = rk_penLink() ) ) return;
-  printf( "change joint displacement of link %s\n", zName( l ) );
-  printf( "enter values [1-%d]> ", rkLinkJointSize(l) );
-  for( i=0; i<rkLinkJointSize(l); i++ )
-    dis[i] = zFDouble( stdin );
+void rk_penDeg2RadJointDis(rkLink *l, double dis[])
+{
   if( rkLinkJoint(l)->com == &rk_joint_revol ||
       rkLinkJoint(l)->com == &rk_joint_cylin ){
     dis[0] = zDeg2Rad( dis[0] );
@@ -164,6 +167,29 @@ void rk_penSetJointDis(void)
     dis[0] = zDeg2Rad( dis[0] );
     dis[1] = zDeg2Rad( dis[1] );
   }
+}
+
+void rk_penSetJointDis(void)
+{
+  int i;
+  double dis[6], min[6], max[6];
+  rkLink *l;
+
+  if( !( l = rk_penLink() ) ) return;
+  if( rkLinkJoint(l)->com == &rk_joint_fixed ){
+    printf( "This is a fixed joint.\n" );
+    return;
+  }
+  printf( "change joint displacement of link %s\n", zName( l ) );
+  rkLinkGetJointMin( l, min );
+  rkLinkGetJointMax( l, max );
+  rk_penRad2DegJointDis( l, min );
+  rk_penRad2DegJointDis( l, max );
+  for( i=0; i<rkLinkJointSize(l); i++ ){
+    printf( "enter value %d/%d [%.10g-%.10g]> ", i, rkLinkJointSize(l), min[i], max[i] );
+    dis[i] = zFDouble( stdin );
+  }
+  rk_penDeg2RadJointDis( l, dis );
   rkLinkSetJointDis( l, dis );
   rkChainUpdateFK( &chain );
 }
