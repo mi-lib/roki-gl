@@ -1,3 +1,5 @@
+2021. 4.27. Modified rk_view to be able to directly read STL and PLY. [app]
+2021. 4.27. Added scale option to rk_view. [app]
 2021. 4.17. Modified rk_penSetJointDis in rk_pen. [app]
 2021. 4.17. Deleted puma.ztk, which is contained in RoKi. [example]
 2021. 3.31. Modified makefile to separately make and install library and applications. [makefile]

@@ -11,6 +11,7 @@ enum{
   OPT_MODELFILE=0,
   OPT_PAN, OPT_TILT, OPT_ROLL, OPT_OX, OPT_OY, OPT_OZ,
   OPT_WIDTH, OPT_HEIGHT,
+  OPT_SCALE,
   OPT_WIREFRAME,
   OPT_BG,
   OPT_LX, OPT_LY, OPT_LZ,
@@ -29,6 +30,7 @@ zOption opt[] = {
   { "z", NULL, "<value>", "camera position in z axis", (char *)"0", false },
   { "width", NULL, "<width>", "set window width", (char *)"500", false },
   { "height", NULL, "<height>", "set window height", (char *)"500", false },
+  { "scale", NULL, "<scale>", "set scale factor", (char *)"1.0", false },
   { "wireframe", NULL, NULL, "draw objects as wireframe models", NULL, false },
   { "bg", NULL, "<RGB#hex>", "set background color", (char *)"#010101", false },
   { "lx", NULL, "<value>", "light position in x axis", (char *)"3", false },
@@ -98,10 +100,56 @@ void rk_viewDisplay(void)
   rkglFlushGLX();
 }
 
+void rk_viewReadModel(void)
+{
+  char *sfx;
+  FILE *fp;
+  register int i;
+  double scale;
+  zMShape3D ms;
+
+  sfx = zGetSuffix( opt[OPT_MODELFILE].arg );
+  if( strcmp( sfx, "ztk" ) == 0 ){
+    if( !zMShape3DReadZTK( &ms, opt[OPT_MODELFILE].arg ) ){
+      ZOPENERROR( opt[OPT_MODELFILE].arg );
+      rk_viewUsage();
+    }
+  }
+  zMShape3DInit( &ms );
+  zArrayAlloc( &ms.optic, zOpticalInfo, 1 );
+  zArrayAlloc( &ms.shape, zShape3D, 1 );
+  if( zMShape3DOpticNum(&ms) != 1 || zMShape3DShapeNum(&ms) != 1 ){
+    ZALLOCERROR();
+    exit( 1 );
+  }
+  zOpticalInfoInit( zMShape3DOptic(&ms,0) );
+  if( !( fp = fopen( opt[OPT_MODELFILE].arg, "rt" ) ) ){
+    ZOPENERROR( opt[OPT_MODELFILE].arg );
+    rk_viewUsage();
+  }
+  if( strcmp( sfx, "stl" ) == 0 ){
+    if( !zShape3DFReadSTL( fp, zMShape3DShape(&ms,0) ) ) exit( 1 );
+  } else
+  if( strcmp( sfx, "ply" ) == 0 ){
+    if( !zShape3DFReadPLY( fp, zMShape3DShape(&ms,0) ) ) exit( 1 );
+  } else{
+    ZRUNERROR( "unknown format %s", sfx );
+    exit( 1 );
+  }
+  if( opt[OPT_SCALE].flag ){
+    scale = atof( opt[OPT_SCALE].arg );
+    for( i=0; i<zMShape3DShapeNum(&ms); i++ )
+      zPH3DScale( zShape3DPH(zMShape3DShape(&ms,i)), scale );
+  }
+  model = rkglMShapeEntry( &ms,
+    opt[OPT_WIREFRAME].flag ? RKGL_WIREFRAME : RKGL_FACE, &light );
+  zMShape3DDestroy( &ms );
+  if( model < 0 ) exit( 1 );
+}
+
 void rk_viewInit(void)
 {
   zRGB rgb;
-  zMShape3D ms;
 
   win = rkglWindowCreateGLX( NULL, 0, 0, atoi(opt[OPT_WIDTH].arg), atoi(opt[OPT_HEIGHT].arg), RK_VIEW_TITLE );
   rkglWindowKeyEnableGLX( win );
@@ -123,15 +171,7 @@ void rk_viewInit(void)
   rkglShadowInit( &shadow, 512, 512, 1.5, 0.2 );
   rkglTextureEnable();
 
-  if( !zMShape3DReadZTK( &ms, opt[OPT_MODELFILE].arg ) ){
-    ZOPENERROR( opt[OPT_MODELFILE].arg );
-    rk_viewUsage();
-    exit( 1 );
-  }
-  model = rkglMShapeEntry( &ms,
-    opt[OPT_WIREFRAME].flag ? RKGL_WIREFRAME : RKGL_FACE, &light );
-  zMShape3DDestroy( &ms );
-  if( model < 0 ) exit( 1 );
+  rk_viewReadModel();
 
   if( opt[OPT_SMOOTH].flag ) glEnable( GL_LINE_SMOOTH );
   if( opt[OPT_FOG].flag ) rkglBGFog( &cam, 0.1 );
