@@ -100,13 +100,44 @@ void rk_viewDisplay(void)
   rkglFlushGLX();
 }
 
+void rk_viewReadPH(zMShape3D *ms, char *sfx)
+{
+  FILE *fp;
+
+  zMShape3DInit( ms );
+  zArrayAlloc( &ms->optic, zOpticalInfo, 1 );
+  zArrayAlloc( &ms->shape, zShape3D, 1 );
+  if( zMShape3DOpticNum(ms) != 1 || zMShape3DShapeNum(ms) != 1 ){
+    ZALLOCERROR();
+    exit( 1 );
+  }
+  zOpticalInfoInit( zMShape3DOptic(ms,0) );
+  if( strcmp( sfx, "dae" ) == 0 ){
+    if( !zShape3DFReadDAE( zMShape3DShape(ms,0), opt[OPT_MODELFILE].arg ) ) exit( 1 );
+    return;
+  }
+  if( !( fp = fopen( opt[OPT_MODELFILE].arg, "rt" ) ) ){
+    ZOPENERROR( opt[OPT_MODELFILE].arg );
+    rk_viewUsage();
+  }
+  if( strcmp( sfx, "stl" ) == 0 ){
+    if( !zShape3DFReadSTL( fp, zMShape3DShape(ms,0) ) ) exit( 1 );
+  } else
+  if( strcmp( sfx, "ply" ) == 0 ){
+    if( !zShape3DFReadPLY( fp, zMShape3DShape(ms,0) ) ) exit( 1 );
+  } else{
+    ZRUNERROR( "unknown format %s", sfx );
+    exit( 1 );
+  }
+  fclose( fp );
+}
+
 void rk_viewReadModel(void)
 {
   char *sfx;
-  FILE *fp;
-  register int i;
   double scale;
   zMShape3D ms;
+  register int i;
 
   sfx = zGetSuffix( opt[OPT_MODELFILE].arg );
   if( strcmp( sfx, "ztk" ) == 0 ){
@@ -114,28 +145,9 @@ void rk_viewReadModel(void)
       ZOPENERROR( opt[OPT_MODELFILE].arg );
       rk_viewUsage();
     }
-  }
-  zMShape3DInit( &ms );
-  zArrayAlloc( &ms.optic, zOpticalInfo, 1 );
-  zArrayAlloc( &ms.shape, zShape3D, 1 );
-  if( zMShape3DOpticNum(&ms) != 1 || zMShape3DShapeNum(&ms) != 1 ){
-    ZALLOCERROR();
-    exit( 1 );
-  }
-  zOpticalInfoInit( zMShape3DOptic(&ms,0) );
-  if( !( fp = fopen( opt[OPT_MODELFILE].arg, "rt" ) ) ){
-    ZOPENERROR( opt[OPT_MODELFILE].arg );
-    rk_viewUsage();
-  }
-  if( strcmp( sfx, "stl" ) == 0 ){
-    if( !zShape3DFReadSTL( fp, zMShape3DShape(&ms,0) ) ) exit( 1 );
   } else
-  if( strcmp( sfx, "ply" ) == 0 ){
-    if( !zShape3DFReadPLY( fp, zMShape3DShape(&ms,0) ) ) exit( 1 );
-  } else{
-    ZRUNERROR( "unknown format %s", sfx );
-    exit( 1 );
-  }
+    rk_viewReadPH( &ms, sfx );
+
   if( opt[OPT_SCALE].flag ){
     scale = atof( opt[OPT_SCALE].arg );
     for( i=0; i<zMShape3DShapeNum(&ms); i++ )
@@ -239,7 +251,6 @@ int rk_viewKeyPress(void)
     rk_viewCapture();
     break;
   case XK_q:
-    eprintf( "quit.\n" );
     return -1;
   }
   return 0;
