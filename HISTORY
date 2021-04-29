@@ -1,3 +1,4 @@
+2021. 4.29. Modified app/makefile. [app]
 2021. 4.29. Reflected new specification of zeda-config-gen. [app]
 2021. 4.27. Modified rk_view to be able to directly read STL and PLY. [app]
 2021. 4.27. Added scale option to rk_view. [app]
