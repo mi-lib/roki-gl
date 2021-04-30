@@ -1,3 +1,4 @@
+2021. 4.30. Modified rk_view to be able to directly read OBJ (geometry only). [app]
 2021. 4.30. Modified rk_view to be able to directly read DAE (geometry only). [app]
 2021. 4.30. Debugged rk_view. [app]
 2021. 4.29. Modified app/makefile. [app]

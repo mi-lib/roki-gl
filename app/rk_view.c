@@ -125,6 +125,9 @@ void rk_viewReadPH(zMShape3D *ms, char *sfx)
   } else
   if( strcmp( sfx, "ply" ) == 0 ){
     if( !zShape3DFReadPLY( fp, zMShape3DShape(ms,0) ) ) exit( 1 );
+  } else
+  if( strcmp( sfx, "obj" ) == 0 ){
+    if( !zShape3DFReadOBJ( fp, zMShape3DShape(ms,0) ) ) exit( 1 );
   } else{
     ZRUNERROR( "unknown format %s", sfx );
     exit( 1 );
