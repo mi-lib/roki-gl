@@ -1,8 +1,8 @@
 PREFIX=$(HOME)/usr
 PROJNAME=roki-gl
-VERSION=1.6.3
+VERSION=1.6.4
 
-DEPENDENCY="zeda=1.5.0;zm=1.3.0;zeo=1.7.5;roki=1.6.3;liw=1.2.0;zx11=1.2.0"
+DEPENDENCY="zeda=1.5.0;zm=1.3.0;zeo=1.7.7;roki=1.6.5;liw=1.2.0;zx11=1.2.0"
 
 # libGL and libGLU required.
 

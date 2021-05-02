@@ -10,7 +10,7 @@
 enum{
   OPT_MODELFILE=0, OPT_ENVFILE, OPT_INITFILE,
   OPT_PAN, OPT_TILT, OPT_ROLL,
-  OPT_OX, OPT_OY, OPT_OZ,
+  OPT_OX, OPT_OY, OPT_OZ, OPT_AUTO,
   OPT_WIDTH, OPT_HEIGHT,
   OPT_WIREFRAME, OPT_BB, OPT_BONE, OPT_ELLIPS,
   OPT_BG,
@@ -29,6 +29,7 @@ zOption opt[] = {
   { "x", NULL, "<value>", "camera position in x axis", (char *)"5", false },
   { "y", NULL, "<value>", "camera position in y axis", (char *)"0", false },
   { "z", NULL, "<value>", "camera position in z axis", (char *)"0", false },
+  { "auto", NULL, NULL, "automatic allocation of camera", NULL, false },
   { "width", NULL, "<value>", "window width", (char *)"500", false },
   { "height", NULL, "<value>", "window height", (char *)"500", false },
   { "wireframe", NULL, NULL, "draw kinematic chain as wireframe model", NULL, false },
@@ -391,25 +392,8 @@ void rk_penInit(void)
   zRGB rgb;
   rkglChainAttr attr;
   zMShape3D envshape;
-
-  zRGBDec( &rgb, opt[OPT_BG].arg );
-  rkglBGSet( &cam, rgb.r, rgb.g, rgb.b );
-  rkglVPCreate( &cam, 0, 0,
-    atoi( opt[OPT_WIDTH].arg ), atoi( opt[OPT_HEIGHT].arg ) );
-  rkglCASet( &cam,
-    atof( opt[OPT_OX].arg ),
-    atof( opt[OPT_OY].arg ),
-    atof( opt[OPT_OZ].arg ),
-    atof( opt[OPT_PAN].arg ),
-    atof( opt[OPT_TILT].arg ),
-    atof( opt[OPT_ROLL].arg ) );
-
-  glEnable( GL_LIGHTING );
-  rkglLightCreate( &light, 0, 0.5, 0.5, 0.5, 0.8, 0.8, 0.8, 0, 0, 0, 0 );
-  rkglLightSetPos( &light,
-    atof(opt[OPT_LX].arg), atof(opt[OPT_LY].arg), atof(opt[OPT_LZ].arg) );
-  rkglShadowInit( &shadow, 1024, 1024, 2, 0.2 );
-  rkglTextureEnable();
+  zSphere3D bball;
+  double vv_width, vv_near, vv_far;
 
   rkglChainAttrInit( &attr );
   if( opt[OPT_WIREFRAME].flag ) attr.disptype = RKGL_WIREFRAME;
@@ -441,10 +425,36 @@ void rk_penInit(void)
   if( opt[OPT_INITFILE].flag &&
       !rkChainInitReadZTK( &chain, opt[OPT_INITFILE].arg ) )
     exit( 1 );
+
+  zRGBDec( &rgb, opt[OPT_BG].arg );
+  rkglBGSet( &cam, rgb.r, rgb.g, rgb.b );
+  rkglVPCreate( &cam, 0, 0, atoi( opt[OPT_WIDTH].arg ), atoi( opt[OPT_HEIGHT].arg ) );
+  if( opt[OPT_AUTO].flag ){
+    rkChainBBall( &chain, &bball );
+    rkglCALookAt( &cam,
+      zSphere3DCenter(&bball)->c.x+zSphere3DRadius(&bball)*18, zSphere3DCenter(&bball)->c.y, zSphere3DCenter(&bball)->c.z,
+      zSphere3DCenter(&bball)->c.x, zSphere3DCenter(&bball)->c.y, zSphere3DCenter(&bball)->c.z,
+      0, 0, 1 );
+    vv_width = zSphere3DRadius(&bball) / 8;
+    vv_near = zSphere3DRadius(&bball);
+    vv_far = 1000*zSphere3DRadius(&bball);
+  } else{
+    rkglCASet( &cam,
+      atof( opt[OPT_OX].arg ), atof( opt[OPT_OY].arg ), atof( opt[OPT_OZ].arg ),
+      atof( opt[OPT_PAN].arg ),  atof( opt[OPT_TILT].arg ), atof( opt[OPT_ROLL].arg ) );
+    vv_width = 0.2;
+    vv_near = 1;
+    vv_far = 200;
+  }
+  glEnable( GL_LIGHTING );
+  rkglLightCreate( &light, 0, 0.5, 0.5, 0.5, 0.8, 0.8, 0.8, 0, 0, 0, 0 );
+  rkglLightSetPos( &light, atof(opt[OPT_LX].arg), atof(opt[OPT_LY].arg), atof(opt[OPT_LZ].arg) );
+  rkglShadowInit( &shadow, 1024, 1024, 2, 0.2 );
+  rkglTextureEnable();
   if( opt[OPT_SMOOTH].flag ) glEnable( GL_LINE_SMOOTH );
   if( opt[OPT_FOG].flag ) glEnable( GL_FOG );
 
-  rkglSetCallbackParamGLUT( &cam, 0.2, 1, 200, 0.02, 5.0 );
+  rkglSetCallbackParamGLUT( &cam, vv_width, vv_near, vv_far, 0.02, 5.0 );
   if( opt[OPT_SHADOW].flag )
     glutDisplayFunc( display_shadow );
   else
