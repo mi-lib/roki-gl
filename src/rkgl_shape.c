@@ -6,7 +6,7 @@
 
 #include <stdarg.h>
 #include <roki-gl/rkgl_shape.h>
-#include <zeo/zeo_bv.h>
+#include <zeo/zeo_bv3d.h>
 
 /* display list */
 

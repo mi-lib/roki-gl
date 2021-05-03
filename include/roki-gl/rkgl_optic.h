@@ -7,7 +7,7 @@
 #ifndef __RKGL_OPTIC_H__
 #define __RKGL_OPTIC_H__
 
-#include <zeo/zeo_optic.h>
+#include <zeo/zeo_render_optic.h>
 #include <roki-gl/rkgl_misc.h>
 
 __BEGIN_DECLS

@@ -10,7 +10,7 @@
 #include <roki-gl/rkgl_optic.h>
 #include <roki-gl/rkgl_texture.h>
 #include <zeo/zeo_pointcloud.h>
-#include <zeo/zeo_mshape.h>
+#include <zeo/zeo_mshape3d.h>
 
 __BEGIN_DECLS
 

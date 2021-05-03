@@ -8,7 +8,7 @@
 #define __RKGL_TEXTURE_H__
 
 #include <roki-gl/rkgl_misc.h>
-#include <zeo/zeo_texture.h>
+#include <zeo/zeo_render_texture.h>
 #include <zx11/zximage.h>
 
 __BEGIN_DECLS
