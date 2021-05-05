@@ -9,7 +9,7 @@
 
 enum{
   OPT_MODELFILE=0,
-  OPT_PAN, OPT_TILT, OPT_ROLL, OPT_OX, OPT_OY, OPT_OZ,
+  OPT_PAN, OPT_TILT, OPT_ROLL, OPT_OX, OPT_OY, OPT_OZ, OPT_AUTO,
   OPT_WIDTH, OPT_HEIGHT,
   OPT_SCALE,
   OPT_WIREFRAME,
@@ -28,6 +28,7 @@ zOption opt[] = {
   { "x", NULL, "<value>", "camera position in x axis", (char *)"5", false },
   { "y", NULL, "<value>", "camera position in y axis", (char *)"0", false },
   { "z", NULL, "<value>", "camera position in z axis", (char *)"0", false },
+  { "auto", NULL, NULL, "automatic allocation of camera", NULL, false },
   { "width", NULL, "<width>", "set window width", (char *)"500", false },
   { "height", NULL, "<height>", "set window height", (char *)"500", false },
   { "scale", NULL, "<scale>", "set scale factor", (char *)"1.0", false },
@@ -52,6 +53,10 @@ rkglCamera cam;
 rkglLight light;
 rkglShadow shadow;
 int model = -1;
+
+/* view volume */
+zSphere3D bball;
+double vv_width, vv_near, vv_far;
 
 void rk_viewUsage(void)
 {
@@ -156,10 +161,31 @@ void rk_viewReadModel(void)
     for( i=0; i<zMShape3DShapeNum(&ms); i++ )
       zPH3DScale( zShape3DPH(zMShape3DShape(&ms,i)), scale );
   }
+  if( !zMShape3DBBall( &ms, &bball ) ) exit( 1 );
   model = rkglMShapeEntry( &ms,
     opt[OPT_WIREFRAME].flag ? RKGL_WIREFRAME : RKGL_FACE, &light );
   zMShape3DDestroy( &ms );
   if( model < 0 ) exit( 1 );
+}
+
+void rk_viewResetCamera(void)
+{
+  if( opt[OPT_AUTO].flag ){
+    rkglCALookAt( &cam,
+      zSphere3DCenter(&bball)->c.x+zSphere3DRadius(&bball)*18, zSphere3DCenter(&bball)->c.y, zSphere3DCenter(&bball)->c.z,
+      zSphere3DCenter(&bball)->c.x, zSphere3DCenter(&bball)->c.y, zSphere3DCenter(&bball)->c.z,
+      0, 0, 1 );
+    vv_width = zSphere3DRadius(&bball) / 8;
+    vv_near = zSphere3DRadius(&bball);
+    vv_far = 1000*zSphere3DRadius(&bball);
+  } else{
+    rkglCASet( &cam,
+      atof(opt[OPT_OX].arg), atof(opt[OPT_OY].arg), atof(opt[OPT_OZ].arg),
+      atof(opt[OPT_PAN].arg), atof(opt[OPT_TILT].arg), atof(opt[OPT_ROLL].arg) );
+    vv_width = 0.2;
+    vv_near = 1;
+    vv_far = 200;
+  }
 }
 
 void rk_viewInit(void)
@@ -173,20 +199,17 @@ void rk_viewInit(void)
 
   zRGBDec( &rgb, opt[OPT_BG].arg );
   rkglBGSet( &cam, rgb.r, rgb.g, rgb.b );
-  rkglVPCreate( &cam, 0, 0,
-    atoi(opt[OPT_WIDTH].arg), atoi(opt[OPT_HEIGHT].arg) );
-  rkglCASet( &cam,
-    atof(opt[OPT_OX].arg), atof(opt[OPT_OY].arg), atof(opt[OPT_OZ].arg),
-    atof(opt[OPT_PAN].arg), atof(opt[OPT_TILT].arg), atof(opt[OPT_ROLL].arg) );
+  rkglVPCreate( &cam, 0, 0, atoi(opt[OPT_WIDTH].arg), atoi(opt[OPT_HEIGHT].arg) );
+  rkglVPCreate( &cam, 0, 0, atoi( opt[OPT_WIDTH].arg ), atoi( opt[OPT_HEIGHT].arg ) );
+
+  rk_viewReadModel();
+  rk_viewResetCamera();
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0, 0.5, 0.5, 0.5, 0.8, 0.8, 0.8, 0, 0, 0, 0 );
-  rkglLightSetPos( &light,
-    atof(opt[OPT_LX].arg), atof(opt[OPT_LY].arg), atof(opt[OPT_LZ].arg) );
+  rkglLightSetPos( &light, atof(opt[OPT_LX].arg), atof(opt[OPT_LY].arg), atof(opt[OPT_LZ].arg) );
   rkglShadowInit( &shadow, 512, 512, 1.5, 0.2 );
   rkglTextureEnable();
-
-  rk_viewReadModel();
 
   if( opt[OPT_SMOOTH].flag ) glEnable( GL_LINE_SMOOTH );
   if( opt[OPT_FOG].flag ) rkglBGFog( &cam, 0.1 );
@@ -227,10 +250,10 @@ void rk_viewReshape(void)
   double x, y;
 
   zxGetGeometry( win, &reg );
-  x = 0.1;
   rkglVPCreate( &cam, 0, 0, reg.width, reg.height );
+  x = vv_width / 2;
   y = x / rkglVPAspect(&cam);
-  rkglFrustum( &cam, -x, x, -y, y, 1, 20 );
+  rkglFrustum( &cam, -x, x, -y, y, vv_near, vv_far );
 }
 
 int rk_viewKeyPress(void)
@@ -244,14 +267,14 @@ int rk_viewKeyPress(void)
       rkglCALookAt( &cam,
         atof(opt[OPT_LX].arg), atof(opt[OPT_LY].arg), atof(opt[OPT_LZ].arg),
         0, 0, 0, -1, 0, 1 );
-    } else{
-      rkglCASet( &cam,
-        atof(opt[OPT_OX].arg), atof(opt[OPT_OY].arg), atof(opt[OPT_OZ].arg),
-        atof(opt[OPT_PAN].arg), atof(opt[OPT_TILT].arg), atof(opt[OPT_ROLL].arg) );
-    }
+    } else
+      rk_viewResetCamera();
     break;
   case XK_c:
     rk_viewCapture();
+    break;
+  case XK_r:
+    rk_viewResetCamera();
     break;
   case XK_q:
     return -1;

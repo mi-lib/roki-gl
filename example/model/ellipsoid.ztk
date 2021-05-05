@@ -4,7 +4,7 @@ ambient: 0.4, 0.4, 0.0
 diffuse: 0.6, 0.6, 0.0
 specular: 0.0, 0.0, 0.0
 alpha: 1, 1, 1
-exp: 1
+esr: 1
 
 [shape]
 name : ellipsoid

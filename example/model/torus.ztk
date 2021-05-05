@@ -4,7 +4,7 @@ ambient: 0.8 0.8 0.8
 diffuse: 0.8 0.8 0.8
 specular: 0.0 0.0 0.0
 alpha: 0.8
-exp: 1.0
+esr: 1.0
 
 [shape]
 name: torus

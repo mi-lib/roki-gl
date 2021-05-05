@@ -1,3 +1,5 @@
+2021. 5. 5. Corrected model files. [example]
+2021. 5. 5. Added -auto option in rk_view to automatically adjust the view point and view volume. [app]
 2021. 5. 3. Reflected new specification of Zeo. [rkgl_optic, rkgl_texture, rkgl_shape]
 2021. 5. 2. Modified rk_penInit in rk_pen. [app]
 2021. 5. 2. Added -auto option in rk_pen to automatically adjust the view point and view volume. [app]

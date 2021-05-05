@@ -4,7 +4,7 @@ ambient: 1.0 1.0 1.0
 diffuse: 1.0 1.0 1.0
 specular: 1.0 1.0 1.0
 alpha: 1.0
-exp: 1.0
+esr: 1.0
 
 [shape]
 name: happy_buddha
