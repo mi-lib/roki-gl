@@ -161,7 +161,8 @@ void rk_viewReadModel(void)
     for( i=0; i<zMShape3DShapeNum(&ms); i++ )
       zPH3DScale( zShape3DPH(zMShape3DShape(&ms,i)), scale );
   }
-  if( !zMShape3DBBall( &ms, &bball ) ) exit( 1 );
+  if( opt[OPT_AUTO].flag )
+    if( !zMShape3DBBall( &ms, &bball ) ) exit( 1 );
   model = rkglMShapeEntry( &ms,
     opt[OPT_WIREFRAME].flag ? RKGL_WIREFRAME : RKGL_FACE, &light );
   zMShape3DDestroy( &ms );
