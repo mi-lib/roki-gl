@@ -14,10 +14,12 @@ __BEGIN_DECLS
 
 /* color material */
 
-#define rkglRGB(rgb) glColor3f( (rgb)->r, (rgb)->g, (rgb)->b )
+#define rkglRGB(rgb)    glColor3f( (rgb)->r, (rgb)->g, (rgb)->b )
+#define rkglRGBA(rgb,a) glColor4f( (rgb)->r, (rgb)->g, (rgb)->b, (a) )
 
 void rkglColor24(unsigned color);
 
+void rkglMaterialRGBA(zRGB *rgb, float alpha);
 void rkglMaterialWhite(void);
 void rkglMaterialOpticalInfo(zOpticalInfo *oi);
 void rkglMaterial(zOpticalInfo *oi);

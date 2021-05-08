@@ -20,10 +20,18 @@ void rkglColor24(unsigned color)
   glColor3ub( red, green, blue );
 }
 
+void rkglMaterialRGBA(zRGB *rgb, float alpha)
+{
+  GLfloat color[4];
+
+  color[3] = alpha;
+  zRGB2fv( rgb, color );
+  glMaterialfv( GL_FRONT, GL_AMBIENT_AND_DIFFUSE, color );
+}
+
 void rkglMaterialWhite(void)
 {
-  GLfloat white[] = { 1.0, 1.0, 1.0, 1.0 };
-  glMaterialfv( GL_FRONT, GL_AMBIENT_AND_DIFFUSE, white );
+  rkglMaterialRGBA( ZRGBWHITE, 1.0 );
 }
 
 void rkglMaterialOpticalInfo(zOpticalInfo *oi)

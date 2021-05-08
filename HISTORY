@@ -1,5 +1,7 @@
+2021. 5. 8. Added rkglRGBA. [rkgl_color]
+2021. 5. 8. Added rkglMaterialRGBA and modified rkglMaterialWhite. [rkgl_color]
 2021. 5. 8. Reflected -ansi option of zeda-makefile-gen. [app]
-2021. 5. 7. Made tools/, and modified makefiles. [zm, app, tools]
+2021. 5. 7. Made tools/, and modified makefiles. [makefile, app, tools]
 2021. 5. 6. Modified rk_view. [app]
 2021. 5. 5. Corrected model files. [example]
 2021. 5. 5. Added -auto option in rk_view to automatically adjust the view point and view volume. [app]
