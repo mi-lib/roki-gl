@@ -570,7 +570,7 @@ void rkglShape(zShape3D *s, zOpticalInfo *oi_alt, int disptype, rkglLight *light
     rkglMaterial( zShape3DOptic(s) );
   if( disptype == RKGL_BB ){
     zBox3D box;
-    zOBB( &box, zShape3DVertBuf(s), zShape3DVertNum(s) );
+    zOBB3D( &box, zShape3DVertBuf(s), zShape3DVertNum(s) );
     rkglBox( &box, disptype );
   }
   for( i=0; shapelist[i].typestr; i++ )
