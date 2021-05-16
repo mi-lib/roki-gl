@@ -77,9 +77,9 @@ rkLink *rk_penLink(void)
 void rk_penPos(double *x, double *y, double *z)
 {
   printf( "enter position vector> " );
-  *x = zFDouble( stdin );
-  *y = zFDouble( stdin );
-  *z = zFDouble( stdin );
+  zFDouble( stdin, x );
+  zFDouble( stdin, y );
+  zFDouble( stdin, z );
   printf( "*** entered position ***\n" );
   printf( "(%.10g %.10g %.10g)\n", *x, *y, *z );
 }
@@ -87,9 +87,9 @@ void rk_penPos(double *x, double *y, double *z)
 void rk_penZYX(double *v1, double *v2, double *v3)
 {
   printf( "enter z-y-x Eulerian angles> " );
-  *v1 = zDeg2Rad( zFDouble( stdin ) );
-  *v2 = zDeg2Rad( zFDouble( stdin ) );
-  *v3 = zDeg2Rad( zFDouble( stdin ) );
+  zFDouble( stdin, v1 ); *v1 = zDeg2Rad( *v1 );
+  zFDouble( stdin, v2 ); *v2 = zDeg2Rad( *v2 );
+  zFDouble( stdin, v3 ); *v3 = zDeg2Rad( *v3 );
   printf( "*** entered z-y-x Eulerian angles ***\n" );
   printf( "(%.10g %.10g %.10g)\n", *v1, *v2, *v3 );
 }
@@ -188,7 +188,7 @@ void rk_penSetJointDis(void)
   rk_penRad2DegJointDis( l, max );
   for( i=0; i<rkLinkJointSize(l); i++ ){
     printf( "enter value %d/%d [%.10g-%.10g]> ", i, rkLinkJointSize(l), min[i], max[i] );
-    dis[i] = zFDouble( stdin );
+    zFDouble( stdin, &dis[i] );
   }
   rk_penDeg2RadJointDis( l, dis );
   rkLinkSetJointDis( l, dis );
