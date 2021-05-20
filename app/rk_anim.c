@@ -74,8 +74,6 @@ static double skew;
 static double t_resume;
 static bool seq_in_process = false;
 
-static rkChain chain_env;
-static rkglChain ge;
 static int env = 0;
 
 static rkglCamera cam;
@@ -431,21 +429,29 @@ void rkAnimRedisplay(void)
 void rkAnimLoadEnv(void)
 {
   rkglChainAttr attr;
+  rkChain chain_env;
+  rkglChain ge;
+  zMShape3D ms_env;
 
   rkglChainAttrInit( &attr );
   if( opt[OPT_WIREFRAME].flag ) attr.disptype = RKGL_WIREFRAME;
   if( opt[OPT_BB].flag )        attr.disptype = RKGL_BB;
 
-  if( !rkChainReadZTK( &chain_env, opt[OPT_ENVFILE].arg ) ){
+  if( rkChainReadZTK( &chain_env, opt[OPT_ENVFILE].arg ) ){
+    if( !rkglChainLoad( &ge, &chain_env, &attr, &light ) ) exit( 1 );
+    env = rkglBeginList();
+    rkglChainDraw( &ge );
+    glEndList();
+    rkglChainUnload( &ge );
+    rkChainDestroy( &chain_env );
+  } else
+  if( zMShape3DReadZTK( &ms_env, opt[OPT_ENVFILE].arg ) ){
+    env = rkglMShapeEntry( &ms_env, attr.disptype, &light );
+    zMShape3DDestroy( &ms_env );
+  } else{
     ZOPENERROR( opt[OPT_ENVFILE].arg );
-    rkAnimUsage();
     exit( 1 );
   }
-  if( !rkglChainLoad( &ge, &chain_env, &attr, &light ) ) exit( 1 );
-
-  env = rkglBeginList();
-  rkglChainDraw( &ge );
-  glEndList();
   if( env < 0 ) exit( 1 );
 }
 
@@ -525,7 +531,9 @@ bool rkAnimCommandArgs(int argc, char *argv[])
 void rkAnimExit(void)
 {
   rkAnimCellListDestroy();
+#if 0
   if( env ) rkChainDestroy( &chain_env );
+#endif
   rkglWindowCloseGLX( glwin );
   rkglExitGLX();
   zxWindowDestroy( &win );
