@@ -119,12 +119,12 @@ int rkglKeyFuncGLX(rkglCamera *cam, double dl, double da)
 {
   KeySym key;
   switch( ( key = zxKeySymbol() ) ){
-  case XK_h:     rkglCARelMoveLeft(  cam, dl ); break;
-  case XK_l:     rkglCARelMoveRight( cam, dl ); break;
-  case XK_k:     rkglCARelMoveUp(    cam, dl ); break;
-  case XK_j:     rkglCARelMoveDown(  cam, dl ); break;
-  case XK_z: zxModkeyShiftIsOn() ?
-                 rkglCAZoomOut( cam, dl ) : rkglCAZoomIn( cam, dl );  break;
+  case XK_H: case XK_h: rkglCARelMoveLeft(  cam, dl ); break;
+  case XK_L: case XK_l: rkglCARelMoveRight( cam, dl ); break;
+  case XK_K: case XK_k: rkglCARelMoveUp(    cam, dl ); break;
+  case XK_J: case XK_j: rkglCARelMoveDown(  cam, dl ); break;
+  case XK_Z: case XK_z: zxModkeyShiftIsOn() ?
+                        rkglCAZoomOut( cam, dl ) : rkglCAZoomIn( cam, dl );  break;
   case XK_Up:    rkglKeyCARotateUp(    cam, da, zxModkeyCtrlIsOn() ); break;
   case XK_Down:  rkglKeyCARotateDown(  cam, da, zxModkeyCtrlIsOn() ); break;
   case XK_Left:  rkglKeyCARotateLeft(  cam, da, zxModkeyCtrlIsOn() ); break;

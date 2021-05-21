@@ -18,14 +18,15 @@ enum{
   OPT_LX, OPT_LY, OPT_LZ,
   OPT_SMOOTH, OPT_FOG,
   OPT_SHADOW, OPT_SHADOW_SIZE, OPT_SHADOW_AREA,
-  OPT_FRAME, OPT_CAPTURE, OPT_CAPTURESERIAL, OPT_SECPERFRAME, OPT_SKEW,
+  OPT_FRAME, OPT_CAPTURE, OPT_CAPTURESERIAL, OPT_CAPTURE_XWD,
+  OPT_SECPERFRAME, OPT_SKEW,
   OPT_RESIZE,
   OPT_NOTIMESTAMP,
   OPT_HELP,
   OPT_INVALID
 };
 zOption opt[] = {
-  { "title", NULL, "<title name>", "title of sequence", (char *)"robot animation", false },
+  { "title", NULL, "<title name>", "title of sequence", (char *)"robot_animation", false },
   { "env", NULL, "<.ztk file>", "environment model file", NULL, false },
   { "pan", NULL, "<pan value>", "set camera pan angle", (char *)"0", false },
   { "tilt", NULL, "<tilt value>", "set camera tilt angle", (char *)"0", false },
@@ -54,6 +55,7 @@ zOption opt[] = {
   { "k", NULL, NULL, "wait key-in at each step", NULL, false },
   { "capture", NULL, "<suf>", "output image format (suffix)", (char *)"png", false },
   { "captureserial", NULL, "<suf>", "output images with serial numbers", NULL, false },
+  { "xwd", NULL, NULL, "use xwd for image conversion", NULL, false },
   { "secperframe", NULL, "<period [msec]>", "second per frame", NULL, false },
   { "skew", NULL, "<multiplier>", "set time skew multiplier", (char *)"1.0", false },
   { "resize", NULL, NULL, "enable to resize within the parent window", NULL, false },
@@ -63,8 +65,8 @@ zOption opt[] = {
 };
 
 #define RK_ANIM_BUFSIZ 512
-#define RK_ANIM_SIDE_SPACE 4
-#define RK_ANIM_TOP_SPACE 4
+#define RK_ANIM_SIDE_SPACE 0
+#define RK_ANIM_TOP_SPACE 0
 #define RK_ANIM_BOTTOM_SPACE 36
 
 #define RK_ANIM_SEC_PER_FRAME 0.033
@@ -237,22 +239,8 @@ bool rkAnimCellListCreate(zStrList *arglist)
   return true;
 }
 
-void rkAnimCapture(void)
+void rkAnimCaptureXWD(void)
 {
-#if 0
-  zxImage img;
-  static char imgfile[RK_ANIM_BUFSIZ];
-  static int count = 0;
-
-  if( opt[OPT_CAPTURESERIAL].flag )
-    sprintf( imgfile, "%s%05d.bmp", opt[OPT_TITLE].arg, count++ );
-  else
-    sprintf( imgfile, "%s%0.3f.bmp", opt[OPT_TITLE].arg, t_resume );
-  zxImageAllocDefault( &img, zxWindowWidth(&win), zxWindowHeight(&win) );
-  zxImageFromPixmap( &img, zxWindowCanvas(&win), img.width, img.height );
-  zxImageWriteBMPFile( &img, imgfile );
-  zxImageDestroy( &img );
-#else
   static char imgfile[RK_ANIM_BUFSIZ];
   static int count = 0;
   char cmd[BUFSIZ];
@@ -265,8 +253,25 @@ void rkAnimCapture(void)
   if( system( cmd ) < 0 ){
     ZRUNERROR( "cannot run xwd" );
   }
-#endif
 }
+
+void rkAnimCaptureZX11(void)
+{
+  zxImage img;
+  static char imgfile[RK_ANIM_BUFSIZ];
+  static int count = 0;
+
+  if( opt[OPT_CAPTURESERIAL].flag )
+    sprintf( imgfile, "%s%05d.bmp", opt[OPT_TITLE].arg, count++ );
+  else
+    sprintf( imgfile, "%s%0.3f.bmp", opt[OPT_TITLE].arg, t_resume );
+  zxImageAllocDefault( &img, zxWindowWidth(&win), zxWindowHeight(&win) );
+  zxImageFromPixmap( &img, zxWindowCanvas(&win), img.width, img.height );
+  zxImageWriteBMPFile( &img, imgfile );
+  zxImageDestroy( &img );
+}
+
+void (* rkAnimCapture)(void) = rkAnimCaptureZX11;
 
 void rkAnimForward(int sig)
 {
@@ -479,7 +484,7 @@ void rkAnimInit(void)
   zxWindowOpen( &win );
   zxWindowSetBGColorByName( &win, "lightgray" );
   zxWindowSetColorByName( &win, "black" );
-  zxWindowSetFont( &win, "-misc-fixed-medium-r-normal-*-40-*-*-*-*-*-*-*" );
+  zxWindowSetFont( &win, "-misc-fixed-medium-r-normal-*-32-*-*-*-*-*-*-*" );
 
   if( opt[OPT_NOTIMESTAMP].flag )
     glwin = rkglWindowCreateGLX( &win, 0, 0, width, height, NULL );
@@ -516,6 +521,7 @@ bool rkAnimCommandArgs(int argc, char *argv[])
   if( argc <= 1 ) rkAnimUsage();
   zOptionRead( opt, argv, &arglist );
   if( opt[OPT_HELP].flag ) rkAnimUsage();
+  if( opt[OPT_CAPTURE_XWD].flag ) rkAnimCapture = rkAnimCaptureXWD;
   if( opt[OPT_SECPERFRAME].flag )
     sec_per_frame = atof( opt[OPT_SECPERFRAME].arg );
   skew = 1.0 / atof( opt[OPT_SKEW].arg );
@@ -621,7 +627,9 @@ void rkAnimDrawTimestamp(void)
   sprintf( timestamp, "%0.3f [s]", t_resume / skew );
   zxTextArea( timestamp, 0, 0, &reg );
   zxWindowClear( &win );
+  zxWindowSetColorByName( &win, "black" );
   zxDrawString( &win, zxWindowWidth(&win)-reg.width-8, zxWindowHeight(&win)-8, timestamp );
+  zxFlush();
 }
 
 void rkAnimFK(void)
@@ -673,7 +681,7 @@ void rkAnimPlay(void)
       if( seq_in_process ) continue;
       rkAnimFK();
       rkAnimRedisplay();
-      rkAnimDrawTimestamp();
+      if( !rkAnimIsTerminated() ) rkAnimDrawTimestamp();
     }
   }
   eprintf( "animation terminated.\n" );
