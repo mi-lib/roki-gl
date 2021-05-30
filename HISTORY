@@ -1,3 +1,4 @@
+2021. 5.30. Applied zeda-deb-gen. [makefile]
 2021. 5.21. Modified rkglKeyFuncGLX to accept capital letters for key input. [rkgl_glx]
 2021. 5.21. Modified rk_anim as to enable to choose xwd or direct pixmap conversion for image capturing. [app]
 2021. 5.21. Debugged rk_anim. [app]
