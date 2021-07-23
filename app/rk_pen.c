@@ -339,10 +339,11 @@ void rk_penExportInit(void)
 
 void rk_penCapture(void)
 {
+#define FILENAMESIZ 512
 #define SUFSIZ 10
   static int count = 0; /* for capture count */
   char xwdcommand[BUFSIZ];
-  char xwdfile[BUFSIZ], imgfile[BUFSIZ];
+  char xwdfile[FILENAMESIZ], imgfile[FILENAMESIZ];
   char imgsuf[SUFSIZ];
 
   printf( "enter a suffix for image format: " );

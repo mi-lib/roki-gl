@@ -41,9 +41,7 @@ zOption opt[] = {
   { NULL, NULL, NULL, NULL, NULL, false },
 };
 
-#define RK_SEQ_BUFSIZ 512
-
-static char seqfilebase[RK_SEQ_BUFSIZ];
+static char *seqfilebase;
 
 static rkChain chain;
 static rkglChain gc;
@@ -96,7 +94,9 @@ bool rk_seqLoadSequence(void)
   if( opt[OPT_ZKCSFILE].flag ){
     if( !zSeqScanFile( &seq, opt[OPT_ZKCSFILE].arg ) )
       return false;
-    zGetBasename( opt[OPT_ZKCSFILE].arg, seqfilebase, BUFSIZ );
+    if( !( seqfilebase = zStrClone( opt[OPT_ZKCSFILE].arg ) ) )
+      return false;
+    zGetBasenameDRC( seqfilebase );
   } else{
     if( opt[OPT_ZVSFILE].flag ){
       if( !zSeqScanFile( &seq, opt[OPT_ZVSFILE].arg ) )
@@ -105,7 +105,9 @@ bool rk_seqLoadSequence(void)
       if( !zSeqFScan( stdin, &seq ) ) return false;
       opt[OPT_ZVSFILE].arg = (char *)seq_stdin;
     }
-    zGetBasename( opt[OPT_ZVSFILE].arg, seqfilebase, BUFSIZ );
+    if( !( seqfilebase = zStrClone( opt[OPT_ZVSFILE].arg ) ) )
+      return false;
+    zGetBasenameDRC( seqfilebase );
   }
   if( !( poselist = zIndexCreate( zListSize(&seq) ) ) ){
     zSeqFree( &seq );
@@ -220,6 +222,7 @@ void rk_seqExit(void)
 {
   register int i;
 
+  free( seqfilebase );
   for( i=0; i<zArraySize(poselist); i++ )
     glDeleteLists( zIndexElem(poselist,i), 1 );
   zIndexFree( poselist );
@@ -231,9 +234,10 @@ void rk_seqExit(void)
 
 void rk_seqCapture(void)
 {
+#define SEQ_BUFSIZ 512
   zxRegion reg;
   zxImage img;
-  static char imgfile[RK_SEQ_BUFSIZ];
+  static char imgfile[SEQ_BUFSIZ];
 
   sprintf( imgfile, "%s_seq.png",  seqfilebase );
   zxGetGeometry( win, &reg );
