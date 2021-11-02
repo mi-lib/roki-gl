@@ -1,3 +1,4 @@
+2021.11. 3. Debugged rkglWindowCreateGLX to accept null string for title. [rkgl_glx]
 2021. 7.24. Resolved ambiguity of buffer size for sprintf in rk_pen and rk_seq. [app]
 2021. 6. 1. Applied new zeda-makefile-gen to compilation of shared objects. [src]
 2021. 6. 1. Modified allclean.sh in example to skip directories without makefile. [example]

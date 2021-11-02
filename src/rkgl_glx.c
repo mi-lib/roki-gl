@@ -89,7 +89,8 @@ Window rkglWindowCreateGLX(zxWindow *parent, int x, int y, int w, int h, const c
     InputOutput, _rkgl_vi_glx->visual,
     CWBackPixel | CWBorderPixel | CWColormap | CWEventMask | CWBackingStore | CWOverrideRedirect,
     &attr );
-  XStoreName( zxdisplay, win, title );
+  if( title )
+    XStoreName( zxdisplay, win, title );
   rkglWindowActivateGLX( win );
   rkglEnableDefault();
   return win;
