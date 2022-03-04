@@ -1,5 +1,6 @@
 /* rk_pen - posture edit navigator of a kinematic chain */
 
+#include <unistd.h>
 #include <pthread.h>
 #include <roki-gl/rkgl_glut.h>
 #include <roki-gl/roki-gl.h>
@@ -388,6 +389,51 @@ void display_shadow(void)
   glutSwapBuffers();
 }
 
+int rk_penChangeDir(char *pathname, char *dirname, char *filename, char *cwd, size_t size)
+{
+  if( !getcwd( cwd, size ) ){
+    ZRUNERROR( "astray from directory" );
+    return -1;
+  }
+  zGetDirFilename( pathname, dirname, filename, size );
+  if( *dirname ){
+    if( chdir( dirname ) < 0 ){
+      ZRUNERROR( "cannot change directory to %s", dirname );
+      return -1;
+    }
+  }
+  return 0;
+}
+
+int rk_penReturnDir(char *cwd)
+{
+  if( chdir( cwd ) < 0 ){
+    ZRUNERROR( "cannot change directory to %s", cwd );
+    return -1;
+  }
+  return 0;
+}
+
+rkChain *rk_penChainReadZTK(rkChain *chain, char *pathname)
+{
+  char dirname[BUFSIZ], filename[BUFSIZ], cwd[BUFSIZ];
+
+  rk_penChangeDir( pathname, dirname, filename, cwd, BUFSIZ );
+  chain = rkChainReadZTK( chain, filename );
+  rk_penReturnDir( cwd );
+  return chain;
+}
+
+zMShape3D *rk_penMShapeReadZTK(zMShape3D *ms, char *pathname)
+{
+  char dirname[BUFSIZ], filename[BUFSIZ], cwd[BUFSIZ];
+
+  rk_penChangeDir( pathname, dirname, filename, cwd, BUFSIZ );
+  ms = zMShape3DReadZTK( ms, filename );
+  rk_penReturnDir( cwd );
+  return ms;
+}
+
 void rk_penInit(void)
 {
   zRGB rgb;
@@ -407,12 +453,12 @@ void rk_penInit(void)
     attr.disptype = RKGL_ELLIPS;
     attr.ellips_mag = atof( opt[OPT_ELLIPS].arg );
   }
-  if( !rkChainReadZTK( &chain, opt[OPT_MODELFILE].arg ) ||
+  if( !rk_penChainReadZTK( &chain, opt[OPT_MODELFILE].arg ) ||
       !rkglChainLoad( &gr, &chain, &attr, &light ) )
     exit( 1 );
 
   if( opt[OPT_ENVFILE].flag ){
-    if( !zMShape3DReadZTK( &envshape, opt[OPT_ENVFILE].arg ) ){
+    if( !rk_penMShapeReadZTK( &envshape, opt[OPT_ENVFILE].arg ) ){
       ZOPENERROR( opt[OPT_ENVFILE].arg );
       rk_penUsage();
       exit( 1 );

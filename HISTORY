@@ -1,3 +1,4 @@
+2022. 3. 4. Modified rk_anim and rk_pen to automatically change working directory when reading model files. [app]
 2021.11. 3. Debugged rkglWindowCreateGLX to accept null string for title. [rkgl_glx]
 2021. 7.24. Resolved ambiguity of buffer size for sprintf in rk_pen and rk_seq. [app]
 2021. 6. 1. Applied new zeda-makefile-gen to compilation of shared objects. [src]

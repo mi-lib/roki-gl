@@ -103,6 +103,51 @@ static rkAnimCellList anim_cell_list;
 
 rkglChain g_env;
 
+int rkAnimChangeDir(char *pathname, char *dirname, char *filename, char *cwd, size_t size)
+{
+  if( !getcwd( cwd, size ) ){
+    ZRUNERROR( "astray from directory" );
+    return -1;
+  }
+  zGetDirFilename( pathname, dirname, filename, size );
+  if( *dirname ){
+    if( chdir( dirname ) < 0 ){
+      ZRUNERROR( "cannot change directory to %s", dirname );
+      return -1;
+    }
+  }
+  return 0;
+}
+
+int rkAnimReturnDir(char *cwd)
+{
+  if( chdir( cwd ) < 0 ){
+    ZRUNERROR( "cannot change directory to %s", cwd );
+    return -1;
+  }
+  return 0;
+}
+
+rkChain *rkAnimChainReadZTK(rkChain *chain, char *pathname)
+{
+  char dirname[BUFSIZ], filename[BUFSIZ], cwd[BUFSIZ];
+
+  rkAnimChangeDir( pathname, dirname, filename, cwd, BUFSIZ );
+  chain = rkChainReadZTK( chain, filename );
+  rkAnimReturnDir( cwd );
+  return chain;
+}
+
+zMShape3D *rkAnimMShapeReadZTK(zMShape3D *ms, char *pathname)
+{
+  char dirname[BUFSIZ], filename[BUFSIZ], cwd[BUFSIZ];
+
+  rkAnimChangeDir( pathname, dirname, filename, cwd, BUFSIZ );
+  ms = zMShape3DReadZTK( ms, filename );
+  rkAnimReturnDir( cwd );
+  return ms;
+}
+
 /* ************************************************************************* */
 /* chain */
 bool rkAnimCellLoadChain(char chainfile[], rkglChainAttr *attr)
@@ -113,7 +158,7 @@ bool rkAnimCellLoadChain(char chainfile[], rkglChainAttr *attr)
     ZALLOCERROR();
     return false;
   }
-  if( !rkChainReadZTK( &cell->data.chain, chainfile ) ||
+  if( !rkAnimChainReadZTK( &cell->data.chain, chainfile ) ||
       !rkglChainLoad( &cell->data.gc, &cell->data.chain, attr, &light ) ){
     ZOPENERROR( chainfile );
     zFree( cell );
@@ -444,14 +489,14 @@ void rkAnimLoadEnv(void)
   if( opt[OPT_BB].flag )        attr.disptype = RKGL_BB;
 
   rkChainInit( &chain_env );
-  if( rkChainReadZTK( &chain_env, opt[OPT_ENVFILE].arg ) ){
+  if( rkAnimChainReadZTK( &chain_env, opt[OPT_ENVFILE].arg ) ){
     if( !rkglChainLoad( &g_env, &chain_env, &attr, &light ) ) exit( 1 );
     env = rkglBeginList();
     rkglChainDraw( &g_env );
     glEndList();
     rkChainDestroy( &chain_env );
   } else
-  if( zMShape3DReadZTK( &ms_env, opt[OPT_ENVFILE].arg ) ){
+  if( rkAnimMShapeReadZTK( &ms_env, opt[OPT_ENVFILE].arg ) ){
     env = rkglMShapeEntry( &ms_env, attr.disptype, &light );
     zMShape3DDestroy( &ms_env );
   } else{
