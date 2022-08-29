@@ -116,7 +116,7 @@ void rk_penShowJointDis(void)
   printf( "*** joint displacements ***\n" );
   for( i=0; i<rkChainLinkNum(&chain); i++ ){
     printf( "[link:%d:%s] \t", i, rkChainLinkName(&chain,i) );
-    rkChainLinkGetJointDis( &chain, i, dis );
+    rkChainLinkJointGetDis( &chain, i, dis );
     for( j=0; j<rkChainLinkJointSize(&chain,i); j++ )
       printf( "%.6g ", dis[j] );
     printf( "\n" );
@@ -183,8 +183,8 @@ void rk_penSetJointDis(void)
     return;
   }
   printf( "change joint displacement of link %s\n", zName( l ) );
-  rkLinkGetJointMin( l, min );
-  rkLinkGetJointMax( l, max );
+  rkLinkJointGetMin( l, min );
+  rkLinkJointGetMax( l, max );
   rk_penRad2DegJointDis( l, min );
   rk_penRad2DegJointDis( l, max );
   for( i=0; i<rkLinkJointSize(l); i++ ){
@@ -192,7 +192,7 @@ void rk_penSetJointDis(void)
     zFDouble( stdin, &dis[i] );
   }
   rk_penDeg2RadJointDis( l, dis );
-  rkLinkSetJointDis( l, dis );
+  rkLinkJointSetDis( l, dis );
   rkChainUpdateFK( &chain );
 }
 
