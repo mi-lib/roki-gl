@@ -1,3 +1,4 @@
+2022. 8.30. Reflected renamed functions rkLinkJointSetDis, rkLinkJointGetMin, rkLinkJointGetMax and rkChainLinkJointGetDis in rk_pen (thanks to Kenta Imanishi). [app]
 2022. 3. 4. Modified rk_anim and rk_pen to automatically change working directory when reading model files. [app]
 2021.11. 3. Debugged rkglWindowCreateGLX to accept null string for title. [rkgl_glx]
 2021. 7.24. Resolved ambiguity of buffer size for sprintf in rk_pen and rk_seq. [app]
@@ -170,16 +171,14 @@
 2009.10. 1. Modified _glrkShadowMap for large bounding radius cases. [glrk_shadow]
 2009. 8.26. Added C declaration in glrk_glx.h. [glrk_glx]
 2009. 8.12. Applied zVec3DCreatePolar to glrkSphere. [glrk_shape]
-2009. 5.23. Debugged glrkRobotUnload, glrkRobotLinkAlt and glrkRobotLinkReset
-            (thanks to Mitsuhiro Kubota). [glrk_robot]
+2009. 5.23. Debugged glrkRobotUnload, glrkRobotLinkAlt and glrkRobotLinkReset (thanks to Mitsuhiro Kubota). [glrk_robot]
 2009. 3.27. Abolished _glut_dl_mouse and _glut_da_mouse. [glrk_glut]
 2009. 3.10. Debugged glrkGetDepth. [glrk_select]
 2009. 3. 9. Added glrkPick and glrkFindNearside. [glrk_select]
 2009. 3. 9. Modified glrkRobotDraw for picking-up operation. [glrk_robot]
 2009. 3. 9. Added glrkRobotLinkAlt and glrkRobotLinkReset. [glrk_robot]
 2009. 3. 9. Abolished glrkMShapeReadFile. [glrk_shape]
-2009. 3. 8. Abolished glrkRobotReadFile. Robot model instance is no longer
-            created in glrkRobot instance. [glrk_robot]
+2009. 3. 8. Abolished glrkRobotReadFile. Robot model instance is no longer created in glrkRobot instance. [glrk_robot]
 2009. 3. 8. Modified glrkRobotDestroy and renamed to glrkRobotUnload. [glrk_robot]
 2009. 3. 8. Abolished glrkRobotUnload. [glrk_robot]
 2009. 3. 8. Added glrkLinkInfo class and modified glrkRobot class. [glrk_robot]
@@ -187,8 +186,7 @@
 2009. 3. 6. Modified glrkSphere, glrkCyl and glrkCone. [glrk_shape, glrk_robot]
 2009. 2. 6. Implemented auto-computation of fovy in lighting volume. [glrk_shadow]
 2009. 2. 4. Added glrkCARotate and to glrkCALockonRotate. [glrk_camera, glrk_glut]
-2009. 2. 4. Renamed glrkCARotate and glrkCALockonRotate to glrkCAPTR
-            (pan-tilt-roll) and glrkCALockonPTR, respectively. [glrk_camera]
+2009. 2. 4. Renamed glrkCARotate and glrkCALockonRotate to glrkCAPTR (pan-tilt-roll) and glrkCALockonPTR, respectively. [glrk_camera]
 2009. 2. 1. Renamed glrkSetCallbackParamGLUT. [glrk_glut]
 2009. 2. 1. Modified glrkMouseDragFuncGLUT. [glrk_glut]
 2009. 1.31. Added glrkShadow class. [glrk_shadow]
