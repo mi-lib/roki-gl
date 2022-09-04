@@ -1,3 +1,4 @@
+2022. 9. 4. Removed register keywords. [rkgl_texture, rkgl_shape, rkgl_chain, rkgl_select, rkgl_terra]
 2022. 8.30. Reflected renamed functions rkLinkJointSetDis, rkLinkJointGetMin, rkLinkJointGetMax and rkChainLinkJointGetDis in rk_pen (thanks to Kenta Imanishi). [app]
 2022. 3. 4. Modified rk_anim and rk_pen to automatically change working directory when reading model files. [app]
 2021.11. 3. Debugged rkglWindowCreateGLX to accept null string for title. [rkgl_glx]

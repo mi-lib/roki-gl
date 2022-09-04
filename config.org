@@ -1,6 +1,6 @@
 PREFIX=$(HOME)/usr
 PROJNAME=roki-gl
-VERSION=1.6.22
+VERSION=1.6.23
 
 DEPENDENCY="zeda=1.6.21;zm=1.4.4;zeo=1.10.2;roki=1.7.1;liw=1.2.7;zx11=1.2.7"
 

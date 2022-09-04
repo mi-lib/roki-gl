@@ -64,7 +64,7 @@ GLuint *rkglFindNearside(GLuint selbuf[], int hits)
 {
   GLuint *ptr, *ns;
   GLuint zmin;
-  register int i;
+  int i;
 
   if( hits <= 0 || selbuf[0] == 0 ) return NULL;
   zmin = selbuf[1];

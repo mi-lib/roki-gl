@@ -88,7 +88,7 @@ void rkglTriTexture(zTri3D *t, zTri2D *f)
 void rkglTriBump(zTri3D *t, zTri2D *f, zVec3D *lp)
 {
   zVec3D r, lv, v;
-  register int i;
+  int i;
 
   glBegin( GL_TRIANGLES );
   rkglNormal( zTri3DNorm(t) );
@@ -107,7 +107,7 @@ void rkglPolygon(zVec3D v[], int n, ...)
 {
   zVec3D v0, v1, v2, norm;
   va_list args;
-  register int i;
+  int i;
 
   if( n < 3 ){
     ZRUNERROR( "cannot create polygon from less than three vertices" );
@@ -136,7 +136,7 @@ void rkglPolygon(zVec3D v[], int n, ...)
 void rkglBox(zBox3D *box, int disptype)
 {
   zVec3D vert[8];
-  register int i;
+  int i;
 
   for( i=0; i<8; i++ )
     zBox3DVert( box, i, &vert[i] ); /* vertices */
@@ -153,7 +153,7 @@ static void _rkglBox(void *box, int disptype){ rkglBox( box, disptype ); }
 
 void rkglSphere(zSphere3D *sphere, int disptype)
 {
-  register int i, j, i1, j1, n2=zSphere3DDiv(sphere)*2;
+  int i, j, i1, j1, n2=zSphere3DDiv(sphere)*2;
   zVec3D vert[zSphere3DDiv(sphere)+1][n2+1], v;
 
   for( i=0; i<=zSphere3DDiv(sphere); i++ )
@@ -194,7 +194,7 @@ zVec3D *_rkglEllipsNormal(zEllips3D *ellips, zVec3D *v, zVec3D *n)
 
 void rkglEllips(zEllips3D *ellips, int disptype)
 {
-  register int i, j, i1, j1, n2=zEllips3DDiv(ellips)*2;
+  int i, j, i1, j1, n2=zEllips3DDiv(ellips)*2;
   zVec3D vert[zEllips3DDiv(ellips)+1][n2+1];
   zVec3D norm[zEllips3DDiv(ellips)+1][n2+1];
   zVec3D tmp;
@@ -238,7 +238,7 @@ void rkglCyl(zCyl3D *cyl, int disptype)
 {
   zVec3D norm[zCyl3DDiv(cyl)+1], vert[2][zCyl3DDiv(cyl)+1], d, s, aa;
   double l;
-  register int i;
+  int i;
 
   zCyl3DAxis( cyl, &d );
   if( zIsTiny( ( l = zVec3DNorm( &d ) ) ) ) return;
@@ -285,7 +285,7 @@ void rkglECyl(zECyl3D *ecyl, int disptype)
 {
   zVec3D norm[zECyl3DDiv(ecyl)+1], vert[2][zECyl3DDiv(ecyl)+1], d;
   double l, s, c;
-  register int i;
+  int i;
 
   zECyl3DAxis( ecyl, &d );
   if( ( l = zVec3DNormalizeDRC( &d ) ) < 0 ) return;
@@ -329,7 +329,7 @@ void rkglCone(zCone3D *cone, int disptype)
 {
   zVec3D norm[zCone3DDiv(cone)+1], vert[zCone3DDiv(cone)+1], d, s, tmp, v;
   double l;
-  register int i;
+  int i;
 
   zCone3DAxis( cone, &d );
   if( zIsTiny( ( l = zVec3DNorm( &d ) ) ) ) return;
@@ -370,7 +370,7 @@ static void _rkglCone(void *cone, int disptype){ rkglCone( cone, disptype ); }
 
 void rkglTorus(zVec3D *c, zVec3D *n, double r1, double r2, int div1, int div2, int disptype)
 {
-  register int i, j;
+  int i, j;
   zVec3D d, aa1, aa2, s, sr, dr, tmp, t;
   zVec3D norm[div1+1][div2+1], vert[div1+1][div2+1];
   double rm, r;
@@ -409,7 +409,7 @@ void rkglTorus(zVec3D *c, zVec3D *n, double r1, double r2, int div1, int div2, i
 
 void rkglNURBS(zNURBS3D *nurbs, int disptype)
 {
-  register int i, j, k;
+  int i, j, k;
   zVec3D *vert, *v1, *v2;
   zVec3D *norm, *n1, *n2;
   double u, v;
@@ -450,7 +450,7 @@ static void _rkglNURBS(void *nurbs, int disptype){ rkglNURBS( nurbs, disptype );
 
 void rkglNURBSCP(zNURBS3D *nurbs, GLfloat size, zRGB *rgb)
 {
-  register int i, j;
+  int i, j;
 
   glPointSize( size );
   glDisable( GL_LIGHTING );
@@ -480,7 +480,7 @@ void rkglNURBSCP(zNURBS3D *nurbs, GLfloat size, zRGB *rgb)
 
 void rkglPH(zPH3D *ph, int disptype)
 {
-  register int i;
+  int i;
 
   if( disptype == RKGL_WIREFRAME )
     glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
@@ -492,7 +492,7 @@ static void _rkglPH(void *ph, int disptype){ rkglPH( ph, disptype ); }
 
 void rkglPHTexture(zPH3D *ph, zOpticalInfo *oi, zTexture *texture)
 {
-  register int i;
+  int i;
 
   glActiveTexture( RKGL_TEXTURE_BASE );
   glBindTexture( GL_TEXTURE_2D, texture->id );
@@ -510,7 +510,7 @@ void rkglPHTexture(zPH3D *ph, zOpticalInfo *oi, zTexture *texture)
 void rkglPHBump(zPH3D *ph, zOpticalInfo *oi, zTexture *bump, rkglLight *light)
 {
   zVec3D lp;
-  register int i;
+  int i;
 
   _zVec3DCreate( &lp, light->pos[0], light->pos[1], light->pos[2] );
   glEnable( GL_TEXTURE_2D );
@@ -553,7 +553,7 @@ void rkglShape(zShape3D *s, zOpticalInfo *oi_alt, int disptype, rkglLight *light
     { "nurbs", _rkglNURBS },
     { NULL, NULL },
   };
-  register int i;
+  int i;
 
   if( zShape3DTexture(s) && zShape3DTexture(s)->id != 0 && disptype == RKGL_FACE && strcmp( s->com->typestr, "polyhedron" ) == 0 ){
     if( zShape3DTexture(s)->type == ZTEXTURE_BUMP )
@@ -593,7 +593,7 @@ int rkglShapeEntry(zShape3D *s, zOpticalInfo *oi_alt, int disptype, rkglLight *l
 
 void rkglMShape(zMShape3D *s, int disptype, rkglLight *light)
 {
-  register int i;
+  int i;
 
   for( i=0; i<zMShape3DShapeNum(s); i++ )
     rkglShape( zMShape3DShape(s,i), NULL, disptype, light );
@@ -713,7 +713,7 @@ void rkglGauge(zDir axis1, double d1, zDir axis2, double d2, double w, double st
 
 void rkglChecker(zVec3D *pc0, zVec3D *pc1, zVec3D *pc2, int div1, int div2, zOpticalInfo *oi1, zOpticalInfo *oi2)
 {
-  register int i, j;
+  int i, j;
   zVec3D d1, d2, d11, d12, d21, d22, v[4];
 
   zVec3DSub( pc1, pc0, &d1 );

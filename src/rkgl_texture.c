@@ -13,7 +13,7 @@ bool rkglTextureReadFile(zTexture *texture, char *filename)
 {
   zxImage img;
   zxPixelManip pm;
-  register int i, j;
+  int i, j;
   ubyte *p;
   bool already_connected, ret = false;
 
@@ -107,7 +107,7 @@ static ubyte *_rkglTextureBumpVec(ubyte *p, double x, double y, double z)
 /* generate a normal map from a bump texture */
 static bool _rkglTextureBumpNormalMap(zTexture *bump, char *filename)
 {
-  register int i, j, k;
+  int i, j, k;
   zxImage img;
   zxPixelManip pm;
   double nx, ny, nz, l;
@@ -143,7 +143,7 @@ static bool _rkglTextureBumpNormalMap(zTexture *bump, char *filename)
 /* generate a light map from a bump texture */
 static void _rkglTextureBumpLightMap(zTexture *bump)
 {
-  register int i, j, k;
+  int i, j, k;
   int wh, hh;
   double x, y, y2;
   double xr, yr, zr;
@@ -179,7 +179,7 @@ bool rkglTextureBumpReadFile(zTexture *bump, char *filename)
     GL_TEXTURE_CUBE_MAP_POSITIVE_Y,
     GL_TEXTURE_CUBE_MAP_POSITIVE_Z,
   };
-  register int i;
+  int i;
 
   if( !_rkglTextureBumpNormalMap( bump, filename ) ) return false;
 
