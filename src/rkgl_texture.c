@@ -13,7 +13,7 @@ bool rkglTextureReadFile(zTexture *texture, char *filename)
 {
   zxImage img;
   zxPixelManip pm;
-  int i, j;
+  uint i, j;
   ubyte *p;
   bool already_connected, ret = false;
 
@@ -48,7 +48,7 @@ bool rkglTextureReadFile(zTexture *texture, char *filename)
 /* bump mapping */
 
 /* x component of a normal vector on a bump texture */
-static double _rkglTextureBumpNormalX(zxImage *img, zxPixelManip *pm, int j, int i)
+static double _rkglTextureBumpNormalX(zxImage *img, zxPixelManip *pm, uint j, uint i)
 {
   ubyte r1, g1, b1;
   ubyte r2, g2, b2;
@@ -60,7 +60,7 @@ static double _rkglTextureBumpNormalX(zxImage *img, zxPixelManip *pm, int j, int
     zxImageCellRGB( img, pm, 2, i, &r3, &g3, &b3 );
     return -0.5 * (double)( r1 + g1 + b1 ) + 2 * (double)( r2 + g2 + b2 ) / 3 - (double)( r3 + g3 + b3 ) / 6;
   }
-  if( j >= img->width - 1 ){
+  if( j + 1 >= img->width ){
     zxImageCellRGB( img, pm, img->width-3, i, &r1, &g1, &b1 );
     zxImageCellRGB( img, pm, img->width-2, i, &r2, &g2, &b2 );
     zxImageCellRGB( img, pm, img->width-1, i, &r3, &g3, &b3 );
@@ -72,7 +72,7 @@ static double _rkglTextureBumpNormalX(zxImage *img, zxPixelManip *pm, int j, int
 }
 
 /* y component of a normal vector on a bump texture */
-static double _rkglTextureBumpNormalY(zxImage *img, zxPixelManip *pm, int j, int i)
+static double _rkglTextureBumpNormalY(zxImage *img, zxPixelManip *pm, uint j, uint i)
 {
   ubyte r1, g1, b1;
   ubyte r2, g2, b2;
@@ -84,7 +84,7 @@ static double _rkglTextureBumpNormalY(zxImage *img, zxPixelManip *pm, int j, int
     zxImageCellRGB( img, pm, j, 2, &r3, &g3, &b3 );
     return -0.5 * (double)( r1 + g1 + b1 ) + 2 * (double)( r2 + g2 + b2 ) / 3 - (double)( r3 + g3 + b3 ) / 6;
   }
-  if( i >= img->height - 1 ){
+  if( i + 1 >= img->height ){
     zxImageCellRGB( img, pm, j, img->height-3, &r1, &g1, &b1 );
     zxImageCellRGB( img, pm, j, img->height-2, &r2, &g2, &b2 );
     zxImageCellRGB( img, pm, j, img->height-1, &r3, &g3, &b3 );
@@ -107,7 +107,7 @@ static ubyte *_rkglTextureBumpVec(ubyte *p, double x, double y, double z)
 /* generate a normal map from a bump texture */
 static bool _rkglTextureBumpNormalMap(zTexture *bump, char *filename)
 {
-  int i, j, k;
+  uint i, j, k;
   zxImage img;
   zxPixelManip pm;
   double nx, ny, nz, l;
@@ -143,8 +143,8 @@ static bool _rkglTextureBumpNormalMap(zTexture *bump, char *filename)
 /* generate a light map from a bump texture */
 static void _rkglTextureBumpLightMap(zTexture *bump)
 {
-  int i, j, k;
-  int wh, hh;
+  uint i, j, k;
+  uint wh, hh;
   double x, y, y2;
   double xr, yr, zr;
 

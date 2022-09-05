@@ -1,3 +1,5 @@
+2022. 9. 5. Added explicit castings from void pointers. [rkgl_shape]
+2022. 9. 5. Corrected arithmetic of signed integer values. [rkgl_texture, rkgl_shape, rkgl_chain]
 2022. 9. 4. Removed register keywords. [rkgl_texture, rkgl_shape, rkgl_chain, rkgl_select, rkgl_terra]
 2022. 8.30. Reflected renamed functions rkLinkJointSetDis, rkLinkJointGetMin, rkLinkJointGetMax and rkChainLinkJointGetDis in rk_pen (thanks to Kenta Imanishi). [app]
 2022. 3. 4. Modified rk_anim and rk_pen to automatically change working directory when reading model files. [app]

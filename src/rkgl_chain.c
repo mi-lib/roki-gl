@@ -32,7 +32,7 @@ void rkglChainAttrCopy(rkglChainAttr *src, rkglChainAttr *dest)
 
 bool rkglChainLoad(rkglChain *gc, rkChain *c, rkglChainAttr *attr, rkglLight *light)
 {
-  int i;
+  uint i;
 
   rkglChainAttrCopy( attr, &gc->attr );
   gc->chain = c;
@@ -50,7 +50,7 @@ bool rkglChainLoad(rkglChain *gc, rkChain *c, rkglChainAttr *attr, rkglLight *li
 
 void rkglChainUnload(rkglChain *gc)
 {
-  int i;
+  uint i;
 
   for( i=0; i<rkChainLinkNum(gc->chain); i++ )
     if( gc->info[i].list >= 0 )
@@ -190,7 +190,7 @@ void rkglChainLinkDraw(rkglChain *gc, int id)
 
 void rkglChainDraw(rkglChain *gc)
 {
-  int i;
+  uint i;
 
   for( i=0; i<rkChainLinkNum(gc->chain); i++ ){
     glLoadName( i );
@@ -200,7 +200,7 @@ void rkglChainDraw(rkglChain *gc)
 
 void rkglChainNamedDraw(rkglChain *gc, GLuint name)
 {
-  int i;
+  uint i;
 
   gc->name = name;
   glLoadName( name );
@@ -218,7 +218,7 @@ int rkglChainDrawSeethru(rkglChain *gc, double alpha, rkglLight *light)
   zShapeListCell *sp;
   zOpticalInfo oi;
   int result;
-  int i;
+  uint i;
 
   result = rkglBeginList();
   for( i=0; i<rkChainLinkNum(gc->chain); i++ ){
