@@ -1,3 +1,5 @@
+2022. 9. 6. Removed empty body of an if statement in rkglKeyFuncGLX. [rkgl_glx]
+2022. 9. 6. Corrected byte-type array subscripts to integer values. [rkgl_shape]
 2022. 9. 5. Added explicit castings from void pointers. [rkgl_shape]
 2022. 9. 5. Corrected arithmetic of signed integer values. [rkgl_texture, rkgl_shape, rkgl_chain]
 2022. 9. 4. Removed register keywords. [rkgl_texture, rkgl_shape, rkgl_chain, rkgl_select, rkgl_terra]

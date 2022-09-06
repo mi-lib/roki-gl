@@ -664,8 +664,8 @@ void rkglAxis(zDir axis, double d, double w, GLfloat color[])
   zVec3DZero( &e1 );
   zVec3DZero( &e2 );
   zEdge3DCreate( &edge, &e1, &e2 );
-  zEdge3DVert(&edge,0)->e[axis] = d;
-  zEdge3DVert(&edge,1)->e[axis] =-d;
+  zEdge3DVert(&edge,0)->e[(int)axis] = d;
+  zEdge3DVert(&edge,1)->e[(int)axis] =-d;
   zEdge3DCalcVec( &edge );
 
   glColor3fv( color );
@@ -689,19 +689,19 @@ void rkglGauge(zDir axis1, double d1, zDir axis2, double d2, double w, double st
     glDisable( GL_LIGHTING );
   glLineWidth( w );
   glColor3fv( color );
-  zEdge3DVert(&edge,0)->e[axis2] = d2;
-  zEdge3DVert(&edge,1)->e[axis2] =-d2;
+  zEdge3DVert(&edge,0)->e[(int)axis2] = d2;
+  zEdge3DVert(&edge,1)->e[(int)axis2] =-d2;
   for( d=-d1; d<=d1; d+=step ){
-    zEdge3DVert(&edge,0)->e[axis1] = d;
-    zEdge3DVert(&edge,1)->e[axis1] = d;
+    zEdge3DVert(&edge,0)->e[(int)axis1] = d;
+    zEdge3DVert(&edge,1)->e[(int)axis1] = d;
     zEdge3DCalcVec( &edge );
     rkglEdge( &edge );
   }
-  zEdge3DVert(&edge,0)->e[axis1] = d1;
-  zEdge3DVert(&edge,1)->e[axis1] =-d1;
+  zEdge3DVert(&edge,0)->e[(int)axis1] = d1;
+  zEdge3DVert(&edge,1)->e[(int)axis1] =-d1;
   for( d=-d2; d<=d2; d+=step ){
-    zEdge3DVert(&edge,0)->e[axis2] = d;
-    zEdge3DVert(&edge,1)->e[axis2] = d;
+    zEdge3DVert(&edge,0)->e[(int)axis2] = d;
+    zEdge3DVert(&edge,1)->e[(int)axis2] = d;
     zEdge3DCalcVec( &edge );
     rkglEdge( &edge );
   }

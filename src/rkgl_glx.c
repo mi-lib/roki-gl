@@ -134,7 +134,7 @@ int rkglKeyFuncGLX(rkglCamera *cam, double dl, double da)
     rkglExitGLX();
     return -1;
   default:
-    if( !zxModkeyOn( key ) );
+    if( !zxModkeyOn( key ) ) break;
   }
   return 0;
 }
