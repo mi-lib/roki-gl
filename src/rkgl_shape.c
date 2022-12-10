@@ -236,7 +236,7 @@ void rkglCyl(zCyl3D *cyl, int disptype)
 {
   zVec3D norm[zCyl3DDiv(cyl)+1], vert[2][zCyl3DDiv(cyl)+1], d, s, aa;
   double l;
-  uint i;
+  int i;
 
   zCyl3DAxis( cyl, &d );
   if( zIsTiny( ( l = zVec3DNorm( &d ) ) ) ) return;
@@ -283,7 +283,7 @@ void rkglECyl(zECyl3D *ecyl, int disptype)
 {
   zVec3D norm[zECyl3DDiv(ecyl)+1], vert[2][zECyl3DDiv(ecyl)+1], d;
   double l, s, c;
-  uint i;
+  int i;
 
   zECyl3DAxis( ecyl, &d );
   if( ( l = zVec3DNormalizeDRC( &d ) ) < 0 ) return;
@@ -327,7 +327,7 @@ void rkglCone(zCone3D *cone, int disptype)
 {
   zVec3D norm[zCone3DDiv(cone)+1], vert[zCone3DDiv(cone)+1], d, s, tmp, v;
   double l;
-  uint i;
+  int i;
 
   zCone3DAxis( cone, &d );
   if( zIsTiny( ( l = zVec3DNorm( &d ) ) ) ) return;
