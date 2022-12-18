@@ -1,3 +1,4 @@
+2022.12.18. Reflected new specification of the inverse kinematics solver. [app/rk_pen]
 2022.12.10. Debugged rkglCyl, rkglECyl, and rkglCone by replacing unsigned integer with signed integer [rkgl_shape]
 2022. 9. 6. Removed empty body of an if statement in rkglKeyFuncGLX. [rkgl_glx]
 2022. 9. 6. Corrected byte-type array subscripts to integer values. [rkgl_shape]

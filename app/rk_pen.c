@@ -4,7 +4,7 @@
 #include <pthread.h>
 #include <roki-gl/rkgl_glut.h>
 #include <roki-gl/roki-gl.h>
-#include <roki/rk_ik.h>
+#include <roki/rk_chain.h>
 
 #define RK_PEN_TITLE "RK-PEN"
 
@@ -207,7 +207,6 @@ void rk_penResetJointDis(void)
 
 void rk_penSetLinkPos(void)
 {
-  rkIK ik;
   rkIKCellAttr attr;
   rkIKCell *cell;
   rkLink *l, *lp;
@@ -220,30 +219,29 @@ void rk_penSetLinkPos(void)
   rk_penPos( &p[0], &p[1], &p[2] );
   dis = zVecAlloc( rkChainJointSize(&chain) );
 
-  rkIKCreate( &ik, &chain );
+  rkChainCreateIK( &chain );
   for( lp=l; lp!=rkChainRoot(&chain); lp=rkLinkParent(lp) )
     if( rkLinkJointSize(lp) > 0 ){
       printf( "register joint [%s].\n", zName(lp) );
-      rkIKJointReg( &ik, lp - rkChainRoot(&chain), 0.001 );
+      rkChainRegIKJoint( &chain, lp - rkChainRoot(&chain), 0.001 );
     }
   attr.id = l - rkChainRoot(&chain);
   printf( "IK of link [%s].\n", rkChainLinkName(&chain,attr.id) );
   zVec3DZero( &attr.ap );
-  cell = rkIKCellRegWldPos( &ik, &attr, RK_IK_CELL_ATTR_ID | RK_IK_CELL_ATTR_AP );
-  rkIKDeactivate( &ik );
-  rkIKBind( &ik );
+  cell = rkChainRegIKCellWldPos( &chain, &attr, RK_IK_CELL_ATTR_ID | RK_IK_CELL_ATTR_AP );
+  rkChainDeactivateIK( &chain );
+  rkChainBindIK( &chain );
   rkIKCellSetRef( cell, p[0], p[1], p[2] );
 
-  rkIKSolve( &ik, dis, zTOL, 0 );
+  rkChainIK( &chain, dis, zTOL, 0 );
   rkChainFK( &chain, dis );
-  rkIKDestroy( &ik );
+  rkChainDestroyIK( &chain );
   zVecFree( dis );
   zFrame3DPrint( rkLinkWldFrame(l) );
 }
 
 void rk_penSetLinkFrame(void)
 {
-  rkIK ik;
   rkIKCellAttr attr;
   rkIKCell *cell_pos, *cell_att;
   rkLink *l, *lp;
@@ -257,25 +255,25 @@ void rk_penSetLinkFrame(void)
   rk_penZYX( &a[0], &a[1], &a[2] );
   dis = zVecAlloc( rkChainJointSize(&chain) );
 
-  rkIKCreate( &ik, &chain );
+  rkChainCreateIK( &chain );
   for( lp=l; lp!=rkChainRoot(&chain); lp=rkLinkParent(lp) )
     if( rkLinkJointSize(lp) > 0 ){
       printf( "register joint [%s].\n", zName(lp) );
-      rkIKJointReg( &ik, lp - rkChainRoot(&chain), 0.001 );
+      rkChainRegIKJoint( &chain, lp - rkChainRoot(&chain), 0.001 );
     }
   attr.id = l - rkChainRoot(&chain);
   printf( "IK of link [%s].\n", rkChainLinkName(&chain,attr.id) );
   zVec3DZero( &attr.ap );
-  cell_pos = rkIKCellRegWldPos( &ik, &attr, RK_IK_CELL_ATTR_ID | RK_IK_CELL_ATTR_AP );
-  cell_att = rkIKCellRegWldAtt( &ik, &attr, RK_IK_CELL_ATTR_ID );
-  rkIKDeactivate( &ik );
-  rkIKBind( &ik );
+  cell_pos = rkChainRegIKCellWldPos( &chain, &attr, RK_IK_CELL_ATTR_ID | RK_IK_CELL_ATTR_AP );
+  cell_att = rkChainRegIKCellWldAtt( &chain, &attr, RK_IK_CELL_ATTR_ID );
+  rkChainDeactivateIK( &chain );
+  rkChainBindIK( &chain );
   rkIKCellSetRef( cell_pos, p[0], p[1], p[2] );
   rkIKCellSetRef( cell_att, a[0], a[1], a[2] );
 
-  rkIKSolve( &ik, dis, zTOL, 0 );
+  rkChainIK( &chain, dis, zTOL, 0 );
   rkChainFK( &chain, dis );
-  rkIKDestroy( &ik );
+  rkChainDestroyIK( &chain );
   zVecFree( dis );
   zFrame3DPrint( rkLinkWldFrame(l) );
 }
