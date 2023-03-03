@@ -25,8 +25,8 @@ typedef struct{
   /*! @endcond */
 } rkglShadow;
 
-void rkglShadowInit(rkglShadow *shadow, int width, int height, double radius, double ratio);
-void rkglShadowDraw(rkglShadow *shadow, rkglCamera* cam, rkglLight *light, void (* scene)(void));
+__EXPORT void rkglShadowInit(rkglShadow *shadow, int width, int height, double radius, double ratio);
+__EXPORT void rkglShadowDraw(rkglShadow *shadow, rkglCamera* cam, rkglLight *light, void (* scene)(void));
 
 #define rkglShadowEnableAntiZFighting(s)  ( (s)->antizfighting = true )
 #define rkglShadowDisableAntiZFighting(s) ( (s)->antizfighting = false )

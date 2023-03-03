@@ -27,13 +27,13 @@ typedef struct{
   (c)->bg[3] = 1.0;\
 } while(0)
 
-void rkglBGFog(rkglCamera *c, double density);
+__EXPORT void rkglBGFog(rkglCamera *c, double density);
 
 /* viewport */
 
-void rkglVPCreate(rkglCamera *c, GLint x, GLint y, GLsizei w, GLsizei h);
-void rkglVPLoad(rkglCamera *c);
-void rkglVPGet(rkglCamera *c);
+__EXPORT void rkglVPCreate(rkglCamera *c, GLint x, GLint y, GLsizei w, GLsizei h);
+__EXPORT void rkglVPLoad(rkglCamera *c);
+__EXPORT void rkglVPGet(rkglCamera *c);
 
 #define rkglVPOX(c)     ( (double)(c)->vp[0] )
 #define rkglVPOY(c)     ( (double)(c)->vp[1] )
@@ -44,52 +44,52 @@ void rkglVPGet(rkglCamera *c);
 
 /* view volume */
 
-void rkglVVLoad(rkglCamera *c);
-void rkglVVGet(rkglCamera *c);
+__EXPORT void rkglVVLoad(rkglCamera *c);
+__EXPORT void rkglVVGet(rkglCamera *c);
 
-void rkglVVInit(void);
+__EXPORT void rkglVVInit(void);
 
-void rkglOrtho(rkglCamera *c, GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near, GLdouble far);
-void rkglFrustum(rkglCamera *c, GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near, GLdouble far);
-void rkglPerspective(rkglCamera *c, GLdouble fovy, GLdouble aspect, GLdouble near, GLdouble far);
-void rkglOrthoScale(rkglCamera *c, double scale, GLdouble near, GLdouble far);
-void rkglFrustumScale(rkglCamera *c, double scale, GLdouble near, GLdouble far);
+__EXPORT void rkglOrtho(rkglCamera *c, GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near, GLdouble far);
+__EXPORT void rkglFrustum(rkglCamera *c, GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near, GLdouble far);
+__EXPORT void rkglPerspective(rkglCamera *c, GLdouble fovy, GLdouble aspect, GLdouble near, GLdouble far);
+__EXPORT void rkglOrthoScale(rkglCamera *c, double scale, GLdouble near, GLdouble far);
+__EXPORT void rkglFrustumScale(rkglCamera *c, double scale, GLdouble near, GLdouble far);
 
 /* camera angle */
 
-void rkglCALoad(rkglCamera *c);
-void rkglCAGet(rkglCamera *c);
+__EXPORT void rkglCALoad(rkglCamera *c);
+__EXPORT void rkglCAGet(rkglCamera *c);
 
-void rkglCAInit(void);
-void rkglCAAlign(rkglCamera *c);
+__EXPORT void rkglCAInit(void);
+__EXPORT void rkglCAAlign(rkglCamera *c);
 
-void rkglCASet(rkglCamera *c, double x, double y, double z, double pan, double tilt, double roll);
-void rkglCAPTR(rkglCamera *c, double pan, double tilt, double roll);
-void rkglCALockonPTR(rkglCamera *c, double pan, double tilt, double roll);
-void rkglCARotate(rkglCamera *c, double angle, double x, double y, double z);
-void rkglCALockonRotate(rkglCamera *c, double angle, double x, double y, double z);
+__EXPORT void rkglCASet(rkglCamera *c, double x, double y, double z, double pan, double tilt, double roll);
+__EXPORT void rkglCAPTR(rkglCamera *c, double pan, double tilt, double roll);
+__EXPORT void rkglCALockonPTR(rkglCamera *c, double pan, double tilt, double roll);
+__EXPORT void rkglCARotate(rkglCamera *c, double angle, double x, double y, double z);
+__EXPORT void rkglCALockonRotate(rkglCamera *c, double angle, double x, double y, double z);
 
-void rkglCAMove(rkglCamera *c, double x, double y, double z);
-void rkglCARelMove(rkglCamera *c, double x, double y, double z);
+__EXPORT void rkglCAMove(rkglCamera *c, double x, double y, double z);
+__EXPORT void rkglCARelMove(rkglCamera *c, double x, double y, double z);
 
-void rkglCALookAt(rkglCamera *c, GLdouble eyex, GLdouble eyey, GLdouble eyez, GLdouble centerx, GLdouble centery, GLdouble centerz, GLdouble upx, GLdouble upy, GLdouble upz);
+__EXPORT void rkglCALookAt(rkglCamera *c, GLdouble eyex, GLdouble eyey, GLdouble eyez, GLdouble centerx, GLdouble centery, GLdouble centerz, GLdouble upx, GLdouble upy, GLdouble upz);
 
-void rkglCARelMoveLeft(rkglCamera *cam, double d);
-void rkglCARelMoveRight(rkglCamera *cam, double d);
-void rkglCARelMoveUp(rkglCamera *cam, double d);
-void rkglCARelMoveDown(rkglCamera *cam, double d);
-void rkglCAZoomIn(rkglCamera *cam, double d);
-void rkglCAZoomOut(rkglCamera *cam, double d);
+__EXPORT void rkglCARelMoveLeft(rkglCamera *cam, double d);
+__EXPORT void rkglCARelMoveRight(rkglCamera *cam, double d);
+__EXPORT void rkglCARelMoveUp(rkglCamera *cam, double d);
+__EXPORT void rkglCARelMoveDown(rkglCamera *cam, double d);
+__EXPORT void rkglCAZoomIn(rkglCamera *cam, double d);
+__EXPORT void rkglCAZoomOut(rkglCamera *cam, double d);
 
-void rkglCATiltUp(rkglCamera *cam, double angle);
-void rkglCATiltDown(rkglCamera *cam, double angle);
-void rkglCAPanLeft(rkglCamera *cam, double angle);
-void rkglCAPanRight(rkglCamera *cam, double angle);
+__EXPORT void rkglCATiltUp(rkglCamera *cam, double angle);
+__EXPORT void rkglCATiltDown(rkglCamera *cam, double angle);
+__EXPORT void rkglCAPanLeft(rkglCamera *cam, double angle);
+__EXPORT void rkglCAPanRight(rkglCamera *cam, double angle);
 
-void rkglCAAngleUp(rkglCamera *cam, double angle);
-void rkglCAAngleDown(rkglCamera *cam, double angle);
-void rkglCARoundLeft(rkglCamera *cam, double angle);
-void rkglCARoundRight(rkglCamera *cam, double angle);
+__EXPORT void rkglCAAngleUp(rkglCamera *cam, double angle);
+__EXPORT void rkglCAAngleDown(rkglCamera *cam, double angle);
+__EXPORT void rkglCARoundLeft(rkglCamera *cam, double angle);
+__EXPORT void rkglCARoundRight(rkglCamera *cam, double angle);
 
 /*
 void rkglCameraFRead(FILE *fp, rkglCamera *cam);

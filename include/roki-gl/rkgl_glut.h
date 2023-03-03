@@ -18,20 +18,20 @@ __BEGIN_DECLS
 #define GLUT_WHEEL_UP   0x0003
 #define GLUT_WHEEL_DOWN 0x0004
 
-void rkglInitGLUT(int *argc, char **argv);
-int rkglWindowCreateGLUT(int x, int y, int w, int h, const char *title);
+__EXPORT void rkglInitGLUT(int *argc, char **argv);
+__EXPORT int rkglWindowCreateGLUT(int x, int y, int w, int h, const char *title);
 
 /* default callback functions */
 
-void rkglSetCallbackParamGLUT(rkglCamera *c, double vv_width, double vv_near, double vv_far, double dl_key, double da_key);
+__EXPORT void rkglSetCallbackParamGLUT(rkglCamera *c, double vv_width, double vv_near, double vv_far, double dl_key, double da_key);
 
-void rkglReshapeFuncGLUT(int w, int h);
-void rkglIdleFuncGLUT(void);
-void rkglKeyFuncGLUT(unsigned char key, int x, int y);
-void rkglSpecialFuncGLUT(int key, int x, int y);
-void rkglMouseFuncGLUT(int button, int event, int x, int y);
-void rkglMouseDragFuncGLUT(int x, int y);
-void rkglVisFuncGLUT(int visible);
+__EXPORT void rkglReshapeFuncGLUT(int w, int h);
+__EXPORT void rkglIdleFuncGLUT(void);
+__EXPORT void rkglKeyFuncGLUT(unsigned char key, int x, int y);
+__EXPORT void rkglSpecialFuncGLUT(int key, int x, int y);
+__EXPORT void rkglMouseFuncGLUT(int button, int event, int x, int y);
+__EXPORT void rkglMouseDragFuncGLUT(int x, int y);
+__EXPORT void rkglVisFuncGLUT(int visible);
 
 __END_DECLS
 

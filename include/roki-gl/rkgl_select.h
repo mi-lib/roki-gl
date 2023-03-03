@@ -13,14 +13,14 @@
 __BEGIN_DECLS
 
 /* project / unproject */
-int rkglProject(rkglCamera *c, zVec3D *p, int *x, int *y);
-int rkglUnproject(rkglCamera *c, int x, int y, double depth, zVec3D *p);
-int rkglPickAndUnproject(rkglCamera *c, int x, int y, zVec3D *p);
-double rkglGetDepth(rkglCamera *c, int x, int y);
+__EXPORT int rkglProject(rkglCamera *c, zVec3D *p, int *x, int *y);
+__EXPORT int rkglUnproject(rkglCamera *c, int x, int y, double depth, zVec3D *p);
+__EXPORT int rkglPickAndUnproject(rkglCamera *c, int x, int y, zVec3D *p);
+__EXPORT double rkglGetDepth(rkglCamera *c, int x, int y);
 
 /* pick */
-int rkglPick(rkglCamera *c, void (* scene)(void), GLuint selbuf[], size_t size, int x, int y, int w, int h);
-GLuint *rkglFindNearside(GLuint selbuf[], int hits);
+__EXPORT int rkglPick(rkglCamera *c, void (* scene)(void), GLuint selbuf[], size_t size, int x, int y, int w, int h);
+__EXPORT GLuint *rkglFindNearside(GLuint selbuf[], int hits);
 
 __END_DECLS
 

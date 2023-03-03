@@ -19,8 +19,8 @@ typedef struct{
   double ellips_mag;
 } rkglChainAttr;
 
-void rkglChainAttrInit(rkglChainAttr *attr);
-void rkglChainAttrCopy(rkglChainAttr *src, rkglChainAttr *dest);
+__EXPORT void rkglChainAttrInit(rkglChainAttr *attr);
+__EXPORT void rkglChainAttrCopy(rkglChainAttr *src, rkglChainAttr *dest);
 
 typedef struct{
   bool visible;
@@ -35,24 +35,24 @@ typedef struct{
   rkglChainAttr attr; /* display attribute */
 } rkglChain;
 
-bool rkglChainLoad(rkglChain *gc, rkChain *c, rkglChainAttr *attr, rkglLight *light);
-void rkglChainUnload(rkglChain *gc);
+__EXPORT bool rkglChainLoad(rkglChain *gc, rkChain *c, rkglChainAttr *attr, rkglLight *light);
+__EXPORT void rkglChainUnload(rkglChain *gc);
 
-void rkglLinkStick(rkLink *l, rkglChainAttr *attr);
-void rkglLinkCOM(rkLink *l, rkglChainAttr *attr);
-void rkglLinkInertiaEllips(rkLink *l, rkglChainAttr *attr);
-int rkglLinkEntry(rkLink *l, zOpticalInfo *oi_alt, rkglChainAttr *attr, rkglLight *light);
+__EXPORT void rkglLinkStick(rkLink *l, rkglChainAttr *attr);
+__EXPORT void rkglLinkCOM(rkLink *l, rkglChainAttr *attr);
+__EXPORT void rkglLinkInertiaEllips(rkLink *l, rkglChainAttr *attr);
+__EXPORT int rkglLinkEntry(rkLink *l, zOpticalInfo *oi_alt, rkglChainAttr *attr, rkglLight *light);
 
-void rkglChainLinkAlt(rkglChain *gc, int id, zOpticalInfo *oi_alt, rkglChainAttr *attr, rkglLight *light);
-void rkglChainLinkReset(rkglChain *gc, int id);
+__EXPORT void rkglChainLinkAlt(rkglChain *gc, int id, zOpticalInfo *oi_alt, rkglChainAttr *attr, rkglLight *light);
+__EXPORT void rkglChainLinkReset(rkglChain *gc, int id);
 
-void rkglChainLinkDraw(rkglChain *gc, int id);
-void rkglChainDraw(rkglChain *gc);
-void rkglChainNamedDraw(rkglChain *gc, GLuint name);
+__EXPORT void rkglChainLinkDraw(rkglChain *gc, int id);
+__EXPORT void rkglChainDraw(rkglChain *gc);
+__EXPORT void rkglChainNamedDraw(rkglChain *gc, GLuint name);
 
-int rkglChainDrawSeethru(rkglChain *gc, double alpha, rkglLight *light);
+__EXPORT int rkglChainDrawSeethru(rkglChain *gc, double alpha, rkglLight *light);
 
-void rkglChainCOMDraw(rkglChain *gc, double r);
+__EXPORT void rkglChainCOMDraw(rkglChain *gc, double r);
 
 __END_DECLS
 

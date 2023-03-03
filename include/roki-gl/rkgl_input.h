@@ -12,29 +12,29 @@
 __BEGIN_DECLS
 
 /* key state */
-extern int rkgl_key_mod;
+__EXPORT int rkgl_key_mod;
 
-void rkglKeyCARotateUp(rkglCamera *cam, double d, bool ctrlison);
-void rkglKeyCARotateDown(rkglCamera *cam, double d, bool ctrlison);
-void rkglKeyCARotateLeft(rkglCamera *cam, double d, bool ctrlison);
-void rkglKeyCARotateRight(rkglCamera *cam, double d, bool ctrlison);
+__EXPORT void rkglKeyCARotateUp(rkglCamera *cam, double d, bool ctrlison);
+__EXPORT void rkglKeyCARotateDown(rkglCamera *cam, double d, bool ctrlison);
+__EXPORT void rkglKeyCARotateLeft(rkglCamera *cam, double d, bool ctrlison);
+__EXPORT void rkglKeyCARotateRight(rkglCamera *cam, double d, bool ctrlison);
 
 /* mouse state */
-extern int rkgl_mouse_button;
-extern int rkgl_mouse_x;
-extern int rkgl_mouse_y;
+__EXPORT int rkgl_mouse_button;
+__EXPORT int rkgl_mouse_x;
+__EXPORT int rkgl_mouse_y;
 
 #define rkglMouseStoreXY(x,y) do{\
   rkgl_mouse_x = (x);\
   rkgl_mouse_y = (y);\
 } while(0)
 
-void rkglMouseStoreInput(int button, int state, int presscode, int x, int y, int mod);
-void rkglMouseDragGetIncrementer(rkglCamera *cam, int x, int y, double *dx, double *dy);
+__EXPORT void rkglMouseStoreInput(int button, int state, int presscode, int x, int y, int mod);
+__EXPORT void rkglMouseDragGetIncrementer(rkglCamera *cam, int x, int y, double *dx, double *dy);
 
-void rkglMouseDragCARotate(rkglCamera *cam, double dx, double dy, int ctrlkey);
-void rkglMouseDragCATranslate(rkglCamera *cam, double dx, double dy, int ctrlkey);
-void rkglMouseDragCAZoom(rkglCamera *cam, double dx, double dy, int ctrlkey);
+__EXPORT void rkglMouseDragCARotate(rkglCamera *cam, double dx, double dy, int ctrlkey);
+__EXPORT void rkglMouseDragCATranslate(rkglCamera *cam, double dx, double dy, int ctrlkey);
+__EXPORT void rkglMouseDragCAZoom(rkglCamera *cam, double dx, double dy, int ctrlkey);
 
 __END_DECLS
 

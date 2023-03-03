@@ -34,7 +34,7 @@ bool rkglTextureReadFile(zTexture *texture, char *filename);
 /* bump mapping */
 
 /*! \brief read an image file and make a bump map. */
-bool rkglTextureBumpReadFile(zTexture *bump, char *filename);
+__EXPORT bool rkglTextureBumpReadFile(zTexture *bump, char *filename);
 
 #define rkglTextureBumpEnable() zTextureSetBumpReadFunc( rkglTextureBumpReadFile )
 

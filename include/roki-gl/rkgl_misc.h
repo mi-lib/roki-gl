@@ -14,7 +14,7 @@
 
 __BEGIN_DECLS
 
-void rkglEnableDefault(void);
+__EXPORT void rkglEnableDefault(void);
 
 #define rkglClear() glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT )
 #define rkglClearColor(r,g,b) do{\
@@ -25,8 +25,8 @@ void rkglEnableDefault(void);
 /* matrix operation */
 
 /* why does not OpenGL have glMultInvMatrixd() ? */
-void rkglInvTranslated(double m[], double *x, double *y, double *z);
-void rkglMultInvMatrixd(double m[]);
+__EXPORT void rkglInvTranslated(double m[], double *x, double *y, double *z);
+__EXPORT void rkglMultInvMatrixd(double m[]);
 
 __END_DECLS
 

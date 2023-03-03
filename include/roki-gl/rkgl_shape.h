@@ -25,57 +25,57 @@ enum{
 
 /* display list */
 
-int rkglBeginList(void);
-void rkglDeleteList(int id);
+__EXPORT int rkglBeginList(void);
+__EXPORT void rkglDeleteList(int id);
 
 /* 3D object drawing */
 
-void rkglTranslate(zVec3D *v);
-void rkglXform(zFrame3D *f);
+__EXPORT void rkglTranslate(zVec3D *v);
+__EXPORT void rkglXform(zFrame3D *f);
 
 #define rkglVertex(v)  glVertex3dv( (v)->e )
 #define rkglNormal(n)  glNormal3dv( (n)->e )
 
-void rkglPoint(zVec3D *p);
-void rkglEdge(zEdge3D *e);
-void rkglTri(zTri3D *t);
-void rkglTriTexture(zTri3D *t, zTri2D *f);
-void rkglTriBump(zTri3D *t, zTri2D *f, zVec3D *lp);
-void rkglPolygon(zVec3D v[], int n, ...);
+__EXPORT void rkglPoint(zVec3D *p);
+__EXPORT void rkglEdge(zEdge3D *e);
+__EXPORT void rkglTri(zTri3D *t);
+__EXPORT void rkglTriTexture(zTri3D *t, zTri2D *f);
+__EXPORT void rkglTriBump(zTri3D *t, zTri2D *f, zVec3D *lp);
+__EXPORT void rkglPolygon(zVec3D v[], int n, ...);
 
-void rkglBox(zBox3D *box, int disptype);
-void rkglSphere(zSphere3D *sphere, int disptype);
-void rkglEllips(zEllips3D *ellips, int disptype);
-void rkglCyl(zCyl3D *cyl, int disptype);
-void rkglECyl(zECyl3D *ecyl, int disptype);
-void rkglCone(zCone3D *cone, int disptype);
+__EXPORT void rkglBox(zBox3D *box, int disptype);
+__EXPORT void rkglSphere(zSphere3D *sphere, int disptype);
+__EXPORT void rkglEllips(zEllips3D *ellips, int disptype);
+__EXPORT void rkglCyl(zCyl3D *cyl, int disptype);
+__EXPORT void rkglECyl(zECyl3D *ecyl, int disptype);
+__EXPORT void rkglCone(zCone3D *cone, int disptype);
 
-void rkglTorus(zVec3D *c, zVec3D *n, double r1, double r2, uint div1, uint div2, int disptype);
+__EXPORT void rkglTorus(zVec3D *c, zVec3D *n, double r1, double r2, uint div1, uint div2, int disptype);
 
-void rkglNURBS(zNURBS3D *nurbs, int disptype);
-void rkglNURBSCP(zNURBS3D *nurbs, GLfloat size, zRGB *rgb);
+__EXPORT void rkglNURBS(zNURBS3D *nurbs, int disptype);
+__EXPORT void rkglNURBSCP(zNURBS3D *nurbs, GLfloat size, zRGB *rgb);
 
-void rkglPH(zPH3D *ph, int disptype);
-void rkglPHTexture(zPH3D *ph, zOpticalInfo *oi, zTexture *texture);
-void rkglPHBump(zPH3D *ph, zOpticalInfo *oi, zTexture *bump, rkglLight *light);
+__EXPORT void rkglPH(zPH3D *ph, int disptype);
+__EXPORT void rkglPHTexture(zPH3D *ph, zOpticalInfo *oi, zTexture *texture);
+__EXPORT void rkglPHBump(zPH3D *ph, zOpticalInfo *oi, zTexture *bump, rkglLight *light);
 
-void rkglShape(zShape3D *s, zOpticalInfo *oi_alt, int disptype, rkglLight *light);
-int rkglShapeEntry(zShape3D *s, zOpticalInfo *oi_alt, int disptype, rkglLight *light);
+__EXPORT void rkglShape(zShape3D *s, zOpticalInfo *oi_alt, int disptype, rkglLight *light);
+__EXPORT int rkglShapeEntry(zShape3D *s, zOpticalInfo *oi_alt, int disptype, rkglLight *light);
 
-void rkglMShape(zMShape3D *s, int disptype, rkglLight *light);
-int rkglMShapeEntry(zMShape3D *s, int disptype, rkglLight *light);
+__EXPORT void rkglMShape(zMShape3D *s, int disptype, rkglLight *light);
+__EXPORT int rkglMShapeEntry(zMShape3D *s, int disptype, rkglLight *light);
 
-void rkglPointCloud(zVec3DList *pc, zVec3D *center, short size);
+__EXPORT void rkglPointCloud(zVec3DList *pc, zVec3D *center, short size);
 
 #define RKGL_ARROW_DIV        8
 #define RKGL_ARROW_BOTTOM_RAD 0.05
 #define RKGL_ARROW_NECK_RAD   0.1
 #define RKGL_ARROW_TIP_LEN    0.2
-void rkglArrow(zVec3D *bot, zVec3D *vec, double mag);
+__EXPORT void rkglArrow(zVec3D *bot, zVec3D *vec, double mag);
 
-void rkglAxis(zDir axis, double d, double w, GLfloat color[]);
-void rkglGauge(zDir axis1, double d1, zDir axis2, double d2, double w, double step, GLfloat color[]);
-void rkglChecker(zVec3D *pc0, zVec3D *pc1, zVec3D *pc2, uint div1, uint div2, zOpticalInfo *oi1, zOpticalInfo *oi2);
+__EXPORT void rkglAxis(zDir axis, double d, double w, GLfloat color[]);
+__EXPORT void rkglGauge(zDir axis1, double d1, zDir axis2, double d2, double w, double step, GLfloat color[]);
+__EXPORT void rkglChecker(zVec3D *pc0, zVec3D *pc1, zVec3D *pc2, uint div1, uint div2, zOpticalInfo *oi1, zOpticalInfo *oi2);
 
 __END_DECLS
 

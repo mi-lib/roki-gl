@@ -17,12 +17,12 @@ __BEGIN_DECLS
 #define rkglRGB(rgb)    glColor3f( (rgb)->r, (rgb)->g, (rgb)->b )
 #define rkglRGBA(rgb,a) glColor4f( (rgb)->r, (rgb)->g, (rgb)->b, (a) )
 
-void rkglColor24(unsigned color);
+__EXPORT void rkglColor24(unsigned color);
 
-void rkglMaterialRGBA(zRGB *rgb, float alpha);
-void rkglMaterialWhite(void);
-void rkglMaterialOpticalInfo(zOpticalInfo *oi);
-void rkglMaterial(zOpticalInfo *oi);
+__EXPORT void rkglMaterialRGBA(zRGB *rgb, float alpha);
+__EXPORT void rkglMaterialWhite(void);
+__EXPORT void rkglMaterialOpticalInfo(zOpticalInfo *oi);
+__EXPORT void rkglMaterial(zOpticalInfo *oi);
 
 /* lighting */
 
@@ -34,11 +34,11 @@ typedef struct{
   GLfloat spc[4];
 } rkglLight;
 
-void rkglLightCreate(rkglLight *l, uint id, GLfloat ar, GLfloat ag, GLfloat ab, GLfloat dr, GLfloat dg, GLfloat db, GLfloat sr, GLfloat sg, GLfloat sb, GLfloat ns);
-void rkglLightLoad(rkglLight *l);
+__EXPORT void rkglLightCreate(rkglLight *l, uint id, GLfloat ar, GLfloat ag, GLfloat ab, GLfloat dr, GLfloat dg, GLfloat db, GLfloat sr, GLfloat sg, GLfloat sb, GLfloat ns);
+__EXPORT void rkglLightLoad(rkglLight *l);
 
-void rkglLightSetPos(rkglLight *l, double x, double y, double z);
-void rkglLightPut(rkglLight *l);
+__EXPORT void rkglLightSetPos(rkglLight *l, double x, double y, double z);
+__EXPORT void rkglLightPut(rkglLight *l);
 
 /*
 void rkglLightFRead(FILE *fp);
