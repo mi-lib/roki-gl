@@ -223,7 +223,7 @@ void rk_penSetLinkPos(void)
   for( lp=l; lp!=rkChainRoot(&chain); lp=rkLinkParent(lp) )
     if( rkLinkJointSize(lp) > 0 ){
       printf( "register joint [%s].\n", zName(lp) );
-      rkChainRegIKJoint( &chain, lp - rkChainRoot(&chain), 0.001 );
+      rkChainRegIKJointID( &chain, lp - rkChainRoot(&chain), 0.001 );
     }
   attr.id = l - rkChainRoot(&chain);
   printf( "IK of link [%s].\n", rkChainLinkName(&chain,attr.id) );
@@ -259,7 +259,7 @@ void rk_penSetLinkFrame(void)
   for( lp=l; lp!=rkChainRoot(&chain); lp=rkLinkParent(lp) )
     if( rkLinkJointSize(lp) > 0 ){
       printf( "register joint [%s].\n", zName(lp) );
-      rkChainRegIKJoint( &chain, lp - rkChainRoot(&chain), 0.001 );
+      rkChainRegIKJointID( &chain, lp - rkChainRoot(&chain), 0.001 );
     }
   attr.id = l - rkChainRoot(&chain);
   printf( "IK of link [%s].\n", rkChainLinkName(&chain,attr.id) );

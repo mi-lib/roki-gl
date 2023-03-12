@@ -1,3 +1,4 @@
+2023. 3.12. Modified rk_pen to reflect renamed rkChainRegIKJointID. [app]
 2023. 3. 3. Added __EXPORT to all methods that are exported. [all]
 2023. 3. 3. Modified rkgl_key_mod, rkgl_mouse_button, rkgl_mouse_x, rkgl_mouse_y, and rkgl_ctx with the new definition of __EXPORT. [rkgl_input, rkgl_glx]
 2022.12.18. Reflected new specification of the inverse kinematics solver. [app/rk_pen]
