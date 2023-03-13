@@ -114,11 +114,11 @@ void rk_viewReadPH(zMShape3D *ms, char *sfx)
   zArrayAlloc( &ms->shape, zShape3D, 1 );
   if( zMShape3DOpticNum(ms) != 1 || zMShape3DShapeNum(ms) != 1 ){
     ZALLOCERROR();
-    exit( 1 );
+    exit( EXIT_FAILURE );
   }
   zOpticalInfoInit( zMShape3DOptic(ms,0) );
   if( strcmp( sfx, "dae" ) == 0 ){
-    if( !zShape3DFReadDAE( zMShape3DShape(ms,0), opt[OPT_MODELFILE].arg ) ) exit( 1 );
+    if( !zShape3DFReadDAE( zMShape3DShape(ms,0), opt[OPT_MODELFILE].arg ) ) exit( EXIT_FAILURE );
     return;
   }
   if( !( fp = fopen( opt[OPT_MODELFILE].arg, "rt" ) ) ){
@@ -126,16 +126,16 @@ void rk_viewReadPH(zMShape3D *ms, char *sfx)
     rk_viewUsage();
   }
   if( strcmp( sfx, "stl" ) == 0 ){
-    if( !zShape3DFReadSTL( fp, zMShape3DShape(ms,0) ) ) exit( 1 );
+    if( !zShape3DFReadSTL( fp, zMShape3DShape(ms,0) ) ) exit( EXIT_FAILURE );
   } else
   if( strcmp( sfx, "ply" ) == 0 ){
-    if( !zShape3DFReadPLY( fp, zMShape3DShape(ms,0) ) ) exit( 1 );
+    if( !zShape3DFReadPLY( fp, zMShape3DShape(ms,0) ) ) exit( EXIT_FAILURE );
   } else
   if( strcmp( sfx, "obj" ) == 0 ){
-    if( !zShape3DFReadOBJ( fp, zMShape3DShape(ms,0) ) ) exit( 1 );
+    if( !zShape3DFReadOBJ( fp, zMShape3DShape(ms,0) ) ) exit( EXIT_FAILURE );
   } else{
     ZRUNERROR( "unknown format %s", sfx );
-    exit( 1 );
+    rk_viewUsage();
   }
   fclose( fp );
 }
@@ -148,7 +148,7 @@ void rk_viewReadModel(void)
   register int i;
 
   sfx = zGetSuffix( opt[OPT_MODELFILE].arg );
-  if( strcmp( sfx, "ztk" ) == 0 ){
+  if( !sfx || strcmp( sfx, "ztk" ) == 0 ){
     if( !zMShape3DReadZTK( &ms, opt[OPT_MODELFILE].arg ) ){
       ZOPENERROR( opt[OPT_MODELFILE].arg );
       rk_viewUsage();
