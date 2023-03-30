@@ -50,7 +50,7 @@ __EXPORT void rkglCyl(zCyl3D *cyl, int disptype);
 __EXPORT void rkglECyl(zECyl3D *ecyl, int disptype);
 __EXPORT void rkglCone(zCone3D *cone, int disptype);
 
-__EXPORT void rkglTorus(zVec3D *c, zVec3D *n, double r1, double r2, uint div1, uint div2, int disptype);
+__EXPORT void rkglTorus(zVec3D *c, zVec3D *n, double r1, double r2, int div1, int div2, int disptype);
 
 __EXPORT void rkglNURBS(zNURBS3D *nurbs, int disptype);
 __EXPORT void rkglNURBSCP(zNURBS3D *nurbs, GLfloat size, zRGB *rgb);
@@ -75,7 +75,7 @@ __EXPORT void rkglArrow(zVec3D *bot, zVec3D *vec, double mag);
 
 __EXPORT void rkglAxis(zDir axis, double d, double w, GLfloat color[]);
 __EXPORT void rkglGauge(zDir axis1, double d1, zDir axis2, double d2, double w, double step, GLfloat color[]);
-__EXPORT void rkglChecker(zVec3D *pc0, zVec3D *pc1, zVec3D *pc2, uint div1, uint div2, zOpticalInfo *oi1, zOpticalInfo *oi2);
+__EXPORT void rkglChecker(zVec3D *pc0, zVec3D *pc1, zVec3D *pc2, int div1, int div2, zOpticalInfo *oi1, zOpticalInfo *oi2);
 
 __END_DECLS
 

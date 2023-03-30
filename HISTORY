@@ -1,3 +1,6 @@
+2023. 3.30. Reflected new specification of zArrayClass and zArray2Class. [rkgl_shape, rkgl_chain, rkgl_terra]
+2023. 3.30. Modified rkglNURBS to reflect new specification of zNURBS3DVecNorm. [rkgl_shape]
+2023. 3.29. Modified config.lib and config.tools for C++ compilation. [src, tools]
 2023. 3.13. Debugged rk_view to read files without suffices. [app]
 2023. 3.12. Modified rk_pen to reflect renamed rkChainRegIKJointID. [app]
 2023. 3. 3. Added __EXPORT to all methods that are exported. [all]

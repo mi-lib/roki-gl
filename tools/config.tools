@@ -2,11 +2,14 @@ INCLUDE+=$(shell echo `zx11-config -I` `liw-config -I` `roki-config -I` | tr ' '
 LIB+=$(shell echo `zx11-config -L` `liw-config -L` `roki-config -L` | tr ' ' '\n' | sort | uniq | xargs)
 DEF+=$(shell echo `zx11-config -D` `liw-config -D` `roki-config -D` | tr ' ' '\n' | sort | uniq | xargs)
 LINK+=-lGLU -lGL `liw-config -l` `roki-config -l`
+LINKCPP+=-lGLU -lGL `liw-config -lcpp` `roki-config -lcpp`
 
 ifeq ($(CONFIG_USE_GLX),y)
 	LINK+=`zx11-config -l`
+	LINKCPP+=`zx11-config -lcpp`
 endif
 
 ifeq ($(CONFIG_USE_GLUT),y)
 	LINK+=-lglut
+	LINKCPP+=-lglut
 endif

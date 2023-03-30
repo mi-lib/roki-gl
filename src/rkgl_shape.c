@@ -153,7 +153,7 @@ static void _rkglBox(void *box, int disptype){ rkglBox( (zBox3D *)box, disptype 
 
 void rkglSphere(zSphere3D *sphere, int disptype)
 {
-  uint i, j, i1, j1, n2 = zSphere3DDiv(sphere) * 2;
+  int i, j, i1, j1, n2 = zSphere3DDiv(sphere) * 2;
   zVec3D vert[zSphere3DDiv(sphere)+1][n2+1], v;
 
   for( i=0; i<=zSphere3DDiv(sphere); i++ )
@@ -193,7 +193,7 @@ static zVec3D *_rkglEllipsNormal(zEllips3D *ellips, zVec3D *v, zVec3D *n)
 
 void rkglEllips(zEllips3D *ellips, int disptype)
 {
-  uint i, j, i1, j1, n2 = zEllips3DDiv(ellips)*2;
+  int i, j, i1, j1, n2 = zEllips3DDiv(ellips)*2;
   zVec3D vert[zEllips3DDiv(ellips)+1][n2+1];
   zVec3D norm[zEllips3DDiv(ellips)+1][n2+1];
   zVec3D tmp;
@@ -366,9 +366,9 @@ void rkglCone(zCone3D *cone, int disptype)
 }
 static void _rkglCone(void *cone, int disptype){ rkglCone( (zCone3D *)cone, disptype ); }
 
-void rkglTorus(zVec3D *c, zVec3D *n, double r1, double r2, uint div1, uint div2, int disptype)
+void rkglTorus(zVec3D *c, zVec3D *n, double r1, double r2, int div1, int div2, int disptype)
 {
-  uint i, j;
+  int i, j;
   zVec3D d, aa1, aa2, s, sr, dr, tmp, t;
   zVec3D norm[div1+1][div2+1], vert[div1+1][div2+1];
   double rm, r;
@@ -407,11 +407,11 @@ void rkglTorus(zVec3D *c, zVec3D *n, double r1, double r2, uint div1, uint div2,
 
 void rkglNURBS(zNURBS3D *nurbs, int disptype)
 {
-  uint i, j, k;
+  int i, j, k;
   zVec3D *vert, *v1, *v2;
   zVec3D *norm, *n1, *n2;
   double u, v;
-  uint w1, w2;
+  int w1, w2;
 
   w1 = nurbs->ns[0] + 1;
   w2 = nurbs->ns[1] + 1;
@@ -425,7 +425,7 @@ void rkglNURBS(zNURBS3D *nurbs, int disptype)
     u = zNURBS3DKnotSlice( nurbs, 0, i );
     for( j=0; j<=nurbs->ns[1]; j++ ){
       v = zNURBS3DKnotSlice( nurbs, 1, j );
-      zNURBS3DVecNorm( nurbs, u, v, &vert[k], &norm[k], NULL, NULL );
+      zNURBS3DVecNorm( nurbs, u, v, &vert[k], &norm[k] );
       k++;
     }
   }
@@ -448,7 +448,7 @@ static void _rkglNURBS(void *nurbs, int disptype){ rkglNURBS( (zNURBS3D *)nurbs,
 
 void rkglNURBSCP(zNURBS3D *nurbs, GLfloat size, zRGB *rgb)
 {
-  uint i, j;
+  int i, j;
 
   glPointSize( size );
   glDisable( GL_LIGHTING );
@@ -478,7 +478,7 @@ void rkglNURBSCP(zNURBS3D *nurbs, GLfloat size, zRGB *rgb)
 
 void rkglPH(zPH3D *ph, int disptype)
 {
-  uint i;
+  int i;
 
   if( disptype == RKGL_WIREFRAME )
     glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
@@ -490,7 +490,7 @@ static void _rkglPH(void *ph, int disptype){ rkglPH( (zPH3D *)ph, disptype ); }
 
 void rkglPHTexture(zPH3D *ph, zOpticalInfo *oi, zTexture *texture)
 {
-  uint i;
+  int i;
 
   glActiveTexture( RKGL_TEXTURE_BASE );
   glBindTexture( GL_TEXTURE_2D, texture->id );
@@ -508,7 +508,7 @@ void rkglPHTexture(zPH3D *ph, zOpticalInfo *oi, zTexture *texture)
 void rkglPHBump(zPH3D *ph, zOpticalInfo *oi, zTexture *bump, rkglLight *light)
 {
   zVec3D lp;
-  uint i;
+  int i;
 
   _zVec3DCreate( &lp, light->pos[0], light->pos[1], light->pos[2] );
   glEnable( GL_TEXTURE_2D );
@@ -551,7 +551,7 @@ void rkglShape(zShape3D *s, zOpticalInfo *oi_alt, int disptype, rkglLight *light
     { "nurbs", _rkglNURBS },
     { NULL, NULL },
   };
-  uint i;
+  int i;
 
   if( zShape3DTexture(s) && zShape3DTexture(s)->id != 0 && disptype == RKGL_FACE && strcmp( s->com->typestr, "polyhedron" ) == 0 ){
     if( zShape3DTexture(s)->type == ZTEXTURE_BUMP )
@@ -591,7 +591,7 @@ int rkglShapeEntry(zShape3D *s, zOpticalInfo *oi_alt, int disptype, rkglLight *l
 
 void rkglMShape(zMShape3D *s, int disptype, rkglLight *light)
 {
-  uint i;
+  int i;
 
   for( i=0; i<zMShape3DShapeNum(s); i++ )
     rkglShape( zMShape3DShape(s,i), NULL, disptype, light );
@@ -709,9 +709,9 @@ void rkglGauge(zDir axis1, double d1, zDir axis2, double d2, double w, double st
     glEnable( GL_LIGHTING );
 }
 
-void rkglChecker(zVec3D *pc0, zVec3D *pc1, zVec3D *pc2, uint div1, uint div2, zOpticalInfo *oi1, zOpticalInfo *oi2)
+void rkglChecker(zVec3D *pc0, zVec3D *pc1, zVec3D *pc2, int div1, int div2, zOpticalInfo *oi1, zOpticalInfo *oi2)
 {
-  uint i, j;
+  int i, j;
   zVec3D d1, d2, d11, d12, d21, d22, v[4];
 
   zVec3DSub( pc1, pc0, &d1 );

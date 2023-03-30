@@ -13,5 +13,3 @@ endif
 ifeq ($(CONFIG_USE_GLUT),y)
 	OBJ += rkgl_glut.o
 endif
-
-DLIB=libroki-gl.so
