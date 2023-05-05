@@ -652,7 +652,57 @@ void rkglArrow(zVec3D *bot, zVec3D *vec, double mag)
   rkglCone( &cone, RKGL_FACE );
 }
 
-void rkglAxis(zDir axis, double d, double w, GLfloat color[])
+void rkglFrame(zFrame3D *f, double l, double mag)
+{
+  zOpticalInfo oi;
+  zVec3D v;
+
+  zOpticalInfoCreate( &oi, 0.5, 0.5, 0.5, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, NULL );
+  rkglMaterial( &oi );
+  zVec3DMul( &zFrame3DAtt(f)->b.x, l, &v );
+  rkglArrow( zFrame3DPos(f), &v, mag );
+  zOpticalInfoCreate( &oi, 0.5, 0.5, 0.5, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, NULL );
+  rkglMaterial( &oi );
+  zVec3DMul( &zFrame3DAtt(f)->b.y, l, &v );
+  rkglArrow( zFrame3DPos(f), &v, mag );
+  zOpticalInfoCreate( &oi, 0.5, 0.5, 0.5, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, NULL );
+  rkglMaterial( &oi );
+  zVec3DMul( &zFrame3DAtt(f)->b.z, l, &v );
+  rkglArrow( zFrame3DPos(f), &v, mag );
+}
+
+static void _rkglFrameHandleAxis(zFrame3D *f, zAxis a, double l, double mag, double r1, double r2)
+{
+  zVec3D v, vb;
+
+  zVec3DMul( &zFrame3DAtt(f)->v[a], 0.5*l, &v );
+  zVec3DAdd( zFrame3DPos(f), &v, &vb );
+  rkglArrow( &vb, &v, mag );
+  zVec3DRevDRC( &v );
+  zVec3DAdd( zFrame3DPos(f), &v, &vb );
+  rkglArrow( &vb, &v, mag );
+  rkglTorus( zFrame3DPos(f), &zFrame3DAtt(f)->v[a], r1, r2, RKGL_ARROW_DIV*4, RKGL_ARROW_DIV, RKGL_FACE );
+}
+
+void rkglFrameHandle(zFrame3D *f, double l, double mag)
+{
+  zOpticalInfo oi;
+  double r1, r2;
+
+  r1 = l * 0.5 + RKGL_ARROW_BOTTOM_RAD * mag;
+  r2 = l * 0.5 - RKGL_ARROW_BOTTOM_RAD * mag;
+  zOpticalInfoCreate( &oi, 0.5, 0.5, 0.5, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, NULL );
+  rkglMaterial( &oi );
+  _rkglFrameHandleAxis( f, zX, l, mag, r1, r2 );
+  zOpticalInfoCreate( &oi, 0.5, 0.5, 0.5, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, NULL );
+  rkglMaterial( &oi );
+  _rkglFrameHandleAxis( f, zY, l, mag, r1, r2 );
+  zOpticalInfoCreate( &oi, 0.5, 0.5, 0.5, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, NULL );
+  rkglMaterial( &oi );
+  _rkglFrameHandleAxis( f, zZ, l, mag, r1, r2 );
+}
+
+void rkglAxis(zAxis axis, double d, double w, GLfloat color[])
 {
   zEdge3D edge;
   zVec3D e1, e2;
@@ -674,7 +724,7 @@ void rkglAxis(zDir axis, double d, double w, GLfloat color[])
     glEnable( GL_LIGHTING );
 }
 
-void rkglGauge(zDir axis1, double d1, zDir axis2, double d2, double w, double step, GLfloat color[])
+void rkglGauge(zAxis axis1, double d1, zAxis axis2, double d2, double w, double step, GLfloat color[])
 {
   zEdge3D edge;
   zVec3D e1, e2;

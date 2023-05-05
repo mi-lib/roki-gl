@@ -73,8 +73,11 @@ __EXPORT void rkglPointCloud(zVec3DList *pc, zVec3D *center, short size);
 #define RKGL_ARROW_TIP_LEN    0.2
 __EXPORT void rkglArrow(zVec3D *bot, zVec3D *vec, double mag);
 
-__EXPORT void rkglAxis(zDir axis, double d, double w, GLfloat color[]);
-__EXPORT void rkglGauge(zDir axis1, double d1, zDir axis2, double d2, double w, double step, GLfloat color[]);
+__EXPORT void rkglFrame(zFrame3D *f, double l, double mag);
+__EXPORT void rkglFrameHandle(zFrame3D *f, double l, double mag);
+
+__EXPORT void rkglAxis(zAxis axis, double d, double w, GLfloat color[]);
+__EXPORT void rkglGauge(zAxis axis1, double d1, zAxis axis2, double d2, double w, double step, GLfloat color[]);
 __EXPORT void rkglChecker(zVec3D *pc0, zVec3D *pc1, zVec3D *pc2, int div1, int div2, zOpticalInfo *oi1, zOpticalInfo *oi2);
 
 __END_DECLS
