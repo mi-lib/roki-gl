@@ -1,3 +1,4 @@
+2023. 5. 6. Added frame_l and frame_mag members to rkglChainAttr, and modified rkglChainAttrInit, rkglChainAttrCopy, and rkglLinkEntry. [rkgl_chain, app]
 2023. 5. 6. Redefined display types as macros, and modified rkglBox, rkglSphere, rkglEllips, rkglCyl, rkglECyl, rkglCone, rkglTorus, rkglNURBS, rkglPH, rkglShape, and rkglLinkEntry. [rkgl_shape, rkgl_chain]
 2023. 5. 6. Abolished rkglTri, and added rkglTriFace and rkglTriWireframe. [rkgl_shape]
 2023. 5. 6. Defined rkglColorWhite. [rkgl_optic]

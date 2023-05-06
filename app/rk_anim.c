@@ -13,7 +13,12 @@ enum{
   OPT_PAN, OPT_TILT, OPT_ROLL, OPT_OX, OPT_OY, OPT_OZ,
   OPT_WINX, OPT_WINY,
   OPT_WIDTH, OPT_HEIGHT,
-  OPT_WIREFRAME, OPT_BB, OPT_BONE, OPT_COM, OPT_ELLIPS,
+  OPT_DRAW_WIREFRAME,
+  OPT_DRAW_BB,
+  OPT_DRAW_BONE,
+  OPT_DRAW_COORD,
+  OPT_DRAW_COM,
+  OPT_DRAW_ELLIPS,
   OPT_BG,
   OPT_LX, OPT_LY, OPT_LZ,
   OPT_SMOOTH, OPT_FOG,
@@ -41,6 +46,7 @@ zOption opt[] = {
   { "wireframe", NULL, NULL, "draw kinematic chain as wireframe model", NULL, false },
   { "bb", NULL, NULL, "draw kinematic chain bounding box", NULL, false },
   { "bone", NULL, "<value>", "draw kinematic chain as bone model with specified radius", (char *)"0.006", false },
+  { "coord", NULL, "<value>", "draw cascaded coordinate frameschained of kinematic chain with specified length of arrows of axes", (char *)"0.1", false },
   { "com", NULL, NULL, "draw COM of each link and the whole", (char *)"0.012", false },
   { "ellips", NULL, NULL, "draw kinematic chain as inertial ellipsoid model", (char *)"0.1", false },
   { "bg", NULL, "<RGB#hex>", "set background color", (char *)"#505050", false },
@@ -239,19 +245,20 @@ void rkAnimUsage(void)
 void rkAnimCreateChainAttr(rkglChainAttr *attr)
 {
   rkglChainAttrInit( attr );
-  if( opt[OPT_WIREFRAME].flag ) attr->disptype = RKGL_WIREFRAME;
-  if( opt[OPT_BB].flag )        attr->disptype = RKGL_BB;
-  if( opt[OPT_BONE].flag ){
+  if( opt[OPT_DRAW_WIREFRAME].flag ) attr->disptype = RKGL_WIREFRAME;
+  if( opt[OPT_DRAW_BB].flag )        attr->disptype = RKGL_BB;
+  if( opt[OPT_DRAW_BONE].flag ){
     attr->disptype = RKGL_STICK;
-    attr->bone_r = atof( opt[OPT_BONE].arg );
+    attr->bone_r = atof( opt[OPT_DRAW_BONE].arg );
   }
-  if( opt[OPT_COM].flag ){
+  if( opt[OPT_DRAW_COORD].flag ) attr->disptype = RKGL_FRAME;
+  if( opt[OPT_DRAW_COM].flag ){
     attr->disptype = RKGL_COM;
-    attr->com_r = atof( opt[OPT_COM].arg );
+    attr->com_r = atof( opt[OPT_DRAW_COM].arg );
   }
-  if( opt[OPT_ELLIPS].flag ){
+  if( opt[OPT_DRAW_ELLIPS].flag ){
     attr->disptype = RKGL_ELLIPS;
-    attr->ellips_mag = atof( opt[OPT_ELLIPS].arg );
+    attr->ellips_mag = atof( opt[OPT_DRAW_ELLIPS].arg );
   }
 }
 
@@ -444,7 +451,7 @@ void rkAnimDraw(void)
 
   zListForEach( &anim_cell_list, cell ){
     rkglChainDraw( &cell->data.gc );
-    if( opt[OPT_COM].flag )
+    if( opt[OPT_DRAW_COM].flag )
       rkglChainCOMDraw( &cell->data.gc, 0.03 );
   }
   if( env ) glCallList( env );
@@ -485,8 +492,8 @@ void rkAnimLoadEnv(void)
   zMShape3D ms_env;
 
   rkglChainAttrInit( &attr );
-  if( opt[OPT_WIREFRAME].flag ) attr.disptype = RKGL_WIREFRAME;
-  if( opt[OPT_BB].flag )        attr.disptype = RKGL_BB;
+  if( opt[OPT_DRAW_WIREFRAME].flag ) attr.disptype = RKGL_WIREFRAME;
+  if( opt[OPT_DRAW_BB].flag )        attr.disptype = RKGL_BB;
 
   rkChainInit( &chain_env );
   if( rkAnimChainReadZTK( &chain_env, opt[OPT_ENVFILE].arg ) ){

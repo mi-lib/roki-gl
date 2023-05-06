@@ -19,6 +19,7 @@ __BEGIN_DECLS
 #define RKGL_FACE      0x01
 #define RKGL_WIREFRAME 0x02
 #define RKGL_STICK     0x04
+#define RKGL_FRAME     0x08
 #define RKGL_COM       0x10
 #define RKGL_ELLIPS    0x20
 #define RKGL_BB        0x40

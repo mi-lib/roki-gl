@@ -31,6 +31,13 @@ void resize(int w, int h)
   rkglFrustumScale( &cam, 1.0/1000, 0.5, 10 );
 }
 
+#define toggle_disptype( gr, type ) do{\
+  if( (gr)->attr.disptype & (type) )\
+    (gr)->attr.disptype &= ~(type);\
+  else\
+    (gr)->attr.disptype |= (type);\
+} while(0)
+
 void keyboard(unsigned char key, int x, int y)
 {
   int id;
@@ -60,33 +67,43 @@ void keyboard(unsigned char key, int x, int y)
     break;
   case '+':
     dis += zDeg2Rad(5.0);
-    rkChainLinkSetJointDis( &chain, 3, &dis );
+    rkChainLinkJointSetDis( &chain, 3, &dis );
     rkChainUpdateFK( &chain );
     break;
   case '-':
     dis -= zDeg2Rad(5.0);
-    rkChainLinkSetJointDis( &chain, 3, &dis );
+    rkChainLinkJointSetDis( &chain, 3, &dis );
     rkChainUpdateFK( &chain );
     break;
   case 'r':
-    gr.attr.disptype = RKGL_FACE;
+    toggle_disptype( &gr, RKGL_FACE );
     rkglChainLinkAlt( &gr, 3, &oi_alt, &gr.attr, &light );
     break;
   case 'R':
     rkglChainLinkReset( &gr, 3 );
     break;
   case 'b':
-    gr.attr.disptype = RKGL_BB;
+    toggle_disptype( &gr, RKGL_BB );
     rkglChainUnload( &gr );
     rkglChainLoad( &gr, &chain, &gr.attr, &light );
     break;
   case 's':
-    gr.attr.disptype = RKGL_STICK;
+    toggle_disptype( &gr, RKGL_STICK );
+    rkglChainUnload( &gr );
+    rkglChainLoad( &gr, &chain, &gr.attr, &light );
+    break;
+  case 'w':
+    toggle_disptype( &gr, RKGL_WIREFRAME );
     rkglChainUnload( &gr );
     rkglChainLoad( &gr, &chain, &gr.attr, &light );
     break;
   case 'f':
-    gr.attr.disptype = RKGL_FACE;
+    toggle_disptype( &gr, RKGL_FACE );
+    rkglChainUnload( &gr );
+    rkglChainLoad( &gr, &chain, &gr.attr, &light );
+    break;
+  case 'm':
+    toggle_disptype( &gr, RKGL_FRAME );
     rkglChainUnload( &gr );
     rkglChainLoad( &gr, &chain, &gr.attr, &light );
     break;
@@ -108,21 +125,21 @@ void init(void)
   rkglChainAttr attr;
 
   rkglBGSet( &cam, 0.5, 0.5, 0.5 );
-  rkglCASet( &cam, 1, 1, 1, 45, -30, 0 );
+  rkglCASet( &cam, 0.5, 0.5, 0.5, 45, -30, 0 );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0, 0 );
   rkglLightSetPos( &light, 1, 3, 6 );
 
   rkglChainAttrInit( &attr );
-  rkChainReadZTK( &chain, "../model/puma" );
+  rkChainReadZTK( &chain, "../../../roki/example/model/puma" );
   rkglChainLoad( &gr, &chain, &attr, &light );
 }
 
 int main(int argc, char *argv[])
 {
   rkglInitGLUT( &argc, argv );
-  rkglWindowCreateGLUT( 0, 0, 320, 320, argv[0] );
+  rkglWindowCreateGLUT( 0, 0, 480, 480, argv[0] );
 
   glutDisplayFunc( display );
   glutIdleFunc( idle );

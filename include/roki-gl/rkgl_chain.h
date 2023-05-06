@@ -15,6 +15,8 @@ __BEGIN_DECLS
 typedef struct{
   ubyte disptype;
   double bone_r;
+  double frame_l;
+  double frame_mag;
   double com_r;
   double ellips_mag;
 } rkglChainAttr;

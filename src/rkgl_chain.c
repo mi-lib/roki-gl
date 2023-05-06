@@ -11,10 +11,14 @@ void rkglChainAttrInit(rkglChainAttr *attr)
 #define RKGL_LINK_BONE_R     0.006
 #define RKGL_LINK_COM_R      0.012
 #define RKGL_LINK_ELLIPS_MAG 1.0
+#define RKGL_LINK_FRAME_L    0.1
+#define RKGL_LINK_FRAME_MAG  0.1
   attr->disptype = RKGL_FACE;
   attr->bone_r = RKGL_LINK_BONE_R;
   attr->com_r = RKGL_LINK_COM_R;
   attr->ellips_mag = RKGL_LINK_ELLIPS_MAG;
+  attr->frame_l = RKGL_LINK_FRAME_L;
+  attr->frame_mag = RKGL_LINK_FRAME_MAG;
 }
 
 void rkglChainAttrCopy(rkglChainAttr *src, rkglChainAttr *dest)
@@ -28,6 +32,8 @@ void rkglChainAttrCopy(rkglChainAttr *src, rkglChainAttr *dest)
   dest->bone_r = src->bone_r;
   dest->com_r = src->com_r;
   dest->ellips_mag = src->ellips_mag;
+  dest->frame_l = src->frame_l;
+  dest->frame_mag = src->frame_mag;
 }
 
 bool rkglChainLoad(rkglChain *gc, rkChain *c, rkglChainAttr *attr, rkglLight *light)
@@ -133,6 +139,7 @@ int rkglLinkEntry(rkLink *l, zOpticalInfo *oi_alt, rkglChainAttr *attr, rkglLigh
 
   result = rkglBeginList();
   if( attr->disptype & RKGL_STICK  ) rkglLinkStick( l, attr );
+  if( attr->disptype & RKGL_FRAME  ) rkglFrame( ZFRAME3DIDENT, attr->frame_l, attr->frame_mag );
   if( attr->disptype & RKGL_COM    ) rkglLinkCOM( l, attr );
   if( attr->disptype & RKGL_ELLIPS ) rkglLinkInertiaEllips( l, attr );
   if( !rkLinkShapeIsEmpty( l ) && attr->disptype & ( RKGL_FACE | RKGL_WIREFRAME | RKGL_BB ) )
