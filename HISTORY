@@ -1,3 +1,8 @@
+2023. 5. 6. Redefined display types as macros, and modified rkglBox, rkglSphere, rkglEllips, rkglCyl, rkglECyl, rkglCone, rkglTorus, rkglNURBS, rkglPH, rkglShape, and rkglLinkEntry. [rkgl_shape, rkgl_chain]
+2023. 5. 6. Abolished rkglTri, and added rkglTriFace and rkglTriWireframe. [rkgl_shape]
+2023. 5. 6. Defined rkglColorWhite. [rkgl_optic]
+2023. 5. 6. Modified rkglNURBS. [rkgl_shape]
+2023. 5. 5. Added rkglSaveLighting and rkglLoadLighting. [rkgl_shape]
 2023. 5. 5. Added rkglFrame and rkglFrameHandle. [rkgl_shape]
 2023. 5. 5. Debugged rkglAxis and rkglGauge. [rkgl_shape]
 2023. 3.30. Reflected new specification of zArrayClass and zArray2Class. [rkgl_shape, rkgl_chain, rkgl_terra]

@@ -2,22 +2,29 @@
 #include <roki-gl/rkgl_camera.h>
 #include <roki-gl/rkgl_shape.h>
 
-int torus;
-
 rkglCamera cam;
 rkglLight light;
 
 double r = 0;
+ubyte dispswitch = 1;
 
 void display(void)
 {
+  zOpticalInfo blue;
+  zVec3D c, d;
+
+  zOpticalInfoCreateSimple( &blue, 0.2, 0.2, 1.0, NULL );
+  zVec3DCreate( &c, 1, 0, 0 );
+  zVec3DCreate( &d, 0, 1, 1 );
+
   rkglCALoad( &cam );
   rkglLightPut( &light );
 
   glPushMatrix();
   glRotated( r, 1, 0, 0 );
   rkglClear();
-  glCallList( torus );
+  rkglMaterial( &blue );
+  rkglTorus( &c, &d, 1.0, 0.5, 32, 16, RKGL_FACE | ( dispswitch ? 0 : RKGL_WIREFRAME ) );
   glPopMatrix();
   glutSwapBuffers();
 }
@@ -44,6 +51,7 @@ void keyboard(unsigned char key, int x, int y)
   case '0': rkglCARelMove( &cam, 0, 0, 0.05 ); break;
   case ')': rkglCARelMove( &cam, 0, 0,-0.05 ); break;
   case ' ': r += 10; break;
+  case 'w': dispswitch = 1 - dispswitch; break;
   case 'q': case 'Q': case '\033':
     exit( EXIT_SUCCESS );
   default: ;
@@ -52,25 +60,15 @@ void keyboard(unsigned char key, int x, int y)
 
 void init(void)
 {
-  zVec3D c, d;
-  zOpticalInfo white;
-
   rkglSetCallbackParamGLUT( &cam, 0, 0, 0, 0, 0 );
 
   rkglBGSet( &cam, 0.5, 0.5, 0.5 );
   rkglCASet( &cam, 6, 0, 3, 0, -30, 0 );
+  glLineWidth( 3 );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0, 0 );
   rkglLightSetPos( &light, 1, 3, 6 );
-
-  zOpticalInfoCreateSimple( &white, 1.6, 1.0, 0.6, NULL );
-  zVec3DCreate( &c, 1, 0, 0 );
-  zVec3DCreate( &d, 0, 1, 1 );
-  torus = rkglBeginList();
-  rkglMaterial( &white );
-  rkglTorus( &c, &d, 1.0, 0.5, 32, 16, RKGL_FACE );
-  glEndList();
 }
 
 int main(int argc, char *argv[])

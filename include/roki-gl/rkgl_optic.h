@@ -19,6 +19,8 @@ __BEGIN_DECLS
 
 __EXPORT void rkglColor24(unsigned color);
 
+#define rkglColorWhite() glColor3ub( 0xff, 0xff, 0xff )
+
 __EXPORT void rkglMaterialRGBA(zRGB *rgb, float alpha);
 __EXPORT void rkglMaterialWhite(void);
 __EXPORT void rkglMaterialOpticalInfo(zOpticalInfo *oi);

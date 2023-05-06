@@ -9,6 +9,7 @@ zOpticalInfo oi;
 zNURBS3D nurbs;
 
 bool show_ctl = false;
+bool show_wf = false;
 
 void init_surface(void)
 {
@@ -35,6 +36,10 @@ void keyboard(unsigned char key, int x, int y)
     init_surface();
     glutPostRedisplay();
     break;
+  case 'w':
+    show_wf = 1 - show_wf;
+    glutPostRedisplay();
+    break;
   case 'p':
     show_ctl = 1 - show_ctl;
     glutPostRedisplay();
@@ -51,7 +56,7 @@ void display(void)
   glPushMatrix();
 
   rkglMaterial( &oi );
-  rkglNURBS( &nurbs, RKGL_FACE );
+  rkglNURBS( &nurbs, RKGL_FACE | ( show_wf ? 0 : RKGL_WIREFRAME ) );
   if( show_ctl )
     rkglNURBSCP( &nurbs, 5.0, &rgb );
 
@@ -74,6 +79,7 @@ void init(void)
 
   rkglBGSet( &cam, 0.0, 0.0, 0.0 );
   rkglCALookAt( &cam, 3, 0, 1, 0, 0, 0, 0, 0, 1 );
+  glLineWidth( 2 );
 
   glEnable( GL_LIGHTING );
   glLightModeli( GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE );

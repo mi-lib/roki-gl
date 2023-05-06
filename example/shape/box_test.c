@@ -15,13 +15,14 @@ void display(void)
   rkglCALoad( &cam );
   rkglLightPut( &light );
 
+  glLineWidth( 2 );
   glPushMatrix();
   glRotated( r, 0, 0, 1 );
   rkglClear();
   rkglMaterial( &red );
-  rkglBox( &box1, RKGL_FACE );
+  rkglBox( &box1, RKGL_FACE | RKGL_WIREFRAME );
   rkglMaterial( &blue );
-  rkglBox( &box2, RKGL_FACE );
+  rkglBox( &box2, RKGL_FACE | RKGL_WIREFRAME );
   glPopMatrix();
   glutSwapBuffers();
 }

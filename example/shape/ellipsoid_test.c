@@ -3,12 +3,15 @@
 #include <roki-gl/rkgl_shape.h>
 
 zOpticalInfo yellow;
+zOpticalInfo orange;
 zEllips3D el;
+zECyl3D ec;
 
 rkglCamera cam;
 rkglLight light;
 
 double r = 0;
+ubyte dispswitch = 1;
 
 void display(void)
 {
@@ -19,7 +22,9 @@ void display(void)
   glRotated( r, 0, 1, 0 );
   rkglClear();
   rkglMaterial( &yellow );
-  rkglEllips( &el, RKGL_FACE );
+  rkglEllips( &el, RKGL_FACE | ( dispswitch ? 0 : RKGL_WIREFRAME ) );
+  rkglMaterial( &orange );
+  rkglECyl( &ec, RKGL_FACE | ( dispswitch ? 0 : RKGL_WIREFRAME ) );
   glPopMatrix();
   glutSwapBuffers();
 }
@@ -46,6 +51,7 @@ void keyboard(unsigned char key, int x, int y)
   case '0': rkglCARelMove( &cam, 0, 0, 0.05 ); break;
   case ')': rkglCARelMove( &cam, 0, 0,-0.05 ); break;
   case ' ': r += 10; break;
+  case 'w': dispswitch = 1 - dispswitch; break;
   case 'q': case 'Q': case '\033':
     exit( EXIT_SUCCESS );
   default: ;
@@ -54,17 +60,26 @@ void keyboard(unsigned char key, int x, int y)
 
 void init(void)
 {
+  zVec3D c1, c2;
+
   rkglSetCallbackParamGLUT( &cam, 0, 0, 0, 0, 0 );
 
   rkglBGSet( &cam, 0.5, 0.5, 0.5 );
   rkglCASet( &cam, 6, 0, 3, 0, -30, 0 );
+  glLineWidth( 2 );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0, 0 );
   rkglLightSetPos( &light, 1, 6, 6 );
 
   zOpticalInfoCreateSimple( &yellow, 0.8, 0.8, 0, NULL );
-  zEllips3DCreateAlign( &el, ZVEC3DZERO, 2, 3, 1, 0 );
+  zVec3DCreate( &c1, 0, -2, 0 );
+  zEllips3DCreateAlign( &el, &c1, 3, 2, 1, 16 );
+
+  zOpticalInfoCreateSimple( &orange, 0.8, 0.4, 0, NULL );
+  zVec3DCreate( &c1, 0, 2,-2 );
+  zVec3DCreate( &c2, 0, 2, 2 );
+  zECyl3DCreate( &ec, &c1, &c2, 3, 1, ZVEC3DX, 16 );
 }
 
 int main(int argc, char *argv[])

@@ -131,29 +131,14 @@ int rkglLinkEntry(rkLink *l, zOpticalInfo *oi_alt, rkglChainAttr *attr, rkglLigh
   zShapeListCell *sp;
   int result;
 
-  switch( attr->disptype ){
-  case RKGL_STICK:
-    result = rkglBeginList();
-      rkglLinkStick( l, attr );
-    glEndList();
-    break;
-  case RKGL_COM:
-    result = rkglBeginList();
-      rkglLinkCOM( l, attr );
-    glEndList();
-    break;
-  case RKGL_ELLIPS:
-    result = rkglBeginList();
-      rkglLinkInertiaEllips( l, attr );
-    glEndList();
-    break;
-  default:
-    if( rkLinkShapeIsEmpty( l ) ) return -1;
-    result = rkglBeginList();
-      zListForEach( rkLinkShapeList(l), sp )
-        rkglShape( zShapeListCellShape(sp), oi_alt, attr->disptype, light );
-    glEndList();
-  }
+  result = rkglBeginList();
+  if( attr->disptype & RKGL_STICK  ) rkglLinkStick( l, attr );
+  if( attr->disptype & RKGL_COM    ) rkglLinkCOM( l, attr );
+  if( attr->disptype & RKGL_ELLIPS ) rkglLinkInertiaEllips( l, attr );
+  if( !rkLinkShapeIsEmpty( l ) && attr->disptype & ( RKGL_FACE | RKGL_WIREFRAME | RKGL_BB ) )
+    zListForEach( rkLinkShapeList(l), sp )
+      rkglShape( zShapeListCellShape(sp), oi_alt, attr->disptype, light );
+  glEndList();
   return result;
 }
 

@@ -14,14 +14,23 @@
 
 __BEGIN_DECLS
 
-enum{
-  RKGL_FACE = 0,
-  RKGL_WIREFRAME,
-  RKGL_STICK,
-  RKGL_COM,
-  RKGL_ELLIPS,
-  RKGL_BB,
-};
+/* display types */
+
+#define RKGL_FACE      0x01
+#define RKGL_WIREFRAME 0x02
+#define RKGL_STICK     0x04
+#define RKGL_COM       0x10
+#define RKGL_ELLIPS    0x20
+#define RKGL_BB        0x40
+
+/* save lighting */
+
+#define rkglSaveLighting( __flag ) do{\
+  if( ( *(__flag) = glIsEnabled( GL_LIGHTING ) ) ) glDisable( GL_LIGHTING );\
+} while(0)
+#define rkglLoadLighting( __flag ) do{\
+  if( __flag ) glEnable( GL_LIGHTING );\
+} while(0)
 
 /* display list */
 
@@ -43,27 +52,27 @@ __EXPORT void rkglTriTexture(zTri3D *t, zTri2D *f);
 __EXPORT void rkglTriBump(zTri3D *t, zTri2D *f, zVec3D *lp);
 __EXPORT void rkglPolygon(zVec3D v[], int n, ...);
 
-__EXPORT void rkglBox(zBox3D *box, int disptype);
-__EXPORT void rkglSphere(zSphere3D *sphere, int disptype);
-__EXPORT void rkglEllips(zEllips3D *ellips, int disptype);
-__EXPORT void rkglCyl(zCyl3D *cyl, int disptype);
-__EXPORT void rkglECyl(zECyl3D *ecyl, int disptype);
-__EXPORT void rkglCone(zCone3D *cone, int disptype);
+__EXPORT void rkglBox(zBox3D *box, ubyte disptype);
+__EXPORT void rkglSphere(zSphere3D *sphere, ubyte disptype);
+__EXPORT void rkglEllips(zEllips3D *ellips, ubyte disptype);
+__EXPORT void rkglCyl(zCyl3D *cyl, ubyte disptype);
+__EXPORT void rkglECyl(zECyl3D *ecyl, ubyte disptype);
+__EXPORT void rkglCone(zCone3D *cone, ubyte disptype);
 
-__EXPORT void rkglTorus(zVec3D *c, zVec3D *n, double r1, double r2, int div1, int div2, int disptype);
+__EXPORT void rkglTorus(zVec3D *c, zVec3D *n, double r1, double r2, int div1, int div2, ubyte disptype);
 
-__EXPORT void rkglNURBS(zNURBS3D *nurbs, int disptype);
+__EXPORT void rkglNURBS(zNURBS3D *nurbs, ubyte disptype);
 __EXPORT void rkglNURBSCP(zNURBS3D *nurbs, GLfloat size, zRGB *rgb);
 
-__EXPORT void rkglPH(zPH3D *ph, int disptype);
+__EXPORT void rkglPH(zPH3D *ph, ubyte disptype);
 __EXPORT void rkglPHTexture(zPH3D *ph, zOpticalInfo *oi, zTexture *texture);
 __EXPORT void rkglPHBump(zPH3D *ph, zOpticalInfo *oi, zTexture *bump, rkglLight *light);
 
-__EXPORT void rkglShape(zShape3D *s, zOpticalInfo *oi_alt, int disptype, rkglLight *light);
-__EXPORT int rkglShapeEntry(zShape3D *s, zOpticalInfo *oi_alt, int disptype, rkglLight *light);
+__EXPORT void rkglShape(zShape3D *s, zOpticalInfo *oi_alt, ubyte disptype, rkglLight *light);
+__EXPORT int rkglShapeEntry(zShape3D *s, zOpticalInfo *oi_alt, ubyte disptype, rkglLight *light);
 
-__EXPORT void rkglMShape(zMShape3D *s, int disptype, rkglLight *light);
-__EXPORT int rkglMShapeEntry(zMShape3D *s, int disptype, rkglLight *light);
+__EXPORT void rkglMShape(zMShape3D *s, ubyte disptype, rkglLight *light);
+__EXPORT int rkglMShapeEntry(zMShape3D *s, ubyte disptype, rkglLight *light);
 
 __EXPORT void rkglPointCloud(zVec3DList *pc, zVec3D *center, short size);
 

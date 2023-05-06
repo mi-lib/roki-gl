@@ -67,9 +67,9 @@ void generate_pc(char *filename)
   for( i=0; i<zShape3DFaceNum(s); i++ ){
     t = zShape3DFace(s,i);
     if( zTri3DNorm(t)->e[zX] < 0 ) continue;
-    zVec3DListInsert( &pc, zTri3DVert(t,0) );
-    zVec3DListInsert( &pc, zTri3DVert(t,1) );
-    zVec3DListInsert( &pc, zTri3DVert(t,2) );
+    zVec3DListAdd( &pc, zTri3DVert(t,0) );
+    zVec3DListAdd( &pc, zTri3DVert(t,1) );
+    zVec3DListAdd( &pc, zTri3DVert(t,2) );
   }
 }
 
@@ -90,6 +90,7 @@ int main(int argc, char *argv[])
   pc_id = rkglBeginList();
   rkglPointCloud( &pc, ZVEC3DZERO, 1 );
   glEndList();
+  zVec3DListDestroy( &pc );
   glutMainLoop();
   return 0;
 }

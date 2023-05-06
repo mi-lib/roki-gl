@@ -13,7 +13,7 @@
 __BEGIN_DECLS
 
 typedef struct{
-  int disptype;
+  ubyte disptype;
   double bone_r;
   double com_r;
   double ellips_mag;

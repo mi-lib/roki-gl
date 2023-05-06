@@ -11,6 +11,7 @@ rkglCamera cam;
 rkglLight light;
 
 double r = 0;
+ubyte dispswitch = 1;
 
 void display(void)
 {
@@ -21,11 +22,17 @@ void display(void)
   glRotated( r, 0, 1, 0 );
   rkglClear();
   rkglMaterial( &red );
-  rkglSphere( &sphere[0], RKGL_FACE ); rkglSphere( &sphere[1], RKGL_FACE ); rkglSphere( &sphere[2], RKGL_FACE );
+  rkglSphere( &sphere[0], RKGL_FACE | ( dispswitch ? 0 : RKGL_WIREFRAME ) );
+  rkglSphere( &sphere[1], RKGL_FACE | ( dispswitch ? 0 : RKGL_WIREFRAME ) );
+  rkglSphere( &sphere[2], RKGL_FACE | ( dispswitch ? 0 : RKGL_WIREFRAME ) );
   rkglMaterial( &cyan );
-  rkglCyl( &cylinder[0], RKGL_FACE );  rkglCyl( &cylinder[1], RKGL_FACE );  rkglCyl( &cylinder[2], RKGL_FACE );
+  rkglCyl( &cylinder[0], RKGL_FACE | ( dispswitch ? 0 : RKGL_WIREFRAME ) );
+  rkglCyl( &cylinder[1], RKGL_FACE | ( dispswitch ? 0 : RKGL_WIREFRAME ) );
+  rkglCyl( &cylinder[2], RKGL_FACE | ( dispswitch ? 0 : RKGL_WIREFRAME ) );
   rkglMaterial( &yellow );
-  rkglCone( &cone[0], RKGL_FACE );     rkglCone( &cone[1], RKGL_FACE );     rkglCone( &cone[2], RKGL_FACE );
+  rkglCone( &cone[0], RKGL_FACE | ( dispswitch ? 0 : RKGL_WIREFRAME ) );
+  rkglCone( &cone[1], RKGL_FACE | ( dispswitch ? 0 : RKGL_WIREFRAME ) );
+  rkglCone( &cone[2], RKGL_FACE | ( dispswitch ? 0 : RKGL_WIREFRAME ) );
   glPopMatrix();
   glutSwapBuffers();
 }
@@ -52,6 +59,7 @@ void keyboard(unsigned char key, int x, int y)
   case '0': rkglCARelMove( &cam, 0, 0, 0.05 ); break;
   case ')': rkglCARelMove( &cam, 0, 0,-0.05 ); break;
   case ' ': r += 10; break;
+  case 'w': dispswitch = 1 - dispswitch; break;
   case 'q': case 'Q': case '\033':
     exit( EXIT_SUCCESS );
   default: ;
@@ -66,6 +74,7 @@ void init(void)
 
   rkglBGSet( &cam, 0.5, 0.5, 0.5 );
   rkglCASet( &cam, 6, 0, 3, 0, -30, 0 );
+  glLineWidth( 2 );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0, 0 );
