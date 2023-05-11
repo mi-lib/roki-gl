@@ -66,9 +66,9 @@ void init(void)
   rkglBGSet( &cam, 0.0, 0.0, 0.4 );
   rkglCALookAt( &cam, 5.0, 4.0, 6.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0 );
 
-  glEnable(GL_LIGHTING);
-  rkglLightCreate( &light, 0, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0, 0 );
-  rkglLightSetPos( &light, 4.0, 8.0, 6.0 );
+  glEnable( GL_LIGHTING );
+  rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
+  rkglLightMove( &light, 4.0, 8.0, 6.0 );
 }
 
 void idle(void){ glutPostRedisplay(); }

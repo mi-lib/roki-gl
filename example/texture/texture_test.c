@@ -25,8 +25,8 @@ void init(void)
   rkglCASet( &cam, 10, 0, 5, 0, -30, 0 );
 
   glEnable( GL_LIGHTING );
-  rkglLightCreate( &light, 0, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0, 0 );
-  rkglLightSetPos( &light, 10, 3, 10 );
+  rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
+  rkglLightMove( &light, 10, 3, 10 );
 
   /* following calls are mandatory. */
   rkglTextureEnable();

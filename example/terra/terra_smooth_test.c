@@ -79,8 +79,8 @@ void init()
 
   glEnable( GL_LIGHTING );
   glLightModeli( GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE );
-  rkglLightCreate( &light, 0, 0.0, 0.0, 0.0, 1, 1, 1, 0, 0, 0, 0 );
-  rkglLightSetPos( &light, 0, 0, 20 );
+  rkglLightCreate( &light, 0.0, 0.0, 0.0, 1, 1, 1, 0, 0, 0 );
+  rkglLightMove( &light, 0, 0, 20 );
 
   zTerraAllocRegion( &terra, -1.0, 1.0, -1.0, 1.0, -HUGE_VAL, HUGE_VAL, 0.4, 0.5 );
   refresh();

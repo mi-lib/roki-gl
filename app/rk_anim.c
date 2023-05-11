@@ -21,7 +21,7 @@ enum{
   OPT_DRAW_ELLIPS,
   OPT_BG,
   OPT_LX, OPT_LY, OPT_LZ,
-  OPT_SMOOTH, OPT_FOG,
+  OPT_SMOOTH,
   OPT_SHADOW, OPT_SHADOW_SIZE, OPT_SHADOW_AREA,
   OPT_FRAME, OPT_CAPTURE, OPT_CAPTURESERIAL, OPT_CAPTURE_XWD,
   OPT_SECPERFRAME, OPT_SKEW,
@@ -54,7 +54,6 @@ zOption opt[] = {
   { "ly", NULL, "<value>", "light position in y axis", (char *)"0", false },
   { "lz", NULL, "<value>", "light position in z axis", (char *)"3", false },
   { "smooth", NULL, NULL, "enable antialias", NULL, false },
-  { "fog", NULL, NULL, "enable fog", NULL, false },
   { "shadow", NULL, NULL, "enable shadow", NULL, false },
   { "shadowsize", NULL, "<value>", "shadow map size", (char *)"1024", false },
   { "shadowarea", NULL, "<value>", "radius of shadowing area", (char *)"2.0", false },
@@ -555,15 +554,13 @@ void rkAnimInit(void)
     atof(opt[OPT_PAN].arg), atof(opt[OPT_TILT].arg), atof(opt[OPT_ROLL].arg) );
 
   glEnable( GL_LIGHTING );
-  rkglLightCreate( &light, 0, 0.5, 0.5, 0.5, 0.8, 0.8, 0.8, 0, 0, 0, 0 );
-  rkglLightSetPos( &light,
-    atof(opt[OPT_LX].arg), atof(opt[OPT_LY].arg), atof(opt[OPT_LZ].arg) );
+  rkglLightCreate( &light, 0.5, 0.5, 0.5, 0.8, 0.8, 0.8, 0, 0, 0 );
+  rkglLightMove( &light, atof(opt[OPT_LX].arg), atof(opt[OPT_LY].arg), atof(opt[OPT_LZ].arg) );
   rkglShadowInit( &shadow, atoi(opt[OPT_SHADOW_SIZE].arg), atoi(opt[OPT_SHADOW_SIZE].arg), atof(opt[OPT_SHADOW_AREA].arg), 0.2 );
   rkglTextureEnable();
 
   if( opt[OPT_ENVFILE].flag ) rkAnimLoadEnv();
   if( opt[OPT_SMOOTH].flag ) glEnable( GL_LINE_SMOOTH );
-  if( opt[OPT_FOG].flag ) rkglBGFog( &cam, 0.1 );
 }
 
 bool rkAnimCommandArgs(int argc, char *argv[])

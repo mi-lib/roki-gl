@@ -67,8 +67,8 @@ void init(void)
   glLineWidth( 3 );
 
   glEnable( GL_LIGHTING );
-  rkglLightCreate( &light, 0, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0, 0 );
-  rkglLightSetPos( &light, 1, 3, 6 );
+  rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
+  rkglLightMove( &light, 1, 3, 6 );
 }
 
 int main(int argc, char *argv[])

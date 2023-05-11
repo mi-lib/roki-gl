@@ -29,8 +29,8 @@ void init(void)
   rkglSetCallbackParamGLUT( &cam, 0.05, 0.1, 5.0, 0.05, 5 );
 
   glEnable( GL_LIGHTING );
-  rkglLightCreate( &light, 0, 0.4, 0.4, 0.4, 1, 1, 1, 0, 0, 0, 0 );
-  rkglLightSetPos( &light, 1, 3, 6 );
+  rkglLightCreate( &light, 0.4, 0.4, 0.4, 1, 1, 1, 0, 0, 0 );
+  rkglLightMove( &light, 1, 3, 6 );
 
   zMShape3DReadZTK( &ms, "../model/scc.ztk" );
   ms_id = rkglMShapeEntry( &ms, RKGL_FACE, &light );

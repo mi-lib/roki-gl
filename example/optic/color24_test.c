@@ -81,32 +81,19 @@ void keyboard(unsigned char key, int x, int y)
   case 'O': color[4] +=0x010001; break;
   case 'P': color[5] +=0x000101; break;
 
-  case 'j':
-    rkglCALockonRotate( &cam, 1, 5, 0, 0 ); break;
-  case 'J':
-    rkglCALockonRotate( &cam, 1,-5, 0, 0 ); break;
-  case 'k':
-    rkglCALockonRotate( &cam, 1, 0, 5, 0 ); break;
-  case 'K':
-    rkglCALockonRotate( &cam, 1, 0,-5, 0 ); break;
-  case 'l':
-    rkglCALockonRotate( &cam, 1, 0, 0, 5 ); break;
-  case 'L':
-    rkglCALockonRotate( &cam, 1, 0, 0,-5 ); break;
-  case 'n':
-    rkglCARelMove( &cam, 0.05, 0, 0 ); break;
-  case 'N':
-    rkglCARelMove( &cam,-0.05, 0, 0 ); break;
-  case 'm':
-    rkglCARelMove( &cam, 0, 0.05, 0 ); break;
-  case 'M':
-    rkglCARelMove( &cam, 0,-0.05, 0 ); break;
-  case ',':
-    rkglCARelMove( &cam, 0, 0, 0.05 ); break;
-  case '<':
-    rkglCARelMove( &cam, 0, 0,-0.05 ); break;
-  case ' ':
-    r += 10; break;
+  case 'j': rkglCALockonRotate( &cam, 1, 5, 0, 0 ); break;
+  case 'J': rkglCALockonRotate( &cam, 1,-5, 0, 0 ); break;
+  case 'k': rkglCALockonRotate( &cam, 1, 0, 5, 0 ); break;
+  case 'K': rkglCALockonRotate( &cam, 1, 0,-5, 0 ); break;
+  case 'l': rkglCALockonRotate( &cam, 1, 0, 0, 5 ); break;
+  case 'L': rkglCALockonRotate( &cam, 1, 0, 0,-5 ); break;
+  case 'n': rkglCARelMove( &cam, 0.05, 0, 0 ); break;
+  case 'N': rkglCARelMove( &cam,-0.05, 0, 0 ); break;
+  case 'm': rkglCARelMove( &cam, 0, 0.05, 0 ); break;
+  case 'M': rkglCARelMove( &cam, 0,-0.05, 0 ); break;
+  case ',': rkglCARelMove( &cam, 0, 0, 0.05 ); break;
+  case '<': rkglCARelMove( &cam, 0, 0,-0.05 ); break;
+  case ' ': r += 10; break;
   case 'q': case 'Q': case '\033':
     exit( EXIT_SUCCESS );
   default: ;

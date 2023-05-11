@@ -80,11 +80,11 @@ void init(void)
 
   rkglSetCallbackParamGLUT( &cam, 0, 0, 0, 0, 0 );
   rkglBGSet( &cam, 0.3, 0.3, 0.3 );
-  rkglCASet( &cam, 7, 2, 2, 0, -20, 0 );
+  rkglCASet( &cam, 8, 2, 2, 0, -30, 0 );
 
   glEnable( GL_LIGHTING );
-  rkglLightCreate( &light, 0, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0, 0 );
-  rkglLightSetPos( &light, 10, 0, 10 );
+  rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
+  rkglLightMove( &light, 10, 0, 10 );
 
   zMapNetReadZTK( &mn, "test.ztk" );
   terra = zMapNetMap( &mn, 0 )->body;

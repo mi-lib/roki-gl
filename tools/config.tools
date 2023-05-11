@@ -13,3 +13,9 @@ ifeq ($(CONFIG_USE_GLUT),y)
 	LINK+=-lglut
 	LINKCPP+=-lglut
 endif
+
+ifeq ($(CONFIG_USE_GLEW),y)
+	DEF+=-D__ROKI_GL_USE_GLEW
+	LINK+=-lGLEW
+	LINKCPP+=-lGLEW
+endif

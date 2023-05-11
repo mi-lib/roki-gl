@@ -86,8 +86,8 @@ void init()
   rkglCASet( &cam, 10, 0, 0, 0, 0, 0 );
 
   glEnable( GL_LIGHTING );
-  rkglLightCreate( &light, 0, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0, 0 );
-  rkglLightSetPos( &light, 10, 10, 10 );
+  rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
+  rkglLightMove( &light, 10, 10, 10 );
 
   memset( sw, 0, sizeof(sw) );
   zRandInit();

@@ -47,7 +47,7 @@ GLvoid init(GLsizei width, GLsizei height)
   rkglCALookAt( &cam, 5,-3, 3, 0, 0, 0, 0, 0, 1 );
 
   glEnable( GL_LIGHTING );
-  rkglLightCreate( &light, 0, 0.4, 0.4, 0.4, 0.8, 0.8, 0.8, 0, 0, 0, 0 );
+  rkglLightCreate( &light, 0.4, 0.4, 0.4, 0.8, 0.8, 0.8, 0, 0, 0 );
 }
 
 GLvoid draw(Window win)
@@ -55,8 +55,7 @@ GLvoid draw(Window win)
   rkglWindowActivateGLX( win );
   rkglClear();
   rkglCALoad( &cam );
-  rkglLightSetPos( &light,
-    8, 10*sin(4*zPI*(double)clock()/CLOCKS_PER_SEC), 5 );
+  rkglLightMove( &light, 8, 10*sin(4*zPI*(double)clock()/CLOCKS_PER_SEC), 5 );
   glPushMatrix();
   glCallList( obj );
   glPopMatrix();

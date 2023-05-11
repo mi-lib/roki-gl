@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include <roki-gl/rkgl_shape.h>
 #include <roki-gl/rkgl_glx.h>
 #include <zx11/zximage.h>
@@ -62,7 +63,7 @@ GLvoid init(GLsizei width, GLsizei height)
   rkglCALookAt( &cam, 5,-3, 3, 0, 0, 0, 0, 0, 1 );
 
   glEnable( GL_LIGHTING );
-  rkglLightCreate( &light, 0, 0.4, 0.4, 0.4, 0.8, 0.8, 0.8, 0, 0, 0, 0 );
+  rkglLightCreate( &light, 0.4, 0.4, 0.4, 0.8, 0.8, 0.8, 0, 0, 0 );
 }
 
 GLvoid draw(Window win)
@@ -70,7 +71,7 @@ GLvoid draw(Window win)
   rkglWindowActivateGLX( win );
   rkglClear();
   rkglCALoad( &cam );
-  rkglLightSetPos( &light, 10, 0, 8 );
+  rkglLightMove( &light, 10, 0, 8 );
   glPushMatrix();
   glCallList( obj );
   glPopMatrix();
@@ -90,7 +91,7 @@ int main(int argc, char **argv)
   rkglWindowOpenGLX( win );
 
   init( WIDTH, HEIGHT );
-  /* i don't know, but a couple of redrawings are needed. */
+  /* i don't know why, but a couple of redrawings are needed. */
   draw( win );
   while( zxNextEvent() != Expose );
   capture( win );

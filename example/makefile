@@ -12,6 +12,10 @@ ifeq ($(CONFIG_USE_GLUT),y)
 	LINK += -lglut
 endif
 
+ifeq ($(CONFIG_USE_GLEW),y)
+	LINK += -lGLEW
+endif
+
 CC=gcc
 CFLAGS=-ansi -Wall -O3 $(LIB) $(INCLUDE) $(DEF) -funroll-loops
 

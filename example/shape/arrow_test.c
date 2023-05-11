@@ -73,8 +73,8 @@ void init(void)
   rkglCASet( &cam, 5, 0, 0, 0, 0, 0 );
 
   glEnable( GL_LIGHTING );
-  rkglLightCreate( &light, 0, 0.4, 0.4, 0.4, 1, 1, 1, 0, 0, 0, 0 );
-  rkglLightSetPos( &light, 8, 0, 8 );
+  rkglLightCreate( &light, 0.4, 0.4, 0.4, 1, 1, 1, 0, 0, 0 );
+  rkglLightMove( &light, 8, 0, 8 );
 
   zVec3DCreate( &bot, 0, 0, 0 );
   zVec3DCreate( &tip, 1.0, 1.0, 1.0 );

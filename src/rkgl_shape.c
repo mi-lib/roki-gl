@@ -8,22 +8,6 @@
 #include <roki-gl/rkgl_shape.h>
 #include <zeo/zeo_bv3d.h>
 
-/* display list */
-
-int rkglBeginList(void)
-{
-  int result;
-
-  result = glGenLists( 1 );
-  glNewList( result, GL_COMPILE );
-  return result;
-}
-
-void rkglDeleteList(int id)
-{
-  if( glIsList( id ) ) glDeleteLists( id, 1 );
-}
-
 /* 3D object drawing */
 
 void rkglTranslate(zVec3D *v)
@@ -941,17 +925,16 @@ void rkglGauge(zAxis axis1, double d1, zAxis axis2, double d2, double w, double 
   rkglLoadLighting( lighting_is_enabled );
 }
 
-void rkglChecker(zVec3D *pc0, zVec3D *pc1, zVec3D *pc2, int div1, int div2, zOpticalInfo *oi1, zOpticalInfo *oi2)
+void rkglCheckerBoard(zVec3D *pc0, zVec3D *pc1, zVec3D *pc2, int div1, int div2, zOpticalInfo *oi1, zOpticalInfo *oi2)
 {
   int i, j;
-  zVec3D d1, d2, d11, d12, d21, d22, v[4];
+  zVec3D d1, d2, d11, d12, d21, d22, n, v[4];
 
+  glEnable( GL_LIGHTING );
   zVec3DSub( pc1, pc0, &d1 );
   zVec3DSub( pc2, pc0, &d2 );
-  zVec3DOuterProd( &d1, &d2, &d11 );
-  zVec3DNormalizeDRC( &d11 );
-  glBegin( GL_QUADS );
-  rkglNormal( &d11 );
+  zVec3DOuterProd( &d1, &d2, &n );
+  zVec3DNormalizeDRC( &n );
 
   zVec3DZero( &d12 );
   for( i=1; i<=div1; i++ ){
@@ -966,11 +949,13 @@ void rkglChecker(zVec3D *pc0, zVec3D *pc1, zVec3D *pc2, int div1, int div2, zOpt
       zVec3DAdd( &d12, &d22, &v[2] ); zVec3DAddDRC( &v[2], pc0 );
       zVec3DAdd( &d11, &d22, &v[3] ); zVec3DAddDRC( &v[3], pc0 );
       rkglMaterial( ( i + j ) % 2 == 0 ? oi1 : oi2 );
+      glBegin( GL_QUADS );
+      rkglNormal( &n );
       rkglVertex( &v[0] );
       rkglVertex( &v[1] );
       rkglVertex( &v[2] );
       rkglVertex( &v[3] );
+      glEnd();
     }
   }
-  glEnd();
 }

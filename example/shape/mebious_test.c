@@ -103,8 +103,8 @@ void init(void)
   rkglCALookAt( &cam, 5, 0, 3, 0, 0, 0, 0, 0, 1 );
 
   glEnable( GL_LIGHTING );
-  rkglLightCreate( &light, 0, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0, 0 );
-  rkglLightSetPos( &light, 1, 3, 10 );
+  rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
+  rkglLightMove( &light, 1, 3, 10 );
 
   make_mebious();
 }

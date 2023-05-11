@@ -55,8 +55,8 @@ void init(void)
   rkglCASet( &cam, 6, 0, 3, 0, -30, 0 );
 
   glEnable( GL_LIGHTING );
-  rkglLightCreate( &light, 0, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0, 0 );
-  rkglLightSetPos( &light, 1, 3, 6 );
+  rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
+  rkglLightMove( &light, 1, 3, 6 );
 
   zOpticalInfoCreateSimple( &opt, 0.8, 0, 0, NULL );
   zShape3DInit( &shape );

@@ -24,20 +24,6 @@ __BEGIN_DECLS
 #define RKGL_ELLIPS    0x20
 #define RKGL_BB        0x40
 
-/* save lighting */
-
-#define rkglSaveLighting( __flag ) do{\
-  if( ( *(__flag) = glIsEnabled( GL_LIGHTING ) ) ) glDisable( GL_LIGHTING );\
-} while(0)
-#define rkglLoadLighting( __flag ) do{\
-  if( __flag ) glEnable( GL_LIGHTING );\
-} while(0)
-
-/* display list */
-
-__EXPORT int rkglBeginList(void);
-__EXPORT void rkglDeleteList(int id);
-
 /* 3D object drawing */
 
 __EXPORT void rkglTranslate(zVec3D *v);
@@ -88,7 +74,7 @@ __EXPORT void rkglFrameHandle(zFrame3D *f, double l, double mag);
 
 __EXPORT void rkglAxis(zAxis axis, double d, double w, GLfloat color[]);
 __EXPORT void rkglGauge(zAxis axis1, double d1, zAxis axis2, double d2, double w, double step, GLfloat color[]);
-__EXPORT void rkglChecker(zVec3D *pc0, zVec3D *pc1, zVec3D *pc2, int div1, int div2, zOpticalInfo *oi1, zOpticalInfo *oi2);
+__EXPORT void rkglCheckerBoard(zVec3D *pc0, zVec3D *pc1, zVec3D *pc2, int div1, int div2, zOpticalInfo *oi1, zOpticalInfo *oi2);
 
 __END_DECLS
 

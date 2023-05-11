@@ -85,8 +85,8 @@ void init(void)
   glLightModeli( GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE );
   glEnable( GL_AUTO_NORMAL );
   glDisable( GL_CULL_FACE );
-  rkglLightCreate( &light, 0, 0.0, 0.0, 0.0, 1, 1, 1, 0, 0, 0, 0 );
-  rkglLightSetPos( &light, 0, 0, 10 );
+  rkglLightCreate( &light, 0.0, 0.0, 0.0, 1, 1, 1, 0, 0, 0 );
+  rkglLightMove( &light, 0, 0, 10 );
 
   zRGBSet( &rgb, 0.5, 1.0, 0.5 );
   zNURBS3DAlloc( &nurbs, 6, 6, 3, 3 );

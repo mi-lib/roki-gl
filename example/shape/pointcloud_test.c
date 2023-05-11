@@ -49,8 +49,8 @@ void init(void)
   rkglCALookAt( &cam, 0.3*cos(azim), 0.3*sin(azim), 0.6, 0.0, 0.0, 0.1, 0.0, 0.0, 1.0 );
 
   glEnable( GL_LIGHTING );
-  rkglLightCreate( &light, 0, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0, 0 );
-  rkglLightSetPos( &light, 10, 3, 10 );
+  rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
+  rkglLightMove( &light, 10, 3, 10 );
 }
 
 void generate_pc(char *filename)
@@ -75,7 +75,7 @@ void generate_pc(char *filename)
 
 int main(int argc, char *argv[])
 {
-  if( argc < 2 ) return 1;
+  char *filename = argc > 1 ? argv[1] : "../model/bunny.ztk";
   rkglInitGLUT( &argc, argv );
   rkglWindowCreateGLUT( 0, 0, 640, 640, argv[0] );
 
@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
   glutMouseFunc( rkglMouseFuncGLUT );
   glutMotionFunc( rkglMouseDragFuncGLUT );
   init();
-  generate_pc( argv[1] );
+  generate_pc( filename );
   pc_id = rkglBeginList();
   rkglPointCloud( &pc, ZVEC3DZERO, 1 );
   glEndList();

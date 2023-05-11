@@ -48,8 +48,8 @@ void init(void)
 
   rkglBGSet( &cam, 0.5, 0.5, 0.5 );
   rkglCASet( &cam, 10, 0, 4, 0, -30, 0 );
-  rkglLightCreate( &light, 0, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0, 0 );
-  rkglLightSetPos( &light, 3, 6, 20 );
+  rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
+  rkglLightMove( &light, 3, 6, 20 );
   rkglShadowInit( &shadow, TEXWIDTH, TEXHEIGHT, 10.0, 0.2 );
   rkglShadowDisableAntiZFighting( &shadow );
 

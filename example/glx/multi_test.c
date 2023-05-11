@@ -56,7 +56,7 @@ GLvoid init(int width, int height)
   rkglCALookAt( &cam[1], 0, 5, 3, 0, 0, 0, 0, 0, 1 );
 
   glEnable( GL_LIGHTING );
-  rkglLightCreate( &light, 0, 0.4, 0.4, 0.4, 0.8, 0.8, 0.8, 0, 0, 0, 0 );
+  rkglLightCreate( &light, 0.4, 0.4, 0.4, 0.8, 0.8, 0.8, 0, 0, 0 );
 }
 
 void draw_button(zxWindow *win)
@@ -128,7 +128,7 @@ GLvoid mainloop(zxWindow *win)
     default: ;
     }
     phase = 2 * zPI * (double)clock() / CLOCKS_PER_SEC;
-    rkglLightSetPos( &light, 10*cos(phase), 10*sin(phase), 8 );
+    rkglLightMove( &light, 10*cos(phase), 10*sin(phase), 8 );
     draw( glwin[0], &cam[0], &light );
     draw( glwin[1], &cam[1], &light );
   }

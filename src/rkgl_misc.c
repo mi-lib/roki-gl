@@ -1,7 +1,7 @@
 /* RoKi-GL - Robot Kinetics library: visualization using OpenGL
  * Copyright (C) 2000 Tomomichi Sugihara (Zhidao)
  *
- * rkgl_misc - miscellanies
+ * rkgl_misc - miscellanies.
  */
 
 #include <roki-gl/rkgl_misc.h>
@@ -36,3 +36,34 @@ void rkglMultInvMatrixd(double m[])
   im[15]= m[15];
   glMultMatrixd( im );
 }
+
+/* display list */
+
+int rkglBeginList(void)
+{
+  int result;
+
+  result = glGenLists( 1 );
+  glNewList( result, GL_COMPILE );
+  return result;
+}
+
+void rkglDeleteList(int id)
+{
+  if( glIsList( id ) ) glDeleteLists( id, 1 );
+}
+
+/* GLEW */
+
+#ifdef __ROKI_GL_USE_GLEW
+bool rkglInitGLEW(void)
+{
+  GLenum err;
+
+  if( ( err = glewInit() ) != GLEW_OK ){
+    fprintf( stderr, "Error: %s\n", glewGetErrorString( err ) );
+    return false;
+  }
+  return true;
+}
+#endif /* __ROKI_GL_USE_GLEW */

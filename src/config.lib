@@ -13,3 +13,8 @@ endif
 ifeq ($(CONFIG_USE_GLUT),y)
 	OBJ += rkgl_glut.o
 endif
+
+ifeq ($(CONFIG_USE_GLEW),y)
+	CFLAGS += -D__ROKI_GL_USE_GLEW
+	OBJ += rkgl_glsl.o
+endif

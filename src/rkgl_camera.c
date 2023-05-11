@@ -6,16 +6,6 @@
 
 #include <roki-gl/rkgl_camera.h>
 
-/* background color */
-
-void rkglBGFog(rkglCamera *c, double density)
-{
-  glEnable( GL_FOG );
-  glFogi( GL_FOG_MODE, GL_EXP );
-  glFogf( GL_FOG_DENSITY, density );
-  glFogfv( GL_FOG_COLOR, c->bg );
-}
-
 /* viewport */
 
 void rkglVPLoad(rkglCamera *c)

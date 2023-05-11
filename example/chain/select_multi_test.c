@@ -53,9 +53,9 @@ void move_link(double angle)
   double dis;
 
   if( selected_chain < 0 || selected_link < 0 ) return;
-  rkChainLinkGetJointDis( &chain[selected_chain], selected_link, &dis );
+  rkChainLinkJointGetDis( &chain[selected_chain], selected_link, &dis );
   dis += angle;
-  rkChainLinkSetJointDis( &chain[selected_chain], selected_link, &dis );
+  rkChainLinkJointSetDis( &chain[selected_chain], selected_link, &dis );
   rkChainUpdateFK( &chain[selected_chain] );
 }
 
@@ -111,8 +111,8 @@ void init(void)
   rkglCASet( &cam, 1, 1, 1, 45, -30, 0 );
 
   glEnable(GL_LIGHTING);
-  rkglLightCreate( &light, 0, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0, 0 );
-  rkglLightSetPos( &light, 1, 3, 6 );
+  rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
+  rkglLightMove( &light, 1, 3, 6 );
 
   rkglChainAttrInit( &attr );
   rkChainReadZTK( &chain[0], "../model/puma.ztk" );

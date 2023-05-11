@@ -60,41 +60,148 @@ void rkglMaterial(zOpticalInfo *oi)
 
 /* lighting */
 
-void rkglLightCreate(rkglLight *l, uint id, GLfloat ar, GLfloat ag, GLfloat ab, GLfloat dr, GLfloat dg, GLfloat db, GLfloat sr, GLfloat sg, GLfloat sb, GLfloat ns)
-{
-  GLenum light_id[] = {
-    GL_LIGHT0, GL_LIGHT1, GL_LIGHT2, GL_LIGHT3, GL_LIGHT4, GL_LIGHT5, GL_LIGHT6, GL_LIGHT7,
-  };
+ZDEF_STRUCT( rkglLightPool ){
+  GLenum id;
+  bool in_use;
+};
+static rkglLightPool _rkgl_light_pool[] = {
+  { GL_LIGHT0, false },
+  { GL_LIGHT1, false },
+  { GL_LIGHT2, false },
+  { GL_LIGHT3, false },
+  { GL_LIGHT4, false },
+  { GL_LIGHT5, false },
+  { GL_LIGHT6, false },
+  { GL_LIGHT7, false },
+  { -1, false },
+};
 
-  if( id > 7 ){
-    ZRUNWARN( "light over GL_LIGHT7 should be manually assigned" );
-    id = 0;
+static void _rkglLightCreate(rkglLight *light, uint id, GLfloat ar, GLfloat ag, GLfloat ab, GLfloat dr, GLfloat dg, GLfloat db, GLfloat sr, GLfloat sg, GLfloat sb)
+{
+  glEnable( ( light->id = id ) );
+  rkglLightSetAmbient( light, ar, ag, ab );
+  rkglLightSetDiffuse( light, dr, dg, db );
+  rkglLightSetSpecular( light, sr, sg, sb );
+  rkglLightLoad( light );
+  rkglLightSetAttenuationConst( light );
+  rkglLightSetSpot( light, 0, 0, 0, 180, 0 );
+}
+
+bool rkglLightCreate(rkglLight *light, GLfloat ar, GLfloat ag, GLfloat ab, GLfloat dr, GLfloat dg, GLfloat db, GLfloat sr, GLfloat sg, GLfloat sb)
+{
+  rkglLightPool *lp;
+
+  for( lp=_rkgl_light_pool; lp->in_use; lp++ ){
+    if( lp->id == -1 ){
+      ZRUNWARN( "no more reserved light object available" );
+      ZRUNWARN( "use rkglLightCreateExtra()" );
+      return false;
+    }
   }
-  glEnable( ( l->id = light_id[id] ) );
-
-  l->amb[0] = ar; l->amb[1] = ag; l->amb[2] = ab; l->amb[3] = 1;
-  l->dif[0] = dr; l->dif[1] = dg; l->dif[2] = db; l->dif[3] = 1;
-  l->spc[0] = sr; l->spc[1] = sg; l->spc[2] = sb; l->spc[3] = 1;
-  rkglLightLoad( l );
+  lp->in_use = true;
+  _rkglLightCreate( light, lp->id, ar, ag, ab, dr, dg, db, sr, sg, sb );
+  return true;
 }
 
-void rkglLightLoad(rkglLight *l)
+bool rkglLightCreateExtra(rkglLight *light, uint i, GLfloat ar, GLfloat ag, GLfloat ab, GLfloat dr, GLfloat dg, GLfloat db, GLfloat sr, GLfloat sg, GLfloat sb)
 {
-  glLightfv( l->id, GL_AMBIENT,  l->amb );
-  glLightfv( l->id, GL_DIFFUSE,  l->dif );
-  glLightfv( l->id, GL_SPECULAR, l->spc );
+  if( i < 1 ){
+    ZRUNERROR( "extra light identifier has to be more than or equal to 1" );
+    return false;
+  }
+  if( i > GL_MAX_LIGHTS - 8 ){
+    ZRUNERROR( "no more light object available" );
+    return false;
+  }
+  _rkglLightCreate( light, GL_LIGHT7 + i, ar, ag, ab, dr, dg, db, sr, sg, sb );
+  return true;
 }
 
-void rkglLightSetPos(rkglLight *l, double x, double y, double z)
+int rkglLightNum(void)
 {
-  l->pos[0] = x;
-  l->pos[1] = y;
-  l->pos[2] = z;
-  l->pos[3] = 1;
-  rkglLightPut( l );
+  int count = 0;
+  rkglLightPool *lp;
+
+  for( lp=_rkgl_light_pool; lp->in_use && lp->id!=-1; lp++, count++ );
+  return count;
 }
 
-void rkglLightPut(rkglLight *l)
+void rkglLightLoad(rkglLight *light)
 {
-  glLightfv( l->id, GL_POSITION, l->pos );
+  glLightfv( light->id, GL_AMBIENT,  light->amb );
+  glLightfv( light->id, GL_DIFFUSE,  light->dif );
+  glLightfv( light->id, GL_SPECULAR, light->spc );
+}
+
+void rkglLightSetAttenuation(rkglLight *light, double att_const, double att_lin, double att_quad)
+{
+  glLightf( light->id, GL_CONSTANT_ATTENUATION,  att_const );
+  glLightf( light->id, GL_LINEAR_ATTENUATION,    att_lin );
+  glLightf( light->id, GL_QUADRATIC_ATTENUATION, att_quad );
+}
+
+void rkglLightSetAttenuationConst(rkglLight *light)
+{
+  rkglLightSetAttenuation( light, 1.0, 0.0, 0.0 );
+}
+
+void rkglLightSetAttenuationLinear(rkglLight *light)
+{
+  rkglLightSetAttenuation( light, 0.0, 1.0/(fabs(light->pos[0])+fabs(light->pos[1])+fabs(light->pos[2])), 0.0 );
+}
+
+void rkglLightSetAttenuationQuad(rkglLight *light)
+{
+  rkglLightSetAttenuation( light, 0.0, 0.0, 1.0/(zSqr(light->pos[0])+zSqr(light->pos[1])+zSqr(light->pos[2])) );
+}
+
+void rkglLightSetSpot(rkglLight *light, double lx, double ly, double lz, double cutoffangle, double exponent)
+{
+  rkglLightSetDir( light, lx, ly, lz );
+  light->cutoffangle = cutoffangle;
+  light->exponent = exponent;
+}
+
+void rkglLightPut(rkglLight *light)
+{
+  glLightfv( light->id, GL_POSITION, light->pos );
+  glLightfv( light->id, GL_SPOT_DIRECTION, light->dir );
+  glLightf( light->id, GL_SPOT_CUTOFF, light->cutoffangle );
+  glLightf( light->id, GL_SPOT_EXPONENT, light->exponent );
+}
+
+void rkglLightMove(rkglLight *light, GLfloat x, GLfloat y, GLfloat z)
+{
+  rkglLightSetPos( light, x, y, z );
+  rkglLightPut( light );
+}
+
+/* fog effect */
+
+static void _rkglFog(GLint mode, GLfloat r, GLfloat g, GLfloat b, GLfloat density)
+{
+  GLfloat color[4];
+
+  color[0] = r; color[1] = g; color[2] = b; color[3] = 1;
+  glEnable( GL_FOG );
+  glFogi( GL_FOG_MODE, mode );
+  glFogfv( GL_FOG_COLOR, color );
+  glFogf( GL_FOG_DENSITY, density );
+}
+
+void rkglFogExp(GLfloat r, GLfloat g, GLfloat b, GLfloat density)
+{
+  _rkglFog( GL_EXP, r, g, b, density );
+}
+
+void rkglFogExp2(GLfloat r, GLfloat g, GLfloat b, GLfloat density)
+{
+  _rkglFog( GL_EXP2, r, g, b, density );
+}
+
+void rkglFogLinear(GLfloat r, GLfloat g, GLfloat b, GLfloat density, GLfloat start, GLfloat end)
+{
+  _rkglFog( GL_LINEAR, r, g, b, density );
+  glFogf( GL_FOG_START, start );
+  glFogf( GL_FOG_END,   end   );
 }

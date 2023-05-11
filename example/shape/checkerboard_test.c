@@ -69,8 +69,8 @@ void init(void)
   rkglCASet( &cam, 6, 0, 3, 0, -30, 0 );
 
   glEnable( GL_LIGHTING );
-  rkglLightCreate( &light, 0, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0, 0 );
-  rkglLightSetPos( &light, 1, 3, 6 );
+  rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
+  rkglLightMove( &light, 1, 3, 6 );
 
   zOpticalInfoCreateSimple( &red, 1.0, 0, 0, NULL );
   zOpticalInfoCreateSimple( &white, 1.0, 1.0, 1.0, NULL );
@@ -78,7 +78,7 @@ void init(void)
   zVec3DCreate( &pc1,  3.5, -5, 0 );
   zVec3DCreate( &pc2, -3.5,  5, 0 );
   checker_id = rkglBeginList();
-  rkglChecker( &pc0, &pc1, &pc2, 7, 10, &red, &white );
+  rkglCheckerBoard( &pc0, &pc1, &pc2, 7, 10, &red, &white );
   glEndList();
 }
 

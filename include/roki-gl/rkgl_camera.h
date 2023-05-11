@@ -27,8 +27,6 @@ typedef struct{
   (c)->bg[3] = 1.0;\
 } while(0)
 
-__EXPORT void rkglBGFog(rkglCamera *c, double density);
-
 /* viewport */
 
 __EXPORT void rkglVPCreate(rkglCamera *c, GLint x, GLint y, GLsizei w, GLsizei h);

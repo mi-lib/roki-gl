@@ -57,8 +57,8 @@ void init(void)
   rkglCASet( &cam, 5, 0, 2, 0, -20, 0 );
 
   glEnable( GL_LIGHTING );
-  rkglLightCreate( &light, 0, 0.4, 0.4, 0.4, 1, 1, 1, 0, 0, 0, 0 );
-  rkglLightSetPos( &light, 8, 0, 8 );
+  rkglLightCreate( &light, 0.4, 0.4, 0.4, 1, 1, 1, 0, 0, 0 );
+  rkglLightMove( &light, 8, 0, 8 );
 
   f_id = rkglBeginList();
   rkglFrameHandle( ZFRAME3DIDENT, 2, 1 );

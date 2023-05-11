@@ -1,0 +1,189 @@
+[chain]
+name : PUMA
+
+[optic]
+name: white
+ambient:  1.0, 1.0, 1.0
+diffuse:  1.0, 1.0, 1.0
+specular: 0.0, 0.0, 0.0
+esr: 1.0
+
+[optic]
+name: yellow
+ambient:  0.9, 0.9, 0.6
+diffuse:  0.9, 0.9, 0.6
+specular: 0.0, 0.0, 0.0
+esr: 1.0
+
+[optic]
+name: lightyellow
+ambient:  1.0, 1.0, 0.6
+diffuse:  0.9, 0.9, 0.6
+specular: 0.6, 0.6, 0.0
+esr: 1.0
+
+[optic]
+name: gray
+ambient:  0.8, 0.8, 0.8
+diffuse:  0.6, 0.6, 0.6
+specular: 0.0, 0.0, 0.0
+esr: 1.0
+
+[shape]
+name: base
+type: cylinder
+optic: gray
+center: 0, 0, 0.0
+center: 0, 0, 0.05
+radius: 0.1
+
+[shape]
+name: post
+type: cylinder
+optic: gray
+center: 0, 0, 0
+center: 0, 0, 0.25
+radius: 0.05
+
+[shape]
+name: shoulderroot
+type: sphere
+optic: gray
+center: 0, 0,-0.049
+radius: 0.05
+
+[shape]
+name: shoulder
+type: cylinder
+optic: gray
+center: 0, 0,-0.12
+center: 0, 0, 0.02
+radius: 0.04
+
+[shape]
+name: upperarm
+type: polyhedron
+optic: white
+loop: z 0.02
+ -0.05,-0.06
+  arc cw 0.08 24
+ -0.05, 0.06
+  0.05, 0.06
+  0.20, 0.03
+  arc cw 0.03 12
+  0.20,-0.03
+  0.05,-0.06
+prism: 0, 0, 0.04
+
+[shape]
+name: forearm
+type: polyhedron
+optic: white
+loop: z 0.02
+  0.04,-0.015
+  arc cw 0.07 12
+ -0.04,-0.015
+ -0.00, 0.16
+  0.04, 0.16
+prism: 0, 0, -0.04
+
+[shape]
+name: hand
+type: cone
+optic: lightyellow
+center: 0 0 -0.02
+vert: 0 0 0
+radius: 0.018
+
+% 0:base
+[link]
+name : base
+jointtype : fixed
+shape: base
+shape: post
+
+[link]
+name : link1
+jointtype : revolute
+max : 180
+min :-180
+DH: { 0, 0, 0.3, 0 }
+inertia: {
+ 0, 0, 0,
+ 0, 0, 0,
+ 0, 0, 0.35 }
+parent : base
+shape: shoulderroot
+
+[link]
+name : link2
+jointtype : revolute
+max : 180
+min :-180
+DH: { 0, -90, 0.05, 0 }
+mass: 17.4
+inertia: {
+ 0.13, 0, 0,
+ 0, 0.524, 0,
+ 0, 0, 0.539 }
+COM: { 0.068, 0.006, -0.016 }
+parent : link1
+shape: shoulder
+shape: upperarm
+
+[link]
+name : link3
+jointtype : revolute
+max : 180
+min :-180
+DH: { 0.2, 0, 0, 0 }
+mass: 4.8
+inertia: {
+ 0.066, 0, 0,
+ 0, 0.0125, 0,
+ 0, 0, 0.086 }
+COM: { 0, -0.07, 0.014 }
+parent : link2
+shape: forearm
+
+[link]
+name : link4
+jointtype : revolute
+max : 180
+min :-180
+DH: { 0.02, -90, 0.18, 0 }
+mass: 0.82
+inertia: {
+ 0.0018, 0, 0,
+ 0, 0.0018, 0,
+ 0, 0, 0.0013 }
+COM: { 0, 0, -0.019 }
+parent : link3
+
+[link]
+name : link5
+jointtype : revolute
+max : 180
+min :-180
+DH: { 0, 90, 0, 0 }
+mass: 0.34
+inertia: {
+ 0.0003, 0, 0,
+ 0, 0.0003, 0,
+ 0, 0, 0.0004 }
+parent : link4
+
+[link]
+name : link6
+jointtype : revolute
+max : 180
+min :-180
+DH: { 0, -90, 0, 0 }
+mass: 0.09
+inertia: {
+ 0.00015, 0, 0,
+ 0, 0.00015, 0,
+ 0, 0, 0.00004 }
+COM: { 0, 0, 0.032 }
+parent : link5
+shape: hand

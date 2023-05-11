@@ -69,8 +69,8 @@ void init(void)
   glLineWidth( 2 );
 
   glEnable( GL_LIGHTING );
-  rkglLightCreate( &light, 0, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0, 0 );
-  rkglLightSetPos( &light, 1, 6, 6 );
+  rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
+  rkglLightMove( &light, 1, 6, 6 );
 
   zOpticalInfoCreateSimple( &yellow, 0.8, 0.8, 0, NULL );
   zVec3DCreate( &c1, 0, -2, 0 );
