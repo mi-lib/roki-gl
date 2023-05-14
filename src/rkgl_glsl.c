@@ -134,3 +134,28 @@ void rkglShaderSetUniform1f(GLuint shader, const char *varname, float val)
   var = glGetUniformLocation( shader, varname );
   glUniform1f( var, val );
 }
+
+/* texture mapping */
+
+GLuint rkglShaderCreateTexture(void)
+{
+  GLuint program;
+
+  program = rkglShaderCreate( RKGL_SHADER_VERT_TEXTURE, RKGL_SHADER_FRAG_TEXTURE );
+  glUseProgram( program );
+  rkglShaderSetTextureMixRate( program, RKGL_SHADER_DEFAULT_MIX_RATE );
+  glUseProgram( 0 );
+  return program;
+}
+
+GLuint rkglShaderCreateTexture2(void)
+{
+  GLuint program;
+
+  program = rkglShaderCreate( RKGL_SHADER_VERT_TEXTURE, RKGL_SHADER_FRAG_TEXTURE2 );
+  glUseProgram( program );
+  rkglShaderSetTextureMixFactor( program, RKGL_SHADER_DEFAULT_MIX_FACTOR );
+  rkglShaderSetTextureMixRate( program, RKGL_SHADER_DEFAULT_MIX_RATE );
+  glUseProgram( 0 );
+  return program;
+}

@@ -1,26 +1,10 @@
 #include <roki-gl/rkgl_shape.h>
 #include <roki-gl/rkgl_glut.h>
-#include <zx11/zximage.h>
 
 rkglCamera cam;
 rkglLight light;
 
 zMShape3D ms;
-zTexture bump;
-
-static void init(char *filename)
-{
-  rkglSetCallbackParamGLUT( &cam, 2.0, 1, 100, 1.0, 5.0 );
-  rkglBGSet( &cam, 0.5, 0.5, 0.5 );
-  rkglCASet( &cam, 3, 0, 3, 0, -45, 0 );
-  glEnable( GL_LIGHTING );
-  rkglLightCreate( &light, 0.5, 0.5, 0.5, 1, 1, 1, 0, 0, 0 );
-  rkglLightMove( &light, 20, 0, 10 );
-
-  rkglTextureBumpEnable();
-  zMShape3DReadZTK( &ms, "bump_test.ztk" );
-  glDisable( GL_CULL_FACE );
-}
 
 void display(void)
 {
@@ -33,6 +17,22 @@ void display(void)
   glutSwapBuffers();
 }
 
+void init(void)
+{
+  rkglSetCallbackParamGLUT( &cam, 2.0, 2, 60, 1.0, 5.0 );
+
+  rkglBGSet( &cam, 0.5, 0.5, 0.5 );
+  rkglCASet( &cam, 10, 0, 5, 0, -30, 0 );
+
+  glEnable( GL_LIGHTING );
+  rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
+  rkglLightMove( &light, 10, 3, 10 );
+
+  /* following calls are mandatory. */
+  rkglTextureEnable();
+  zMShape3DReadZTK( &ms, "lena_cube.ztk" );
+}
+
 int main(int argc, char *argv[])
 {
   rkglInitGLUT( &argc, argv );
@@ -41,12 +41,11 @@ int main(int argc, char *argv[])
   glutDisplayFunc( display );
   glutVisibilityFunc( rkglVisFuncGLUT );
   glutReshapeFunc( rkglReshapeFuncGLUT );
-  glutMouseFunc( rkglMouseFuncGLUT );
-  glutMotionFunc( rkglMouseDragFuncGLUT );
   glutKeyboardFunc( rkglKeyFuncGLUT );
   glutSpecialFunc( rkglSpecialFuncGLUT );
-  rkglInitGLEW();
-  init( argc > 1 ? argv[1] : "bump.bmp" );
+  glutMouseFunc( rkglMouseFuncGLUT );
+  glutMotionFunc( rkglMouseDragFuncGLUT );
+  init();
   glutMainLoop();
   return 0;
 }

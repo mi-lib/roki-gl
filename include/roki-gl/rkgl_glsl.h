@@ -23,5 +23,6 @@ __END_DECLS
 #include <roki-gl/rkgl_glsl_phong.h>
 #include <roki-gl/rkgl_glsl_spotlight.h>
 #include <roki-gl/rkgl_glsl_fog.h>
+#include <roki-gl/rkgl_glsl_texture.h>
 
 #endif /* __RKGL_GLSL_H__ */

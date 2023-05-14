@@ -13,23 +13,37 @@
 
 __BEGIN_DECLS
 
-/* texture units for rendering by multiple textures */
-#define RKGL_TEXTURE_BASE   GL_TEXTURE0
-#define RKGL_TEXTURE_BUMP   GL_TEXTURE1
-#define RKGL_TEXTURE_SHADOW GL_TEXTURE2
-#define RKGL_TEXTURE_COLOR  GL_TEXTURE3
+__EXPORT int rkglTextureNum(void);
+
+/* texture environment mode */
+
+#define rkglTextureSetModulate() glTexEnvi( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE )
+#define rkglTextureSetBlend()    glTexEnvi( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_BLEND )
+#define rkglTextureSetCombine()  glTexEnvi( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE )
+#define rkglTextureSetReplace()  glTexEnvi( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE )
+#define rkglTextureSetDecal()    glTexEnvi( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL )
 
 /* magic numbers to prevent z-fighting */
 #define rkglAntiZFighting()   glPolygonOffset( -1.1, 4.0 )
 
 /* color texture mapping */
 
+/*! \brief initialize GL parameters for a 2D texture. */
+void rkglTextureInit(zTexture *texture);
+
 /*! \brief read an image file and make a texture data. */
 bool rkglTextureReadFile(zTexture *texture, char *filename);
 
 #define rkglTextureEnable()   zTextureSetReadFunc( rkglTextureReadFile )
 
+#define rkglTextureBind(texture) glBindTexture( GL_TEXTURE_2D, (texture)->id )
+#define rkglTextureUnbind()      glBindTexture( GL_TEXTURE_2D, 0 )
+
 #define rkglCoord(coord)      glTexCoord2d( (coord)->c.x, (coord)->c.y )
+
+/* units for multitexture */
+void rkglTextureInitUnit(void);
+GLint rkglTextureNewUnit(void);
 
 /* bump mapping */
 

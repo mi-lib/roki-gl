@@ -21,6 +21,9 @@ int rkglWindowCreateGLUT(int x, int y, int w, int h, const char *title)
   glutInitWindowPosition( x, y );
   glutInitWindowSize( w, h );
   id = glutCreateWindow( title );
+#ifdef __ROKI_GL_USE_GLEW
+  rkglInitGLEW();
+#endif /* __ROKI_GL_USE_GLEW */
   rkglEnableDefault();
   return id;
 }

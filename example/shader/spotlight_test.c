@@ -165,7 +165,6 @@ int main(int argc, char *argv[])
   glutMouseFunc( rkglMouseFuncGLUT );
   glutMotionFunc( rkglMouseDragFuncGLUT );
   init();
-  rkglInitGLEW();
   shader_program = rkglShaderCreateSpotlight();
   glutMainLoop();
   return 0;

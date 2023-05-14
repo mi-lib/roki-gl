@@ -147,7 +147,6 @@ int main(int argc, char *argv[])
   glutMouseFunc( rkglMouseFuncGLUT );
   glutMotionFunc( rkglMouseDragFuncGLUT );
   init();
-  rkglInitGLEW();
   shader_program = rkglShaderCreatePhong();
   glutMainLoop();
   return 0;

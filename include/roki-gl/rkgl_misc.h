@@ -11,9 +11,10 @@
 
 #ifdef __ROKI_GL_USE_GLEW
 #include <GL/glew.h>
+#else
+#include <GL/gl.h>
 #endif /* __ROKI_GL_USE_GLEW */
 
-#include <GL/gl.h>
 #include <GL/glu.h>
 
 __BEGIN_DECLS

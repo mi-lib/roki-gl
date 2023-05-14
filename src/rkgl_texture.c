@@ -8,13 +8,27 @@
 
 /* color texture mapping */
 
+/* initialize GL parameters for a 2D texture. */
+void rkglTextureInit(zTexture *texture)
+{
+  glGenTextures( 1, &texture->id );
+  glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
+  rkglTextureBind( texture );
+  glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, texture->width, texture->height, 0, GL_RGB, GL_UNSIGNED_BYTE, texture->buf );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+  rkglTextureUnbind();
+}
+
 /* read an image file and make a texture data. */
 bool rkglTextureReadFile(zTexture *texture, char *filename)
 {
   zxImage img;
   zxPixelManip pm;
   uint i, j;
-  ubyte *p;
+  ubyte *pt;
   bool already_connected, ret = false;
 
   already_connected = !zxInit();
@@ -22,27 +36,41 @@ bool rkglTextureReadFile(zTexture *texture, char *filename)
   if( !( texture->buf = zAlloc( ubyte, img.width*img.height*3 ) ) ) goto TERMINATE;
   ret = true;
   zxPixelManipSet( &pm, zxdepth );
-  for( p=texture->buf, i=0; i<img.height; i++ )
+  for( pt=texture->buf, i=0; i<img.height; i++ )
     for( j=0; j<img.width; j++ ){
-      zxImageCellRGB( &img, &pm, j, i, p, p+1, p+2 );
-      p += 3;
+      zxImageCellRGB( &img, &pm, j, i, pt, pt+1, pt+2 );
+      pt += 3;
     }
   texture->width = img.width;
   texture->height = img.height;
   zxImageDestroy( &img );
-
-  glActiveTexture( RKGL_TEXTURE_BASE );
-  glGenTextures( 1, &texture->id );
-  glBindTexture( GL_TEXTURE_2D, texture->id );
-  glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
-  gluBuild2DMipmaps( GL_TEXTURE_2D, GL_RGB, texture->width, texture->height, GL_RGB, GL_UNSIGNED_BYTE, texture->buf );
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
-  glBindTexture( GL_TEXTURE_2D, 0 );
+  rkglTextureInit( texture );
+  zFree( texture->buf );
 
  TERMINATE:
   if( !already_connected ) zxExit();
   return ret;
+}
+
+/* units for multitexture */
+
+static int rkgl_texture_unit_num = 0;
+
+void rkglTextureInitUnit(void)
+{
+  rkgl_texture_unit_num = 0;
+}
+
+GLint rkglTextureNewUnit(void)
+{
+  int n;
+
+  glGetIntegerv( GL_MAX_TEXTURE_UNITS, &n );
+  if( rkgl_texture_unit_num >= n ){
+    ZRUNERROR( "no more texture units available" );
+    return -1;
+  }
+  return GL_TEXTURE0 + rkgl_texture_unit_num++;
 }
 
 /* bump mapping */
@@ -183,21 +211,14 @@ bool rkglTextureBumpReadFile(zTexture *bump, char *filename)
 
   if( !_rkglTextureBumpNormalMap( bump, filename ) ) return false;
 
-  glActiveTexture( RKGL_TEXTURE_BASE );
+  glActiveTexture( GL_TEXTURE0 );
   glGenTextures( 1, &bump->id );
   glBindTexture( GL_TEXTURE_2D, bump->id );
-  glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
-  glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, bump->width, bump->height, 0, GL_RGB, GL_UNSIGNED_BYTE, bump->buf );
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
-  glTexEnvi( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE );
+  rkglTextureInit( bump );
 
-  glActiveTexture( RKGL_TEXTURE_BUMP );
+  glActiveTexture( GL_TEXTURE1 );
   glGenTextures( 1, &bump->id_bump );
   glBindTexture( GL_TEXTURE_2D, bump->id_bump );
-
   _rkglTextureBumpLightMap( bump );
   for( i=0; i<6; i++ )
     glTexImage2D( cmap_type[i], 0, GL_RGB, bump->width/2, bump->height/2, 0, GL_RGB, GL_UNSIGNED_BYTE, bump->lbuf[i] );
@@ -206,12 +227,11 @@ bool rkglTextureBumpReadFile(zTexture *bump, char *filename)
   glTexParameteri( GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
   glTexParameteri( GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
   glTexParameteri( GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
-  glTexEnvi( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE );
+  rkglTextureSetCombine();
   glTexEnvi( GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_DOT3_RGB );
-  glTexEnvi( GL_TEXTURE_ENV, GL_SOURCE0_RGB, RKGL_TEXTURE_BASE );
-  glTexEnvi( GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_TEXTURE );
+  glTexEnvi( GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE0 );
+  glTexEnvi( GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_TEXTURE1 );
 
-  glBindTexture( GL_TEXTURE_2D, 0 );
-  glActiveTexture( RKGL_TEXTURE_BASE );
+  rkglTextureUnbind();
   return true;
 }

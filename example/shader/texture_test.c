@@ -1,6 +1,9 @@
 #include <roki-gl/rkgl_shape.h>
 #include <roki-gl/rkgl_glut.h>
+#include <roki-gl/rkgl_glsl.h>
 #include <zx11/zximage.h>
+
+GLuint shader_program;
 
 rkglCamera cam;
 rkglLight light;
@@ -64,9 +67,9 @@ void draw(void)
   zOpticalInfoCreateSimple( &oi, 0.8, 0.4, 0.4, NULL );
   rkglMaterial( &oi );
   glEnable( GL_TEXTURE_2D );
-  rkglTextureBind( &tex[1] );
+  rkglShaderSetTexture( shader_program, 1 );
   square( norm[0], vert[0], vert[1], vert[2], vert[3] );
-  rkglTextureBind( &tex[0] );
+  rkglShaderSetTexture( shader_program, 0 );
   square( norm[1], vert[2], vert[1], vert[4], vert[7] );
   square( norm[2], vert[3], vert[2], vert[7], vert[6] );
   square( norm[3], vert[4], vert[5], vert[6], vert[7] );
@@ -82,7 +85,14 @@ void display(void)
   rkglCALoad( &cam );
   rkglLightPut( &light );
   glPushMatrix();
+
+  glActiveTexture( GL_TEXTURE0 );
+  rkglTextureBind( &tex[0] );
+  glActiveTexture( GL_TEXTURE1 );
+  rkglTextureBind( &tex[1] );
+  glUseProgram( shader_program );
   draw();
+  glUseProgram( 0 );
   glPopMatrix();
   glutSwapBuffers();
 }
@@ -101,9 +111,6 @@ void init(void)
 
   make_check_texture( &tex[0], 256, 256, 4 );
   rkglTextureReadFile( &tex[1], "lena_mini.jpg" );
-/*
-  rkglTextureSetDecal();
-*/
 }
 
 int main(int argc, char *argv[])
@@ -119,6 +126,10 @@ int main(int argc, char *argv[])
   glutMouseFunc( rkglMouseFuncGLUT );
   glutMotionFunc( rkglMouseDragFuncGLUT );
   init();
+  shader_program = rkglShaderCreateTexture();
+  glUseProgram( shader_program );
+  rkglShaderSetTextureMixRate( shader_program, 0.5 );
+  glUseProgram( 0 );
   glutMainLoop();
   return 0;
 }

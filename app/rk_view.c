@@ -306,6 +306,7 @@ void rk_viewLoop(void)
   /* initial draw */
   rk_viewReshape();
   rk_viewDisplay();
+  rkglInitGLEW();
   while( rk_viewEvent() == 0 ){
     if( count++ > RK_VIEW_LOOP_SKIP ){
       rk_viewDisplay();

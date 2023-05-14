@@ -93,6 +93,9 @@ Window rkglWindowCreateGLX(zxWindow *parent, int x, int y, int w, int h, const c
     XStoreName( zxdisplay, win, title );
   rkglWindowActivateGLX( win );
   rkglEnableDefault();
+#ifdef __ROKI_GL_USE_GLEW
+  rkglInitGLEW();
+#endif /* __ROKI_GL_USE_GLEW */
   return win;
 }
 
