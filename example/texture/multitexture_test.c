@@ -12,7 +12,7 @@ bool make_check_texture(zTexture *texture, int width, int height, int div)
   int i, j, dw, dh;
   GLubyte *pt, color;
 
-  if( !( texture->buf = zAlloc( ubyte, width*height*3 ) ) ) return false;
+  if( !( texture->buf = zAlloc( ubyte, width*height*4 ) ) ) return false;
   dw = ( texture->width  = width  ) / div;
   dh = ( texture->height = height ) / div;
   for( pt=texture->buf, i=0; i<texture->height; i++ ){
@@ -21,6 +21,7 @@ bool make_check_texture(zTexture *texture, int width, int height, int div)
       *pt++ = color;
       *pt++ = 0;
       *pt++ = 0xff - color;
+      *pt++ = 0xff;
     }
   }
   rkglTextureInit( texture );
@@ -28,7 +29,7 @@ bool make_check_texture(zTexture *texture, int width, int height, int div)
   return true;
 }
 
-#define rkglMultiTexCoord(s,t) do{\
+#define multi_texcoord(s,t) do{\
   glMultiTexCoord2f( GL_TEXTURE0, s, t );\
   glMultiTexCoord2f( GL_TEXTURE1, s, t );\
 } while(0)
@@ -37,10 +38,10 @@ void square(GLfloat norm[3], GLfloat v1[3], GLfloat v2[3], GLfloat v3[3], GLfloa
 {
   glBegin( GL_QUADS );
     glNormal3fv( norm );
-    rkglMultiTexCoord( 0.0, 1.0 ); glVertex3fv( v1 );
-    rkglMultiTexCoord( 1.0, 1.0 ); glVertex3fv( v2 );
-    rkglMultiTexCoord( 1.0, 0.0 ); glVertex3fv( v3 );
-    rkglMultiTexCoord( 0.0, 0.0 ); glVertex3fv( v4 );
+    multi_texcoord( 0.0, 1.0 ); glVertex3fv( v1 );
+    multi_texcoord( 1.0, 1.0 ); glVertex3fv( v2 );
+    multi_texcoord( 1.0, 0.0 ); glVertex3fv( v3 );
+    multi_texcoord( 0.0, 0.0 ); glVertex3fv( v4 );
   glEnd();
 }
 
@@ -131,7 +132,6 @@ int main(int argc, char *argv[])
   glutSpecialFunc( rkglSpecialFuncGLUT );
   glutMouseFunc( rkglMouseFuncGLUT );
   glutMotionFunc( rkglMouseDragFuncGLUT );
-  rkglInitGLEW();
   init();
   glutMainLoop();
   return 0;

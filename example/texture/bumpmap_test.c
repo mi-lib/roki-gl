@@ -45,7 +45,6 @@ int main(int argc, char *argv[])
   glutMotionFunc( rkglMouseDragFuncGLUT );
   glutKeyboardFunc( rkglKeyFuncGLUT );
   glutSpecialFunc( rkglSpecialFuncGLUT );
-  rkglInitGLEW();
   init( argc > 1 ? argv[1] : "bump.bmp" );
   glutMainLoop();
   return 0;

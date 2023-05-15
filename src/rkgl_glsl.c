@@ -143,19 +143,15 @@ GLuint rkglShaderCreateTexture(void)
 
   program = rkglShaderCreate( RKGL_SHADER_VERT_TEXTURE, RKGL_SHADER_FRAG_TEXTURE );
   glUseProgram( program );
-  rkglShaderSetTextureMixRate( program, RKGL_SHADER_DEFAULT_MIX_RATE );
-  glUseProgram( 0 );
-  return program;
-}
-
-GLuint rkglShaderCreateTexture2(void)
-{
-  GLuint program;
-
-  program = rkglShaderCreate( RKGL_SHADER_VERT_TEXTURE, RKGL_SHADER_FRAG_TEXTURE2 );
-  glUseProgram( program );
-  rkglShaderSetTextureMixFactor( program, RKGL_SHADER_DEFAULT_MIX_FACTOR );
-  rkglShaderSetTextureMixRate( program, RKGL_SHADER_DEFAULT_MIX_RATE );
+  rkglShaderSetTextureNum( program, 1 );
+  rkglShaderSetTextureMixRate0( program, RKGL_SHADER_DEFAULT_MIX_RATE );
+  rkglShaderSetTextureMixRate1( program, RKGL_SHADER_DEFAULT_MIX_RATE );
+  rkglShaderSetTextureMixRate2( program, RKGL_SHADER_DEFAULT_MIX_RATE );
+  rkglShaderSetTextureMixRate3( program, RKGL_SHADER_DEFAULT_MIX_RATE );
+  rkglShaderSetTextureMixRate4( program, RKGL_SHADER_DEFAULT_MIX_RATE );
+  rkglShaderSetTextureMixRate5( program, RKGL_SHADER_DEFAULT_MIX_RATE );
+  rkglShaderSetTextureMixRate6( program, RKGL_SHADER_DEFAULT_MIX_RATE );
+  rkglShaderSetTextureMixRate7( program, RKGL_SHADER_DEFAULT_MIX_RATE );
   glUseProgram( 0 );
   return program;
 }

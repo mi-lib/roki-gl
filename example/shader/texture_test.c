@@ -15,7 +15,7 @@ bool make_check_texture(zTexture *texture, int width, int height, int div)
   int i, j, dw, dh;
   GLubyte *pt, color;
 
-  if( !( texture->buf = zAlloc( ubyte, width*height*3 ) ) ) return false;
+  if( !( texture->buf = zAlloc( ubyte, width*height*4 ) ) ) return false;
   dw = ( texture->width  = width  ) / div;
   dh = ( texture->height = height ) / div;
   for( pt=texture->buf, i=0; i<texture->height; i++ ){
@@ -24,6 +24,7 @@ bool make_check_texture(zTexture *texture, int width, int height, int div)
       *pt++ = color;
       *pt++ = 0;
       *pt++ = 0xff - color;
+      *pt++ = 0xff;
     }
   }
   rkglTextureInit( texture );
@@ -67,9 +68,9 @@ void draw(void)
   zOpticalInfoCreateSimple( &oi, 0.8, 0.4, 0.4, NULL );
   rkglMaterial( &oi );
   glEnable( GL_TEXTURE_2D );
-  rkglShaderSetTexture( shader_program, 1 );
+  rkglShaderSetTexture0( shader_program, 1 );
   square( norm[0], vert[0], vert[1], vert[2], vert[3] );
-  rkglShaderSetTexture( shader_program, 0 );
+  rkglShaderSetTexture0( shader_program, 0 );
   square( norm[1], vert[2], vert[1], vert[4], vert[7] );
   square( norm[2], vert[3], vert[2], vert[7], vert[6] );
   square( norm[3], vert[4], vert[5], vert[6], vert[7] );
@@ -128,7 +129,7 @@ int main(int argc, char *argv[])
   init();
   shader_program = rkglShaderCreateTexture();
   glUseProgram( shader_program );
-  rkglShaderSetTextureMixRate( shader_program, 0.5 );
+  rkglShaderSetTextureMixRate0( shader_program, 0.5 );
   glUseProgram( 0 );
   glutMainLoop();
   return 0;

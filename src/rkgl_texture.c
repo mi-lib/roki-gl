@@ -14,7 +14,7 @@ void rkglTextureInit(zTexture *texture)
   glGenTextures( 1, &texture->id );
   glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
   rkglTextureBind( texture );
-  glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, texture->width, texture->height, 0, GL_RGB, GL_UNSIGNED_BYTE, texture->buf );
+  glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, texture->width, texture->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, texture->buf );
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
@@ -33,13 +33,13 @@ bool rkglTextureReadFile(zTexture *texture, char *filename)
 
   already_connected = !zxInit();
   if( !zxImageReadFile( &img, filename ) ) goto TERMINATE;
-  if( !( texture->buf = zAlloc( ubyte, img.width*img.height*3 ) ) ) goto TERMINATE;
+  if( !( texture->buf = zAlloc( ubyte, img.width*img.height*4 ) ) ) goto TERMINATE;
   ret = true;
   zxPixelManipSet( &pm, zxdepth );
   for( pt=texture->buf, i=0; i<img.height; i++ )
-    for( j=0; j<img.width; j++ ){
+    for( j=0; j<img.width; j++, pt+=4 ){
       zxImageCellRGB( &img, &pm, j, i, pt, pt+1, pt+2 );
-      pt += 3;
+      *( pt + 3 ) = 0xff;
     }
   texture->width = img.width;
   texture->height = img.height;
@@ -129,6 +129,7 @@ static ubyte *_rkglTextureBumpVec(ubyte *p, double x, double y, double z)
   *(p  ) = 0xff * ( 0.5 * ( x + 1 ) );
   *(p+1) = 0xff * ( 0.5 * ( y + 1 ) );
   *(p+2) = 0xff * ( 0.5 * ( z + 1 ) );
+  *(p+3) = 0x00;
   return p;
 }
 
@@ -155,7 +156,7 @@ static bool _rkglTextureBumpNormalMap(zTexture *bump, char *filename)
   }
   nz = 1.0 / bump->depth;
   for( k=0, i=0; i<img.height; i++ ){
-    for( j=0; j<img.width; j++, k+=3 ){
+    for( j=0; j<img.width; j++, k+=4 ){
       nx = _rkglTextureBumpNormalX( &img, &pm, j, i );
       ny = _rkglTextureBumpNormalY( &img, &pm, j, i );
       l = sqrt( nx*nx + ny*ny + nz*nz );
@@ -181,7 +182,7 @@ static void _rkglTextureBumpLightMap(zTexture *bump)
   for( k=0, i=0; i<hh; i++ ){
     y = 2*(double)i/hh - 1;
     y2 = y*y + 1;
-    for( j=0; j<wh; j++, k+=3 ){
+    for( j=0; j<wh; j++, k+=4 ){
       x = 2*(double)j/wh - 1;
       zr = 1.0 / sqrt( x*x + y2 );
       xr = x * zr;
@@ -221,14 +222,14 @@ bool rkglTextureBumpReadFile(zTexture *bump, char *filename)
   glBindTexture( GL_TEXTURE_2D, bump->id_bump );
   _rkglTextureBumpLightMap( bump );
   for( i=0; i<6; i++ )
-    glTexImage2D( cmap_type[i], 0, GL_RGB, bump->width/2, bump->height/2, 0, GL_RGB, GL_UNSIGNED_BYTE, bump->lbuf[i] );
+    glTexImage2D( cmap_type[i], 0, GL_RGBA, bump->width/2, bump->height/2, 0, GL_RGBA, GL_UNSIGNED_BYTE, bump->lbuf[i] );
 
   glTexParameteri( GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
   glTexParameteri( GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
   glTexParameteri( GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
   glTexParameteri( GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
   rkglTextureSetCombine();
-  glTexEnvi( GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_DOT3_RGB );
+  glTexEnvi( GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_DOT3_RGBA );
   glTexEnvi( GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE0 );
   glTexEnvi( GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_TEXTURE1 );
 

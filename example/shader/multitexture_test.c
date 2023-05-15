@@ -15,7 +15,7 @@ bool make_check_texture(zTexture *texture, int width, int height, int div)
   int i, j, dw, dh;
   GLubyte *pt, color;
 
-  if( !( texture->buf = zAlloc( ubyte, width*height*3 ) ) ) return false;
+  if( !( texture->buf = zAlloc( ubyte, width*height*4 ) ) ) return false;
   dw = ( texture->width  = width  ) / div;
   dh = ( texture->height = height ) / div;
   for( pt=texture->buf, i=0; i<texture->height; i++ ){
@@ -24,6 +24,7 @@ bool make_check_texture(zTexture *texture, int width, int height, int div)
       *pt++ = color;
       *pt++ = 0;
       *pt++ = 0xff - color;
+      *pt++ = 0xff;
     }
   }
   rkglTextureInit( texture );
@@ -31,7 +32,7 @@ bool make_check_texture(zTexture *texture, int width, int height, int div)
   return true;
 }
 
-#define rkglMultiTexCoord(s,t) do{\
+#define multi_texcoord(s,t) do{\
   glMultiTexCoord2f( GL_TEXTURE0, s, t );\
   glMultiTexCoord2f( GL_TEXTURE1, s, t );\
 } while(0)
@@ -40,10 +41,10 @@ void square(GLfloat norm[3], GLfloat v1[3], GLfloat v2[3], GLfloat v3[3], GLfloa
 {
   glBegin( GL_QUADS );
     glNormal3fv( norm );
-    rkglMultiTexCoord( 0.0, 1.0 ); glVertex3fv( v1 );
-    rkglMultiTexCoord( 1.0, 1.0 ); glVertex3fv( v2 );
-    rkglMultiTexCoord( 1.0, 0.0 ); glVertex3fv( v3 );
-    rkglMultiTexCoord( 0.0, 0.0 ); glVertex3fv( v4 );
+    multi_texcoord( 0.0, 1.0 ); glVertex3fv( v1 );
+    multi_texcoord( 1.0, 1.0 ); glVertex3fv( v2 );
+    multi_texcoord( 1.0, 0.0 ); glVertex3fv( v3 );
+    multi_texcoord( 0.0, 0.0 ); glVertex3fv( v4 );
   glEnd();
 }
 
@@ -72,8 +73,8 @@ void draw(void)
   zOpticalInfoCreateSimple( &oi, 0.8, 0.4, 0.4, NULL );
   rkglMaterial( &oi );
   glEnable( GL_TEXTURE_2D );
-  rkglShaderSetTexture0( shader_program, 1 );
-  rkglShaderSetTexture1( shader_program, 0 );
+  rkglShaderSetTexture0( shader_program, 0 );
+  rkglShaderSetTexture1( shader_program, 1 );
   square( norm[0], vert[0], vert[1], vert[2], vert[3] );
   square( norm[1], vert[2], vert[1], vert[4], vert[7] );
   square( norm[2], vert[3], vert[2], vert[7], vert[6] );
@@ -115,7 +116,6 @@ void init(void)
 
   make_check_texture( &tex[0], 256, 256, 4 );
   rkglTextureReadFile( &tex[1], "lena_mini.jpg" );
-  rkglTextureSetModulate();
 }
 
 int main(int argc, char *argv[])
@@ -131,9 +131,11 @@ int main(int argc, char *argv[])
   glutMouseFunc( rkglMouseFuncGLUT );
   glutMotionFunc( rkglMouseDragFuncGLUT );
   init();
-  shader_program = rkglShaderCreateTexture2();
+  shader_program = rkglShaderCreateTexture();
   glUseProgram( shader_program );
-  rkglShaderSetTextureMixRate( shader_program, 0.5 );
+  rkglShaderSetTextureNum( shader_program, 2 );
+  rkglShaderSetTextureMixRate0( shader_program, 0.6 );
+  rkglShaderSetTextureMixRate1( shader_program, 0.5 );
   glUseProgram( 0 );
   glutMainLoop();
   return 0;

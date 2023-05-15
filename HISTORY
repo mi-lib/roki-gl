@@ -1,4 +1,4 @@
-2023. 5.14. Added rkglShaderCreateTexture and rkglShaderCreateTexture2. [rkgl_glsl, rkgl_glsl_texture]
+2023. 5.14. Added rkglShaderCreateTexture. [rkgl_glsl, rkgl_glsl_texture]
 2023. 5.14. Abolished RKGL_TEXTURE_BASE, RKGL_TEXTURE_BUMP, RKGL_TEXTURE_SHADOW, and RKGL_TEXTURE_COLOR. [rkgl_texture]
 2023. 5.14. Modified rkglPHBump and rkglTriBump. [rkgl_shape]
 2023. 5.14. Modified rkglWindowCreateGLUT and rkglWindowCreateGLX to call rkglInitGLEW if GLEW is applied. [rkgl_glut, rkgl_glx]

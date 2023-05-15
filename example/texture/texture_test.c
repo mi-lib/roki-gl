@@ -12,7 +12,7 @@ bool make_check_texture(zTexture *texture, int width, int height, int div)
   int i, j, dw, dh;
   GLubyte *pt, color;
 
-  if( !( texture->buf = zAlloc( ubyte, width*height*3 ) ) ) return false;
+  if( !( texture->buf = zAlloc( ubyte, width*height*4 ) ) ) return false;
   dw = ( texture->width  = width  ) / div;
   dh = ( texture->height = height ) / div;
   for( pt=texture->buf, i=0; i<texture->height; i++ ){
@@ -21,6 +21,7 @@ bool make_check_texture(zTexture *texture, int width, int height, int div)
       *pt++ = color;
       *pt++ = 0;
       *pt++ = 0xff - color;
+      *pt++ = 0xff;
     }
   }
   rkglTextureInit( texture );
