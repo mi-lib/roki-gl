@@ -91,10 +91,8 @@ void display(void)
   rkglLightPut( &light );
   glPushMatrix();
 
-  glActiveTexture( GL_TEXTURE0 );
-  rkglTextureBind( &tex[0] );
-  glActiveTexture( GL_TEXTURE1 );
-  rkglTextureBind( &tex[1] );
+  rkglTextureAssignUnit( 0, tex[0].id );
+  rkglTextureAssignUnit( 1, tex[1].id );
   glUseProgram( shader_program );
   draw();
   glUseProgram( 0 );

@@ -9,17 +9,26 @@
 /* color texture mapping */
 
 /* initialize GL parameters for a 2D texture. */
-void rkglTextureInit(zTexture *texture)
+GLuint rkglTextureGen(int width, int height, ubyte *buf)
 {
-  glGenTextures( 1, &texture->id );
+  GLuint id;
+
+  glGenTextures( 1, &id );
   glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
-  rkglTextureBind( texture );
-  glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, texture->width, texture->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, texture->buf );
+  glBindTexture( GL_TEXTURE_2D, id );
+  glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf );
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-  rkglTextureUnbind();
+  glBindTexture( GL_TEXTURE_2D, 0 );
+  return id;
+}
+
+/* initialize GL parameters for a 2D texture. */
+GLuint rkglTextureInit(zTexture *texture)
+{
+  return ( texture->id = rkglTextureGen( texture->width, texture->height, texture->buf ) );
 }
 
 /* read an image file and make a texture data. */
@@ -71,6 +80,34 @@ GLint rkglTextureNewUnit(void)
     return -1;
   }
   return GL_TEXTURE0 + rkgl_texture_unit_num++;
+}
+
+/* frame buffer and render buffer for off-screan rendering */
+
+GLuint rkglFramebufferAttachTexture(GLuint texid)
+{
+  GLuint fbid;
+
+  glGenFramebuffersEXT( 1, &fbid );
+  glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, fbid );
+  glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, texid, 0 );
+  if( glCheckFramebufferStatusEXT( GL_FRAMEBUFFER_EXT ) != GL_FRAMEBUFFER_COMPLETE_EXT )
+    ZRUNWARN( "the current framebuffer status is unsupported" );
+  glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, 0 );
+  return fbid;
+}
+
+GLuint rkglFramebufferAttachRenderbuffer(int width, int height)
+{
+  GLuint rbid;
+
+  glGenRenderbuffersEXT( 1, &rbid );
+  glBindRenderbufferEXT( GL_RENDERBUFFER_EXT, rbid );
+  /* to use depthbuffer as a render buffer */
+  glRenderbufferStorageEXT( GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT, width, height );
+  glFramebufferRenderbufferEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, rbid );
+  glBindRenderbufferEXT( GL_RENDERBUFFER_EXT, 0 );
+  return rbid;
 }
 
 /* bump mapping */

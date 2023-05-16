@@ -56,7 +56,7 @@ void rkglShadowInit(rkglShadow *shadow, int width, int height, double radius, do
   glDrawBuffer( GL_NONE );
   glReadBuffer( GL_NONE );
   if( glCheckFramebufferStatusEXT( GL_FRAMEBUFFER_EXT ) != GL_FRAMEBUFFER_COMPLETE_EXT )
-    ZRUNWARN( "the current framebuffer status is unsupported");
+    ZRUNWARN( "the current framebuffer status is unsupported" );
   glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, 0 );
 
   rkglShadowEnableAntiZFighting( shadow );

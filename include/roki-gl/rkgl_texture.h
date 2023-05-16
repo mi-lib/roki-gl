@@ -28,11 +28,14 @@ __EXPORT int rkglTextureNum(void);
 
 /* color texture mapping */
 
+/*! \brief generate a 2D texture, and set related GL parameters as default. */
+__EXPORT GLuint rkglTextureGen(int width, int height, ubyte *buf);
+
 /*! \brief initialize GL parameters for a 2D texture. */
-void rkglTextureInit(zTexture *texture);
+__EXPORT GLuint rkglTextureInit(zTexture *texture);
 
 /*! \brief read an image file and make a texture data. */
-bool rkglTextureReadFile(zTexture *texture, char *filename);
+__EXPORT bool rkglTextureReadFile(zTexture *texture, char *filename);
 
 #define rkglTextureEnable()   zTextureSetReadFunc( rkglTextureReadFile )
 
@@ -42,8 +45,21 @@ bool rkglTextureReadFile(zTexture *texture, char *filename);
 #define rkglCoord(coord)      glTexCoord2d( (coord)->c.x, (coord)->c.y )
 
 /* units for multitexture */
-void rkglTextureInitUnit(void);
-GLint rkglTextureNewUnit(void);
+
+__EXPORT void rkglTextureInitUnit(void);
+__EXPORT GLint rkglTextureNewUnit(void);
+
+#define rkglTextureAssignUnit(n,id) do{\
+  glActiveTexture( GL_TEXTURE0 + (n) );\
+  glBindTexture( GL_TEXTURE_2D, id );\
+} while(0)
+
+/* frame buffer and render buffer for off-screan rendering */
+
+__EXPORT GLuint rkglFramebufferAttachTexture(GLuint texid);
+__EXPORT GLuint rkglFramebufferAttachRenderbuffer(int width, int height);
+
+#define rkglTextureCopySubImage(dx,dy,sx,sy,sw,sh) glCopyTexSubImage2D( GL_TEXTURE_2D, 0, dx, dy, sx, sy, sw, sh )
 
 /* bump mapping */
 
