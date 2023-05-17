@@ -1,15 +1,15 @@
 /* RoKi-GL - Robot Kinetics library: visualization using OpenGL
  * Copyright (C) 2000 Tomomichi Sugihara (Zhidao)
  *
- * rkgl_shadow - shadow map
+ * rkgl_shadow - shadow map.
  */
 
 #ifndef __RKGL_SHADOW_H__
 #define __RKGL_SHADOW_H__
 
-#include <roki-gl/rkgl_optic.h>
-#include <roki-gl/rkgl_camera.h>
-#include <roki-gl/rkgl_texture.h>
+#include <roki_gl/rkgl_optic.h>
+#include <roki_gl/rkgl_camera.h>
+#include <roki_gl/rkgl_texture.h>
 
 __BEGIN_DECLS
 
@@ -25,8 +25,8 @@ typedef struct{
   /*! @endcond */
 } rkglShadow;
 
-__EXPORT void rkglShadowInit(rkglShadow *shadow, int width, int height, double radius, double ratio);
-__EXPORT void rkglShadowDraw(rkglShadow *shadow, rkglCamera* cam, rkglLight *light, void (* scene)(void));
+__ROKI_GL_EXPORT void rkglShadowInit(rkglShadow *shadow, int width, int height, double radius, double ratio);
+__ROKI_GL_EXPORT void rkglShadowDraw(rkglShadow *shadow, rkglCamera* cam, rkglLight *light, void (* scene)(void));
 
 #define rkglShadowEnableAntiZFighting(s)  ( (s)->antizfighting = true )
 #define rkglShadowDisableAntiZFighting(s) ( (s)->antizfighting = false )

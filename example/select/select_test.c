@@ -1,5 +1,5 @@
-#include <roki-gl/rkgl_glut.h>
-#include <roki-gl/rkgl_select.h>
+#include <roki_gl/rkgl_glut.h>
+#include <roki_gl/rkgl_select.h>
 
 typedef struct{
   GLint list;

@@ -1,11 +1,11 @@
 /* RoKi-GL - Robot Kinetics library: visualization using OpenGL
  * Copyright (C) 2000 Tomomichi Sugihara (Zhidao)
  *
- * rkgl_shape - visualization of shapes
+ * rkgl_shape - visualization of shapes.
  */
 
 #include <stdarg.h>
-#include <roki-gl/rkgl_shape.h>
+#include <roki_gl/rkgl_shape.h>
 #include <zeo/zeo_bv3d.h>
 
 /* 3D object drawing */

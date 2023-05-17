@@ -1,10 +1,10 @@
 /* RoKi-GL - Robot Kinetics library: visualization using OpenGL
  * Copyright (C) 2000 Tomomichi Sugihara (Zhidao)
  *
- * rkgl_camera - camera work
+ * rkgl_camera - camera work.
  */
 
-#include <roki-gl/rkgl_camera.h>
+#include <roki_gl/rkgl_camera.h>
 
 /* viewport */
 

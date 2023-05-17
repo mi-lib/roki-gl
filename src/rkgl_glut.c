@@ -1,12 +1,12 @@
 /* RoKi-GL - Robot Kinetics library: visualization using OpenGL
  * Copyright (C) 2000 Tomomichi Sugihara (Zhidao)
  *
- * rkgl_glut - GLUT (OpenGL utility toolkit) wrapper
+ * rkgl_glut - GLUT (OpenGL utility toolkit) wrapper.
  */
 
 #include <signal.h>
 #include <math.h>
-#include <roki-gl/rkgl_glut.h>
+#include <roki_gl/rkgl_glut.h>
 
 void rkglInitGLUT(int *argc, char **argv)
 {

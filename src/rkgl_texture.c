@@ -4,7 +4,7 @@
  * rkgl_texture - texture mapping.
  */
 
-#include <roki-gl/rkgl_texture.h>
+#include <roki_gl/rkgl_texture.h>
 
 /* color texture mapping */
 

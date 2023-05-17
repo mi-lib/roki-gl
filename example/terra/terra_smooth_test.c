@@ -1,5 +1,5 @@
-#include <roki-gl/rkgl_glut.h>
-#include <roki-gl/rkgl_terra.h>
+#include <roki_gl/rkgl_glut.h>
+#include <roki_gl/rkgl_terra.h>
 
 rkglCamera cam;
 rkglLight light;

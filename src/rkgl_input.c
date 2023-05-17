@@ -1,12 +1,12 @@
 /* RoKi-GL - Robot Kinetics library: visualization using OpenGL
  * Copyright (C) 2000 Tomomichi Sugihara (Zhidao)
  *
- * rkgl_input - key and mouse actions
+ * rkgl_input - key and mouse actions.
  */
 
 #include <signal.h>
 #include <math.h>
-#include <roki-gl/rkgl_input.h>
+#include <roki_gl/rkgl_input.h>
 
 void rkglKeyCARotateUp(rkglCamera *cam, double d, bool ctrlison){
   ctrlison ? rkglCATiltUp( cam, d ) : rkglCAAngleUp( cam, d );

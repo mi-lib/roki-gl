@@ -1,10 +1,10 @@
 /* RoKi-GL - Robot Kinetics library: visualization using OpenGL
  * Copyright (C) 2000 Tomomichi Sugihara (Zhidao)
  *
- * rkgl_terra - visualization of an elevation map
+ * rkgl_terra - visualization of an elevation map.
  */
 
-#include <roki-gl/rkgl_terra.h>
+#include <roki_gl/rkgl_terra.h>
 
 /* register a vertex on an elevation map. */
 static void _rkglTerraVertex(zTerra *terra, int i, int j)

@@ -2,8 +2,8 @@
 
 #include <unistd.h>
 #include <pthread.h>
-#include <roki-gl/rkgl_glut.h>
-#include <roki-gl/roki-gl.h>
+#include <roki_gl/rkgl_glut.h>
+#include <roki_gl/roki_gl.h>
 #include <roki/rk_chain.h>
 
 #define RK_PEN_TITLE "RK-PEN"

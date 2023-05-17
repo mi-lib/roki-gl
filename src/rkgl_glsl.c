@@ -4,7 +4,7 @@
  * rkgl_glsl - programmable shaders with GLSL.
  */
 
-#include <roki-gl/rkgl_glsl.h>
+#include <roki_gl/rkgl_glsl.h>
 
 static bool _rkglShaderOutputLog(void (* get_info_log)(GLuint,GLsizei,GLsizei*,GLchar*), GLuint id)
 {

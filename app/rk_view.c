@@ -1,8 +1,8 @@
 /* rk_view - 3D geometry viewer */
 
 #include <unistd.h>
-#include <roki-gl/roki-gl.h>
-#include <roki-gl/rkgl_glx.h>
+#include <roki_gl/roki_gl.h>
+#include <roki_gl/rkgl_glx.h>
 #include <zx11/zximage.h>
 
 #define RK_VIEW_TITLE "RK-VIEW"

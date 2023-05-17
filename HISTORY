@@ -1,3 +1,5 @@
+2023. 5.17. Replaced __EXPORT to __ROKI_GL_EXPORT. [all]
+2023. 5.17. Renamed PROJNAME from roki-gl to roki_gl. [all]
 2023. 5.16. Added rkglFramebufferAttachTexture and rkglFramebufferAttachRenderbuffer. [rkgl_texture]
 2023. 5.16. Defined rkglTextureAssignUnit. [rkgl_texture]
 2023. 5.16. Added rkglTextureCopySubImage. [rkgl_texture]

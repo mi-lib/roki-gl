@@ -7,13 +7,13 @@
 #ifndef __RKGL_TEXTURE_H__
 #define __RKGL_TEXTURE_H__
 
-#include <roki-gl/rkgl_misc.h>
+#include <roki_gl/rkgl_misc.h>
 #include <zeo/zeo_render_texture.h>
 #include <zx11/zximage.h>
 
 __BEGIN_DECLS
 
-__EXPORT int rkglTextureNum(void);
+__ROKI_GL_EXPORT int rkglTextureNum(void);
 
 /* texture environment mode */
 
@@ -29,13 +29,13 @@ __EXPORT int rkglTextureNum(void);
 /* color texture mapping */
 
 /*! \brief generate a 2D texture, and set related GL parameters as default. */
-__EXPORT GLuint rkglTextureGen(int width, int height, ubyte *buf);
+__ROKI_GL_EXPORT GLuint rkglTextureGen(int width, int height, ubyte *buf);
 
 /*! \brief initialize GL parameters for a 2D texture. */
-__EXPORT GLuint rkglTextureInit(zTexture *texture);
+__ROKI_GL_EXPORT GLuint rkglTextureInit(zTexture *texture);
 
 /*! \brief read an image file and make a texture data. */
-__EXPORT bool rkglTextureReadFile(zTexture *texture, char *filename);
+__ROKI_GL_EXPORT bool rkglTextureReadFile(zTexture *texture, char *filename);
 
 #define rkglTextureEnable()   zTextureSetReadFunc( rkglTextureReadFile )
 
@@ -46,8 +46,8 @@ __EXPORT bool rkglTextureReadFile(zTexture *texture, char *filename);
 
 /* units for multitexture */
 
-__EXPORT void rkglTextureInitUnit(void);
-__EXPORT GLint rkglTextureNewUnit(void);
+__ROKI_GL_EXPORT void rkglTextureInitUnit(void);
+__ROKI_GL_EXPORT GLint rkglTextureNewUnit(void);
 
 #define rkglTextureAssignUnit(n,id) do{\
   glActiveTexture( GL_TEXTURE0 + (n) );\
@@ -56,15 +56,15 @@ __EXPORT GLint rkglTextureNewUnit(void);
 
 /* frame buffer and render buffer for off-screan rendering */
 
-__EXPORT GLuint rkglFramebufferAttachTexture(GLuint texid);
-__EXPORT GLuint rkglFramebufferAttachRenderbuffer(int width, int height);
+__ROKI_GL_EXPORT GLuint rkglFramebufferAttachTexture(GLuint texid);
+__ROKI_GL_EXPORT GLuint rkglFramebufferAttachRenderbuffer(int width, int height);
 
 #define rkglTextureCopySubImage(dx,dy,sx,sy,sw,sh) glCopyTexSubImage2D( GL_TEXTURE_2D, 0, dx, dy, sx, sy, sw, sh )
 
 /* bump mapping */
 
 /*! \brief read an image file and make a bump map. */
-__EXPORT bool rkglTextureBumpReadFile(zTexture *bump, char *filename);
+__ROKI_GL_EXPORT bool rkglTextureBumpReadFile(zTexture *bump, char *filename);
 
 #define rkglTextureBumpEnable() zTextureSetBumpReadFunc( rkglTextureBumpReadFile )
 

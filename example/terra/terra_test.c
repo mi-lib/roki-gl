@@ -1,6 +1,6 @@
-#include <roki-gl/rkgl_glut.h>
-#include <roki-gl/rkgl_camera.h>
-#include <roki-gl/rkgl_terra.h>
+#include <roki_gl/rkgl_glut.h>
+#include <roki_gl/rkgl_camera.h>
+#include <roki_gl/rkgl_terra.h>
 
 #define ENTRY_POINT 0x1
 #define ENTRY_NORM  0x2

@@ -1,6 +1,6 @@
-#include <roki-gl/rkgl_glut.h>
-#include <roki-gl/rkgl_camera.h>
-#include <roki-gl/rkgl_shape.h>
+#include <roki_gl/rkgl_glut.h>
+#include <roki_gl/rkgl_camera.h>
+#include <roki_gl/rkgl_shape.h>
 
 int ms_id;
 zMShape3D ms;

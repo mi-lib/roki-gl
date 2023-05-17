@@ -18,10 +18,10 @@
 #ifndef __ROKI_GL_H__
 #define __ROKI_GL_H__
 
-#include <roki-gl/rkgl_camera.h>
-#include <roki-gl/rkgl_shadow.h>
-#include <roki-gl/rkgl_chain.h>
-#include <roki-gl/rkgl_select.h>
+#include <roki_gl/rkgl_camera.h>
+#include <roki_gl/rkgl_shadow.h>
+#include <roki_gl/rkgl_chain.h>
+#include <roki_gl/rkgl_select.h>
 
 __BEGIN_DECLS
 

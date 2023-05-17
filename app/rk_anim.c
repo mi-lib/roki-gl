@@ -1,7 +1,7 @@
 /* rk_anim - robot animation viewer */
 
-#include <roki-gl/roki-gl.h>
-#include <roki-gl/rkgl_glx.h>
+#include <roki_gl/roki_gl.h>
+#include <roki_gl/rkgl_glx.h>
 #include <zx11/zximage.h>
 #include <liw/liw_paction.h>
 

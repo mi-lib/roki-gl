@@ -1,5 +1,5 @@
-#include <roki-gl/rkgl_shape.h>
-#include <roki-gl/rkgl_glx.h>
+#include <roki_gl/rkgl_shape.h>
+#include <roki_gl/rkgl_glx.h>
 
 int obj;
 

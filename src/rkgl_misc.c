@@ -4,7 +4,7 @@
  * rkgl_misc - miscellanies.
  */
 
-#include <roki-gl/rkgl_misc.h>
+#include <roki_gl/rkgl_misc.h>
 
 void rkglEnableDefault(void)
 {

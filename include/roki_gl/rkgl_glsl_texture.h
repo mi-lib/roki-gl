@@ -82,6 +82,6 @@ void main(void)\
 
 #define RKGL_SHADER_DEFAULT_MIX_RATE 0.5
 
-__EXPORT GLuint rkglShaderCreateTexture(void);
+__ROKI_GL_EXPORT GLuint rkglShaderCreateTexture(void);
 
 #endif /* __RKGL_GLSL_TEXTURE_H__ */

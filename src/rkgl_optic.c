@@ -1,10 +1,10 @@
 /* RoKi-GL - Robot Kinetics library: visualization using OpenGL
  * Copyright (C) 2000 Tomomichi Sugihara (Zhidao)
  *
- * rkgl_optic - optics
+ * rkgl_optic - optics.
  */
 
-#include <roki-gl/rkgl_optic.h>
+#include <roki_gl/rkgl_optic.h>
 
 /* color material */
 

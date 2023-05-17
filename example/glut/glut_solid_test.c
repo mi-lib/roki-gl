@@ -1,5 +1,5 @@
-#include <roki-gl/rkgl_glut.h>
-#include <roki-gl/rkgl_shape.h>
+#include <roki_gl/rkgl_glut.h>
+#include <roki_gl/rkgl_shape.h>
 #include <signal.h>
 #include <GL/freeglut_ext.h>
 

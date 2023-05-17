@@ -1,10 +1,10 @@
 /* RoKi-GL - Robot Kinetics library: visualization using OpenGL
  * Copyright (C) 2000 Tomomichi Sugihara (Zhidao)
  *
- * rkgl_select - object selection
+ * rkgl_select - object selection.
  */
 
-#include <roki-gl/rkgl_select.h>
+#include <roki_gl/rkgl_select.h>
 
 /* project / unproject */
 

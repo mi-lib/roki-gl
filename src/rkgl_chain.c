@@ -1,10 +1,10 @@
 /* RoKi-GL - Robot Kinetics library: visualization using OpenGL
  * Copyright (C) 2000 Tomomichi Sugihara (Zhidao)
  *
- * rkgl_chain - visualization of kinematic chain
+ * rkgl_chain - visualization of kinematic chain.
  */
 
-#include <roki-gl/rkgl_chain.h>
+#include <roki_gl/rkgl_chain.h>
 
 void rkglChainAttrInit(rkglChainAttr *attr)
 {

@@ -1,11 +1,11 @@
 /* RoKi-GL - Robot Kinetics library: visualization using OpenGL
  * Copyright (C) 2000 Tomomichi Sugihara (Zhidao)
  *
- * rkgl_shadow - shadow map
+ * rkgl_shadow - shadow map.
  */
 
 #define GL_GLEXT_PROTOTYPES
-#include <roki-gl/rkgl_shadow.h>
+#include <roki_gl/rkgl_shadow.h>
 
 void rkglShadowInit(rkglShadow *shadow, int width, int height, double radius, double ratio)
 {
