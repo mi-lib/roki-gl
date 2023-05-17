@@ -2,7 +2,7 @@ include ../../config
 
 DIR=../..
 
-CONFIGTOOL=roki-gl-config
+CONFIGTOOL=roki_gl-config
 INCLUDE=-I$(DIR)/include `$(CONFIGTOOL) -I`
 LIB=-L$(DIR)/lib `$(CONFIGTOOL) -L`
 LINK=`$(CONFIGTOOL) -l`
