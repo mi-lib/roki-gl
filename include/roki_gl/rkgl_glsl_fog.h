@@ -42,15 +42,15 @@ void main(void)\
       float ls = dot( -lv, normalize( gl_LightSource[i].spotDirection ) );\
       attenuation = ( ls < gl_LightSource[i].spotCosCutoff ) ? 0.0 : pow( ls, gl_LightSource[i].spotExponent );\
     }\
-    vec4 amb = gl_FrontLightProduct[i].ambient;\
-    float dotNL = dot( norm, lv );\
-    vec4 dif = gl_FrontLightProduct[i].diffuse * max( 0.0, dotNL );\
+    vec4 ambient = gl_FrontLightProduct[i].ambient;\
+    float cos_norm_lv = dot( norm, lv );\
+    vec4 diffuse = gl_FrontLightProduct[i].diffuse * max( 0.0, cos_norm_lv );\
     vec3 view = normalize( -pos );\
     vec3 hv = normalize( lv + view );\
-    float powNH = pow( max( dot( norm, hv ), 0.0 ), gl_FrontMaterial.shininess );\
-    if( dotNL <= 0.0 ) powNH = 0.0;\
-    vec4 spc = gl_FrontLightProduct[i].specular * powNH;\
-    gl_FragColor += ( amb + dif + spc ) * attenuation;\
+    float ref_shininess = pow( max( dot( norm, hv ), 0.0 ), gl_FrontMaterial.shininess );\
+    if( cos_norm_lv <= 0.0 ) ref_shininess = 0.0;\
+    vec4 specular = gl_FrontLightProduct[i].specular * ref_shininess;\
+    gl_FragColor += ( ambient + diffuse + specular ) * attenuation;\
   }\
   float fog;\
   float a = gl_Fog.density * gl_FogFragCoord;\

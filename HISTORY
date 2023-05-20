@@ -1,3 +1,5 @@
+2023. 5.20. Reflected new specification of zeda-makefile-gen, and modified src/makefile. [src]
+2023. 5.18. Debugged computation of attenuation in shader programs. [rkgl_glsl_*]
 2023. 5.17. Corrected makefile for examples. [examle]
 2023. 5.17. Replaced __EXPORT to __ROKI_GL_EXPORT. [all]
 2023. 5.17. Renamed PROJNAME from roki-gl to roki_gl. [all]

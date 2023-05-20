@@ -42,13 +42,13 @@ void main(void)\
                             + gl_LightSource[0].quadraticAttenuation * d * d );\
   lv = normalize( lv );\
   vec4 ambient = gl_FrontLightProduct[0].ambient;\
-  float dotNL = dot( norm, lv );\
-  vec4 diffuse = gl_FrontLightProduct[0].diffuse * max( 0.0, dotNL );\
+  float cos_norm_lv = dot( norm, lv );\
+  vec4 diffuse = gl_FrontLightProduct[0].diffuse * max( 0.0, cos_norm_lv );\
   vec3 view = normalize( -pos );\
   vec3 hv = normalize( lv +  view );\
-  float powNH = pow( max( dot( norm, hv ), 0.0 ), gl_FrontMaterial.shininess );\
-  if( dotNL <= 0.0 ) powNH = 0.0;\
-  vec4 specular = gl_FrontLightProduct[0].specular * powNH;\
+  float ref_shininess = pow( max( dot( norm, hv ), 0.0 ), gl_FrontMaterial.shininess );\
+  if( cos_norm_lv <= 0.0 ) ref_shininess = 0.0;\
+  vec4 specular = gl_FrontLightProduct[0].specular * ref_shininess;\
   if( num_sampler > 0 ) diffuse = mix( diffuse, texture2D( sampler[0], gl_TexCoord[0].st ), mix_rate[0] );\
   if( num_sampler > 1 ) diffuse = mix( diffuse, texture2D( sampler[1], gl_TexCoord[1].st ), mix_rate[1] );\
   if( num_sampler > 2 ) diffuse = mix( diffuse, texture2D( sampler[2], gl_TexCoord[2].st ), mix_rate[2] );\
@@ -57,7 +57,8 @@ void main(void)\
   if( num_sampler > 5 ) diffuse = mix( diffuse, texture2D( sampler[5], gl_TexCoord[5].st ), mix_rate[5] );\
   if( num_sampler > 6 ) diffuse = mix( diffuse, texture2D( sampler[6], gl_TexCoord[6].st ), mix_rate[6] );\
   if( num_sampler > 7 ) diffuse = mix( diffuse, texture2D( sampler[7], gl_TexCoord[7].st ), mix_rate[7] );\
-  gl_FragColor = ( ambient + diffuse + specular ) * attenuation;\
+  gl_FragColor.rgb = ( ambient.rgb + diffuse.rgb + specular.rgb ) * attenuation;\
+  gl_FragColor.a   =   ambient.a   + diffuse.a   + specular.a;\
 }"
 
 #define rkglShaderSetTextureNum(shader,n) glUniform1i( glGetUniformLocation( shader, "num_sampler" ), n )
