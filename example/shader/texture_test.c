@@ -106,7 +106,7 @@ void init(void)
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.5, 0.5, 0.5, 1, 1, 1, 0, 0, 0 );
   rkglLightMove( &light, 10, 3, 10 );
-  rkglLightSetAttenuationQuad( &light );
+  rkglLightSetAttenuationQuad( &light, 1.0 );
 
   make_check_texture( &tex[0], 256, 256, 4 );
   rkglTextureReadFile( &tex[1], "lena_mini.jpg" );

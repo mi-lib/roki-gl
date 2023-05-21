@@ -18,11 +18,15 @@ __ROKI_GL_EXPORT GLuint rkglShaderCreate(const char *vssource, const char *fssou
 __ROKI_GL_EXPORT void rkglShaderSetUniform1i(GLuint shader, const char *varname, int val);
 __ROKI_GL_EXPORT void rkglShaderSetUniform1f(GLuint shader, const char *varname, float val);
 
+__ROKI_GL_EXPORT void rkglShaderSetUniformMat(GLuint shader, const char *varname, GLuint matid);
+__ROKI_GL_EXPORT void rkglShaderSetUniformMatT(GLuint shader, const char *varname, GLuint matid);
+
 __END_DECLS
 
 #include <roki_gl/rkgl_glsl_phong.h>
 #include <roki_gl/rkgl_glsl_spotlight.h>
 #include <roki_gl/rkgl_glsl_fog.h>
 #include <roki_gl/rkgl_glsl_texture.h>
+#include <roki_gl/rkgl_glsl_reflection.h>
 
 #endif /* __RKGL_GLSL_H__ */

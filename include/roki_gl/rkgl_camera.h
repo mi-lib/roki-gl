@@ -27,6 +27,8 @@ typedef struct{
   (c)->bg[3] = 1.0;\
 } while(0)
 
+#define rkglBGCopy(cs,cd) memcpy( (cd)->bg, (cs)->bg, sizeof(GLclampf)*4 )
+
 /* viewport */
 
 __ROKI_GL_EXPORT void rkglVPCreate(rkglCamera *c, GLint x, GLint y, GLsizei w, GLsizei h);
@@ -40,12 +42,16 @@ __ROKI_GL_EXPORT void rkglVPGet(rkglCamera *c);
 
 #define rkglVPAspect(c) ( rkglVPWidth(c) / rkglVPHeight(c) )
 
+#define rkglVPCopy(cs,cd) memcpy( (cd)->vp, (cs)->vp, sizeof(GLint)*4 )
+
 /* view volume */
 
 __ROKI_GL_EXPORT void rkglVVLoad(rkglCamera *c);
 __ROKI_GL_EXPORT void rkglVVGet(rkglCamera *c);
 
 __ROKI_GL_EXPORT void rkglVVInit(void);
+
+#define rkglVVCopy(cs,cd) memcpy( (cd)->vv, (cs)->vv, sizeof(GLdouble)*16 )
 
 __ROKI_GL_EXPORT void rkglOrtho(rkglCamera *c, GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near, GLdouble far);
 __ROKI_GL_EXPORT void rkglFrustum(rkglCamera *c, GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near, GLdouble far);
@@ -57,6 +63,8 @@ __ROKI_GL_EXPORT void rkglFrustumScale(rkglCamera *c, double scale, GLdouble nea
 
 __ROKI_GL_EXPORT void rkglCALoad(rkglCamera *c);
 __ROKI_GL_EXPORT void rkglCAGet(rkglCamera *c);
+
+#define rkglCACopy(cs,cd) memcpy( (cd)->ca, (cs)->ca, sizeof(GLdouble)*16 )
 
 __ROKI_GL_EXPORT void rkglCAInit(void);
 __ROKI_GL_EXPORT void rkglCAAlign(rkglCamera *c);
@@ -88,6 +96,15 @@ __ROKI_GL_EXPORT void rkglCAAngleUp(rkglCamera *cam, double angle);
 __ROKI_GL_EXPORT void rkglCAAngleDown(rkglCamera *cam, double angle);
 __ROKI_GL_EXPORT void rkglCARoundLeft(rkglCamera *cam, double angle);
 __ROKI_GL_EXPORT void rkglCARoundRight(rkglCamera *cam, double angle);
+
+/* camera */
+
+#define rkglCameraCopy(cs,cd) do{\
+  rkglBGCopy( cs, cd );\
+  rkglVPCopy( cs, cd );\
+  rkglVVCopy( cs, cd );\
+  rkglCACopy( cs, cd );\
+} while(0)
 
 /*
 void rkglCameraFRead(FILE *fp, rkglCamera *cam);

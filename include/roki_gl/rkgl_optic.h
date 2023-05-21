@@ -37,6 +37,7 @@ typedef struct{
   GLfloat dir[4];
   GLfloat cutoffangle;
   GLfloat exponent;
+  GLfloat attenuation[3];
 } rkglLight;
 
 __ROKI_GL_EXPORT int rkglLightNum(void);
@@ -62,10 +63,10 @@ __ROKI_GL_EXPORT bool rkglLightCreateExtra(rkglLight *light, uint n, GLfloat ar,
 
 __ROKI_GL_EXPORT void rkglLightLoad(rkglLight *light);
 
-__ROKI_GL_EXPORT void rkglLightSetAttenuation(rkglLight *light, double att_const, double att_lin, double att_quad);
-__ROKI_GL_EXPORT void rkglLightSetAttenuationConst(rkglLight *light);
-__ROKI_GL_EXPORT void rkglLightSetAttenuationLinear(rkglLight *light);
-__ROKI_GL_EXPORT void rkglLightSetAttenuationQuad(rkglLight *light);
+__ROKI_GL_EXPORT void rkglLightSetAttenuation(rkglLight *light, GLfloat att_const, GLfloat att_lin, GLfloat att_quad);
+#define rkglLightSetAttenuationConst(l,a)  rkglLightSetAttenuation( (l), (a), 0.0, 0.0 )
+#define rkglLightSetAttenuationLinear(l,a) rkglLightSetAttenuation( (l), 0.0, (a)/(fabs((l)->pos[0])+fabs((l)->pos[1])+fabs((l)->pos[2])), 0.0 )
+#define rkglLightSetAttenuationQuad(l,a)   rkglLightSetAttenuation( (l), 0.0, 0.0, (a)/(zSqr((l)->pos[0])+zSqr((l)->pos[1])+zSqr((l)->pos[2])) )
 
 __ROKI_GL_EXPORT void rkglLightSetSpot(rkglLight *light, double lx, double ly, double lz, double cutoffangle, double exponent);
 

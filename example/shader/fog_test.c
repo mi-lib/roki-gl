@@ -94,7 +94,7 @@ void init(void)
   rkglLightCreate( &light, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0, 0, 0 );
   rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
   rkglLightMove( &light, 5, 0, 10 );
-  rkglLightSetAttenuationQuad( &light );
+  rkglLightSetAttenuationQuad( &light, 2.0 );
 
   rkglLightCreate( &spotlight, 0.3, 0.3, 0.3, 0.6, 0.6, 0.6, 0, 0, 0 );
   rkglLightSetSpot( &spotlight, 0.0, 0.0, -3.0, 20.0, 30.0 );

@@ -88,7 +88,7 @@ void init(void)
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
   rkglLightMove( &light, 5, 0, 10 );
-  rkglLightSetAttenuationQuad( &light );
+  rkglLightSetAttenuationQuad( &light, 1.0 );
 
   zOpticalInfoCreateSimple( &oi, 0.8, 0, 0, NULL );
   zVec3DCreate( &c1, 0, 0, 0 );

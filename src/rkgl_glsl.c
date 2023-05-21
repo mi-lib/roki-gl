@@ -77,14 +77,16 @@ static bool _rkglShaderLink(GLuint program)
   return true;
 }
 
-static void _rkglShaderCreateFromFile(GLuint program, uint shadertype, const char *file)
+static bool _rkglShaderCreateFromFile(GLuint program, uint shadertype, const char *file)
 {
   GLuint shader;
+  bool ret;
 
   shader = glCreateShader( shadertype );
-  _rkglShaderCompileFile( shader, file );
+  ret = _rkglShaderCompileFile( shader, file );
   glAttachShader( program, shader );
   glDeleteShader( shader );
+  return ret;
 }
 
 GLuint rkglShaderCreateFromFile(const char *vsfile, const char *fsfile)
@@ -93,20 +95,22 @@ GLuint rkglShaderCreateFromFile(const char *vsfile, const char *fsfile)
 
   program = glCreateProgram();
   if( vsfile )
-    _rkglShaderCreateFromFile( program, GL_VERTEX_SHADER, vsfile );
+    if( !_rkglShaderCreateFromFile( program, GL_VERTEX_SHADER, vsfile ) ) return 0;
   if( fsfile )
-    _rkglShaderCreateFromFile( program, GL_FRAGMENT_SHADER, fsfile );
+    if( !_rkglShaderCreateFromFile( program, GL_FRAGMENT_SHADER, fsfile ) ) return 0;
   return _rkglShaderLink( program ) ? program : 0;
 }
 
-static void _rkglShaderCreate(GLuint program, uint shadertype, const char *source)
+static bool _rkglShaderCreate(GLuint program, uint shadertype, const char *source)
 {
   GLuint shader;
+  bool ret;
 
   shader = glCreateShader( shadertype );
-  _rkglShaderCompile( shader, source );
+  ret = _rkglShaderCompile( shader, source );
   glAttachShader( program, shader );
   glDeleteShader( shader );
+  return ret;
 }
 
 GLuint rkglShaderCreate(const char *vssource, const char *fssource)
@@ -115,9 +119,9 @@ GLuint rkglShaderCreate(const char *vssource, const char *fssource)
 
   program = glCreateProgram();
   if( vssource )
-    _rkglShaderCreate( program, GL_VERTEX_SHADER, vssource );
+    if( !_rkglShaderCreate( program, GL_VERTEX_SHADER, vssource ) ) return 0;
   if( fssource )
-    _rkglShaderCreate( program, GL_FRAGMENT_SHADER, fssource );
+    if( !_rkglShaderCreate( program, GL_FRAGMENT_SHADER, fssource ) ) return 0;
   return _rkglShaderLink( program ) ? program : 0;
 }
 
@@ -133,6 +137,26 @@ void rkglShaderSetUniform1f(GLuint shader, const char *varname, float val)
   GLfloat var;
   var = glGetUniformLocation( shader, varname );
   glUniform1f( var, val );
+}
+
+static void _rkglShaderSetUniformMat(GLuint shader, const char *varname, GLuint matid, GLboolean transpose)
+{
+  GLfloat m[16];
+  GLint var;
+
+  var = glGetUniformLocation( shader, varname );
+  glGetFloatv( matid, m );
+  glUniformMatrix4fv( var, 1, transpose, m );
+}
+
+void rkglShaderSetUniformMat(GLuint shader, const char *varname, GLuint matid)
+{
+  _rkglShaderSetUniformMat( shader, varname, matid, GL_FALSE );
+}
+
+void rkglShaderSetUniformMatT(GLuint shader, const char *varname, GLuint matid)
+{
+  _rkglShaderSetUniformMat( shader, varname, matid, GL_TRUE );
 }
 
 /* texture mapping */

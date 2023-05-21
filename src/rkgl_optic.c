@@ -83,7 +83,7 @@ static void _rkglLightCreate(rkglLight *light, uint id, GLfloat ar, GLfloat ag, 
   rkglLightSetDiffuse( light, dr, dg, db );
   rkglLightSetSpecular( light, sr, sg, sb );
   rkglLightLoad( light );
-  rkglLightSetAttenuationConst( light );
+  rkglLightSetAttenuation( light, 1.0, 0.0, 0.0 );
   rkglLightSetSpot( light, 0, 0, 0, 180, 0 );
 }
 
@@ -133,26 +133,11 @@ void rkglLightLoad(rkglLight *light)
   glLightfv( light->id, GL_SPECULAR, light->spc );
 }
 
-void rkglLightSetAttenuation(rkglLight *light, double att_const, double att_lin, double att_quad)
+void rkglLightSetAttenuation(rkglLight *light, GLfloat att_const, GLfloat att_lin, GLfloat att_quad)
 {
-  glLightf( light->id, GL_CONSTANT_ATTENUATION,  att_const );
-  glLightf( light->id, GL_LINEAR_ATTENUATION,    att_lin );
-  glLightf( light->id, GL_QUADRATIC_ATTENUATION, att_quad );
-}
-
-void rkglLightSetAttenuationConst(rkglLight *light)
-{
-  rkglLightSetAttenuation( light, 1.0, 0.0, 0.0 );
-}
-
-void rkglLightSetAttenuationLinear(rkglLight *light)
-{
-  rkglLightSetAttenuation( light, 0.0, 1.0/(fabs(light->pos[0])+fabs(light->pos[1])+fabs(light->pos[2])), 0.0 );
-}
-
-void rkglLightSetAttenuationQuad(rkglLight *light)
-{
-  rkglLightSetAttenuation( light, 0.0, 0.0, 1.0/(zSqr(light->pos[0])+zSqr(light->pos[1])+zSqr(light->pos[2])) );
+  glLightf( light->id, GL_CONSTANT_ATTENUATION,  ( light->attenuation[0] = att_const ) );
+  glLightf( light->id, GL_LINEAR_ATTENUATION,    ( light->attenuation[1] = att_lin   ) );
+  glLightf( light->id, GL_QUADRATIC_ATTENUATION, ( light->attenuation[2] = att_quad  ) );
 }
 
 void rkglLightSetSpot(rkglLight *light, double lx, double ly, double lz, double cutoffangle, double exponent)
