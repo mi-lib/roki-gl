@@ -60,7 +60,7 @@ void rkglMaterial(zOpticalInfo *oi)
 
 /* lighting */
 
-ZDEF_STRUCT( rkglLightPool ){
+ZDEF_STRUCT( , rkglLightPool ){
   GLenum id;
   bool in_use;
 };
