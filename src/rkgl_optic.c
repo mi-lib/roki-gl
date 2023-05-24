@@ -73,7 +73,7 @@ static rkglLightPool _rkgl_light_pool[] = {
   { GL_LIGHT5, false },
   { GL_LIGHT6, false },
   { GL_LIGHT7, false },
-  { -1, false },
+  { 0, false },
 };
 
 static void _rkglLightCreate(rkglLight *light, uint id, GLfloat ar, GLfloat ag, GLfloat ab, GLfloat dr, GLfloat dg, GLfloat db, GLfloat sr, GLfloat sg, GLfloat sb)
@@ -92,7 +92,7 @@ bool rkglLightCreate(rkglLight *light, GLfloat ar, GLfloat ag, GLfloat ab, GLflo
   rkglLightPool *lp;
 
   for( lp=_rkgl_light_pool; lp->in_use; lp++ ){
-    if( lp->id == -1 ){
+    if( lp->id == 0 ){
       ZRUNWARN( "no more reserved light object available" );
       ZRUNWARN( "use rkglLightCreateExtra()" );
       return false;
@@ -122,7 +122,7 @@ int rkglLightNum(void)
   int count = 0;
   rkglLightPool *lp;
 
-  for( lp=_rkgl_light_pool; lp->in_use && lp->id!=-1; lp++, count++ );
+  for( lp=_rkgl_light_pool; lp->in_use && lp->id!=0; lp++, count++ );
   return count;
 }
 

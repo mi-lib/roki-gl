@@ -1,3 +1,7 @@
+2023. 5.25. Replaced _rkglRadial with zVec3DOrthoNormal. [rkgl_shape]
+2023. 5.25. Added capsule in rkglShape. [rkgl_shape]
+2023. 5.25. Added rkglHemisphere, rkglTube, rkglCapsule, and _rkglCapsule. [rkgl_shape]
+2023. 5.22. Modified terminator of _rkgl_light_pool, rkglLightCreate, and rkglLightNum. [rkgl_optic]
 2023. 5.21. Modified specifications of rkglLightSetAttenuationConst, rkglLightSetAttenuationLinear, and rkglLightSetAttenuationQuad. [rkgl_optic]
 2023. 5.21. Added attenuation member of rkglLight, and modified specification of rkglLightSetAttenuation. [rkgl_optic]
 2023. 5.21. Added rkglBGCopy, rkglVPCopy, rkglVVCopy, rkglCACopy, and rkglCameraCopy. [rkgl_camera]

@@ -39,9 +39,12 @@ __ROKI_GL_EXPORT void rkglTriBump(zTri3D *t, zTri2D *f, zVec3D *lp);
 __ROKI_GL_EXPORT void rkglPolygon(zVec3D v[], int n, ...);
 
 __ROKI_GL_EXPORT void rkglBox(zBox3D *box, ubyte disptype);
+__ROKI_GL_EXPORT void rkglHemisphere(zSphere3D *sphere, zVec3D *dir, ubyte disptype);
 __ROKI_GL_EXPORT void rkglSphere(zSphere3D *sphere, ubyte disptype);
 __ROKI_GL_EXPORT void rkglEllips(zEllips3D *ellips, ubyte disptype);
+__ROKI_GL_EXPORT void rkglTube(zCyl3D *tube, ubyte disptype);
 __ROKI_GL_EXPORT void rkglCyl(zCyl3D *cyl, ubyte disptype);
+__ROKI_GL_EXPORT void rkglCapsule(zCapsule3D *capsule, ubyte disptype);
 __ROKI_GL_EXPORT void rkglECyl(zECyl3D *ecyl, ubyte disptype);
 __ROKI_GL_EXPORT void rkglCone(zCone3D *cone, ubyte disptype);
 

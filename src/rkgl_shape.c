@@ -173,6 +173,69 @@ void rkglBox(zBox3D *box, ubyte disptype)
 }
 static void _rkglBox(void *box, ubyte disptype){ rkglBox( (zBox3D *)box, disptype ); }
 
+void rkglHemisphere(zSphere3D *sphere, zVec3D *dir, ubyte disptype)
+{
+  int i, j, i1, j1;
+  int n1 = ( zIsOdd( zSphere3DDiv(sphere) ) ? zSphere3DDiv(sphere)+1 : zSphere3DDiv(sphere) ) / 2;
+  zVec3D vert[n1+1][zSphere3DDiv(sphere)+1], v, a, d, s, dr, aa;
+  double phi;
+
+  zVec3DNormalize( dir, &a );
+  zVec3DMul( &a, zSphere3DRadius(sphere), &d );
+  _zVec3DCreate( &s, a.c.y-a.c.z, a.c.z-a.c.x, a.c.x-a.c.y );
+  zVec3DMulDRC( &s, zSphere3DRadius(sphere)/zVec3DNorm(&s) );
+  for( i=0; i<=n1; i++ ){
+    phi = zPI_2 * i / n1;
+    zVec3DMul( &d, cos(phi), &dr );
+    zVec3DCatDRC( &dr, sin(phi), &s );
+    for( j=0; j<=zSphere3DDiv(sphere); j++ ){
+      zVec3DMul( &a, zPIx2 * j / zSphere3DDiv(sphere), &aa );
+      zVec3DRot( &dr, &aa, &vert[i][j] );
+    }
+  }
+  if( disptype & RKGL_FACE ){
+    glShadeModel( GL_SMOOTH );
+    for( i=1; i<=n1; i++ ){
+      i1 = i - 1;
+      for( j=1; j<=zSphere3DDiv(sphere); j++ ){
+        j1 = j - 1;
+        glBegin( GL_QUADS );
+          zVec3DAdd( &vert[i][j],   zSphere3DCenter(sphere), &v );
+          rkglNormal( &vert[i][j] );   rkglVertex( &v );
+          zVec3DAdd( &vert[i1][j],  zSphere3DCenter(sphere), &v );
+          rkglNormal( &vert[i1][j] );  rkglVertex( &v );
+          zVec3DAdd( &vert[i1][j1], zSphere3DCenter(sphere), &v );
+          rkglNormal( &vert[i1][j1] ); rkglVertex( &v );
+          zVec3DAdd( &vert[i][j1],  zSphere3DCenter(sphere), &v );
+          rkglNormal( &vert[i][j1] );  rkglVertex( &v );
+        glEnd();
+      }
+    }
+  }
+  if( disptype & RKGL_WIREFRAME ){
+    bool lighting_is_enabled;
+    rkglSaveLighting( &lighting_is_enabled );
+    rkglColorWhite();
+    for( i=0; i<=n1; i++ ){
+      glBegin( GL_LINE_LOOP );
+      for( j=0; j<zSphere3DDiv(sphere); j++ ){
+        zVec3DAdd( &vert[i][j], zSphere3DCenter(sphere), &v );
+        rkglVertex( &v );
+      }
+      glEnd();
+    }
+    for( j=0; j<zSphere3DDiv(sphere); j++ ){
+      glBegin( GL_LINE_STRIP );
+      for( i=0; i<=n1; i++ ){
+        zVec3DAdd( &vert[i][j], zSphere3DCenter(sphere), &v );
+        rkglVertex( &v );
+      }
+      glEnd();
+    }
+    rkglLoadLighting( lighting_is_enabled );
+  }
+}
+
 void rkglSphere(zSphere3D *sphere, ubyte disptype)
 {
   int i, j, i1, j1;
@@ -289,14 +352,51 @@ void rkglEllips(zEllips3D *ellips, ubyte disptype)
 }
 static void _rkglEllips(void *ellips, ubyte disptype){ rkglEllips( (zEllips3D *)ellips, disptype ); }
 
-static zVec3D *_rkglRadial(zVec3D *d, zVec3D *s)
+void rkglTube(zCyl3D *tube, ubyte disptype)
 {
-  if( !zIsTiny( d->e[zX] ) && !zIsTiny( d->e[zY] ) )
-    zVec3DCreate( s, d->e[zY],-d->e[zX], 0 );
-  else
-    zVec3DCreate( s, d->e[zY]-d->e[zZ], d->e[zZ]-d->e[zX], d->e[zX]-d->e[zY] );
-  zVec3DNormalizeDRC( s );
-  return s;
+  zVec3D norm[zCyl3DDiv(tube)+1], vert[2][zCyl3DDiv(tube)+1], d, s, aa;
+  double l;
+  int i;
+
+  zCyl3DAxis( tube, &d );
+  if( zIsTiny( ( l = zVec3DNorm( &d ) ) ) ) return;
+  zVec3DDivDRC( &d, l );
+  /* one radial vector */
+  zVec3DOrthoNormal( &d, &s );
+  zVec3DMulDRC( &s, zCyl3DRadius(tube) );
+  /* creation of vertices */
+  for( i=0; i<=zCyl3DDiv(tube); i++ ){
+    zVec3DMul( &d, -2*zPI*i/zCyl3DDiv(tube), &aa );
+    zVec3DRot( &s, &aa, &norm[i] );
+    /* vertices on the top rim */
+    zVec3DAdd( zCyl3DCenter(tube,0), &norm[i], &vert[0][i] );
+    /* vertices on the bottom rim */
+    zVec3DAdd( zCyl3DCenter(tube,1), &norm[i], &vert[1][i] );
+  }
+  if( disptype & RKGL_FACE ){
+    /* side faces */
+    glShadeModel( GL_SMOOTH );
+    glBegin( GL_QUAD_STRIP );
+    for( i=0; i<=zCyl3DDiv(tube); i++ ){
+      rkglNormal( &norm[i] );
+      rkglVertex( &vert[0][i] );
+      rkglVertex( &vert[1][i] );
+    }
+    glEnd();
+  }
+  if( disptype & RKGL_WIREFRAME ){
+    bool lighting_is_enabled;
+    rkglSaveLighting( &lighting_is_enabled );
+    rkglColorWhite();
+    /* side faces */
+    glBegin( GL_LINES );
+    for( i=0; i<=zCyl3DDiv(tube); i++ ){
+      rkglVertex( &vert[0][i] );
+      rkglVertex( &vert[1][i] );
+    }
+    glEnd();
+    rkglLoadLighting( lighting_is_enabled );
+  }
 }
 
 void rkglCyl(zCyl3D *cyl, ubyte disptype)
@@ -309,7 +409,7 @@ void rkglCyl(zCyl3D *cyl, ubyte disptype)
   if( zIsTiny( ( l = zVec3DNorm( &d ) ) ) ) return;
   zVec3DDivDRC( &d, l );
   /* one radial vector */
-  _rkglRadial( &d, &s );
+  zVec3DOrthoNormal( &d, &s );
   zVec3DMulDRC( &s, zCyl3DRadius(cyl) );
   /* creation of vertices */
   for( i=0; i<=zCyl3DDiv(cyl); i++ ){
@@ -370,6 +470,21 @@ void rkglCyl(zCyl3D *cyl, ubyte disptype)
   }
 }
 static void _rkglCyl(void *cyl, ubyte disptype){ rkglCyl( (zCyl3D *)cyl, disptype ); }
+
+void rkglCapsule(zCapsule3D *capsule, ubyte disptype)
+{
+  zVec3D dir;
+  zSphere3D hemisphere;
+
+  zSphere3DCreate( &hemisphere, zCapsule3DCenter(capsule,1), zCapsule3DRadius(capsule), zCapsule3DDiv(capsule) );
+  zCapsule3DAxis( capsule, &dir );
+  rkglHemisphere( &hemisphere, &dir, disptype );
+  rkglTube( capsule, disptype );
+  zSphere3DCreate( &hemisphere, zCapsule3DCenter(capsule,0), zCapsule3DRadius(capsule), zCapsule3DDiv(capsule) );
+  zVec3DRevDRC( &dir );
+  rkglHemisphere( &hemisphere, &dir, disptype );
+}
+static void _rkglCapsule(void *capsule, ubyte disptype){ rkglCapsule( (zCapsule3D *)capsule, disptype ); }
 
 void rkglECyl(zECyl3D *ecyl, ubyte disptype)
 {
@@ -450,7 +565,7 @@ void rkglCone(zCone3D *cone, ubyte disptype)
   if( zIsTiny( ( l = zVec3DNorm( &d ) ) ) ) return;
   zVec3DDivDRC( &d, l );
   /* one radial vector */
-  _rkglRadial( &d, &s );
+  zVec3DOrthoNormal( &d, &s );
   zVec3DMulDRC( &s, zCone3DRadius(cone) );
   /* creation of vertices */
   for( i=0; i<=zCone3DDiv(cone); i++ ){
@@ -515,7 +630,7 @@ void rkglTorus(zVec3D *c, zVec3D *n, double r1, double r2, int div1, int div2, u
   rm = 0.5 * ( r1 + r2 );
   r  = 0.5 * ( r2 - r1 );
   zVec3DNormalize( n, &d );
-  _rkglRadial( &d, &s );
+  zVec3DOrthoNormal( &d, &s );
 
   for( i=0; i<=div1; i++ ){
     zVec3DMul( &d, 2*zPI*i/div1, &aa1 );
@@ -720,6 +835,7 @@ void rkglShape(zShape3D *s, zOpticalInfo *oi_alt, ubyte disptype, rkglLight *lig
     { "sphere", _rkglSphere },
     { "ellipsoid", _rkglEllips },
     { "cylinder", _rkglCyl },
+    { "capsule", _rkglCapsule },
     { "ellipticcylinder", _rkglECyl },
     { "cone", _rkglCone },
     { "polyhedron", _rkglPH },
