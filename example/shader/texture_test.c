@@ -110,6 +110,11 @@ void init(void)
 
   make_check_texture( &tex[0], 256, 256, 4 );
   rkglTextureReadFile( &tex[1], "lena_mini.jpg" );
+
+  shader_program = rkglShaderCreateTexture();
+  glUseProgram( shader_program );
+  rkglShaderSetTextureMixRate0( shader_program, 0.5 );
+  glUseProgram( 0 );
 }
 
 int main(int argc, char *argv[])
@@ -125,10 +130,6 @@ int main(int argc, char *argv[])
   glutMouseFunc( rkglMouseFuncGLUT );
   glutMotionFunc( rkglMouseDragFuncGLUT );
   init();
-  shader_program = rkglShaderCreateTexture();
-  glUseProgram( shader_program );
-  rkglShaderSetTextureMixRate0( shader_program, 0.5 );
-  glUseProgram( 0 );
   glutMainLoop();
   return 0;
 }

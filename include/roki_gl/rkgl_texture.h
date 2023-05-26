@@ -61,6 +61,12 @@ __ROKI_GL_EXPORT GLuint rkglFramebufferAttachRenderbuffer(int width, int height)
 
 #define rkglTextureCopySubImage(dx,dy,sx,sy,sw,sh) glCopyTexSubImage2D( GL_TEXTURE_2D, 0, dx, dy, sx, sy, sw, sh )
 
+/* cube mapping */
+
+__ROKI_GL_EXPORT const GLenum rkgl_cubemap_id[];
+
+__ROKI_GL_EXPORT void rkglTextureGenCubeMap(int width, int height);
+
 /* bump mapping */
 
 /*! \brief read an image file and make a bump map. */

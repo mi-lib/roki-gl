@@ -110,6 +110,30 @@ GLuint rkglFramebufferAttachRenderbuffer(int width, int height)
   return rbid;
 }
 
+/* cube mapping */
+
+const GLenum rkgl_cubemap_id[] = {
+  GL_TEXTURE_CUBE_MAP_POSITIVE_X,
+  GL_TEXTURE_CUBE_MAP_NEGATIVE_X,
+  GL_TEXTURE_CUBE_MAP_POSITIVE_Y,
+  GL_TEXTURE_CUBE_MAP_NEGATIVE_Y,
+  GL_TEXTURE_CUBE_MAP_POSITIVE_Z,
+  GL_TEXTURE_CUBE_MAP_NEGATIVE_Z,
+};
+
+void rkglTextureGenCubeMap(int width, int height)
+{
+  int i;
+
+  for( i=0; i<6; i++ )
+    glTexImage2D( rkgl_cubemap_id[i], 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0 );
+  glTexParameteri( GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP );
+  glTexParameteri( GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP );
+  glTexParameteri( GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP );
+  glTexParameteri( GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+  glTexParameteri( GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+}
+
 /* bump mapping */
 
 /* x component of a normal vector on a bump texture */

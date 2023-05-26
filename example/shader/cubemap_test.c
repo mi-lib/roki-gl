@@ -106,7 +106,7 @@ void init(void)
   rkglSetCallbackParamGLUT( &cam, 0, 0, 0, 0, 0 );
 
   rkglBGSet( &cam, 0.5, 0.5, 0.5 );
-  rkglCASet( &cam, 6, 0, 6, 0, -30, 0 );
+  rkglCASet( &cam, 6, 0, 4, 0, -30, 0 );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 1.0, 1.0, 1.0, 0.5, 0.5, 0.5, 0, 0, 0 );

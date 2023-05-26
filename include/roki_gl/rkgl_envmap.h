@@ -1,17 +1,24 @@
 /* RoKi-GL - Robot Kinetics library: visualization using OpenGL
  * Copyright (C) 2000 Tomomichi Sugihara (Zhidao)
  *
- * rkgl_shadow - shadow map.
+ * rkgl_envmap - environment mapping (reflection/refraction/shadow).
  */
 
-#ifndef __RKGL_SHADOW_H__
-#define __RKGL_SHADOW_H__
+#ifndef __RKGL_ENVMAP_H__
+#define __RKGL_ENVMAP_H__
 
 #include <roki_gl/rkgl_optic.h>
 #include <roki_gl/rkgl_camera.h>
 #include <roki_gl/rkgl_texture.h>
+#include <roki_gl/rkgl_shape.h>
 
 __BEGIN_DECLS
+
+/* reflection and refraction mapping */
+
+__ROKI_GL_EXPORT void rkglReflectionRefraction(int width, int height, rkglCamera *cam, rkglLight *light, void (* draw)(void), zVec3D *center);
+
+/* shadow mapping */
 
 typedef struct{
   int width, height; /* texture size */
@@ -33,4 +40,4 @@ __ROKI_GL_EXPORT void rkglShadowDraw(rkglShadow *shadow, rkglCamera* cam, rkglLi
 
 __END_DECLS
 
-#endif /* __RKGL_SHADOW_H__ */
+#endif /* __RKGL_ENVMAP_H__ */

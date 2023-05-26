@@ -13,6 +13,7 @@
 #ifdef __ROKI_GL_USE_GLEW
 #include <GL/glew.h>
 #else
+#define GL_GLEXT_PROTOTYPES
 #include <GL/gl.h>
 #endif /* __ROKI_GL_USE_GLEW */
 

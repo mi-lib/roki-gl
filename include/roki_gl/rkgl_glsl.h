@@ -27,6 +27,6 @@ __END_DECLS
 #include <roki_gl/rkgl_glsl_spotlight.h>
 #include <roki_gl/rkgl_glsl_fog.h>
 #include <roki_gl/rkgl_glsl_texture.h>
-#include <roki_gl/rkgl_glsl_reflection.h>
+#include <roki_gl/rkgl_glsl_fresnel.h>
 
 #endif /* __RKGL_GLSL_H__ */

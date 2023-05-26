@@ -10,6 +10,7 @@
  - object selection
  - texture mapping
  - bump mapping
+ - reflection and refraction mapping
  - shadow mapping
  - GLUT (OpenGL utility toolkit) wrapper
  - X11/OpenGL wrapper
@@ -19,9 +20,9 @@
 #define __ROKI_GL_H__
 
 #include <roki_gl/rkgl_camera.h>
-#include <roki_gl/rkgl_shadow.h>
 #include <roki_gl/rkgl_chain.h>
 #include <roki_gl/rkgl_select.h>
+#include <roki_gl/rkgl_envmap.h>
 
 __BEGIN_DECLS
 

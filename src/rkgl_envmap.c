@@ -1,11 +1,54 @@
 /* RoKi-GL - Robot Kinetics library: visualization using OpenGL
  * Copyright (C) 2000 Tomomichi Sugihara (Zhidao)
  *
- * rkgl_shadow - shadow map.
+ * rkgl_envmap - environment mapping (reflection/refraction/shadow).
  */
 
-#define GL_GLEXT_PROTOTYPES
-#include <roki_gl/rkgl_shadow.h>
+#include <roki_gl/rkgl_envmap.h>
+
+/* reflection and refraction mapping */
+
+void rkglReflectionRefraction(int width, int height, rkglCamera *cam, rkglLight *light, void (* draw)(void), zVec3D *center)
+{
+  rkglCamera view;
+  static const zVec3D viewvec[] = {
+    { { 1.0, 0.0, 0.0 } },
+    { {-1.0, 0.0, 0.0 } },
+    { { 0.0, 1.0, 0.0 } },
+    { { 0.0,-1.0, 0.0 } },
+    { { 0.0, 0.0, 1.0 } },
+    { { 0.0, 0.0,-1.0 } },
+  };
+  static const zVec3D upvec[] = {
+    { { 0.0,-1.0, 0.0 } },
+    { { 0.0,-1.0, 0.0 } },
+    { { 0.0, 0.0, 1.0 } },
+    { { 0.0, 0.0,-1.0 } },
+    { { 0.0,-1.0, 0.0 } },
+    { { 0.0,-1.0, 0.0 } },
+  };
+  int i;
+
+  rkglBGCopy( cam, &view );
+  for( i=0; i<6; i++ ){
+    rkglClear();
+    rkglVPCreate( &view, 0, 0, width, height );
+    rkglPerspective( &view, 90.0, 1.0, 0.1, 20.0 );
+    rkglCALookAt( &view,
+      center->c.x, center->c.y, center->c.z,
+      center->c.x+viewvec[i].c.x, center->c.y+viewvec[i].c.y, center->c.z+viewvec[i].c.z,
+      upvec[i].c.x, upvec[i].c.y, upvec[i].c.z );
+    rkglLightPut( light );
+    glPushMatrix();
+    draw();
+    glPopMatrix();
+    glCopyTexSubImage2D( rkgl_cubemap_id[i], 0, 0, 0, 0, 0, width, height );
+  }
+  rkglVPLoad( cam );
+  rkglVVLoad( cam );
+}
+
+/* shadow mapping */
 
 void rkglShadowInit(rkglShadow *shadow, int width, int height, double radius, double ratio)
 {

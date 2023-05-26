@@ -151,6 +151,8 @@ void init(void)
   checkerboard_id = rkglBeginList();
   rkglCheckerBoard( &pc0, &pc1, &pc2, 10, 10, &oi, &oi2 );
   glEndList();
+
+  shader_program = rkglShaderCreateSpotlight();
 }
 
 int main(int argc, char *argv[])
@@ -165,7 +167,6 @@ int main(int argc, char *argv[])
   glutMouseFunc( rkglMouseFuncGLUT );
   glutMotionFunc( rkglMouseDragFuncGLUT );
   init();
-  shader_program = rkglShaderCreateSpotlight();
   glutMainLoop();
   return 0;
 }
