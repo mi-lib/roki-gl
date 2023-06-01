@@ -1,3 +1,4 @@
+2023. 6. 1. Reflected modification of zeda-makefile-gen to keep roki_gl_export.h. [roki_gl_export]
 2023. 5.26. Abolished rkglShaderCreateReflection, and added rkglShaderCreateFresnel. [rkgl_glsl, rkgl_glsl_fresnel]
 2023. 5.26. Abolished rkgl_reflection. [rkgl_glsl_fresnel]
 2023. 5.26. Moved GL_GLEXT_PROTOTYPES from rkgl_envmap.h to rkgl_misc.h. [rkgl_misc, rkgl_envmap]
