@@ -8,8 +8,8 @@
 
 /* color texture mapping */
 
-/* initialize GL parameters for a 2D texture. */
-GLuint rkglTextureGen(int width, int height, ubyte *buf)
+/* assign a 2D texture to GL. */
+GLuint rkglTextureAssign(int width, int height, ubyte *buf)
 {
   GLuint id;
 
@@ -17,10 +17,8 @@ GLuint rkglTextureGen(int width, int height, ubyte *buf)
   glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
   glBindTexture( GL_TEXTURE_2D, id );
   glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf );
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+  rkglTextureSetClamp();
+  rkglTextureSetFilterLinear();
   glBindTexture( GL_TEXTURE_2D, 0 );
   return id;
 }
@@ -28,7 +26,7 @@ GLuint rkglTextureGen(int width, int height, ubyte *buf)
 /* initialize GL parameters for a 2D texture. */
 GLuint rkglTextureInit(zTexture *texture)
 {
-  return ( texture->id = rkglTextureGen( texture->width, texture->height, texture->buf ) );
+  return ( texture->id = rkglTextureAssign( texture->width, texture->height, texture->buf ) );
 }
 
 /* read an image file and make a texture data. */
@@ -65,11 +63,13 @@ bool rkglTextureReadFile(zTexture *texture, char *filename)
 
 static int rkgl_texture_unit_num = 0;
 
+/* initialize texture units. */
 void rkglTextureInitUnit(void)
 {
   rkgl_texture_unit_num = 0;
 }
 
+/* assign a new texture unit. */
 GLint rkglTextureNewUnit(void)
 {
   int n;
@@ -84,6 +84,7 @@ GLint rkglTextureNewUnit(void)
 
 /* frame buffer and render buffer for off-screan rendering */
 
+/* attach a 2D texture to a frame buffer. */
 GLuint rkglFramebufferAttachTexture(GLuint texid)
 {
   GLuint fbid;
@@ -97,6 +98,7 @@ GLuint rkglFramebufferAttachTexture(GLuint texid)
   return fbid;
 }
 
+/* attach a render buffer to a frame buffer. */
 GLuint rkglFramebufferAttachRenderbuffer(int width, int height)
 {
   GLuint rbid;
@@ -121,6 +123,7 @@ const GLenum rkgl_cubemap_id[] = {
   GL_TEXTURE_CUBE_MAP_NEGATIVE_Z,
 };
 
+/* generate a cube map. */
 void rkglTextureGenCubeMap(int width, int height)
 {
   int i;
@@ -132,6 +135,58 @@ void rkglTextureGenCubeMap(int width, int height)
   glTexParameteri( GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP );
   glTexParameteri( GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
   glTexParameteri( GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+}
+
+/* projection mapping */
+
+/* generate a square texture map for projection mapping to an object. */
+void rkglTextureGenProjectionObject(void)
+{
+  GLfloat param[] = { 0.0, 0.0, 0.0, 0.0 };
+
+  glTexGenf( GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR );
+  glTexGenf( GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR );
+  glTexGenf( GL_R, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR );
+  glTexGenf( GL_Q, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR );
+  param[0] = 1.0; glTexGenfv( GL_S, GL_OBJECT_PLANE, param ); param[0] = 0.0;
+  param[1] = 1.0; glTexGenfv( GL_T, GL_OBJECT_PLANE, param ); param[1] = 0.0;
+  param[2] = 1.0; glTexGenfv( GL_R, GL_OBJECT_PLANE, param ); param[2] = 0.0;
+  param[3] = 1.0; glTexGenfv( GL_Q, GL_OBJECT_PLANE, param ); param[3] = 0.0;
+}
+
+/* generate a square texture map for projection mapping to an eye view. */
+void rkglTextureGenProjectionEye(void)
+{
+  GLdouble param[] = { 0.0, 0.0, 0.0, 0.0 };
+
+  glTexGeni( GL_S, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR );
+  glTexGeni( GL_T, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR );
+  glTexGeni( GL_R, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR );
+  glTexGeni( GL_Q, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR );
+  param[0] = 1.0; glTexGendv( GL_S, GL_EYE_PLANE, param ); param[0] = 0.0;
+  param[1] = 1.0; glTexGendv( GL_T, GL_EYE_PLANE, param ); param[1] = 0.0;
+  param[2] = 1.0; glTexGendv( GL_R, GL_EYE_PLANE, param ); param[2] = 0.0;
+  param[3] = 1.0; glTexGendv( GL_Q, GL_EYE_PLANE, param ); param[3] = 0.0;
+}
+
+/* enable projection mapping of a 2D texture. */
+void rkglTextureEnableProjection(void)
+{
+  glEnable( GL_TEXTURE_2D );
+  glEnable( GL_TEXTURE_GEN_S );
+  glEnable( GL_TEXTURE_GEN_T );
+  glEnable( GL_TEXTURE_GEN_R );
+  glEnable( GL_TEXTURE_GEN_Q );
+}
+
+/* disable projection mapping of a 2D texture. */
+void rkglTextureDisableProjection(void)
+{
+  glDisable( GL_TEXTURE_GEN_S );
+  glDisable( GL_TEXTURE_GEN_T );
+  glDisable( GL_TEXTURE_GEN_R );
+  glDisable( GL_TEXTURE_GEN_Q );
+  glDisable( GL_TEXTURE_2D );
 }
 
 /* bump mapping */

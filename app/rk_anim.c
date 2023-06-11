@@ -22,7 +22,7 @@ enum{
   OPT_BG,
   OPT_LX, OPT_LY, OPT_LZ,
   OPT_SMOOTH,
-  OPT_SHADOW, OPT_SHADOW_SIZE, OPT_SHADOW_AREA,
+  OPT_SHADOW, OPT_SHADOW_SIZE, OPT_SHADOW_AREA, OPT_SHADOW_BLUR,
   OPT_FRAME, OPT_CAPTURE, OPT_CAPTURESERIAL, OPT_CAPTURE_XWD,
   OPT_SECPERFRAME, OPT_SKEW,
   OPT_RESIZE,
@@ -56,7 +56,8 @@ zOption opt[] = {
   { "smooth", NULL, NULL, "enable antialias", NULL, false },
   { "shadow", NULL, NULL, "enable shadow", NULL, false },
   { "shadowsize", NULL, "<value>", "shadow map size", (char *)"1024", false },
-  { "shadowarea", NULL, "<value>", "radius of shadowing area", (char *)"2.0", false },
+  { "shadowarea", NULL, "<value>", "radius of shadowing area", (char *)"3.0", false },
+  { "shadowblur", NULL, "<value>", "edge blur of shadow", (char *)"0.1", false },
   { "k", NULL, NULL, "wait key-in at each step", NULL, false },
   { "capture", NULL, "<suf>", "output image format (suffix)", (char *)"png", false },
   { "captureserial", NULL, "<suf>", "output images with serial numbers", NULL, false },
@@ -556,7 +557,7 @@ void rkAnimInit(void)
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.5, 0.5, 0.5, 0.8, 0.8, 0.8, 0, 0, 0 );
   rkglLightMove( &light, atof(opt[OPT_LX].arg), atof(opt[OPT_LY].arg), atof(opt[OPT_LZ].arg) );
-  rkglShadowInit( &shadow, atoi(opt[OPT_SHADOW_SIZE].arg), atoi(opt[OPT_SHADOW_SIZE].arg), atof(opt[OPT_SHADOW_AREA].arg), 0.2 );
+  rkglShadowInit( &shadow, atoi(opt[OPT_SHADOW_SIZE].arg), atoi(opt[OPT_SHADOW_SIZE].arg), atof(opt[OPT_SHADOW_AREA].arg), 0.2, atof(opt[OPT_SHADOW_BLUR].arg) );
   rkglTextureEnable();
 
   if( opt[OPT_ENVFILE].flag ) rkAnimLoadEnv();

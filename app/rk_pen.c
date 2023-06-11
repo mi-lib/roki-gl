@@ -499,7 +499,7 @@ void rk_penInit(void)
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.5, 0.5, 0.5, 0.8, 0.8, 0.8, 0, 0, 0 );
   rkglLightMove( &light, atof(opt[OPT_LX].arg), atof(opt[OPT_LY].arg), atof(opt[OPT_LZ].arg) );
-  rkglShadowInit( &shadow, 1024, 1024, 2, 0.2 );
+  rkglShadowInit( &shadow, 1024, 1024, 2, 0.2, 0.1 );
   rkglTextureEnable();
   if( opt[OPT_SMOOTH].flag ) glEnable( GL_LINE_SMOOTH );
   if( opt[OPT_FOG].flag ) glEnable( GL_FOG );

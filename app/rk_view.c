@@ -208,7 +208,7 @@ void rk_viewInit(void)
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.5, 0.5, 0.5, 0.8, 0.8, 0.8, 0, 0, 0 );
   rkglLightMove( &light, atof(opt[OPT_LX].arg), atof(opt[OPT_LY].arg), atof(opt[OPT_LZ].arg) );
-  rkglShadowInit( &shadow, 512, 512, 1.5, 0.2 );
+  rkglShadowInit( &shadow, 512, 512, 1.5, 0.2, 0.1 );
   rkglTextureEnable();
 
   if( opt[OPT_SMOOTH].flag ) glEnable( GL_LINE_SMOOTH );

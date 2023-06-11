@@ -87,8 +87,8 @@ void display(void)
   rkglLightPut( &light );
   glPushMatrix();
 
-  rkglTextureAssignUnit( 0, tex[0].id );
-  rkglTextureAssignUnit( 1, tex[1].id );
+  rkglTextureAssignUnit( &tex[0], 0 );
+  rkglTextureAssignUnit( &tex[1], 1 );
   glUseProgram( shader_program );
   draw();
   glUseProgram( 0 );
@@ -109,7 +109,7 @@ void init(void)
   rkglLightSetAttenuationQuad( &light, 1.0 );
 
   make_check_texture( &tex[0], 256, 256, 4 );
-  rkglTextureReadFile( &tex[1], "lena_mini.jpg" );
+  rkglTextureReadFile( &tex[1], "../fig/lena_mini.jpg" );
 
   shader_program = rkglShaderCreateTexture();
   glUseProgram( shader_program );

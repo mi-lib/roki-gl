@@ -2,8 +2,6 @@
 #include <roki_gl/rkgl_glut.h>
 #include <roki_gl/rkgl_glsl.h>
 
-/* sample test */
-
 int box_id;
 int sphere_id;
 int room_id;

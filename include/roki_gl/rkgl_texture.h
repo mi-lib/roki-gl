@@ -15,6 +15,18 @@ __BEGIN_DECLS
 
 __ROKI_GL_EXPORT int rkglTextureNum(void);
 
+/* texture mode */
+
+#define rkglTextureSetClamp() do{\
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );\
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );\
+} while(0)
+
+#define rkglTextureSetFilterLinear() do{\
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );\
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );\
+} while(0)
+
 /* texture environment mode */
 
 #define rkglTextureSetModulate() glTexEnvi( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE )
@@ -24,12 +36,12 @@ __ROKI_GL_EXPORT int rkglTextureNum(void);
 #define rkglTextureSetDecal()    glTexEnvi( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL )
 
 /* magic numbers to prevent z-fighting */
-#define rkglAntiZFighting()   glPolygonOffset( -1.1, 4.0 )
+#define rkglAntiZFighting() glPolygonOffset( 1.1, 4.0 )
 
 /* color texture mapping */
 
-/*! \brief generate a 2D texture, and set related GL parameters as default. */
-__ROKI_GL_EXPORT GLuint rkglTextureGen(int width, int height, ubyte *buf);
+/*! \brief assign a 2D texture to GL. */
+__ROKI_GL_EXPORT GLuint rkglTextureAssign(int width, int height, ubyte *buf);
 
 /*! \brief initialize GL parameters for a 2D texture. */
 __ROKI_GL_EXPORT GLuint rkglTextureInit(zTexture *texture);
@@ -42,6 +54,8 @@ __ROKI_GL_EXPORT bool rkglTextureReadFile(zTexture *texture, char *filename);
 #define rkglTextureBind(texture) glBindTexture( GL_TEXTURE_2D, (texture)->id )
 #define rkglTextureUnbind()      glBindTexture( GL_TEXTURE_2D, 0 )
 
+#define rkglTextureDelete(t)     glDeleteTextures( 1, &(t)->id )
+
 #define rkglCoord(coord)      glTexCoord2d( (coord)->c.x, (coord)->c.y )
 
 /* units for multitexture */
@@ -49,9 +63,14 @@ __ROKI_GL_EXPORT bool rkglTextureReadFile(zTexture *texture, char *filename);
 __ROKI_GL_EXPORT void rkglTextureInitUnit(void);
 __ROKI_GL_EXPORT GLint rkglTextureNewUnit(void);
 
-#define rkglTextureAssignUnit(n,id) do{\
+#define rkglTextureBindUnit(n,id) do{\
   glActiveTexture( GL_TEXTURE0 + (n) );\
   glBindTexture( GL_TEXTURE_2D, id );\
+} while(0)
+
+#define rkglTextureAssignUnit(t,n) do{\
+  glActiveTexture( GL_TEXTURE0 + (n) );\
+  rkglTextureBind( (t) );\
 } while(0)
 
 /* frame buffer and render buffer for off-screan rendering */
@@ -66,6 +85,13 @@ __ROKI_GL_EXPORT GLuint rkglFramebufferAttachRenderbuffer(int width, int height)
 __ROKI_GL_EXPORT const GLenum rkgl_cubemap_id[];
 
 __ROKI_GL_EXPORT void rkglTextureGenCubeMap(int width, int height);
+
+/* projection mapping */
+
+__ROKI_GL_EXPORT void rkglTextureGenProjectionObject(void);
+__ROKI_GL_EXPORT void rkglTextureGenProjectionEye(void);
+__ROKI_GL_EXPORT void rkglTextureEnableProjection(void);
+__ROKI_GL_EXPORT void rkglTextureDisableProjection(void);
 
 /* bump mapping */
 

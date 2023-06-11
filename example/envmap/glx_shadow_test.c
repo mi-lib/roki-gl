@@ -50,7 +50,7 @@ void init(void)
   rkglCASet( &cam, 10, 0, 4, 0, -30, 0 );
   rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
   rkglLightMove( &light, 3, 6, 20 );
-  rkglShadowInit( &shadow, TEXWIDTH, TEXHEIGHT, 10.0, 0.2 );
+  rkglShadowInit( &shadow, TEXWIDTH, TEXHEIGHT, 10.0, 0.2, 0 );
   rkglShadowDisableAntiZFighting( &shadow );
 
   sphere = rkglBeginList();

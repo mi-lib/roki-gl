@@ -18,7 +18,7 @@ exp: 1
 name: bump
 type: bump
 depth: 0.05
-file: bump.bmp
+file: ../fig/bump.bmp
 coord: 0 ( 0, 1 )
 coord: 1 ( 1, 1 )
 coord: 2 ( 1, 0 )
@@ -30,7 +30,7 @@ face: 0 2 3
 name: lena
 type: bump
 depth: 0.05
-file: lena_mini.jpg
+file: ../fig/lena_mini.jpg
 coord: 0 ( 0, 1 )
 coord: 1 ( 1, 1 )
 coord: 2 ( 1, 0 )

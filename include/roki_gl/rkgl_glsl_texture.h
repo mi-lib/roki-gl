@@ -45,7 +45,7 @@ void main(void)\
   float cos_norm_lv = dot( norm, lv );\
   vec4 diffuse = gl_FrontLightProduct[0].diffuse * max( 0.0, cos_norm_lv );\
   vec3 view = normalize( -pos );\
-  vec3 hv = normalize( lv +  view );\
+  vec3 hv = normalize( lv + view );\
   float ref_shininess = pow( max( dot( norm, hv ), 0.0 ), gl_FrontMaterial.shininess );\
   if( cos_norm_lv <= 0.0 ) ref_shininess = 0.0;\
   vec4 specular = gl_FrontLightProduct[0].specular * ref_shininess;\

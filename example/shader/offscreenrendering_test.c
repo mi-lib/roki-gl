@@ -3,8 +3,6 @@
 #include <roki_gl/rkgl_shape.h>
 #include <roki_gl/rkgl_glsl.h>
 
-/* sample test */
-
 int sphere_solid_id, sphere_wf_id;
 int cylinder_solid_id, cylinder_wf_id;
 int cone_solid_id, cone_wf_id;
@@ -100,7 +98,7 @@ void display(void)
   rkglTextureCopySubImage( 0, 0, 0, 0, TEX_WIDTH, TEX_HEIGHT );
   rkglTextureUnbind();
 
-  rkglTextureAssignUnit( 0, tex_id );
+  rkglTextureBindUnit( 0, tex_id );
 
   rkglCALoad( &cam );
   rkglLightPut( &light );
@@ -212,7 +210,7 @@ void init(void)
   rkglCheckerBoard( &pc0, &pc1, &pc2, 10, 10, &oi, &oi2 );
   glEndList();
 
-  tex_id = rkglTextureGen( TEX_WIDTH, TEX_HEIGHT, NULL );
+  tex_id = rkglTextureAssign( TEX_WIDTH, TEX_HEIGHT, NULL );
 }
 
 int main(int argc, char *argv[])

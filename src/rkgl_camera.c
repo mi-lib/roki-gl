@@ -118,8 +118,7 @@ void rkglCAAlign(rkglCamera *c)
   rkglCALoad( c );
 }
 
-static void _rkglCAPTR(double pan, double tilt, double roll);
-void _rkglCAPTR(double pan, double tilt, double roll)
+static void _rkglCAPTR(double pan, double tilt, double roll)
 {
   glRotated( -tilt, 0.0, 1.0, 0.0 );
   glRotated( -roll, 1.0, 0.0, 0.0 );

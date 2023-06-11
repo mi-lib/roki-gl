@@ -3,8 +3,6 @@
 #include <roki_gl/rkgl_shape.h>
 #include <roki_gl/rkgl_glsl.h>
 
-/* sample test */
-
 int sphere_solid_id, sphere_wf_id;
 int cylinder_solid_id, cylinder_wf_id;
 int cone_solid_id, cone_wf_id;

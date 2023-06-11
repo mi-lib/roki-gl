@@ -8,7 +8,7 @@ exp: 1
 
 [texture]
 name: lena
-file: lena_mini.jpg
+file: ../fig/lena_mini.jpg
 coord: 0 ( 0, 1 )
 coord: 1 ( 1, 1 )
 coord: 2 ( 1, 0 )
@@ -18,7 +18,7 @@ face: 0 2 3
 
 [texture]
 name: lena_flop
-file: lena_flop_mini.jpg
+file: ../fig/lena_flop_mini.jpg
 coord: 0 ( 0, 1 )
 coord: 1 ( 1, 1 )
 coord: 2 ( 1, 0 )
