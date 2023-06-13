@@ -36,7 +36,11 @@ __ROKI_GL_EXPORT int rkglTextureNum(void);
 #define rkglTextureSetDecal()    glTexEnvi( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL )
 
 /* magic numbers to prevent z-fighting */
+#if 0
 #define rkglAntiZFighting() glPolygonOffset( 1.1, 4.0 )
+#else
+#define rkglAntiZFighting() glPolygonOffset( 2.0, 1.0 )
+#endif
 
 /* color texture mapping */
 

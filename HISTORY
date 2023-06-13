@@ -1,3 +1,6 @@
+2023. 6.13. Applied shadow map with GLSL to rk_anim. [app]
+2023. 6.13. Modified parameters in rkglAntiZFighting. [rkgl_texture]
+2023. 6.13. Modified specification of rkglShadowInit for compatibility with rkglShadowInitGLSL. [rkgl_envmap]
 2023. 6.11. Added rkgl_glsl_projectionmap and rkglShaderCreateProjection. [rkgl_glsl, rkgl_glsl_projectionmap]
 2023. 6.11. Added rkglShaderCreateShadow, rkglShadowInitGLSL, _rkglShadowPutGLSL, rkglShadowDrawGLSL, and rkglShadowDeleteGLSL. [rkgl_envmap]
 2023. 6.11. Added shader_program member of rkglShadow for shadow map with GLSL. [rkgl_envmap]

@@ -27,6 +27,7 @@ enum{
   OPT_SECPERFRAME, OPT_SKEW,
   OPT_RESIZE,
   OPT_NOTIMESTAMP,
+  OPT_GLSL,
   OPT_HELP,
   OPT_INVALID
 };
@@ -66,6 +67,7 @@ zOption opt[] = {
   { "skew", NULL, "<multiplier>", "set time skew multiplier", (char *)"1.0", false },
   { "resize", NULL, NULL, "enable to resize within the parent window", NULL, false },
   { "notimestamp", NULL, NULL, "no timestanp for capture", NULL, false },
+  { "glsl", NULL, NULL, "use GLSL", NULL, false },
   { "help", NULL, NULL, "show this message", NULL, false },
   { NULL, NULL, NULL, NULL, NULL, false },
 };
@@ -87,6 +89,8 @@ static int env = 0;
 static rkglCamera cam;
 static rkglLight light;
 static rkglShadow shadow;
+static void (* shadow_draw_func)(rkglShadow*,rkglCamera*,rkglLight*,void (*)(void));
+
 static bool from_light = false;
 
 static zxWindow win;
@@ -462,7 +466,7 @@ void rkAnimDisplay(void)
   rkglWindowActivateGLX( glwin );
   if( opt[OPT_SHADOW].flag ){
     /* shadow-map rendering */
-    rkglShadowDraw( &shadow, &cam, &light, rkAnimDraw );
+    shadow_draw_func( &shadow, &cam, &light, rkAnimDraw );
   } else{
     /* non-shadowed rendering */
     rkglClear();
@@ -555,9 +559,21 @@ void rkAnimInit(void)
     atof(opt[OPT_PAN].arg), atof(opt[OPT_TILT].arg), atof(opt[OPT_ROLL].arg) );
 
   glEnable( GL_LIGHTING );
-  rkglLightCreate( &light, 0.5, 0.5, 0.5, 0.8, 0.8, 0.8, 0, 0, 0 );
+  rkglLightCreate( &light, 0.3, 0.3, 0.3, 1.0, 1.0, 1.0, 0, 0, 0 );
   rkglLightMove( &light, atof(opt[OPT_LX].arg), atof(opt[OPT_LY].arg), atof(opt[OPT_LZ].arg) );
-  rkglShadowInit( &shadow, atoi(opt[OPT_SHADOW_SIZE].arg), atoi(opt[OPT_SHADOW_SIZE].arg), atof(opt[OPT_SHADOW_AREA].arg), 0.2, atof(opt[OPT_SHADOW_BLUR].arg) );
+
+  if( opt[OPT_SHADOW].flag ){
+#ifdef __ROKI_GL_USE_GLEW
+    if( opt[OPT_GLSL].flag ){
+      rkglShadowInitGLSL( &shadow, atoi(opt[OPT_SHADOW_SIZE].arg), atoi(opt[OPT_SHADOW_SIZE].arg), atof(opt[OPT_SHADOW_AREA].arg), 0.2, atof(opt[OPT_SHADOW_BLUR].arg) );
+      shadow_draw_func = rkglShadowDrawGLSL;
+    } else
+#endif /* __ROKI_GL_USE_GLEW */
+    do{
+      rkglShadowInit( &shadow, atoi(opt[OPT_SHADOW_SIZE].arg), atoi(opt[OPT_SHADOW_SIZE].arg), atof(opt[OPT_SHADOW_AREA].arg), 0.2, atof(opt[OPT_SHADOW_BLUR].arg) );
+      shadow_draw_func = rkglShadowDraw;
+    } while(0);
+  }
   rkglTextureEnable();
 
   if( opt[OPT_ENVFILE].flag ) rkAnimLoadEnv();

@@ -80,7 +80,7 @@ static void _rkglShadowInit(rkglShadow *shadow, int width, int height, double ra
   rkglShadowEnableAntiZFighting( shadow );
 }
 
-void rkglShadowInit(rkglShadow *shadow, int width, int height, double radius, double ratio, double blur)
+GLuint rkglShadowInit(rkglShadow *shadow, int width, int height, double radius, double ratio, double blur)
 {
   _rkglShadowInit( shadow, width, height, radius, ratio, blur );
 
@@ -92,6 +92,7 @@ void rkglShadowInit(rkglShadow *shadow, int width, int height, double radius, do
   glBindTexture( GL_TEXTURE_2D, shadow->texid );
   rkglTextureGenProjectionEye();
   glBindTexture( GL_TEXTURE_2D, 0 );
+  return ( shadow->shader_program = 0 );
 }
 
 static void _rkglShadowSetLight(rkglShadow *shadow, rkglLight *light)
@@ -164,7 +165,7 @@ static void _rkglShadowPut(rkglShadow *shadow, rkglCamera *cam, rkglLight *light
   scene();
 }
 
-static void _rkglShadowXformMap(rkglShadow *shadow, rkglCamera* cam)
+static void _rkglShadowXformMap(rkglShadow *shadow, rkglCamera *cam)
 {
   glMatrixMode( GL_TEXTURE );
   glLoadIdentity();
@@ -174,7 +175,7 @@ static void _rkglShadowXformMap(rkglShadow *shadow, rkglCamera* cam)
   rkglMultInvMatrixd( cam->ca );
 }
 
-static void _rkglShadowSunnyside(rkglShadow *shadow, rkglCamera* cam, rkglLight *light, void (* scene)(void))
+static void _rkglShadowSunnyside(rkglShadow *shadow, rkglCamera *cam, rkglLight *light, void (* scene)(void))
 {
   _rkglShadowXformMap( shadow, cam );
   glMatrixMode( GL_MODELVIEW );
@@ -191,7 +192,7 @@ static void _rkglShadowSunnyside(rkglShadow *shadow, rkglCamera* cam, rkglLight 
   glBindTexture( GL_TEXTURE_2D, 0 );
 }
 
-void rkglShadowDraw(rkglShadow *shadow, rkglCamera* cam, rkglLight *light, void (* scene)(void))
+void rkglShadowDraw(rkglShadow *shadow, rkglCamera *cam, rkglLight *light, void (* scene)(void))
 {
   /* create shadow texture */
   _rkglShadowMap( shadow, cam, light, scene );
@@ -231,7 +232,7 @@ static void _rkglShadowPutGLSL(rkglShadow *shadow, rkglCamera *cam, rkglLight *l
   glUseProgram( 0 );
 }
 
-void rkglShadowDrawGLSL(rkglShadow *shadow, rkglCamera* cam, rkglLight *light, void (* scene)(void))
+void rkglShadowDrawGLSL(rkglShadow *shadow, rkglCamera *cam, rkglLight *light, void (* scene)(void))
 {
   /* create shadow texture */
   _rkglShadowMap( shadow, cam, light, scene );

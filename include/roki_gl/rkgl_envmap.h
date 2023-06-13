@@ -35,8 +35,8 @@ typedef struct{
   /*! @endcond */
 } rkglShadow;
 
-__ROKI_GL_EXPORT void rkglShadowInit(rkglShadow *shadow, int width, int height, double radius, double ratio, double blur);
-__ROKI_GL_EXPORT void rkglShadowDraw(rkglShadow *shadow, rkglCamera* cam, rkglLight *light, void (* scene)(void));
+__ROKI_GL_EXPORT GLuint rkglShadowInit(rkglShadow *shadow, int width, int height, double radius, double ratio, double blur);
+__ROKI_GL_EXPORT void rkglShadowDraw(rkglShadow *shadow, rkglCamera *cam, rkglLight *light, void (* scene)(void));
 
 #define rkglShadowEnableAntiZFighting(s)  ( (s)->antizfighting = true )
 #define rkglShadowDisableAntiZFighting(s) ( (s)->antizfighting = false )
@@ -104,7 +104,7 @@ void main (void)\
 #define rkglShaderCreateShadow() rkglShaderCreate( RKGL_SHADER_VERT_SHADOW, RKGL_SHADER_FRAG_SHADOW )
 
 __ROKI_GL_EXPORT GLuint rkglShadowInitGLSL(rkglShadow *shadow, int width, int height, double radius, double ratio, double blur);
-__ROKI_GL_EXPORT void rkglShadowDrawGLSL(rkglShadow *shadow, rkglCamera* cam, rkglLight *light, void (* scene)(void));
+__ROKI_GL_EXPORT void rkglShadowDrawGLSL(rkglShadow *shadow, rkglCamera *cam, rkglLight *light, void (* scene)(void));
 
 #define rkglShadowDeleteGLSL(s) glDeleteProgram( (s)->shader_program )
 
