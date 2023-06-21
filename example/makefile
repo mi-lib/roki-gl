@@ -1,20 +1,7 @@
-include ../../config
-
-DIR=../..
-
-CONFIGTOOL=roki_gl-config
-INCLUDE=-I$(DIR)/include `$(CONFIGTOOL) -I`
-LIB=-L$(DIR)/lib `$(CONFIGTOOL) -L`
-LINK=`$(CONFIGTOOL) -l`
-DEF=`$(CONFIGTOOL) -D`
-
-ifeq ($(CONFIG_USE_GLUT),y)
-	LINK += -lglut
-endif
-
-ifeq ($(CONFIG_USE_GLEW),y)
-	LINK += -lGLEW
-endif
+INCLUDE=`roki-gl-config -I`
+LIB=`roki-gl-config -L`
+LINK=`roki-gl-config -l`
+DEF=`roki-gl-config -D`
 
 CC=gcc
 CFLAGS=-ansi -Wall -O3 $(LIB) $(INCLUDE) $(DEF) -funroll-loops
