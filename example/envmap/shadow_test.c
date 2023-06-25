@@ -1,7 +1,4 @@
-#include <roki_gl/rkgl_camera.h>
-#include <roki_gl/rkgl_shape.h>
-#include <roki_gl/rkgl_envmap.h>
-#include <roki_gl/rkgl_glut.h>
+#include <roki_gl/roki_glut.h>
 
 int sphere, cylinder, cone, box;
 void scene(void)

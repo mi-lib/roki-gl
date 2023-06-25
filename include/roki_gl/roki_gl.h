@@ -5,8 +5,9 @@
  OpenGL. It includes
  - camera work
  - optics
- - visualization of shape
- - visualization of kinematic chain
+ - visualization of shapes
+ - visualization of kinematic chains
+ - visualization of terrain models
  - object selection
  - texture mapping
  - bump mapping
@@ -19,8 +20,9 @@
 #ifndef __ROKI_GL_H__
 #define __ROKI_GL_H__
 
-#include <roki_gl/rkgl_camera.h>
+#include <roki_gl/rkgl_input.h>
 #include <roki_gl/rkgl_chain.h>
+#include <roki_gl/rkgl_terra.h>
 #include <roki_gl/rkgl_select.h>
 #include <roki_gl/rkgl_envmap.h>
 

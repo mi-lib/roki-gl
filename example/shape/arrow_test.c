@@ -1,6 +1,4 @@
-#include <roki_gl/rkgl_glut.h>
-#include <roki_gl/rkgl_camera.h>
-#include <roki_gl/rkgl_shape.h>
+#include <roki_gl/roki_glut.h>
 
 int a_id;
 rkglCamera cam;
@@ -64,7 +62,7 @@ void keyboard(unsigned char key, int x, int y)
 
 void init(void)
 {
-  zVec3D bot, tip;
+  zVec3D bot, vec;
   zOpticalInfo oi;
 
   rkglSetCallbackParamGLUT( &cam, 0, 0, 0, 0, 0 );
@@ -77,11 +75,11 @@ void init(void)
   rkglLightMove( &light, 8, 0, 8 );
 
   zVec3DCreate( &bot, 0, 0, 0 );
-  zVec3DCreate( &tip, 1.0, 1.0, 1.0 );
+  zVec3DCreate( &vec, 2.0, 2.0, 2.0 );
   zOpticalInfoCreateSimple( &oi, 0.9, 0.9, 0.3, NULL );
   a_id = rkglBeginList();
     rkglMaterial( &oi );
-    rkglArrow( &bot, &tip, 1.0 );
+    rkglArrow( &bot, &vec, 1.0 );
   glEndList();
 }
 

@@ -1,5 +1,4 @@
-#include <roki_gl/rkgl_shape.h>
-#include <roki_gl/rkgl_glut.h>
+#include <roki_gl/roki_glut.h>
 #include <zx11/zximage.h>
 
 rkglCamera cam;
@@ -8,7 +7,7 @@ rkglLight light;
 zMShape3D ms;
 zTexture bump;
 
-static void init(char *filename)
+static void init(void)
 {
   rkglSetCallbackParamGLUT( &cam, 2.0, 1, 100, 1.0, 5.0 );
   rkglBGSet( &cam, 0.5, 0.5, 0.5 );
@@ -45,7 +44,7 @@ int main(int argc, char *argv[])
   glutMotionFunc( rkglMouseDragFuncGLUT );
   glutKeyboardFunc( rkglKeyFuncGLUT );
   glutSpecialFunc( rkglSpecialFuncGLUT );
-  init( argc > 1 ? argv[1] : "bump.bmp" );
+  init();
   glutMainLoop();
   return 0;
 }

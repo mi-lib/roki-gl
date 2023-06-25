@@ -1,5 +1,4 @@
-#include <roki_gl/rkgl_glut.h>
-#include <roki_gl/rkgl_camera.h>
+#include <roki_gl/roki_glut.h>
 
 GLdouble vertex[][3] = {
   { 0, 0, 0 },

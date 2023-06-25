@@ -1,5 +1,4 @@
-#include <roki_gl/rkgl_envmap.h>
-#include <roki_gl/rkgl_glut.h>
+#include <roki_gl/roki_glut.h>
 
 int room_id;
 

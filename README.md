@@ -9,10 +9,14 @@ RoKi-GL is a library to visualize robots and 3D shapes using
 penGL. It includes
 - camera work
 - optics
-- visualization of shape
-- visualization of kinematic chain
+- visualization of shapes
+- visualization of kinematic chains
+- visualization of terrain models
 - object selection
-- shadow map
+- texture mapping
+- bump mapping
+- reflection and refraction mapping
+- shadow mapping
 - GLUT (OpenGL utility toolkit) wrapper
 - X11/OpenGL wrapper
 
@@ -28,6 +32,7 @@ Install the following libraries in advance.
 - GLU
 - GLUT (option)
 - GLX (option)
+- GLEW (option)
 - ZEDA
 - ZM
 - Zeo
@@ -46,7 +51,7 @@ Edit **PREFIX** in *config* file if necessary in order to specify
 a directory where the header files, the library and some utilities
 are installed. (default: ~/usr)
 
-   - header files: $PREFIX/include/roki-gl
+   - header files: $PREFIX/include/roki_gl
    - library file: $PREFIX/lib
    - utilities: $PREFIX/bin
 
@@ -67,16 +72,16 @@ Do:
    % make uninstall
    ```
 
-which removes $PREFIX/lib/libroki-gl.so and $PREFIX/include/roki-gl.
+which removes $PREFIX/lib/libroki-gl.so and $PREFIX/include/roki_gl.
 
 -----------------------------------------------------------------
 ## [How to use]
 
 When you want to compile your code *test.c*, for example, the following
-line will work.
+line works.
 
    ```
-   % gcc `roki-gl-config -L` `roki-gl-config -I` test.c `roki-gl-config -l`
+   % gcc `roki-gl-config --cflags` test.c `roki-gl-config -l`
    ```
 
 -----------------------------------------------------------------

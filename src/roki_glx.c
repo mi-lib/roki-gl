@@ -1,12 +1,12 @@
 /* RoKi-GL - Robot Kinetics library: visualization using OpenGL
  * Copyright (C) 2000 Tomomichi Sugihara (Zhidao)
  *
- * rkgl_glx - X11/OpenGL wrapper.
+ * roki_glx - GLX wrapper (on X11/OpenGL).
  */
 
 #include <signal.h>
 #include <math.h>
-#include <roki_gl/rkgl_glx.h>
+#include <roki_gl/roki_glx.h>
 #include <GL/glxext.h>
 #include <X11/Xatom.h>
 
@@ -50,7 +50,7 @@ int rkglInitGLX(void)
     None,
   };
 
-  zxInit();
+  if( !zxdisplay ) zxInit();
   if( !glXQueryExtension( zxdisplay, NULL, NULL ) ){
     ZRUNERROR( "GLX extension not available" );
     return -1;
@@ -74,6 +74,7 @@ void rkglExitGLX(void)
 {
   XFreeColormap( zxdisplay, _rkgl_cmap_glx );
   glXDestroyContext( zxdisplay, rkgl_ctx );
+  zxExit();
 }
 
 Window rkglWindowCreateGLX(zxWindow *parent, int x, int y, int w, int h, const char *title)

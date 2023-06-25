@@ -1,7 +1,4 @@
-#include <roki_gl/rkgl_glut.h>
-#include <roki_gl/rkgl_camera.h>
-#include <roki_gl/rkgl_shape.h>
-#include <roki_gl/rkgl_glsl.h>
+#include <roki_gl/roki_glut.h>
 
 int sphere_solid_id, sphere_wf_id;
 int cylinder_solid_id, cylinder_wf_id;

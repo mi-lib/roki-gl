@@ -5,15 +5,15 @@ OBJ=rkgl_misc.o rkgl_camera.o rkgl_input.o\
 	rkgl_select.o\
 	rkgl_envmap.o\
 
-ifeq ($(CONFIG_USE_GLX),y)
-	OBJ += rkgl_glx.o
-endif
-
-ifeq ($(CONFIG_USE_GLUT),y)
-	OBJ += rkgl_glut.o
-endif
-
 ifeq ($(CONFIG_USE_GLEW),y)
 	CFLAGS += -D__ROKI_GL_USE_GLEW
 	OBJ += rkgl_glsl.o
+endif
+
+ifeq ($(CONFIG_USE_GLX),y)
+	OBJ += roki_glx.o
+endif
+
+ifeq ($(CONFIG_USE_GLUT),y)
+	OBJ += roki_glut.o
 endif

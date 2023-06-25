@@ -781,9 +781,9 @@ void rkglPHTexture(zPH3D *ph, zOpticalInfo *oi, zTexture *texture)
 
   glBindTexture( GL_TEXTURE_2D, texture->id );
   glEnable( GL_POLYGON_OFFSET_FILL );
-  rkglAntiZFighting();
   rkglMaterial( oi );
   glEnable( GL_TEXTURE_2D );
+  rkglTextureOffset();
   for( i=0; i<zPH3DFaceNum(ph); i++ )
     rkglTriTexture( zPH3DFace(ph,i), zTextureFace(texture,i) );
   glDisable( GL_TEXTURE_2D );
@@ -801,15 +801,16 @@ void rkglPHBump(zPH3D *ph, zOpticalInfo *oi, zTexture *bump, rkglLight *light)
   glEnable( GL_BLEND );
   glBlendFunc( GL_ONE_MINUS_SRC_ALPHA, GL_SRC_COLOR );
   glEnable( GL_POLYGON_OFFSET_FILL );
-  rkglAntiZFighting();
   rkglMaterial( oi );
 
   glActiveTexture( GL_TEXTURE0 );
   glEnable( GL_TEXTURE_2D );
+  rkglTextureOffset();
   rkglTextureBind( bump );
   glActiveTexture( GL_TEXTURE1 );
   glEnable( GL_TEXTURE_2D );
   glBindTexture( GL_TEXTURE_2D, bump->id_bump );
+  rkglTextureOffsetBump();
   glEnable( GL_TEXTURE_CUBE_MAP );
   for( i=0; i<zPH3DFaceNum(ph); i++ )
     rkglTriBump( zPH3DFace(ph,i), zTextureFace(bump,i), &lp );

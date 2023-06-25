@@ -1,14 +1,14 @@
 /* RoKi-GL - Robot Kinetics library: visualization using OpenGL
  * Copyright (C) 2000 Tomomichi Sugihara (Zhidao)
  *
- * rkgl_glx - X11/OpenGL wrapper
+ * roki_glx - GLX wrapper (on X11/OpenGL)
  */
 
 #ifndef __RKGL_GLX_H__
 #define __RKGL_GLX_H__
 
 #include <zx11/zxinput.h>
-#include <roki_gl/rkgl_input.h>
+#include <roki_gl/roki_gl.h>
 #include <GL/glx.h>
 
 __BEGIN_DECLS
