@@ -1,3 +1,5 @@
+2023. 6.26. Modified rkglTextureBumpReadFile and _rkglTextureBumpLightMap to use rkgl_cubemap_id. [rkgl_texture]
+2023. 6.26. Abolished _rkglTextureBumpNormalX and _rkglTextureBumpNormalY, and applied zxImageNormalVec in ZX11. [rkgl_texture]
 2023. 6.25. Abolished rkglAntiZFighting, and added rkglTextureOffsetShadow, rkglTextureOffset and rkglTextureOffsetBump. [rkgl_texture]
 2023. 6.24. Modified rkglExitGLX to call zxExit. [roki_glx]
 2023. 6.24. Modified rkglInitGLX to check if zxdisplay is assigned before zxInit. [roki_glx]
