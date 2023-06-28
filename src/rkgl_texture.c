@@ -24,9 +24,9 @@ GLuint rkglTextureAssign(int width, int height, ubyte *buf)
 }
 
 /* initialize GL parameters for a 2D texture. */
-GLuint rkglTextureInit(zTexture *texture)
+GLuint rkglTextureInit(zTexture *texture, ubyte *buf)
 {
-  return ( texture->id = rkglTextureAssign( texture->width, texture->height, texture->buf ) );
+  return ( texture->id = rkglTextureAssign( texture->width, texture->height, buf ) );
 }
 
 /* read an image file and make a texture data. */
@@ -35,15 +35,18 @@ bool rkglTextureReadFile(zTexture *texture, char *filename)
   zxImage img;
   zxPixelManip pm;
   uint i, j;
-  ubyte *pt;
+  ubyte *buf, *pt;
   bool already_connected, ret = false;
 
   already_connected = !zxInit();
   if( !zxImageReadFile( &img, filename ) ) goto TERMINATE;
-  if( !( texture->buf = zAlloc( ubyte, img.width*img.height*4 ) ) ) goto TERMINATE;
+  if( !( buf = zAlloc( ubyte, img.width*img.height*4 ) ) ){
+    ZALLOCERROR();
+    goto TERMINATE;
+  }
   ret = true;
   zxPixelManipSet( &pm, zxdepth );
-  for( pt=texture->buf, i=0; i<img.height; i++ )
+  for( pt=buf, i=0; i<img.height; i++ )
     for( j=0; j<img.width; j++, pt+=4 ){
       zxImageCellRGB( &img, &pm, j, i, pt, pt+1, pt+2 );
       *( pt + 3 ) = 0xff;
@@ -51,8 +54,8 @@ bool rkglTextureReadFile(zTexture *texture, char *filename)
   texture->width = img.width;
   texture->height = img.height;
   zxImageDestroy( &img );
-  rkglTextureInit( texture );
-  zFree( texture->buf );
+  rkglTextureInit( texture, buf );
+  free( buf );
 
  TERMINATE:
   if( !already_connected ) zxExit();
@@ -207,79 +210,90 @@ static bool _rkglTextureBumpNormalMap(zTexture *bump, char *filename)
   uint i, j, k;
   zxImage img;
   zxPixelManip pm;
+  ubyte *buf;
   double nx, ny, nz;
   bool already_connected, ret = true;
 
   already_connected = !zxInit();
   if( zxImageReadFile( &img, filename ) == 0 ||
       img.width < 3 || img.height < 3 ) return false;
-  if( !zTextureBumpAlloc( bump, img.width, img.height ) ){
+  if( !( buf = zAlloc( ubyte, ( bump->width = img.width ) * ( bump->height = img.height ) * 4 ) ) ){
+    ZALLOCERROR();
     ret = false;
     goto TERMINATE;
   }
   zxPixelManipSetDefault( &pm );
   if( zIsTiny( bump->depth ) ){
-    ZRUNERROR( "zero-depth bump unrenderable" );
+    ZRUNWARN( "zero-depth bump unrenderable" );
     bump->depth = 1.0;
   }
   for( k=0, i=0; i<img.height; i++ ){
     for( j=0; j<img.width; j++, k+=4 ){
-      zxImageNormalVec( &img, &pm, j, i, &nx, &ny, &nz );
-      _rkglTextureBumpVec( bump->buf + k, nx, ny, nz );
+      zxImageNormalVec( &img, &pm, bump->depth, j, i, &nx, &ny, &nz );
+      _rkglTextureBumpVec( buf + k, nx, ny, nz );
     }
   }
  TERMINATE:
   zxImageDestroy( &img );
   if( !already_connected ) zxExit();
+  rkglTextureInit( bump, buf );
+  free( buf );
   return ret;
 }
 
 /* generate a light map from a bump texture */
-static void _rkglTextureBumpLightMap(zTexture *bump)
+static bool _rkglTextureBumpLightMap(zTexture *bump)
 {
   uint i, j, k;
   uint wh, hh;
+  ubyte *buf[6];
+  bool ret = true;
   double x, y, y2;
   double xr, yr, zr;
 
   wh = bump->width / 2;
   hh = bump->height / 2;
+  for( i=0; i<6; i++ )
+    if( !( buf[i] = zAlloc( ubyte, wh * hh * 4 ) ) ){
+      ZALLOCERROR();
+      ret = false;
+    }
+  if( !ret ) goto TERMINATE;
   for( k=0, i=0; i<hh; i++ ){
     y = 2*(double)i/hh - 1;
-    y2 = y*y + 1;
+    y2 = y*y + 1.0 / ( bump->depth * bump->depth );
     for( j=0; j<wh; j++, k+=4 ){
       x = 2*(double)j/wh - 1;
       zr = 1.0 / sqrt( x*x + y2 );
       xr = x * zr;
       yr = y * zr;
-      _rkglTextureBumpVec( bump->lbuf[0] + k,  zr, -yr, -xr );
-      _rkglTextureBumpVec( bump->lbuf[1] + k, -zr, -yr,  xr );
-      _rkglTextureBumpVec( bump->lbuf[2] + k,  xr,  zr,  yr );
-      _rkglTextureBumpVec( bump->lbuf[3] + k,  xr, -zr, -yr );
-      _rkglTextureBumpVec( bump->lbuf[4] + k,  xr, -yr,  zr );
-      _rkglTextureBumpVec( bump->lbuf[5] + k, -xr, -yr, -zr );
+      _rkglTextureBumpVec( buf[0] + k,  zr, -yr, -xr );
+      _rkglTextureBumpVec( buf[1] + k, -zr, -yr,  xr );
+      _rkglTextureBumpVec( buf[2] + k,  xr,  zr,  yr );
+      _rkglTextureBumpVec( buf[3] + k,  xr, -zr, -yr );
+      _rkglTextureBumpVec( buf[4] + k,  xr, -yr,  zr );
+      _rkglTextureBumpVec( buf[5] + k, -xr, -yr, -zr );
     }
   }
+ TERMINATE:
+  for( i=0; i<6; i++ ){
+    if( ret )
+      glTexImage2D( rkgl_cubemap_id[i], 0, GL_RGBA, wh, hh, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf[i] );
+    free( buf[i] );
+  }
+  return ret;
 }
 
 /* create a bump map */
 bool rkglTextureBumpReadFile(zTexture *bump, char *filename)
 {
-  int i;
-
-  if( !_rkglTextureBumpNormalMap( bump, filename ) ) return false;
-
   glActiveTexture( GL_TEXTURE0 );
-  glGenTextures( 1, &bump->id );
-  glBindTexture( GL_TEXTURE_2D, bump->id );
-  rkglTextureInit( bump );
+  if( !_rkglTextureBumpNormalMap( bump, filename ) ) return false;
 
   glActiveTexture( GL_TEXTURE1 );
   glGenTextures( 1, &bump->id_bump );
   glBindTexture( GL_TEXTURE_2D, bump->id_bump );
-  _rkglTextureBumpLightMap( bump );
-  for( i=0; i<6; i++ )
-    glTexImage2D( rkgl_cubemap_id[i], 0, GL_RGBA, bump->width/2, bump->height/2, 0, GL_RGBA, GL_UNSIGNED_BYTE, bump->lbuf[i] );
+  if( !_rkglTextureBumpLightMap( bump ) ) return false;
 
   glTexParameteri( GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
   glTexParameteri( GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR );

@@ -47,7 +47,7 @@ __ROKI_GL_EXPORT int rkglTextureNum(void);
 __ROKI_GL_EXPORT GLuint rkglTextureAssign(int width, int height, ubyte *buf);
 
 /*! \brief initialize GL parameters for a 2D texture. */
-__ROKI_GL_EXPORT GLuint rkglTextureInit(zTexture *texture);
+__ROKI_GL_EXPORT GLuint rkglTextureInit(zTexture *texture, ubyte *buf);
 
 /*! \brief read an image file and make a texture data. */
 __ROKI_GL_EXPORT bool rkglTextureReadFile(zTexture *texture, char *filename);

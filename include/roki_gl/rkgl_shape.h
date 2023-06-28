@@ -55,7 +55,7 @@ __ROKI_GL_EXPORT void rkglNURBSCP(zNURBS3D *nurbs, GLfloat size, zRGB *rgb);
 
 __ROKI_GL_EXPORT void rkglPH(zPH3D *ph, ubyte disptype);
 __ROKI_GL_EXPORT void rkglPHTexture(zPH3D *ph, zOpticalInfo *oi, zTexture *texture);
-__ROKI_GL_EXPORT void rkglPHBump(zPH3D *ph, zOpticalInfo *oi, zTexture *bump, rkglLight *light);
+__ROKI_GL_EXPORT void rkglPHBump(zPH3D *ph, zTexture *bump, rkglLight *light);
 
 __ROKI_GL_EXPORT void rkglShape(zShape3D *s, zOpticalInfo *oi_alt, ubyte disptype, rkglLight *light);
 __ROKI_GL_EXPORT int rkglShapeEntry(zShape3D *s, zOpticalInfo *oi_alt, ubyte disptype, rkglLight *light);

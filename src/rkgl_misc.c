@@ -37,6 +37,18 @@ void rkglMultInvMatrixd(double m[])
   glMultMatrixd( im );
 }
 
+void rkglXformInvd(double m[], double p[], double px[])
+{
+  double dp[3];
+
+  dp[0] = p[0] - m[12];
+  dp[1] = p[1] - m[13];
+  dp[2] = p[2] - m[14];
+  px[0] = m[0] * dp[0] + m[1] * dp[1] + m[2] * dp[2];
+  px[1] = m[4] * dp[0] + m[5] * dp[1] + m[6] * dp[2];
+  px[2] = m[8] * dp[0] + m[9] * dp[1] + m[10]* dp[2];
+}
+
 /* display list */
 
 int rkglBeginList(void)

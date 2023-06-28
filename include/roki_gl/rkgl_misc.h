@@ -34,6 +34,7 @@ __ROKI_GL_EXPORT void rkglEnableDefault(void);
 /* why does not OpenGL have glMultInvMatrixd() ? */
 __ROKI_GL_EXPORT void rkglInvTranslated(double m[], double *x, double *y, double *z);
 __ROKI_GL_EXPORT void rkglMultInvMatrixd(double m[]);
+__ROKI_GL_EXPORT void rkglXformInvd(double m[], double p[], double px[]);
 
 /* display list */
 

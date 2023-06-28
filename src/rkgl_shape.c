@@ -80,17 +80,18 @@ void rkglTriTexture(zTri3D *t, zTri2D *f)
 
 void rkglTriBump(zTri3D *t, zTri2D *f, zVec3D *lp)
 {
-  zVec3D r, lv, v;
+  GLdouble m[16];
+  zVec3D lp_local, lv;
   int i;
 
+  glGetDoublev( GL_MODELVIEW_MATRIX, m );
+  rkglXformInvd( m, lp->e, lp_local.e );
   glBegin( GL_TRIANGLES );
   rkglNormal( zTri3DNorm(t) );
-  zVec3DAAError( zTri3DNorm(t), ZVEC3DZ, &r );
   for( i=0; i<3; i++ ){
     rkglCoord( zTri2DVert(f,i) );
-    zVec3DSub( lp, zTri3DVert(t,i), &lv );
-    zVec3DRot( &lv, &r, &v );
-    glMultiTexCoord3dv( GL_TEXTURE1, v.e );
+    zVec3DSub( &lp_local, zTri3DVert(t,i), &lv );
+    glMultiTexCoord3d( GL_TEXTURE1, lv.c.x, lv.c.y, lv.c.z );
     rkglVertex( zTri3DVert(t,i) );
   }
   glEnd();
@@ -779,7 +780,7 @@ void rkglPHTexture(zPH3D *ph, zOpticalInfo *oi, zTexture *texture)
 {
   int i;
 
-  glBindTexture( GL_TEXTURE_2D, texture->id );
+  rkglTextureBind( texture );
   glEnable( GL_POLYGON_OFFSET_FILL );
   rkglMaterial( oi );
   glEnable( GL_TEXTURE_2D );
@@ -788,30 +789,27 @@ void rkglPHTexture(zPH3D *ph, zOpticalInfo *oi, zTexture *texture)
     rkglTriTexture( zPH3DFace(ph,i), zTextureFace(texture,i) );
   glDisable( GL_TEXTURE_2D );
   glDisable( GL_POLYGON_OFFSET_FILL );
-  glBindTexture( GL_TEXTURE_2D, 0 );
+  rkglTextureUnbind();
 }
 
-void rkglPHBump(zPH3D *ph, zOpticalInfo *oi, zTexture *bump, rkglLight *light)
+void rkglPHBump(zPH3D *ph, zTexture *bump, rkglLight *light)
 {
   zVec3D lp;
   int i;
 
-  _zVec3DCreate( &lp, light->pos[0], light->pos[1], light->pos[2] );
-  glEnable( GL_TEXTURE_2D );
   glEnable( GL_BLEND );
-  glBlendFunc( GL_ONE_MINUS_SRC_ALPHA, GL_SRC_COLOR );
+  glBlendFunc( GL_ONE_MINUS_SRC_COLOR, GL_SRC_COLOR );
   glEnable( GL_POLYGON_OFFSET_FILL );
-  rkglMaterial( oi );
-
+  /* normal map */
   glActiveTexture( GL_TEXTURE0 );
   glEnable( GL_TEXTURE_2D );
-  rkglTextureOffset();
   rkglTextureBind( bump );
+  /* normalized light map */
   glActiveTexture( GL_TEXTURE1 );
-  glEnable( GL_TEXTURE_2D );
+  glEnable( GL_TEXTURE_CUBE_MAP );
   glBindTexture( GL_TEXTURE_2D, bump->id_bump );
   rkglTextureOffsetBump();
-  glEnable( GL_TEXTURE_CUBE_MAP );
+  _zVec3DCreate( &lp, light->pos[0], light->pos[1], light->pos[2] );
   for( i=0; i<zPH3DFaceNum(ph); i++ )
     rkglTriBump( zPH3DFace(ph,i), zTextureFace(bump,i), &lp );
   glDisable( GL_TEXTURE_CUBE_MAP );
@@ -820,9 +818,6 @@ void rkglPHBump(zPH3D *ph, zOpticalInfo *oi, zTexture *bump, rkglLight *light)
 
   glActiveTexture( GL_TEXTURE0 );
   glDisable( GL_TEXTURE_2D );
-  glActiveTexture( GL_TEXTURE1 );
-  glDisable( GL_TEXTURE_2D );
-
   rkglTextureUnbind();
 }
 
@@ -847,7 +842,7 @@ void rkglShape(zShape3D *s, zOpticalInfo *oi_alt, ubyte disptype, rkglLight *lig
 
   if( zShape3DTexture(s) && zShape3DTexture(s)->id != 0 && disptype & RKGL_FACE && strcmp( s->com->typestr, "polyhedron" ) == 0 ){
     if( zShape3DTexture(s)->type == ZTEXTURE_BUMP )
-      rkglPHBump( (zPH3D*)s->body, zShape3DOptic(s), zShape3DTexture(s), light );
+      rkglPHBump( (zPH3D*)s->body, zShape3DTexture(s), light );
     else
       rkglPHTexture( (zPH3D*)s->body, zShape3DOptic(s), zShape3DTexture(s) );
     return;
