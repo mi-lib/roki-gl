@@ -806,9 +806,10 @@ void rkglPHBump(zPH3D *ph, zTexture *bump, rkglLight *light)
   rkglTextureBind( bump );
   /* normalized light map */
   glActiveTexture( GL_TEXTURE1 );
-  glEnable( GL_TEXTURE_CUBE_MAP );
   glBindTexture( GL_TEXTURE_2D, bump->id_bump );
   rkglTextureOffsetBump();
+
+  glEnable( GL_TEXTURE_CUBE_MAP );
   _zVec3DCreate( &lp, light->pos[0], light->pos[1], light->pos[2] );
   for( i=0; i<zPH3DFaceNum(ph); i++ )
     rkglTriBump( zPH3DFace(ph,i), zTextureFace(bump,i), &lp );

@@ -16,7 +16,7 @@ static bool _rkglShaderOutputLog(void (* get_info_log)(GLuint,GLsizei,GLsizei*,G
     ZALLOCERROR();
   } else{
     get_info_log( id, size, &len, logbuf );
-    eprintf( "%s.\n", logbuf );
+    eprintf( "%s", logbuf );
     free( logbuf );
   }
   return false;

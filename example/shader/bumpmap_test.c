@@ -6,6 +6,8 @@ rkglLight light;
 
 zTexture tex[2];
 
+GLint shader_program;
+
 bool make_check_texture(zTexture *texture, int width, int height, int div)
 {
   int i, j, dw, dh;
@@ -19,7 +21,7 @@ bool make_check_texture(zTexture *texture, int width, int height, int div)
     for( j=0; j<texture->width; j++ ){
       color = ( i/dh + j/dw ) % 2 ? 0xff : 0;
       *pt++ = color;
-      *pt++ = 0x00;
+      *pt++ = 0;
       *pt++ = 0xff - color;
       *pt++ = 0xff;
     }
@@ -29,35 +31,17 @@ bool make_check_texture(zTexture *texture, int width, int height, int div)
   return true;
 }
 
-void square_tex(zVec3D *norm, zVec3D *v1, zVec3D *v2, zVec3D *v3, zVec3D *v4)
+void square_bump(zVec3D *norm, zVec3D *v1, zVec3D *v2, zVec3D *v3, zVec3D *v4)
 {
+  zVec3D tan1;
+
+  rkglShaderSetBumpmapTangent( shader_program, zVec3DSub( v2, v1, &tan1 ) );
   glBegin( GL_QUADS );
     rkglNormal( norm );
     glTexCoord2f( 0.0, 1.0 ); rkglVertex( v1 );
     glTexCoord2f( 1.0, 1.0 ); rkglVertex( v2 );
     glTexCoord2f( 1.0, 0.0 ); rkglVertex( v3 );
     glTexCoord2f( 0.0, 0.0 ); rkglVertex( v4 );
-  glEnd();
-}
-
-void square_bump(zVec3D *norm, zVec3D *v1, zVec3D *v2, zVec3D *v3, zVec3D *v4)
-{
-  GLdouble m[16];
-  zVec3D lp_world, lp, lv;
-
-  glGetDoublev( GL_MODELVIEW_MATRIX, m );
-  _zVec3DCreate( &lp_world, light.pos[0], light.pos[1], light.pos[2] );
-  rkglXformInvd( m, lp_world.e, lp.e );
-  glBegin( GL_QUADS );
-    rkglNormal( norm );
-    glTexCoord2f( 0.0, 1.0 );
-    _zVec3DSub( &lp, v1, &lv ); glMultiTexCoord3d( GL_TEXTURE1, lv.c.x, lv.c.y, lv.c.z ); rkglVertex( v1 );
-    glTexCoord2f( 1.0, 1.0 );
-    _zVec3DSub( &lp, v2, &lv ); glMultiTexCoord3d( GL_TEXTURE1, lv.c.x, lv.c.y, lv.c.z ); rkglVertex( v2 );
-    glTexCoord2f( 1.0, 0.0 );
-    _zVec3DSub( &lp, v3, &lv ); glMultiTexCoord3d( GL_TEXTURE1, lv.c.x, lv.c.y, lv.c.z ); rkglVertex( v3 );
-    glTexCoord2f( 0.0, 0.0 );
-    _zVec3DSub( &lp, v4, &lv ); glMultiTexCoord3d( GL_TEXTURE1, lv.c.x, lv.c.y, lv.c.z ); rkglVertex( v4 );
   glEnd();
 }
 
@@ -81,38 +65,22 @@ void draw(void)
     { { 0,-1, 0 } },
     { { 0, 0,-1 } },
   };
+  zOpticalInfo oi;
 
+  zOpticalInfoCreateSimple( &oi, 1.0, 1.0, 1.0, NULL );
+  rkglMaterial( &oi );
+  rkglTextureAssignUnit( &tex[0], 0 );
+  rkglTextureAssignUnit( &tex[1], 1 );
+  glUseProgram( shader_program );
+  rkglShaderSetBumpmapColor( shader_program, 0 );
+  rkglShaderSetBumpmapNormal( shader_program, 1 );
   glEnable( GL_TEXTURE_2D );
-  glActiveTexture( GL_TEXTURE0 );
-  rkglTextureBind( &tex[0] );
-  square_tex( &norm[0], &vert[0], &vert[1], &vert[2], &vert[3] );
-  square_tex( &norm[1], &vert[2], &vert[1], &vert[4], &vert[7] );
-  square_tex( &norm[2], &vert[3], &vert[2], &vert[7], &vert[6] );
-  square_tex( &norm[3], &vert[4], &vert[5], &vert[6], &vert[7] );
-  square_tex( &norm[4], &vert[0], &vert[3], &vert[6], &vert[5] );
-  square_tex( &norm[5], &vert[1], &vert[0], &vert[5], &vert[4] );
-
-  glEnable( GL_BLEND );
-  glBlendFunc( GL_ONE_MINUS_SRC_COLOR, GL_SRC_COLOR );
-  glEnable( GL_POLYGON_OFFSET_FILL );
-  glActiveTexture( GL_TEXTURE0 );
-  glEnable( GL_TEXTURE_2D );
-  rkglTextureBind( &tex[1] );
-  glActiveTexture( GL_TEXTURE1 );
-  glBindTexture( GL_TEXTURE_2D, tex[1].id_bump );
-  rkglTextureOffsetBump();
-  glEnable( GL_TEXTURE_CUBE_MAP );
   square_bump( &norm[0], &vert[0], &vert[1], &vert[2], &vert[3] );
-  square_bump( &norm[1], &vert[2], &vert[1], &vert[4], &vert[7] );
+  square_bump( &norm[1], &vert[1], &vert[4], &vert[7], &vert[2] );
   square_bump( &norm[2], &vert[3], &vert[2], &vert[7], &vert[6] );
   square_bump( &norm[3], &vert[4], &vert[5], &vert[6], &vert[7] );
-  square_bump( &norm[4], &vert[0], &vert[3], &vert[6], &vert[5] );
-  square_bump( &norm[5], &vert[1], &vert[0], &vert[5], &vert[4] );
-  glDisable( GL_TEXTURE_CUBE_MAP );
-  glDisable( GL_POLYGON_OFFSET_FILL );
-  glDisable( GL_BLEND );
-
-  glActiveTexture( GL_TEXTURE0 );
+  square_bump( &norm[4], &vert[5], &vert[0], &vert[3], &vert[6] );
+  square_bump( &norm[5], &vert[4], &vert[1], &vert[0], &vert[5] );
   glDisable( GL_TEXTURE_2D );
   rkglTextureUnbind();
 }
@@ -137,12 +105,15 @@ void init(double depth)
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
-  rkglLightMove( &light, 5, 0, 5 );
+  rkglLightMove( &light, 5, 0, 10 );
   rkglLightSetAttenuationConst( &light, 1.0 );
 
   make_check_texture( &tex[0], 256, 256, 4 );
   tex[1].depth = depth;
-  rkglTextureBumpReadFile( &tex[1], "../fig/bump.bmp" );
+  rkglTextureBumpReadFileGLSL( &tex[1], "../fig/bump.bmp" );
+  shader_program = rkglShaderCreateBumpmap();
+
+  glEnable( GL_CULL_FACE );
 }
 
 int main(int argc, char *argv[])

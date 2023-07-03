@@ -103,6 +103,12 @@ __ROKI_GL_EXPORT bool rkglTextureBumpReadFile(zTexture *bump, char *filename);
 
 #define rkglTextureBumpEnable() zTextureSetBumpReadFunc( rkglTextureBumpReadFile )
 
+#ifdef __ROKI_GL_USE_GLEW
+/* bump map using GLSL */
+/* create a bump map */
+__ROKI_GL_EXPORT bool rkglTextureBumpReadFileGLSL(zTexture *bump, char *filename);
+#endif /* __ROKI_GL_USE_GLEW */
+
 __END_DECLS
 
 #endif /* __RKGL_TEXTURE_H__ */

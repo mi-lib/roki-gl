@@ -53,7 +53,7 @@ void main(void)\
   vec4 specular = gl_FrontLightProduct[0].specular * ref_shininess;\
   vec4 color_reflect = textureCube( environment_sampler, reflect_val.stp );\
   vec4 color_refract = textureCube( environment_sampler, refract_val.stp );\
-  gl_FragColor.rgb = ambient.rgb + mix( mix( diffuse, color_refract, transparency ), color_reflect, reflection_index ).rgb + specular.rgb;\
+  gl_FragColor.rgb = mix( mix( ambient + diffuse, color_refract, transparency ), color_reflect, reflection_index ).rgb + specular.rgb;\
   gl_FragColor.a = 1.0;\
 }"
 

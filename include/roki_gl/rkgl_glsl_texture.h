@@ -49,16 +49,17 @@ void main(void)\
   float ref_shininess = pow( max( dot( norm, hv ), 0.0 ), gl_FrontMaterial.shininess );\
   if( cos_norm_lv <= 0.0 ) ref_shininess = 0.0;\
   vec4 specular = gl_FrontLightProduct[0].specular * ref_shininess;\
-  if( num_sampler > 0 ) diffuse = mix( diffuse, texture2D( sampler[0], gl_TexCoord[0].st ), mix_rate[0] );\
-  if( num_sampler > 1 ) diffuse = mix( diffuse, texture2D( sampler[1], gl_TexCoord[1].st ), mix_rate[1] );\
-  if( num_sampler > 2 ) diffuse = mix( diffuse, texture2D( sampler[2], gl_TexCoord[2].st ), mix_rate[2] );\
-  if( num_sampler > 3 ) diffuse = mix( diffuse, texture2D( sampler[3], gl_TexCoord[3].st ), mix_rate[3] );\
-  if( num_sampler > 4 ) diffuse = mix( diffuse, texture2D( sampler[4], gl_TexCoord[4].st ), mix_rate[4] );\
-  if( num_sampler > 5 ) diffuse = mix( diffuse, texture2D( sampler[5], gl_TexCoord[5].st ), mix_rate[5] );\
-  if( num_sampler > 6 ) diffuse = mix( diffuse, texture2D( sampler[6], gl_TexCoord[6].st ), mix_rate[6] );\
-  if( num_sampler > 7 ) diffuse = mix( diffuse, texture2D( sampler[7], gl_TexCoord[7].st ), mix_rate[7] );\
-  gl_FragColor.rgb = ( ambient.rgb + diffuse.rgb + specular.rgb ) * attenuation;\
-  gl_FragColor.a   =   ambient.a   + diffuse.a   + specular.a;\
+  vec4 texcolor = vec4( 1.0 );\
+  if( num_sampler > 0 ) texcolor = mix( texcolor, texture2D( sampler[0], gl_TexCoord[0].st ), mix_rate[0] );\
+  if( num_sampler > 1 ) texcolor = mix( texcolor, texture2D( sampler[1], gl_TexCoord[1].st ), mix_rate[1] );\
+  if( num_sampler > 2 ) texcolor = mix( texcolor, texture2D( sampler[2], gl_TexCoord[2].st ), mix_rate[2] );\
+  if( num_sampler > 3 ) texcolor = mix( texcolor, texture2D( sampler[3], gl_TexCoord[3].st ), mix_rate[3] );\
+  if( num_sampler > 4 ) texcolor = mix( texcolor, texture2D( sampler[4], gl_TexCoord[4].st ), mix_rate[4] );\
+  if( num_sampler > 5 ) texcolor = mix( texcolor, texture2D( sampler[5], gl_TexCoord[5].st ), mix_rate[5] );\
+  if( num_sampler > 6 ) texcolor = mix( texcolor, texture2D( sampler[6], gl_TexCoord[6].st ), mix_rate[6] );\
+  if( num_sampler > 7 ) texcolor = mix( texcolor, texture2D( sampler[7], gl_TexCoord[7].st ), mix_rate[7] );\
+  gl_FragColor.rgb = ( ( ambient.rgb + diffuse.rgb ) * texcolor.rgb + specular.rgb ) * attenuation;\
+  gl_FragColor.a   =     ambient.a   + diffuse.a                    + specular.a;\
 }"
 
 #define rkglShaderSetTextureNum(shader,n) glUniform1i( glGetUniformLocation( shader, "num_sampler" ), n )

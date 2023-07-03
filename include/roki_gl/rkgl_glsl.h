@@ -29,5 +29,6 @@ __END_DECLS
 #include <roki_gl/rkgl_glsl_texture.h>
 #include <roki_gl/rkgl_glsl_fresnel.h>
 #include <roki_gl/rkgl_glsl_projectionmap.h>
+#include <roki_gl/rkgl_glsl_bumpmap.h>
 
 #endif /* __RKGL_GLSL_H__ */

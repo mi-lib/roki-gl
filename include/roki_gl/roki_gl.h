@@ -15,6 +15,7 @@
  - shadow mapping
  - GLUT (OpenGL utility toolkit) wrapper
  - X11/OpenGL wrapper
+ - shaders using GLSL
  */
 
 #ifndef __ROKI_GL_H__

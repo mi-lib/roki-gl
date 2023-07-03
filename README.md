@@ -19,6 +19,7 @@ penGL. It includes
 - shadow mapping
 - GLUT (OpenGL utility toolkit) wrapper
 - X11/OpenGL wrapper
+- shaders using GLSL
 
 ZEDA, ZM, Zeo, RoKi, LIW and ZX11 are required.
 

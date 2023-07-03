@@ -17,7 +17,7 @@ esr: 1
 [texture]
 name: bump
 type: bump
-depth: 0.05
+depth: 1.0
 file: ../fig/bump.bmp
 coord: 0 ( 0, 1 )
 coord: 1 ( 1, 1 )
@@ -29,7 +29,7 @@ face: 0 2 3
 [texture]
 name: lena
 type: bump
-depth: 0.05
+depth: 1.0
 file: ../fig/lena_mini.jpg
 coord: 0 ( 0, 1 )
 coord: 1 ( 1, 1 )

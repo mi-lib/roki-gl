@@ -306,3 +306,14 @@ bool rkglTextureBumpReadFile(zTexture *bump, char *filename)
   rkglTextureUnbind();
   return true;
 }
+
+#ifdef __ROKI_GL_USE_GLEW
+/* bump map using GLSL */
+
+/* create a bump map */
+bool rkglTextureBumpReadFileGLSL(zTexture *bump, char *filename)
+{
+  return _rkglTextureBumpNormalMap( bump, filename );
+}
+
+#endif /* __ROKI_GL_USE_GLEW */
