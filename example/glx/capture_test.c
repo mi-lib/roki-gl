@@ -1,18 +1,5 @@
-#include <unistd.h>
 #include <roki_gl/roki_glx.h>
 #include <zx11/zximage.h>
-
-void capture(Window win)
-{
-  zxRegion reg;
-  zxImage img;
-
-  zxGetGeometry( win, &reg );
-  zxImageAllocDefault( &img, reg.width, reg.height );
-  zxImageFromPixmap( &img, win, img.width, img.height );
-  zxImageWritePNGFile( &img, "capture_test.png" );
-  zxImageDestroy( &img );
-}
 
 int obj;
 
@@ -56,9 +43,9 @@ GLvoid init(GLsizei width, GLsizei height)
 {
   enter();
 
-  rkglBGSet( &cam, 0.1, 0.1, 0.1 );
+  rkglBGSet( &cam, 0.5, 0.5, 0.5 );
   rkglVPCreate( &cam, 0, 0, width, height );
-  rkglFrustumScale( &cam, 1.0/640, 1, 20 );
+  rkglFrustumScale( &cam, 1.0/180, 3, 10 );
   rkglCALookAt( &cam, 5,-3, 3, 0, 0, 0, 0, 0, 1 );
 
   glEnable( GL_LIGHTING );
@@ -78,22 +65,33 @@ GLvoid draw(Window win)
   rkglFlushGLX();
 }
 
-#define WIDTH  500
-#define HEIGHT 500
+#define WIDTH  480
+#define HEIGHT 480
 
 int main(int argc, char **argv)
 {
   Window win;
+  zxImage img1, img2, img3;
 
   rkglInitGLX();
   win = rkglWindowCreateGLX( NULL, 0, 0, WIDTH,  HEIGHT, "image capturing test" );
-  rkglWindowOpenGLX( win );
-
   init( WIDTH, HEIGHT );
-  /* i don't know why, but a couple of redrawings are needed. */
+  rkglWindowOpenGLX( win );
   draw( win );
-  while( zxNextEvent() != Expose );
-  capture( win );
+  draw( win );
+  draw( win );
+  glFinish();
+
+  rkglReadRGBImageGLX( win, &img1 );
+  rkglReadRGBImage( &img2 );
+  rkglReadDepthImage( &img3 );
+  zxImageWriteFile( &img1, "out_glx.bmp" );
+  zxImageWriteFile( &img2, "out_rgb.bmp" );
+  zxImageWriteFile( &img3, "out_dep.bmp" );
+  zxImageDestroy( &img1 );
+  zxImageDestroy( &img2 );
+  zxImageDestroy( &img3 );
+
   rkglExitGLX();
   return 0;
 }

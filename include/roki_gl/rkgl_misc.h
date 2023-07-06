@@ -29,6 +29,8 @@ __ROKI_GL_EXPORT void rkglEnableDefault(void);
   rkglClear();\
 } while(0)
 
+__ROKI_GL_EXPORT void rkglReadBuffer(GLuint type, int x, int  y, int width, int height, ubyte *buf);
+
 /* matrix operation */
 
 /* why does not OpenGL have glMultInvMatrixd() ? */

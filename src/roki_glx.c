@@ -166,3 +166,44 @@ void rkglMouseDragFuncGLX(rkglCamera *cam)
   }
   rkglMouseStoreXY( zxMouseX, zxMouseY );
 }
+
+/* buffer-to-image conversion */
+
+static void _rkglReadBufferImage(zxImage *img, GLuint type, int bpp, int os1, int os2)
+{
+  GLint view[4];
+  int i, j, k;
+  zxPixelManip pm;
+  ubyte *buf;
+
+  glGetIntegerv( GL_VIEWPORT, view );
+  buf = malloc( sizeof(ubyte) * view[2] * view[3] * bpp );
+  rkglReadBuffer( type, view[0], view[1], view[2], view[3], buf );
+  zxImageAllocDefault( img, view[2], view[3] );
+  zxPixelManipSetDefault( &pm );
+  for( i=img->height-1; i>=0; i-- )
+    for( j=0; j<img->width; j++ ){
+      k = bpp * ( i * img->width + j );
+      zxImageCellFromRGB( img, &pm, j, img->height-i-1, buf[k], buf[k+os1], buf[k+os2] );
+    }
+  free( buf );
+}
+
+void rkglReadRGBImage(zxImage *img)
+{
+  _rkglReadBufferImage( img, GL_RGB, 3, 1, 2 );
+}
+
+void rkglReadDepthImage(zxImage *img)
+{
+  _rkglReadBufferImage( img, GL_DEPTH_COMPONENT, 1, 0, 0 );
+}
+
+void rkglReadRGBImageGLX(Window win, zxImage *img)
+{
+  zxRegion reg;
+
+  zxGetGeometry( win, &reg );
+  zxImageAllocDefault( img, reg.width, reg.height );
+  zxImageFromPixmap( img, win, reg.width, reg.height );
+}

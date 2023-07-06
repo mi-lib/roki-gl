@@ -16,6 +16,13 @@ void rkglEnableDefault(void)
   glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 }
 
+/* buf has to have size of width x height x 3. */
+void rkglReadBuffer(GLuint type, int x, int  y, int width, int height, ubyte *buf)
+{
+  glReadBuffer( GL_FRONT );
+  glReadPixels( x, y, width, height, type, GL_UNSIGNED_BYTE, buf );
+}
+
 /* matrix operation */
 
 void rkglInvTranslated(double m[], double *x, double *y, double *z)

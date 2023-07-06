@@ -48,6 +48,12 @@ __ROKI_GL_EXPORT int rkglKeyFuncGLX(rkglCamera *cam, double dl, double da);
 __ROKI_GL_EXPORT void rkglMouseFuncGLX(rkglCamera *cam, int event, double dl);
 __ROKI_GL_EXPORT void rkglMouseDragFuncGLX(rkglCamera *cam);
 
+/* buffer-to-image conversion */
+
+__ROKI_GL_EXPORT void rkglReadRGBImage(zxImage *img);
+__ROKI_GL_EXPORT void rkglReadDepthImage(zxImage *img);
+__ROKI_GL_EXPORT void rkglReadRGBImageGLX(Window win, zxImage *img);
+
 __END_DECLS
 
 #endif /* __RKGL_GLX_H__ */

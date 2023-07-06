@@ -1,3 +1,5 @@
+2023. 7. 6. Added rkglReadRGBImage, rkglReadDepthImage, and rkglReadRGBImageGLX. [roki_glx]
+2023. 7. 6. Added rkglReadBuffer. [rkgl_misc]
 2023. 7. 3. Added rkgl_glsl_bumpmap. [rkgl_glsl_bumpmap, rgl_glsl]
 2023. 7. 1. Corrected RKGL_SHADER_FRAG_TEXTURE and RKGL_SHADER_FRAG_FRESNEL to reflect ambient color on texture maps. [rkgl_glsl_texture, rkgl_glsl_fresnel]
 2023. 6.30. Modified _rkglShaderOutputLog. [rkgl_glsl]
