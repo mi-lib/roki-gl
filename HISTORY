@@ -1,3 +1,4 @@
+2023. 8. 7. Modified rk_view to apply zShape3DReadFileDAE, zShape3DReadFileSTL, and zShape3DReadFileOBJ. [app]
 2023. 7. 6. Added rkglReadRGBImage, rkglReadDepthImage, and rkglReadRGBImageGLX. [roki_glx]
 2023. 7. 6. Added rkglReadBuffer. [rkgl_misc]
 2023. 7. 3. Added rkgl_glsl_bumpmap. [rkgl_glsl_bumpmap, rgl_glsl]
