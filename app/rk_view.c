@@ -105,8 +105,6 @@ void rk_viewDisplay(void)
 
 void rk_viewReadPH(zMShape3D *ms, char *sfx)
 {
-  FILE *fp;
-
   zMShape3DInit( ms );
   zArrayAlloc( &ms->optic, zOpticalInfo, 1 );
   zArrayAlloc( &ms->shape, zShape3D, 1 );
@@ -127,17 +125,12 @@ void rk_viewReadPH(zMShape3D *ms, char *sfx)
     if( !zShape3DReadFileOBJ( zMShape3DShape(ms,0), opt[OPT_MODELFILE].arg ) ) exit( EXIT_FAILURE );
     return;
   }
-  if( !( fp = fopen( opt[OPT_MODELFILE].arg, "rt" ) ) ){
-    ZOPENERROR( opt[OPT_MODELFILE].arg );
-    rk_viewUsage();
-  }
   if( strcmp( sfx, "ply" ) == 0 ){
-    if( !zShape3DFReadPLY( fp, zMShape3DShape(ms,0) ) ) exit( EXIT_FAILURE );
-  } else{
-    ZRUNERROR( "unknown format %s", sfx );
-    rk_viewUsage();
+    if( !zShape3DReadFilePLY( zMShape3DShape(ms,0), opt[OPT_MODELFILE].arg ) ) exit( EXIT_FAILURE );
+    return;
   }
-  fclose( fp );
+  ZRUNERROR( "unknown format %s", sfx );
+  rk_viewUsage();
 }
 
 void rk_viewReadModel(void)
