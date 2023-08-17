@@ -1,3 +1,4 @@
+2023. 8.18. Reflected renamed zSeqCell. [app]
 2023. 8.10. Modified rk_view to apply zShape3DReadFilePLY. [app]
 2023. 8. 7. Modified rk_view to apply zShape3DReadFileDAE, zShape3DReadFileSTL, and zShape3DReadFileOBJ. [app]
 2023. 7. 6. Added rkglReadRGBImage, rkglReadDepthImage, and rkglReadRGBImageGLX. [roki_glx]

@@ -119,7 +119,7 @@ bool rk_seqLoadSequence(void)
 void rk_seqListEntry(void)
 {
   register int i=0;
-  zSeqListCell *cp;
+  zSeqCell *cp;
   void (* kf)(rkChain*,zVec);
 
   kf = opt[OPT_ZKCSFILE].flag ? rkChainSetConf : rkChainFK;
@@ -129,7 +129,7 @@ void rk_seqListEntry(void)
     kf( &chain, cp->data.v );
     rkglChainDraw( &gc );
     glEndList();
-    zSeqListCellFree( cp );
+    zSeqCellFree( cp );
   }
 }
 

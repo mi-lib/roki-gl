@@ -101,7 +101,7 @@ typedef struct{
   rkChain chain;
   rkglChain gc;
   zSeq seq;
-  zSeqListCell *seq_now;
+  zSeqCell *seq_now;
   char seqfilebase[RK_ANIM_BUFSIZ];
   void (* kf)(rkChain*,zVec);
   double t_now;
