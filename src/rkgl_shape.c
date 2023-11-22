@@ -1017,15 +1017,15 @@ void rkglFrameHandleTorusParts(zFrame3D *f, zAxis a, double l, double mag, bool 
     rkglMaterial( NULL );
   } else{
     zOpticalInfo oi;
-    if(a == zXA){
+    if(a == zX){
       /* Red */
       zOpticalInfoCreate( &oi, 0.5, 0.5, 0.5, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, NULL );
     } else
-    if(a == zYA){
+    if(a == zY){
       /* Green */
       zOpticalInfoCreate( &oi, 0.5, 0.5, 0.5, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, NULL );
     } else
-    if(a == zZA){
+    if(a == zZ){
       /* Blue */
       zOpticalInfoCreate( &oi, 0.5, 0.5, 0.5, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, NULL );
     }
