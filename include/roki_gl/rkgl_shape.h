@@ -73,6 +73,8 @@ __ROKI_GL_EXPORT void rkglPointCloud(zVec3DList *pc, zVec3D *center, short size)
 __ROKI_GL_EXPORT void rkglArrow(zVec3D *bot, zVec3D *vec, double mag);
 
 __ROKI_GL_EXPORT void rkglFrame(zFrame3D *f, double l, double mag);
+__ROKI_GL_EXPORT void rkglFrameHandleArrowParts(zFrame3D *f, zAxis a, double l, double mag, bool is_white);
+__ROKI_GL_EXPORT void rkglFrameHandleTorusParts(zFrame3D *f, zAxis a, double l, double mag, bool is_white);
 __ROKI_GL_EXPORT void rkglFrameHandle(zFrame3D *f, double l, double mag);
 
 __ROKI_GL_EXPORT void rkglAxis(zAxis axis, double d, double w, GLfloat color[]);

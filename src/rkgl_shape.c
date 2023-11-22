@@ -963,6 +963,78 @@ void rkglFrame(zFrame3D *f, double l, double mag)
   rkglArrow( zFrame3DPos(f), &v, mag );
 }
 
+static void _rkglFrameHandleArrowPartsAxis(zFrame3D *f, zAxis a, double l, double mag)
+{
+  zVec3D v, vb;
+
+  zVec3DMul( &zFrame3DAtt(f)->v[a], 0.5*l, &v );
+  zVec3DAdd( zFrame3DPos(f), &v, &vb );
+  rkglArrow( &vb, &v, mag );
+  zVec3DRevDRC( &v );
+  zVec3DAdd( zFrame3DPos(f), &v, &vb );
+  rkglArrow( &vb, &v, mag );
+}
+
+void rkglFrameHandleArrowParts(zFrame3D *f, zAxis a, double l, double mag, bool is_white)
+{
+  if( is_white ){
+    /* White */
+    rkglMaterial( NULL );
+  } else {
+    zOpticalInfo oi;
+    if(a == zX){
+      /* Red */
+      zOpticalInfoCreate( &oi, 0.5, 0.5, 0.5, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, NULL );
+    } else
+    if(a == zY){
+      /* Green */
+      zOpticalInfoCreate( &oi, 0.5, 0.5, 0.5, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, NULL );
+    } else
+    if(a == zZ){
+      /* Blue */
+      zOpticalInfoCreate( &oi, 0.5, 0.5, 0.5, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, NULL );
+    }
+    rkglMaterial( &oi );
+  }
+
+  _rkglFrameHandleArrowPartsAxis( f, a, l, mag );
+}
+
+static void _rkglFrameHandleTorusPartsAxis(zFrame3D *f, zAxis a, double l, double mag)
+{
+  double r1, r2;
+
+  r1 = l * 0.5 + RKGL_ARROW_BOTTOM_RAD * mag;
+  r2 = l * 0.5 - RKGL_ARROW_BOTTOM_RAD * mag;
+
+  rkglTorus( zFrame3DPos(f), &zFrame3DAtt(f)->v[a], r1, r2, RKGL_ARROW_DIV*4, RKGL_ARROW_DIV, RKGL_FACE );
+}
+
+void rkglFrameHandleTorusParts(zFrame3D *f, zAxis a, double l, double mag, bool is_white)
+{
+  if( is_white ){
+    /* White */
+    rkglMaterial( NULL );
+  } else{
+    zOpticalInfo oi;
+    if(a == zXA){
+      /* Red */
+      zOpticalInfoCreate( &oi, 0.5, 0.5, 0.5, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, NULL );
+    } else
+    if(a == zYA){
+      /* Green */
+      zOpticalInfoCreate( &oi, 0.5, 0.5, 0.5, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, NULL );
+    } else
+    if(a == zZA){
+      /* Blue */
+      zOpticalInfoCreate( &oi, 0.5, 0.5, 0.5, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, NULL );
+    }
+    rkglMaterial( &oi );
+  }
+
+  _rkglFrameHandleTorusPartsAxis( f, a, l, mag );
+}
+
 static void _rkglFrameHandleAxis(zFrame3D *f, zAxis a, double l, double mag, double r1, double r2)
 {
   zVec3D v, vb;
