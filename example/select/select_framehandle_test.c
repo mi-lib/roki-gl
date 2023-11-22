@@ -15,7 +15,7 @@ typedef struct{
 frameHandle_t g_fh;
 
 #define NPOSSIZE 3
-static const zAxis g_AXES[NOBJECTS] = {zX, zY, zZ, zXA, zYA, zZA};
+static const zAxis g_AXES[NOBJECTS] = {zX, zY, zZ, zX, zY, zZ};
 
 rkglCamera cam;
 rkglLight light;
