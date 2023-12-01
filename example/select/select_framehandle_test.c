@@ -19,7 +19,9 @@ static const zAxis g_AXES[NOBJECTS] = {zX, zY, zZ, zX, zY, zZ};
 
 rkglCamera cam;
 rkglLight light;
-
+static const GLdouble g_znear = -100.0;
+static const GLdouble g_zfar  = 100.0;
+static double g_scale = 0.01;
 static const double g_LENGTH = 2.0;
 static const double g_MAGNITUDE = 1.0;
 
@@ -30,7 +32,7 @@ void draw_fhpts(int id, void (*fhpts_callback)(zFrame3D*, zAxis, double, double,
   zVec6D aa;
   zFrame3DToVec6DAA( &g_fh.frame, &aa );
   zVec3D axis;
-  double angle = zVec3DNormalize( zVec6DAng( &aa ), &axis );
+  double angle = zVec3DNormalize( zVec6DAng( &aa ), &axis ) * 180.0 / zPI;
 
   /* start draw */
   glLoadName( id );
@@ -41,8 +43,8 @@ void draw_fhpts(int id, void (*fhpts_callback)(zFrame3D*, zAxis, double, double,
   else
     fhpts_callback( &g_fh.frame, g_AXES[id], g_LENGTH, g_MAGNITUDE, true );
 
-  glTranslated( g_fh.frame.pos.c.x, g_fh.frame.pos.c.y, g_fh.frame.pos.c.y );
-  glRotated( angle, axis.c.x, axis.c.y, axis.c.z);
+  glRotated( angle, axis.c.x, axis.c.y, axis.c.z );
+  glTranslated( g_fh.frame.pos.c.x, g_fh.frame.pos.c.y, g_fh.frame.pos.c.z );
 
   glCallList( g_fh.partsInfo[id].list );
   glPopMatrix();
@@ -74,6 +76,13 @@ void display(void)
 }
 
 static int selected_parts_id = -1;
+static double g_zmin;
+static zFrame3D g_frame3D_org;
+static zVec3D g_vp_mouse_start_3D;
+static zVec3D g_vp_parts_axis_3D_vector;
+static zVec3D g_parts_axis_unit_3D_vector;
+static zVec3D g_vp_circle_center_3D;
+static zVec3D g_vp_radial_dir_center_to_start;
 
 void reset_parts(void)
 {
@@ -86,16 +95,74 @@ void reset_parts(void)
   }
 }
 
-void select_parts(GLuint selbuf[], int hits)
+void select_parts(GLuint selbuf[], int x, int y, int hits)
 {
-  GLuint *ns;
-
   reset_parts();
+
+  GLuint *ns;
   if( !( ns = rkglFindNearside( selbuf, hits ) ) ) return;
   selected_parts_id = ns[3]; /* simple reference to link name */
 
-  if( selected_parts_id >= 0 && selected_parts_id < NOBJECTS )
+  /* moving mode */
+  if( selected_parts_id >= 0 && selected_parts_id < NOBJECTS ){
+
     g_fh.partsInfo[ selected_parts_id ].updown = 1;
+
+    zFrame3DCopy( &g_fh.frame, &g_frame3D_org );
+    /* zmin(=ns[1]) is GLuint data. GLuint maximum value is 0xffffffff. */
+    g_zmin = ns[1] / (GLdouble)(0xffffffff);
+
+    zVec3D parts_axis_start_3D;
+    rkglUnproject( &cam, x, y, g_zmin, &parts_axis_start_3D );
+    /* project to view port */
+    rkglUnproject( &cam, x, y, g_znear, &g_vp_mouse_start_3D );
+
+    if( selected_parts_id >= 0 && selected_parts_id <= 2 ){
+      /* translate mode */
+      if( selected_parts_id == 0 ){
+        /* x */
+        zFrame3DCopy( &g_fh.frame.att.b.x, &g_parts_axis_unit_3D_vector );
+      } else if( selected_parts_id == 1 ){
+        /* y */
+        zFrame3DCopy( &g_fh.frame.att.b.y, &g_parts_axis_unit_3D_vector );
+      } else if( selected_parts_id == 2 ){
+        /* z */
+        zFrame3DCopy( &g_fh.frame.att.b.z, &g_parts_axis_unit_3D_vector );
+      }
+      zVec3D parts_axis_unit_end_3D;
+      zVec3DAdd( &parts_axis_start_3D, &g_parts_axis_unit_3D_vector, &parts_axis_unit_end_3D );
+
+      /* project to view port */
+      int ax, ay;
+      rkglProject( &cam, &parts_axis_unit_end_3D, &ax, &ay );
+      zVec3D vp_parts_axis_unit_end_3D;
+      rkglUnproject( &cam, ax, ay, g_znear, &vp_parts_axis_unit_end_3D );
+      zVec3DSub( &vp_parts_axis_unit_end_3D, &g_vp_mouse_start_3D, &g_vp_parts_axis_3D_vector );
+
+      /* end of translate mode */
+    } else{
+      /* rotate mode */
+      if( selected_parts_id == 3 ){
+        /* x */
+        zFrame3DCopy( &g_fh.frame.att.b.x, &g_parts_axis_unit_3D_vector );
+      } else if( selected_parts_id == 4 ){
+        /* y */
+        zFrame3DCopy( &g_fh.frame.att.b.y, &g_parts_axis_unit_3D_vector );
+      } else if( selected_parts_id == 5 ){
+        /* z */
+        zFrame3DCopy( &g_fh.frame.att.b.z, &g_parts_axis_unit_3D_vector );
+      } else{
+        ZRUNERROR( "selected_parts_id is ERROR\n" );
+      }
+      /* project to view port */
+      int cx, cy;
+      rkglProject( &cam, &g_fh.frame.pos, &cx, &cy );
+      rkglUnproject( &cam, cx, cy, g_znear, &g_vp_circle_center_3D );
+      zVec3DSub( &g_vp_mouse_start_3D, &g_vp_circle_center_3D, &g_vp_radial_dir_center_to_start);
+    }
+    /* end of rotate mode */
+  }
+  /* end moving mode */
 }
 
 void mouse(int button, int state, int x, int y)
@@ -105,7 +172,7 @@ void mouse(int button, int state, int x, int y)
   switch( button ){
   case GLUT_LEFT_BUTTON:
     if( state == GLUT_DOWN )
-      select_parts( selbuf, rkglPick( &cam, draw_scene, selbuf, BUFSIZ, x, y, 1, 1 ) );
+      select_parts( selbuf, x, y, rkglPick( &cam, draw_scene, selbuf, BUFSIZ, x, y, 1, 1 ) );
     break;
   case GLUT_MIDDLE_BUTTON:
     break;
@@ -124,13 +191,60 @@ void motion(int x, int y)
 {
   if( selected_parts_id == -1 ){
     rkglMouseDragFuncGLUT(x, y);
+  } else{
+    /* moving mode */
+    zVec3D vp_mouse_goal_3D;
+    rkglUnproject( &cam, x, y, g_znear, &vp_mouse_goal_3D );
+
+    if( selected_parts_id >= 0 && selected_parts_id <= 2 ){
+      /* translate mode */
+      zVec3D vp_mouse_drag_3D_vector;
+      zVec3DSub( &vp_mouse_goal_3D, &g_vp_mouse_start_3D, &vp_mouse_drag_3D_vector );
+
+      double project_3D_scale = zVec3DInnerProd( &vp_mouse_drag_3D_vector, &g_vp_parts_axis_3D_vector ) / zVec3DSqrNorm( &g_vp_parts_axis_3D_vector );
+
+      zVec3D dir_3D;
+      zVec3DMul( &g_parts_axis_unit_3D_vector, project_3D_scale, &dir_3D );
+
+      /* translate frame */
+      zVec3DAdd( &g_frame3D_org.pos, &dir_3D, &g_fh.frame.pos );
+
+      /* end of translate mode */
+    } else{
+      /* rotate mode */
+      zVec3D vp_radial_dir_center_to_goal;
+      zVec3DSub( &vp_mouse_goal_3D, &g_vp_circle_center_3D, &vp_radial_dir_center_to_goal);
+
+      if ( !zVec3DIsTiny( &g_vp_radial_dir_center_to_start ) ){
+        /* oval circle rotation on view port plane */
+        double theta = zVec3DAngle( &g_vp_radial_dir_center_to_start, &vp_radial_dir_center_to_goal, &g_parts_axis_unit_3D_vector);
+        zMat3D m;
+        /* zVec3D axis; */
+        if( selected_parts_id == 3 ){
+          /* x */
+          zMat3DFromZYX( &m, 0, 0, theta );
+        } else if( selected_parts_id == 4 ){
+          /* y */
+          zMat3DFromZYX( &m, 0, theta, 0 );
+        } else if( selected_parts_id == 5 ){
+          /* z */
+          zMat3DFromZYX( &m, theta, 0, 0 );
+        } else{
+          ZRUNERROR( "selected_parts_id is ERROR\n" );
+        }
+        zMulMat3DMat3D( &g_frame3D_org.att, &m, &g_fh.frame.att );
+      }
+      /* end of if g_vp_radial_dir_center_to_start is not Tiny */
+    }
+    /* end of rotate mode */
   }
+  /* end moving mode */
 }
 
 void resize(int w, int h)
 {
   rkglVPCreate( &cam, 0, 0, w, h );
-  rkglFrustumScale( &cam, 0.002, 1, 20 );
+  rkglOrthoScale( &cam, g_scale, g_znear, g_zfar );
 }
 
 void keyboard(unsigned char key, int x, int y)
@@ -142,8 +256,8 @@ void keyboard(unsigned char key, int x, int y)
   case 'I': rkglCALockonPTR( &cam, 0,-5, 0 ); break;
   case 'o': rkglCALockonPTR( &cam, 0, 0, 5 ); break;
   case 'O': rkglCALockonPTR( &cam, 0, 0,-5 ); break;
-  case '8': rkglCARelMove( &cam, 0.05, 0, 0 ); break;
-  case '*': rkglCARelMove( &cam,-0.05, 0, 0 ); break;
+  case '8': g_scale += 0.001; rkglOrthoScale( &cam, g_scale, g_znear, g_zfar ); break;
+  case '*': g_scale -= 0.001; rkglOrthoScale( &cam, g_scale, g_znear, g_zfar ); break;
   case '9': rkglCARelMove( &cam, 0, 0.05, 0 ); break;
   case '(': rkglCARelMove( &cam, 0,-0.05, 0 ); break;
   case '0': rkglCARelMove( &cam, 0, 0, 0.05 ); break;
