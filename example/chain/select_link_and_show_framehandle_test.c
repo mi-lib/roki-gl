@@ -25,7 +25,7 @@ static const zAxis g_AXES[NOBJECTS] = {zX, zY, zZ, zX, zY, zZ};
 rkglCamera cam;
 rkglLight light;
 
-rkChain chain;
+rkChain g_chain;
 rkglChain gr;
 
 static const GLdouble g_znear = -100.0;
@@ -136,7 +136,7 @@ void select_link(GLuint selbuf[], int hits)
 
     /* update frame handle location */
     if( selected_link != pre_selected_link ) {
-      zFrame3DCopy( rkChainLinkWldFrame(&chain, selected_link), &g_fh.frame );
+      zFrame3DCopy( rkChainLinkWldFrame(gr.chain, selected_link), &g_fh.frame );
     }
   }
   /* end of if( selected_link >= 0 && selected_link < rkChainLinkNum(gr.chain) ) */
@@ -235,15 +235,45 @@ void select_parts(GLuint selbuf[], int x, int y, int hits)
   /* end moving mode */
 }
 
+void update_alljoint_by_ik_with_frame(zFrame3D *ref_frame)
+{
+  zVec dis;
+  dis = zVecAlloc( rkChainJointSize( &g_chain ) );
+  rkChainGetJointDisAll(&g_chain, dis);
+
+  rkIKAttr attr;
+  attr.id = selected_link;
+
+  rkIKCell *cell[2];
+  cell[0] = rkChainRegIKCellWldAtt( &g_chain, &attr, RK_IK_ATTR_ID );
+  cell[1] = rkChainRegIKCellWldPos( &g_chain, &attr, RK_IK_ATTR_ID );
+  rkChainDeactivateIK( &g_chain );
+  rkChainBindIK( &g_chain );
+
+  zVec3D zyx;
+  zMat3DToZYX( &(ref_frame->att), &zyx );
+  rkIKCellSetRefVec( cell[0], &zyx );
+  rkIKCellSetRefVec( cell[1], &(ref_frame->pos) );
+
+  rkChainFK( &g_chain, dis ); /* copy state to mentatin result consistency */
+
+  rkChainIK( &g_chain, dis, zTOL, 0 );
+  rkChainUnregIKCell( &g_chain, cell[1] );
+  rkChainUnregIKCell( &g_chain, cell[0] );
+
+  rkChainSetJointDisAll( &g_chain, dis );
+  rkChainUpdateFK( &g_chain );
+}
+
 void move_link(double angle)
 {
   double dis;
 
   if( selected_link < 0 ) return;
-  rkChainLinkJointGetDis( &chain, selected_link, &dis );
+  rkChainLinkJointGetDis( &g_chain, selected_link, &dis );
   dis += angle;
-  rkChainLinkJointSetDis( &chain, selected_link, &dis );
-  rkChainUpdateFK( &chain );
+  rkChainLinkJointSetDis( &g_chain, selected_link, &dis );
+  rkChainUpdateFK( &g_chain );
 }
 
 void mouse(int button, int state, int x, int y)
@@ -322,6 +352,8 @@ void motion(int x, int y)
       /* end of if g_vp_radial_dir_center_to_start is not Tiny */
     }
     /* end of rotate mode */
+
+    update_alljoint_by_ik_with_frame( &g_fh.frame );
   }
   /* end moving mode */
 }
@@ -349,7 +381,7 @@ void keyboard(unsigned char key, int x, int y)
   case 'h': move_link(-zDeg2Rad(5) ); break;
   case 'q': case 'Q': case '\033':
     rkglChainUnload( &gr );
-    rkChainDestroy( &chain );
+    rkChainDestroy( &g_chain );
     exit( EXIT_SUCCESS );
   default: ;
   }
@@ -369,8 +401,10 @@ void init(void)
 
   rkglChainAttr attr;
   rkglChainAttrInit( &attr );
-  rkChainReadZTK( &chain, "../model/puma.ztk" );
-  rkglChainLoad( &gr, &chain, &attr, &light );
+  rkChainReadZTK( &g_chain, "../model/puma.ztk" );
+  rkglChainLoad( &gr, &g_chain, &attr, &light );
+  rkChainCreateIK( &g_chain );
+  rkChainRegIKJointAll( &g_chain, 0.001 );
 
   int i;
   for( i=0; i<NOBJECTS; i++ ){
