@@ -957,7 +957,28 @@ void rkglFrame(zFrame3D *f, double l, double mag)
   rkglArrow( zFrame3DPos(f), &v, mag );
 }
 
-static void _rkglFrameHandleArrowPartsAxis(zFrame3D *f, zAxis a, double l, double mag)
+void rkglFrameAxisMaterial(zAxis a)
+{
+  zOpticalInfo oi;
+  switch(a){
+  case zX:
+    /* Red */
+    zOpticalInfoCreate( &oi, 0.5, 0.5, 0.5, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, NULL );
+    break;
+  case zY:
+    /* Green */
+    zOpticalInfoCreate( &oi, 0.5, 0.5, 0.5, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, NULL );
+    break;
+  case zZ:
+    /* Blue */
+    zOpticalInfoCreate( &oi, 0.5, 0.5, 0.5, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, NULL );
+    break;
+  default: return;
+  }
+  rkglMaterial( &oi );
+}
+
+void rkglFrameHandleArrowParts(zFrame3D *f, zAxis a, double l, double mag)
 {
   zVec3D v, vb;
 
@@ -969,32 +990,7 @@ static void _rkglFrameHandleArrowPartsAxis(zFrame3D *f, zAxis a, double l, doubl
   rkglArrow( &vb, &v, mag );
 }
 
-void rkglFrameHandleArrowParts(zFrame3D *f, zAxis a, double l, double mag, bool is_white)
-{
-  if( is_white ){
-    /* White */
-    rkglMaterial( NULL );
-  } else {
-    zOpticalInfo oi;
-    if(a == zX){
-      /* Red */
-      zOpticalInfoCreate( &oi, 0.5, 0.5, 0.5, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, NULL );
-    } else
-    if(a == zY){
-      /* Green */
-      zOpticalInfoCreate( &oi, 0.5, 0.5, 0.5, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, NULL );
-    } else
-    if(a == zZ){
-      /* Blue */
-      zOpticalInfoCreate( &oi, 0.5, 0.5, 0.5, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, NULL );
-    }
-    rkglMaterial( &oi );
-  }
-
-  _rkglFrameHandleArrowPartsAxis( f, a, l, mag );
-}
-
-static void _rkglFrameHandleTorusPartsAxis(zFrame3D *f, zAxis a, double l, double mag)
+void rkglFrameHandleTorusParts(zFrame3D *f, zAxis a, double l, double mag)
 {
   double r1, r2;
 
@@ -1002,31 +998,6 @@ static void _rkglFrameHandleTorusPartsAxis(zFrame3D *f, zAxis a, double l, doubl
   r2 = l * 0.5 - RKGL_ARROW_BOTTOM_RAD * mag;
 
   rkglTorus( zFrame3DPos(f), &zFrame3DAtt(f)->v[a], r1, r2, RKGL_ARROW_DIV*4, RKGL_ARROW_DIV, RKGL_FACE );
-}
-
-void rkglFrameHandleTorusParts(zFrame3D *f, zAxis a, double l, double mag, bool is_white)
-{
-  if( is_white ){
-    /* White */
-    rkglMaterial( NULL );
-  } else{
-    zOpticalInfo oi;
-    if(a == zX){
-      /* Red */
-      zOpticalInfoCreate( &oi, 0.5, 0.5, 0.5, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, NULL );
-    } else
-    if(a == zY){
-      /* Green */
-      zOpticalInfoCreate( &oi, 0.5, 0.5, 0.5, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, NULL );
-    } else
-    if(a == zZ){
-      /* Blue */
-      zOpticalInfoCreate( &oi, 0.5, 0.5, 0.5, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, NULL );
-    }
-    rkglMaterial( &oi );
-  }
-
-  _rkglFrameHandleTorusPartsAxis( f, a, l, mag );
 }
 
 static void _rkglFrameHandleAxis(zFrame3D *f, zAxis a, double l, double mag, double r1, double r2)
