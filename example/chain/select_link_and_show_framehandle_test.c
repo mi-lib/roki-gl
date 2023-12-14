@@ -1,38 +1,56 @@
 #include <roki_gl/roki_glut.h>
 
+/* the number of FrameHandle parts */
+#define NOBJECTS 6
+/* the number of translation size (x,y,z : 3) */
+#define NPOSSIZE 3
+
+static const zAxis g_AXES[NOBJECTS] = {zX, zY, zZ, zX, zY, zZ};
+
 typedef struct{
   GLint list;
   int updown;
 } partsInfo_t;
 
-#define NOBJECTS 6
 typedef struct{
   partsInfo_t partsInfo[NOBJECTS];
   zFrame3D frame;
 } frameHandle_t;
 
-/* the main target of this sample code */
+/* the main targets of this sample code */
 frameHandle_t g_fh;
-
-#define NPOSSIZE 3
-/* to avoid duplication with selected_link and selected_parts_id */
-/* NOFFSET must be enough large than rkChainLinkNum */
-#define NOFFSET 50
-
-static const zAxis g_AXES[NOBJECTS] = {zX, zY, zZ, zX, zY, zZ};
-
-
-rkglCamera cam;
-rkglLight light;
-
 rkChain g_chain;
 rkglChain gr;
 
+/* viewing parameters */
+rkglCamera cam;
+rkglLight light;
 static const GLdouble g_znear = -100.0;
 static const GLdouble g_zfar  = 100.0;
 static double g_scale = 0.001;
+
+/* FrameHandle viewing parameters */
 static const double g_LENGTH = 0.2;
 static const double g_MAGNITUDE = g_LENGTH * 0.5;
+
+/* mouse selected information */
+typedef enum{
+  NONE=1,
+  LINKFRAME,
+  FRAMEHANDLE,
+} selectedObj;
+
+typedef struct{
+  selectedObj obj;
+  int link_id;
+  int fh_parts_id; /* FrameHandle parts id */
+} selectInfo;
+
+selectInfo g_selected;
+
+/* To avoid duplication between selected_link and selected_parts_id */
+/* NOFFSET must be enough large than rkChainLinkNum(gr.chain)  */
+#define NOFFSET 50
 
 /* draw FrameHandle parts shape */
 void draw_fhpts(int id, void (*fhpts_callback)(zFrame3D*, zAxis, double, double, bool))
@@ -47,8 +65,8 @@ void draw_fhpts(int id, void (*fhpts_callback)(zFrame3D*, zAxis, double, double,
     angle = zVec3DNormalize( zVec6DAng( &aa ), &axis ) * 180.0 / zPI;
   }
 
-  /* start draw */
   glLoadName( id + NOFFSET );
+
   glPushMatrix();
 
   if( g_fh.partsInfo[id].updown == 0 )
@@ -59,17 +77,29 @@ void draw_fhpts(int id, void (*fhpts_callback)(zFrame3D*, zAxis, double, double,
   glRotated( angle, axis.c.x, axis.c.y, axis.c.z );
   glTranslated( g_fh.frame.pos.c.x, g_fh.frame.pos.c.y, g_fh.frame.pos.c.z );
 
+  /* start draw */
   glCallList( g_fh.partsInfo[id].list );
   glPopMatrix();
   /* end draw */
 }
 
-static int selected_link = -1;
-static int selected_parts_id = -1;
-
 void draw_scene(void)
 {
-  if( selected_link >= 0 ){
+  rkglChainDraw( &gr );
+
+  if( g_selected.obj != NONE ){
+    if( gr.info[g_selected.link_id].list != gr.info[g_selected.link_id].list_alt ){
+      /* re-drawing selected link once when mouse() clicked */
+      zOpticalInfo oi_alt;
+      /* zOpticalInfoCreateSimple( &oi_alt, 1.0, 0.0, 0.0, NULL ); */
+      zOpticalInfoCreate( &oi_alt, 0.8, 0.5, 0.5, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.2, NULL );
+      gr.attr.disptype = RKGL_FACE;
+      /* TODO : reuse selected link list value */
+      /* (the current implementation generates new list value by glNewList() ) */
+      rkglChainLinkAlt( &gr, g_selected.link_id, &oi_alt, &gr.attr, &light );
+    }
+
+    /* drawing FrameHandle */
     /* pos */
     int i = 0;
     for( i = 0; i < NPOSSIZE; i++ ){
@@ -80,8 +110,7 @@ void draw_scene(void)
       draw_fhpts( i, rkglFrameHandleTorusParts );
     }
   }
-
-  rkglChainDraw( &gr );
+  /* end of if( g_selected.obj != NONE ) */
 }
 
 void display(void)
@@ -94,7 +123,7 @@ void display(void)
 }
 
 
-static double g_zmin;
+static double g_zmin; /* selected depth of the nearest object */
 static zFrame3D g_frame3D_org;
 static zVec3D g_vp_mouse_start_3D;
 static zVec3D g_vp_parts_axis_3D_vector;
@@ -104,137 +133,115 @@ static zVec3D g_vp_radial_dir_center_to_start;
 
 void reset_link(void)
 {
-  rkglChainLinkReset( &gr, selected_link );
+  if( g_selected.link_id >= 0 ){
+    rkglChainLinkReset( &gr, g_selected.link_id );
+  }
 }
 
-void select_link(GLuint selbuf[], int hits)
+void reset_fh_parts(void)
+{
+  if( g_selected.fh_parts_id >= 0 ){
+    glDeleteLists( g_fh.partsInfo[ g_selected.fh_parts_id ].list, 1 );
+    g_fh.partsInfo[ g_selected.fh_parts_id ].updown = 0;
+  }
+}
+
+void select_object(GLuint selbuf[], int hits)
 {
   GLuint *ns;
-  zOpticalInfo oi_alt;
 
   reset_link();
+  reset_fh_parts();
+
   if( !( ns = rkglFindNearside( selbuf, hits ) ) ){
-    selected_link = -1;
-    printf( "selected_link = %d, ", selected_link );
+    g_selected.obj = NONE;
+    g_selected.link_id = -1;
+    g_selected.fh_parts_id = -1;
+    printf( "selected_link_id = %d, ", g_selected.link_id );
+    printf( "selected_parts_id = %d \n", g_selected.fh_parts_id );
     return;
   }
-  int nearest_link = ns[3];
-  int pre_selected_link = selected_link;
-  if( nearest_link < rkChainLinkNum(gr.chain) ){
-    selected_link = nearest_link; /* simple reference to link name */
-  }
-  printf( "selected_link = %d, ", selected_link );
+  int nearest_shape_id = ns[3];
+  if( nearest_shape_id >= 0
+      && nearest_shape_id < rkChainLinkNum(gr.chain) ){
+    /* nearest_link < NOFFSET */
+    g_selected.obj = LINKFRAME;
+    g_selected.link_id = nearest_shape_id; /* simple reference to link name */
+    g_selected.fh_parts_id = -1;
+  } else if( nearest_shape_id >= NOFFSET
+             && nearest_shape_id < NOFFSET + NOBJECTS ){
+    g_selected.obj = FRAMEHANDLE;
+    /* g_selected.link_id is not changed */
+    g_selected.fh_parts_id = nearest_shape_id - NOFFSET;
 
-  /* re-drawing selected link */
-  if( selected_link >= 0
-      && selected_link < rkChainLinkNum(gr.chain) )
-  {
-    /* zOpticalInfoCreateSimple( &oi_alt, 1.0, 0.0, 0.0, NULL ); */
-    zOpticalInfoCreate( &oi_alt, 0.8, 0.5, 0.5, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.2, NULL );
-    gr.attr.disptype = RKGL_FACE;
-    rkglChainLinkAlt( &gr, selected_link, &oi_alt, &gr.attr, &light );
-
-    /* update frame handle location */
-    if( selected_link != pre_selected_link ) {
-      zFrame3DCopy( rkChainLinkWldFrame(gr.chain, selected_link), &g_fh.frame );
-    }
-  }
-  /* end of if( selected_link >= 0 && selected_link < rkChainLinkNum(gr.chain) ) */
-}
-
-
-void reset_parts(void)
-{
-  /* if( selected_parts_id > rkChainLinkNum(gr.chain) ){ */
-  if( selected_parts_id >= 0 ){
-    glDeleteLists( g_fh.partsInfo[ selected_parts_id ].list, 1 );
-    g_fh.partsInfo[ selected_parts_id ].list = -1;
-    g_fh.partsInfo[ selected_parts_id ].updown = 0;
-
-    selected_parts_id = -1;
-  }
-}
-
-void select_parts(GLuint selbuf[], int x, int y, int hits)
-{
-  reset_parts();
-
-  GLuint *ns;
-  if( !( ns = rkglFindNearside( selbuf, hits ) ) ){
-    selected_parts_id = -1;
-    printf("  selected_parts_id = %d \n", selected_parts_id );
-    return;
-  }
-  if( ns[3] < NOFFSET ){
-    selected_parts_id = -1;
-    printf("  selected_parts_id = %d \n", selected_parts_id );
-    return;
-  }
-  selected_parts_id = ns[3] - NOFFSET; /* simple reference to link name */
-  printf("  selected_parts_id = %d \n", selected_parts_id );
-
-  /* moving mode */
-  if( selected_parts_id >= 0 && selected_parts_id < NOBJECTS ){
-
-    g_fh.partsInfo[ selected_parts_id ].updown = 1;
-
-    zFrame3DCopy( &g_fh.frame, &g_frame3D_org );
     /* zmin(=ns[1]) is GLuint data. GLuint maximum value is 0xffffffff. */
     g_zmin = ns[1] / (GLdouble)(0xffffffff);
-
-    zVec3D parts_axis_start_3D;
-    rkglUnproject( &cam, x, y, g_zmin, &parts_axis_start_3D );
-    /* project to view port */
-    rkglUnproject( &cam, x, y, g_znear, &g_vp_mouse_start_3D );
-
-    if( selected_parts_id >= 0 && selected_parts_id < NPOSSIZE ){
-      /* translate mode */
-      if( selected_parts_id == 0 ){
-        /* x */
-        zFrame3DCopy( &g_fh.frame.att.b.x, &g_parts_axis_unit_3D_vector );
-      } else if( selected_parts_id == 1 ){
-        /* y */
-        zFrame3DCopy( &g_fh.frame.att.b.y, &g_parts_axis_unit_3D_vector );
-      } else if( selected_parts_id == 2 ){
-        /* z */
-        zFrame3DCopy( &g_fh.frame.att.b.z, &g_parts_axis_unit_3D_vector );
-      }
-      zVec3D parts_axis_unit_end_3D;
-      zVec3DAdd( &parts_axis_start_3D, &g_parts_axis_unit_3D_vector, &parts_axis_unit_end_3D );
-
-      /* project to view port */
-      int ax, ay;
-      rkglProject( &cam, &parts_axis_unit_end_3D, &ax, &ay );
-      zVec3D vp_parts_axis_unit_end_3D;
-      rkglUnproject( &cam, ax, ay, g_znear, &vp_parts_axis_unit_end_3D );
-      zVec3DSub( &vp_parts_axis_unit_end_3D, &g_vp_mouse_start_3D, &g_vp_parts_axis_3D_vector );
-
-      /* end of translate mode */
-    } else{
-      /* rotate mode */
-      if( selected_parts_id == 3 ){
-        /* x */
-        zFrame3DCopy( &g_fh.frame.att.b.x, &g_parts_axis_unit_3D_vector );
-      } else if( selected_parts_id == 4 ){
-        /* y */
-        zFrame3DCopy( &g_fh.frame.att.b.y, &g_parts_axis_unit_3D_vector );
-      } else if( selected_parts_id == 5 ){
-        /* z */
-        zFrame3DCopy( &g_fh.frame.att.b.z, &g_parts_axis_unit_3D_vector );
-      } else{
-        ZRUNERROR( "selected_parts_id is ERROR\n" );
-      }
-      /* project to view port */
-      int cx, cy;
-      rkglProject( &cam, &g_fh.frame.pos, &cx, &cy );
-      rkglUnproject( &cam, cx, cy, g_znear, &g_vp_circle_center_3D );
-      zVec3DSub( &g_vp_mouse_start_3D, &g_vp_circle_center_3D, &g_vp_radial_dir_center_to_start);
-    }
-    /* end of rotate mode */
+  } else{
+    g_selected.obj = NONE;
+    g_selected.link_id = -1;
+    g_selected.fh_parts_id = -1;
   }
-  /* end moving mode */
+  printf( "selected_link_id = %d, ", g_selected.link_id );
+  printf("  selected_parts_id = %d \n", g_selected.fh_parts_id );
 }
 
+void select_fh_parts(int x, int y)
+{
+  g_fh.partsInfo[ g_selected.fh_parts_id ].updown = 1;
+  zFrame3DCopy( &g_fh.frame, &g_frame3D_org );
+
+  zVec3D parts_axis_start_3D;
+  rkglUnproject( &cam, x, y, g_zmin, &parts_axis_start_3D );
+  /* project to view port */
+  rkglUnproject( &cam, x, y, g_znear, &g_vp_mouse_start_3D );
+
+  if( g_selected.fh_parts_id >= 0 && g_selected.fh_parts_id < NPOSSIZE ){
+    /* translate mode */
+    if( g_selected.fh_parts_id == 0 ){
+      /* x */
+      zFrame3DCopy( &g_fh.frame.att.b.x, &g_parts_axis_unit_3D_vector );
+    } else if( g_selected.fh_parts_id == 1 ){
+      /* y */
+      zFrame3DCopy( &g_fh.frame.att.b.y, &g_parts_axis_unit_3D_vector );
+    } else if( g_selected.fh_parts_id == 2 ){
+      /* z */
+      zFrame3DCopy( &g_fh.frame.att.b.z, &g_parts_axis_unit_3D_vector );
+    }
+    zVec3D parts_axis_unit_end_3D;
+    zVec3DAdd( &parts_axis_start_3D, &g_parts_axis_unit_3D_vector, &parts_axis_unit_end_3D );
+
+    /* project to view port */
+    int ax, ay;
+    rkglProject( &cam, &parts_axis_unit_end_3D, &ax, &ay );
+    zVec3D vp_parts_axis_unit_end_3D;
+    rkglUnproject( &cam, ax, ay, g_znear, &vp_parts_axis_unit_end_3D );
+    zVec3DSub( &vp_parts_axis_unit_end_3D, &g_vp_mouse_start_3D, &g_vp_parts_axis_3D_vector );
+
+    /* end of translate mode */
+  } else{
+    /* rotate mode */
+    if( g_selected.fh_parts_id == 3 ){
+      /* x */
+      zFrame3DCopy( &g_fh.frame.att.b.x, &g_parts_axis_unit_3D_vector );
+    } else if( g_selected.fh_parts_id == 4 ){
+      /* y */
+      zFrame3DCopy( &g_fh.frame.att.b.y, &g_parts_axis_unit_3D_vector );
+    } else if( g_selected.fh_parts_id == 5 ){
+      /* z */
+      zFrame3DCopy( &g_fh.frame.att.b.z, &g_parts_axis_unit_3D_vector );
+    } else{
+      ZRUNERROR( "selected_parts_id is ERROR\n" );
+    }
+    /* project to view port */
+    int cx, cy;
+    rkglProject( &cam, &g_fh.frame.pos, &cx, &cy );
+    rkglUnproject( &cam, cx, cy, g_znear, &g_vp_circle_center_3D );
+    zVec3DSub( &g_vp_mouse_start_3D, &g_vp_circle_center_3D, &g_vp_radial_dir_center_to_start);
+  }
+  /* end of rotate mode */
+}
+
+/* inverse kinematics */
 void update_alljoint_by_ik_with_frame(zFrame3D *ref_frame)
 {
   zVec dis;
@@ -242,7 +249,7 @@ void update_alljoint_by_ik_with_frame(zFrame3D *ref_frame)
   rkChainGetJointDisAll(&g_chain, dis);
 
   rkIKAttr attr;
-  attr.id = selected_link;
+  attr.id = g_selected.link_id;
 
   rkIKCell *cell[2];
   cell[0] = rkChainRegIKCellWldAtt( &g_chain, &attr, RK_IK_ATTR_ID );
@@ -269,10 +276,10 @@ void move_link(double angle)
 {
   double dis;
 
-  if( selected_link < 0 ) return;
-  rkChainLinkJointGetDis( &g_chain, selected_link, &dis );
+  if( g_selected.link_id < 0 ) return;
+  rkChainLinkJointGetDis( &g_chain, g_selected.link_id, &dis );
   dis += angle;
-  rkChainLinkJointSetDis( &g_chain, selected_link, &dis );
+  rkChainLinkJointSetDis( &g_chain, g_selected.link_id, &dis );
   rkChainUpdateFK( &g_chain );
 }
 
@@ -283,19 +290,37 @@ void mouse(int button, int state, int x, int y)
   switch( button ){
   case GLUT_LEFT_BUTTON:
     if( state == GLUT_DOWN ){
+      int pre_selected_link = g_selected.link_id;
       int hits = rkglPick( &cam, draw_scene, selbuf, BUFSIZ, x, y, 1, 1 );
-      select_link( selbuf, hits );
-      select_parts( selbuf, x, y, hits );
+      /* update g_selected status */
+      select_object( selbuf, hits );
+
+      switch( g_selected.obj ){
+      case LINKFRAME:
+        /* update frame handle location */
+        if( g_selected.link_id != pre_selected_link ) {
+          zFrame3DCopy( rkChainLinkWldFrame(gr.chain, g_selected.link_id), &g_fh.frame );
+        }
+        break;
+      case FRAMEHANDLE:
+        select_fh_parts( x, y );
+        break;
+      default: ;
+      }
+      /* end of switch( g_selected.obj ) */
     }
     break;
   case GLUT_RIGHT_BUTTON:
-    if( state == GLUT_DOWN )
+    if( state == GLUT_DOWN ){
       reset_link();
+      reset_fh_parts();
+    }
     break;
   default: ;
   }
+  /* end of switch( button ) */
 
-  if( selected_parts_id == -1 )
+  if( g_selected.obj != FRAMEHANDLE )
   {
     rkglMouseFuncGLUT(button, state, x, y);
   }
@@ -304,14 +329,14 @@ void mouse(int button, int state, int x, int y)
 
 void motion(int x, int y)
 {
-  if( selected_parts_id == -1 ){
+  if( g_selected.obj != FRAMEHANDLE ){
     rkglMouseDragFuncGLUT(x, y);
   } else{
     /* moving mode */
     zVec3D vp_mouse_goal_3D;
     rkglUnproject( &cam, x, y, g_znear, &vp_mouse_goal_3D );
 
-    if( selected_parts_id >= 0 && selected_parts_id <= 2 ){
+    if( g_selected.fh_parts_id >= 0 && g_selected.fh_parts_id <= 2 ){
       /* translate mode */
       zVec3D vp_mouse_drag_3D_vector;
       zVec3DSub( &vp_mouse_goal_3D, &g_vp_mouse_start_3D, &vp_mouse_drag_3D_vector );
@@ -335,13 +360,13 @@ void motion(int x, int y)
         double theta = zVec3DAngle( &g_vp_radial_dir_center_to_start, &vp_radial_dir_center_to_goal, &g_parts_axis_unit_3D_vector);
         zMat3D m;
         /* zVec3D axis; */
-        if( selected_parts_id == 3 ){
+        if( g_selected.fh_parts_id == 3 ){
           /* x */
           zMat3DFromZYX( &m, 0, 0, theta );
-        } else if( selected_parts_id == 4 ){
+        } else if( g_selected.fh_parts_id == 4 ){
           /* y */
           zMat3DFromZYX( &m, 0, theta, 0 );
-        } else if( selected_parts_id == 5 ){
+        } else if( g_selected.fh_parts_id == 5 ){
           /* z */
           zMat3DFromZYX( &m, theta, 0, 0 );
         } else{
@@ -403,13 +428,19 @@ void init(void)
   rkglChainAttrInit( &attr );
   rkChainReadZTK( &g_chain, "../model/puma.ztk" );
   rkglChainLoad( &gr, &g_chain, &attr, &light );
+
   rkChainCreateIK( &g_chain );
   rkChainRegIKJointAll( &g_chain, 0.001 );
+
+  g_selected.obj = NONE;
+  g_selected.link_id = -1;
+  g_selected.fh_parts_id = -1;
 
   int i;
   for( i=0; i<NOBJECTS; i++ ){
     g_fh.partsInfo[i].updown = 0;
-    glDeleteLists( g_fh.partsInfo[i].list, 1 );
+    if( glIsList( g_fh.partsInfo[i].list ) )
+      glDeleteLists( g_fh.partsInfo[i].list, 1 );
     g_fh.partsInfo[i].list = glGenLists( 1 );
     glNewList( g_fh.partsInfo[i].list, GL_COMPILE );
     glEndList();
