@@ -25,7 +25,7 @@ rkglChain gr;
 /* viewing parameters */
 rkglCamera cam;
 rkglLight light;
-static const GLdouble g_znear = -100.0;
+static const GLdouble g_znear = -1000.0;
 static const GLdouble g_zfar  = 100.0;
 static double g_scale = 0.001;
 
@@ -58,6 +58,10 @@ void draw_fh_parts(void)
   int i;
   for( i=0; i < NOBJECTS; i++ ){
     glLoadName( i + NOFFSET );
+    if( g_fh.partsInfo[i].updown == 0 )
+      rkglFrameAxisMaterial( g_AXES[i] );
+    else
+      rkglMaterial(NULL);
     glPushMatrix();
     rkglXform( &g_fh.frame );
     glCallList( g_fh.partsInfo[i].list );
@@ -368,8 +372,8 @@ void keyboard(unsigned char key, int x, int y)
   case 'I': rkglCALockonPTR( &cam, 0,-5, 0 ); break;
   case 'o': rkglCALockonPTR( &cam, 0, 0, 5 ); break;
   case 'O': rkglCALockonPTR( &cam, 0, 0,-5 ); break;
-  case '8': g_scale += 0.001; rkglOrthoScale( &cam, g_scale, g_znear, g_zfar ); break;
-  case '*': g_scale -= 0.001; rkglOrthoScale( &cam, g_scale, g_znear, g_zfar ); break;
+  case '8': g_scale += 0.0001; rkglOrthoScale( &cam, g_scale, g_znear, g_zfar ); break;
+  case '*': g_scale -= 0.0001; rkglOrthoScale( &cam, g_scale, g_znear, g_zfar ); break;
   case 'g': move_link( zDeg2Rad(5) ); break;
   case 'h': move_link(-zDeg2Rad(5) ); break;
   case 'q': case 'Q': case '\033':
@@ -390,15 +394,16 @@ void init_fh_parts(void)
       glDeleteLists( g_fh.partsInfo[i].list, 1 );
     glPushMatrix();
     rkglXform( &g_fh.frame );
+    rkglFrameAxisMaterial( g_AXES[i] );
     /* start register */
     g_fh.partsInfo[i].list = glGenLists( 1 );
     glNewList( g_fh.partsInfo[i].list, GL_COMPILE );
     if( i < NPOSSIZE ){
       /* translation arrow shape */
-      rkglFrameHandleArrowParts( &g_fh.frame, g_AXES[i], g_LENGTH, g_MAGNITUDE, false );
+      rkglFrameHandleArrowParts( &g_fh.frame, g_AXES[i], g_LENGTH, g_MAGNITUDE );
     } else {
       /* rotation torus shape */
-      rkglFrameHandleTorusParts( &g_fh.frame, g_AXES[i], g_LENGTH, g_MAGNITUDE, false );
+      rkglFrameHandleTorusParts( &g_fh.frame, g_AXES[i], g_LENGTH, g_MAGNITUDE );
     }
     glEndList();
     /* end register */
