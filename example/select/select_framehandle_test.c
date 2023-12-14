@@ -26,44 +26,25 @@ static const double g_LENGTH = 2.0;
 static const double g_MAGNITUDE = 1.0;
 
 /* draw FrameHandle parts shape */
-void draw_fhpts(int id, void (*fhpts_callback)(zFrame3D*, zAxis, double, double, bool))
+void draw_fh_parts(void)
 {
-  /* frame.ang (AA) -> angle & axis */
-  zVec6D aa;
-  zFrame3DToVec6DAA( &g_fh.frame, &aa );
-  zVec3D axis;
-  double angle = zVec3DNormalize( zVec6DAng( &aa ), &axis ) * 180.0 / zPI;
-
-  /* start draw */
-  glLoadName( id );
-  glPushMatrix();
-
-  if( g_fh.partsInfo[id].updown == 0 )
-    fhpts_callback( &g_fh.frame, g_AXES[id], g_LENGTH, g_MAGNITUDE, false );
-  else
-    fhpts_callback( &g_fh.frame, g_AXES[id], g_LENGTH, g_MAGNITUDE, true );
-
-  glRotated( angle, axis.c.x, axis.c.y, axis.c.z );
-  glTranslated( g_fh.frame.pos.c.x, g_fh.frame.pos.c.y, g_fh.frame.pos.c.z );
-
-  glCallList( g_fh.partsInfo[id].list );
-  glPopMatrix();
-  /* end draw */
+  int i;
+  for( i=0; i < NOBJECTS; i++ ){
+    glLoadName( i );
+    if( g_fh.partsInfo[i].updown == 0 )
+      rkglFrameAxisMaterial( g_AXES[i] );
+    else
+      rkglMaterial(NULL);
+    glPushMatrix();
+    rkglXform( &g_fh.frame );
+    glCallList( g_fh.partsInfo[i].list );
+    glPopMatrix();
+  }
 }
 
 void draw_scene(void)
 {
-  /* pos */
-  int i = 0;
-  for( i = 0; i < NPOSSIZE; i++ )
-  {
-    draw_fhpts( i, rkglFrameHandleArrowParts );
-  }
-  /* rot */
-  for( i = NPOSSIZE; i < NOBJECTS; i++ )
-  {
-    draw_fhpts( i, rkglFrameHandleTorusParts );
-  }
+  draw_fh_parts();
 }
 
 void display(void)
@@ -87,20 +68,19 @@ static zVec3D g_vp_radial_dir_center_to_start;
 void reset_parts(void)
 {
   if( selected_parts_id >= 0 ){
-    glDeleteLists( g_fh.partsInfo[ selected_parts_id ].list, 1 );
-    g_fh.partsInfo[ selected_parts_id ].list = -1;
     g_fh.partsInfo[ selected_parts_id ].updown = 0;
-
-    selected_parts_id = -1;
   }
 }
 
-void select_parts(GLuint selbuf[], int x, int y, int hits)
+void select_fh_parts(GLuint selbuf[], int x, int y, int hits)
 {
   reset_parts();
 
   GLuint *ns;
-  if( !( ns = rkglFindNearside( selbuf, hits ) ) ) return;
+  if( !( ns = rkglFindNearside( selbuf, hits ) ) ){
+    selected_parts_id = -1;
+    return;
+  }
   selected_parts_id = ns[3]; /* simple reference to link name */
 
   /* moving mode */
@@ -172,7 +152,7 @@ void mouse(int button, int state, int x, int y)
   switch( button ){
   case GLUT_LEFT_BUTTON:
     if( state == GLUT_DOWN )
-      select_parts( selbuf, x, y, rkglPick( &cam, draw_scene, selbuf, BUFSIZ, x, y, 1, 1 ) );
+      select_fh_parts( selbuf, x, y, rkglPick( &cam, draw_scene, selbuf, BUFSIZ, x, y, 1, 1 ) );
     break;
   case GLUT_MIDDLE_BUTTON:
     break;
@@ -268,6 +248,33 @@ void keyboard(unsigned char key, int x, int y)
   }
 }
 
+void init_fh_parts(void)
+{
+  int i;
+  zFrame3DIdent( &g_fh.frame );
+  for( i=0; i<NOBJECTS; i++ ){
+    g_fh.partsInfo[i].updown = 0;
+    if( glIsList( g_fh.partsInfo[i].list ) )
+      glDeleteLists( g_fh.partsInfo[i].list, 1 );
+    glPushMatrix();
+    rkglXform( &g_fh.frame );
+    rkglFrameAxisMaterial( g_AXES[i] );
+    /* start register */
+    g_fh.partsInfo[i].list = glGenLists( 1 );
+    glNewList( g_fh.partsInfo[i].list, GL_COMPILE );
+    if( i < NPOSSIZE ){
+      /* translation arrow shape */
+      rkglFrameHandleArrowParts( &g_fh.frame, g_AXES[i], g_LENGTH, g_MAGNITUDE );
+    } else {
+      /* rotation torus shape */
+      rkglFrameHandleTorusParts( &g_fh.frame, g_AXES[i], g_LENGTH, g_MAGNITUDE );
+    }
+    glEndList();
+    /* end register */
+    glPopMatrix();
+  }
+}
+
 void init(void)
 {
   rkglSetCallbackParamGLUT( &cam, 0, 0, 0, 0, 0 );
@@ -279,14 +286,7 @@ void init(void)
   rkglLightCreate( &light, 0.4, 0.4, 0.4, 1, 1, 1, 0, 0, 0 );
   rkglLightMove( &light, 8, 0, 8 );
 
-  int i;
-  for( i=0; i<NOBJECTS; i++ ){
-    g_fh.partsInfo[i].updown = 0;
-    glDeleteLists( g_fh.partsInfo[i].list, 1 );
-    g_fh.partsInfo[i].list = glGenLists( 1 );
-    glNewList( g_fh.partsInfo[i].list, GL_COMPILE );
-    glEndList();
-  }
+  init_fh_parts();
 }
 
 void idle(void){ glutPostRedisplay(); }
