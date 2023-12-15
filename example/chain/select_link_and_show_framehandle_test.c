@@ -69,11 +69,14 @@ void draw_fh_parts(void)
   }
 }
 
+bool g_mouse_event_flag = false;
+
 void draw_scene(void)
 {
   rkglChainDraw( &gr );
   if( g_selected.obj != NONE ){
-    if( gr.info[g_selected.link_id].list != gr.info[g_selected.link_id].list_alt ){
+    if( g_mouse_event_flag
+        && gr.info[g_selected.link_id].list_alt == -1 ){
       /* re-drawing selected link once when mouse() clicked */
       zOpticalInfo oi_alt;
       /* zOpticalInfoCreateSimple( &oi_alt, 1.0, 0.0, 0.0, NULL ); */
@@ -82,7 +85,9 @@ void draw_scene(void)
       /* TODO : reuse selected link list value */
       /* (the current implementation generates new list value by glNewList() ) */
       rkglChainLinkAlt( &gr, g_selected.link_id, &oi_alt, &gr.attr, &light );
+      g_mouse_event_flag = false;
     }
+    /* end of if( g_mouse_event_flag ) */
     /* drawing FrameHandle */
     draw_fh_parts();
   }
@@ -106,10 +111,19 @@ static zVec3D g_parts_axis_unit_3D_vector;
 static zVec3D g_vp_circle_center_3D;
 static zVec3D g_vp_radial_dir_center_to_start;
 
-void reset_link(void)
+void reset_link(int new_link_id)
 {
-  if( g_selected.link_id >= 0 ){
-    rkglChainLinkReset( &gr, g_selected.link_id );
+  if( new_link_id != g_selected.link_id ){
+    if( g_selected.link_id >= 0 ){
+      printf( "reset_link : pre gr.info[%d].list = %d, ", g_selected.link_id, gr.info[g_selected.link_id].list );
+      printf( "list_alt = %d, ---> ", gr.info[g_selected.link_id].list_alt );
+
+      rkglChainLinkReset( &gr, g_selected.link_id );
+
+      printf( "list = %d, ", gr.info[g_selected.link_id].list );
+      printf( "list_alt = %d\n  ", gr.info[g_selected.link_id].list_alt );
+    }
+    g_selected.link_id = new_link_id;
   }
 }
 
@@ -122,17 +136,14 @@ void reset_fh_parts(void)
 
 void select_object(GLuint selbuf[], int hits)
 {
-  GLuint *ns;
-
-  reset_link();
   reset_fh_parts();
-
+  GLuint *ns;
   if( !( ns = rkglFindNearside( selbuf, hits ) ) ){
     g_selected.obj = NONE;
-    g_selected.link_id = -1;
+    reset_link( -1 );
     g_selected.fh_parts_id = -1;
-    printf( "selected_link_id = %d, ", g_selected.link_id );
-    printf( "selected_parts_id = %d \n", g_selected.fh_parts_id );
+    printf( "selected : link_id = %d, ", g_selected.link_id );
+    printf( "fh_parts_id = %d \n\n", g_selected.fh_parts_id );
     return;
   }
   int nearest_shape_id = ns[3];
@@ -140,7 +151,7 @@ void select_object(GLuint selbuf[], int hits)
       && nearest_shape_id < rkChainLinkNum(gr.chain) ){
     /* nearest_link < NOFFSET */
     g_selected.obj = LINKFRAME;
-    g_selected.link_id = nearest_shape_id; /* simple reference to link name */
+    reset_link( nearest_shape_id );
     g_selected.fh_parts_id = -1;
   } else if( nearest_shape_id >= NOFFSET
              && nearest_shape_id < NOFFSET + NOBJECTS ){
@@ -152,11 +163,11 @@ void select_object(GLuint selbuf[], int hits)
     g_zmin = ns[1] / (GLdouble)(0xffffffff);
   } else{
     g_selected.obj = NONE;
-    g_selected.link_id = -1;
+    reset_link( -1 );
     g_selected.fh_parts_id = -1;
   }
-  printf( "selected_link_id = %d, ", g_selected.link_id );
-  printf("  selected_parts_id = %d \n", g_selected.fh_parts_id );
+  printf( "selected : link_id = %d, ", g_selected.link_id );
+  printf( "fh_parts_id = %d \n\n", g_selected.fh_parts_id );
 }
 
 void select_fh_parts(int x, int y)
@@ -268,7 +279,8 @@ void mouse(int button, int state, int x, int y)
       int hits = rkglPick( &cam, draw_scene, selbuf, BUFSIZ, x, y, 1, 1 );
       /* update g_selected status */
       select_object( selbuf, hits );
-
+      /* this flag changing must be called after draw_scene called in rkglPick() */
+      g_mouse_event_flag = true;
       switch( g_selected.obj ){
       case LINKFRAME:
         /* update frame handle location */
@@ -286,8 +298,6 @@ void mouse(int button, int state, int x, int y)
     break;
   case GLUT_RIGHT_BUTTON:
     if( state == GLUT_DOWN ){
-      reset_link();
-      reset_fh_parts();
     }
     break;
   default: ;
