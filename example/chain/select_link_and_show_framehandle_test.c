@@ -69,25 +69,19 @@ void draw_fh_parts(void)
   }
 }
 
-bool g_mouse_event_flag = false;
-
 void draw_scene(void)
 {
   rkglChainDraw( &gr );
   if( g_selected.obj != NONE ){
-    if( g_mouse_event_flag
-        && gr.info[g_selected.link_id].list_alt == -1 ){
-      /* re-drawing selected link once when mouse() clicked */
+    if( gr.info[g_selected.link_id].list_alt == -1 ){
+      /* re-drawing selected link once when mouse left clicked */
       zOpticalInfo oi_alt;
-      /* zOpticalInfoCreateSimple( &oi_alt, 1.0, 0.0, 0.0, NULL ); */
       zOpticalInfoCreate( &oi_alt, 0.8, 0.5, 0.5, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.2, NULL );
       gr.attr.disptype = RKGL_FACE;
       /* TODO : reuse selected link list value */
       /* (the current implementation generates new list value by glNewList() ) */
       rkglChainLinkAlt( &gr, g_selected.link_id, &oi_alt, &gr.attr, &light );
-      g_mouse_event_flag = false;
     }
-    /* end of if( g_mouse_event_flag ) */
     /* drawing FrameHandle */
     draw_fh_parts();
   }
@@ -149,7 +143,6 @@ void select_object(GLuint selbuf[], int hits)
   int nearest_shape_id = ns[3];
   if( nearest_shape_id >= 0
       && nearest_shape_id < rkChainLinkNum(gr.chain) ){
-    /* nearest_link < NOFFSET */
     g_selected.obj = LINKFRAME;
     reset_link( nearest_shape_id );
     g_selected.fh_parts_id = -1;
@@ -158,7 +151,6 @@ void select_object(GLuint selbuf[], int hits)
     g_selected.obj = FRAMEHANDLE;
     /* g_selected.link_id is not changed */
     g_selected.fh_parts_id = nearest_shape_id - NOFFSET;
-
     /* zmin(=ns[1]) is GLuint data. GLuint maximum value is 0xffffffff. */
     g_zmin = ns[1] / (GLdouble)(0xffffffff);
   } else{
@@ -275,16 +267,14 @@ void mouse(int button, int state, int x, int y)
   switch( button ){
   case GLUT_LEFT_BUTTON:
     if( state == GLUT_DOWN ){
-      int pre_selected_link = g_selected.link_id;
+      int pre_selected_link_id = g_selected.link_id;
       int hits = rkglPick( &cam, draw_scene, selbuf, BUFSIZ, x, y, 1, 1 );
       /* update g_selected status */
       select_object( selbuf, hits );
-      /* this flag changing must be called after draw_scene called in rkglPick() */
-      g_mouse_event_flag = true;
       switch( g_selected.obj ){
       case LINKFRAME:
         /* update frame handle location */
-        if( g_selected.link_id != pre_selected_link ) {
+        if( g_selected.link_id != pre_selected_link_id ) {
           zFrame3DCopy( rkChainLinkWldFrame(gr.chain, g_selected.link_id), &g_fh.frame );
         }
         break;
@@ -400,13 +390,13 @@ void init_fh_parts(void)
   zFrame3DIdent( &g_fh.frame );
   for( i=0; i<NOBJECTS; i++ ){
     g_fh.partsInfo[i].updown = 0;
-    if( glIsList( g_fh.partsInfo[i].list ) )
-      glDeleteLists( g_fh.partsInfo[i].list, 1 );
     glPushMatrix();
     rkglXform( &g_fh.frame );
     rkglFrameAxisMaterial( g_AXES[i] );
     /* start register */
     g_fh.partsInfo[i].list = glGenLists( 1 );
+    if( glIsList( g_fh.partsInfo[i].list ) )
+      glDeleteLists( g_fh.partsInfo[i].list, 1 );
     glNewList( g_fh.partsInfo[i].list, GL_COMPILE );
     if( i < NPOSSIZE ){
       /* translation arrow shape */
@@ -426,7 +416,6 @@ void init(void)
   rkglSetCallbackParamGLUT( &cam, 0, 0, 0, 0, 0 );
 
   rkglBGSet( &cam, 0.5, 0.5, 0.5 );
-  /* rkglCASet( &cam, 1, 1, 1, 45, -30, 0 ); */
   rkglCASet( &cam, 1, 1, 1, 45, -30, 0 );
 
   glEnable(GL_LIGHTING);
@@ -452,7 +441,7 @@ void idle(void){ glutPostRedisplay(); }
 
 int main(int argc, char *argv[])
 {
-  /* initialize */
+  /* initialize the location of frame handle object */
   zFrame3DFromAA( &g_fh.frame, 0.0, 0.0, 0.0,  0.0, 0.0, 1.0);
 
   rkglInitGLUT( &argc, argv );
@@ -460,9 +449,7 @@ int main(int argc, char *argv[])
 
   glutDisplayFunc( display );
   glutMouseFunc( mouse );
-
   glutMotionFunc( motion );
-
   glutReshapeFunc( resize );
   glutKeyboardFunc( keyboard );
   glutIdleFunc( idle );
