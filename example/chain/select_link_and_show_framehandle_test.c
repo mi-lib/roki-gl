@@ -40,6 +40,10 @@ typedef enum{
   FRAMEHANDLE,
 } selectedObj;
 
+static const int NOT_SELECTED = -1;
+static const int INACTIVE_SELECT = 0;
+static const int ACTIVE_SELECT = 1;
+
 typedef struct{
   selectedObj obj;
   int link_id;
@@ -71,19 +75,26 @@ void draw_fh_parts(void)
 
 void draw_scene(void)
 {
-  rkglChainDraw( &gr );
+  /* Transparency depends on drawing order */
   if( g_selected.obj != NONE ){
-    if( gr.info[g_selected.link_id].list_alt == -1 ){
-      /* re-drawing selected link once when mouse left clicked */
-      zOpticalInfo oi_alt;
-      zOpticalInfoCreate( &oi_alt, 0.8, 0.5, 0.5, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.2, NULL );
-      gr.attr.disptype = RKGL_FACE;
-      /* TODO : reuse selected link list value */
-      /* (the current implementation generates new list value by glNewList() ) */
-      rkglChainLinkAlt( &gr, g_selected.link_id, &oi_alt, &gr.attr, &light );
-    }
     /* drawing FrameHandle */
     draw_fh_parts();
+  }
+  /* drawing link frame */
+  rkglChainDraw( &gr );
+  if( g_selected.obj != NONE
+      && gr.info[g_selected.link_id].list_alt == -1 ){
+    /* re-drawing the selected link once after proccessing with rkglChainLinkReset() */
+    zOpticalInfo oi_alt;
+    zOpticalInfoCreate( &oi_alt, 0.8, 0.5, 0.5, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.2, NULL );
+    gr.attr.disptype = RKGL_FACE;
+    printf( "alternate link : pre gr.info[%d].list = %d, ", g_selected.link_id, gr.info[g_selected.link_id].list );
+    printf( "list_alt = %d, ---> ", gr.info[g_selected.link_id].list_alt );
+    /* TODO : reuse selected link list value */
+    /* (the current implementation generates new list value by glNewList() ) */
+    rkglChainLinkAlt( &gr, g_selected.link_id, &oi_alt, &gr.attr, &light );
+    printf( "list = %d, ", gr.info[g_selected.link_id].list );
+    printf( "list_alt = %d\n", gr.info[g_selected.link_id].list_alt );
   }
   /* end of if( g_selected.obj != NONE ) */
 }
@@ -109,15 +120,34 @@ void reset_link(int new_link_id)
 {
   if( new_link_id != g_selected.link_id ){
     if( g_selected.link_id >= 0 ){
-      printf( "reset_link : pre gr.info[%d].list = %d, ", g_selected.link_id, gr.info[g_selected.link_id].list );
-      printf( "list_alt = %d, ---> ", gr.info[g_selected.link_id].list_alt );
-
-      rkglChainLinkReset( &gr, g_selected.link_id );
-
-      printf( "list = %d, ", gr.info[g_selected.link_id].list );
-      printf( "list_alt = %d\n  ", gr.info[g_selected.link_id].list_alt );
+      gr.info[g_selected.link_id].select = INACTIVE_SELECT;
+    } else{
+      /* This may be redundant */
+      gr.info[g_selected.link_id].select = NOT_SELECTED;
     }
     g_selected.link_id = new_link_id;
+  }
+  if( new_link_id >= 0 ){
+    if( gr.info[new_link_id].select == NOT_SELECTED ){
+      printf( "reset link     : pre gr.info[%d].list = %d, ", new_link_id, gr.info[new_link_id].list );
+      printf( "list_alt = %d, ---> ", gr.info[new_link_id].list_alt );
+      rkglChainLinkReset( &gr, new_link_id );
+      printf( "list = %d, ", gr.info[new_link_id].list );
+      printf( "list_alt = %d\n", gr.info[new_link_id].list_alt );
+    }
+    gr.info[new_link_id].select = ACTIVE_SELECT;
+  } else{
+    int i;
+    for( i=0; i<rkChainLinkNum(gr.chain); i++ ){
+      if( gr.info[i].select != NOT_SELECTED ){
+        printf( "reset_link : pre gr.info[%d].list = %d, ", i, gr.info[i].list );
+        printf( "list_alt = %d, ---> ", gr.info[i].list_alt );
+        rkglChainLinkReset( &gr, i );
+        gr.info[i].select = NOT_SELECTED;
+        printf( "list = %d, ", gr.info[i].list );
+        printf( "list_alt = %d\n", gr.info[i].list_alt );
+      }
+    }
   }
 }
 
@@ -128,38 +158,53 @@ void reset_fh_parts(void)
   }
 }
 
-void select_object(GLuint selbuf[], int hits)
+int select_object(GLuint selbuf[], int hits)
 {
-  reset_fh_parts();
+  int nearest_shape_id = -1;
   GLuint *ns;
   if( !( ns = rkglFindNearside( selbuf, hits ) ) ){
     g_selected.obj = NONE;
-    reset_link( -1 );
-    g_selected.fh_parts_id = -1;
-    printf( "selected : link_id = %d, ", g_selected.link_id );
-    printf( "fh_parts_id = %d \n\n", g_selected.fh_parts_id );
-    return;
+    return nearest_shape_id;
   }
-  int nearest_shape_id = ns[3];
+  nearest_shape_id = ns[3];
+  /* zmin(=ns[1]) is GLuint data. GLuint maximum value is 0xffffffff. */
+  g_zmin = ns[1] / (GLdouble)(0xffffffff);
   if( nearest_shape_id >= 0
       && nearest_shape_id < rkChainLinkNum(gr.chain) ){
     g_selected.obj = LINKFRAME;
-    reset_link( nearest_shape_id );
-    g_selected.fh_parts_id = -1;
   } else if( nearest_shape_id >= NOFFSET
              && nearest_shape_id < NOFFSET + NOBJECTS ){
     g_selected.obj = FRAMEHANDLE;
-    /* g_selected.link_id is not changed */
-    g_selected.fh_parts_id = nearest_shape_id - NOFFSET;
-    /* zmin(=ns[1]) is GLuint data. GLuint maximum value is 0xffffffff. */
-    g_zmin = ns[1] / (GLdouble)(0xffffffff);
   } else{
     g_selected.obj = NONE;
-    reset_link( -1 );
-    g_selected.fh_parts_id = -1;
   }
-  printf( "selected : link_id = %d, ", g_selected.link_id );
-  printf( "fh_parts_id = %d \n\n", g_selected.fh_parts_id );
+  return nearest_shape_id;
+}
+
+void switch_status(int new_selected_shape_id)
+{
+  reset_fh_parts();
+  switch( g_selected.obj ){
+  case LINKFRAME:
+    g_selected.fh_parts_id = -1;
+    /* update frame handle location */
+    if( new_selected_shape_id != g_selected.link_id ) {
+      zFrame3DCopy( rkChainLinkWldFrame(gr.chain, new_selected_shape_id), &g_fh.frame );
+    }
+    reset_link( new_selected_shape_id );
+    break;
+  case FRAMEHANDLE:
+    /* g_selected.link_id is not changed */
+    g_selected.fh_parts_id = new_selected_shape_id - NOFFSET;
+    break;
+  case NONE:
+    reset_link( new_selected_shape_id );
+    g_selected.fh_parts_id = -1;
+    break;
+  default: break;
+  }
+  printf( "selected       : link_id = %d, ", g_selected.link_id );
+  printf( "fh_parts_id = %d \n", g_selected.fh_parts_id );
 }
 
 void select_fh_parts(int x, int y)
@@ -260,40 +305,44 @@ void move_link(double angle)
   rkChainUpdateFK( &g_chain );
 }
 
+void draw_select_fh_parts(void)
+{
+  if( g_selected.obj != NONE ){
+    draw_fh_parts();
+  }
+}
+
+void draw_select_link(void)
+{
+  rkglChainDraw( &gr );
+}
+
 void mouse(int button, int state, int x, int y)
 {
-  GLuint selbuf[BUFSIZ];
-
   switch( button ){
   case GLUT_LEFT_BUTTON:
     if( state == GLUT_DOWN ){
-      int pre_selected_link_id = g_selected.link_id;
-      int hits = rkglPick( &cam, draw_scene, selbuf, BUFSIZ, x, y, 1, 1 );
-      /* update g_selected status */
-      select_object( selbuf, hits );
-      switch( g_selected.obj ){
-      case LINKFRAME:
-        /* update frame handle location */
-        if( g_selected.link_id != pre_selected_link_id ) {
-          zFrame3DCopy( rkChainLinkWldFrame(gr.chain, g_selected.link_id), &g_fh.frame );
-        }
-        break;
-      case FRAMEHANDLE:
+      GLuint selbuf[BUFSIZ];
+      int hits = rkglPick( &cam, draw_select_fh_parts, selbuf, BUFSIZ, x, y, 1, 1 );
+      int new_selected_shape_id = select_object( selbuf, hits );
+      if( g_selected.obj == FRAMEHANDLE ){
+        /* update g_selected status */
+        switch_status( new_selected_shape_id );
         select_fh_parts( x, y );
-        break;
-      default: ;
+      } else{
+        GLuint selbuf2[BUFSIZ];
+        hits = rkglPick( &cam, draw_select_link, selbuf2, BUFSIZ, x, y, 1, 1 );
+        new_selected_shape_id = select_object( selbuf2, hits );
+        switch_status( new_selected_shape_id );
       }
-      /* end of switch( g_selected.obj ) */
     }
     break;
   case GLUT_RIGHT_BUTTON:
     if( state == GLUT_DOWN ){
     }
     break;
-  default: ;
-  }
-  /* end of switch( button ) */
-
+  default: break;
+  } /* end of switch( button ) */
   if( g_selected.obj != FRAMEHANDLE )
   {
     rkglMouseFuncGLUT(button, state, x, y);
@@ -359,7 +408,6 @@ void motion(int x, int y)
 void resize(int w, int h)
 {
   rkglVPCreate( &cam, 0, 0, w, h );
-  /* rkglFrustumScale( &cam, 1.0/1000, 0.5, 10 ); */
   rkglOrthoScale( &cam, g_scale, g_znear, g_zfar );
 }
 
@@ -426,7 +474,10 @@ void init(void)
   rkglChainAttrInit( &attr );
   rkChainReadZTK( &g_chain, "../model/puma.ztk" );
   rkglChainLoad( &gr, &g_chain, &attr, &light );
-
+  int i;
+  for( i=0; i<rkChainLinkNum(gr.chain); i++ ){
+    gr.info[i].select = NOT_SELECTED;
+  }
   rkChainCreateIK( &g_chain );
   rkChainRegIKJointAll( &g_chain, 0.001 );
 

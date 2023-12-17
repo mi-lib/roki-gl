@@ -26,6 +26,7 @@ __ROKI_GL_EXPORT void rkglChainAttrCopy(rkglChainAttr *src, rkglChainAttr *dest)
 
 typedef struct{
   bool visible;
+  int select;
   GLint list;
   GLint list_alt; /* alternative drawing */
 } rkglLinkInfo;

@@ -50,6 +50,7 @@ bool rkglChainLoad(rkglChain *gc, rkChain *c, rkglChainAttr *attr, rkglLight *li
     gc->info[i].list = rkglLinkEntry( rkChainLink(gc->chain,i), NULL, &gc->attr, light );
     gc->info[i].list_alt = -1;
     gc->info[i].visible = ( gc->info[i].list >= 0 ) ? true : false;
+    gc->info[i].select = -1;
   }
   return true;
 }
