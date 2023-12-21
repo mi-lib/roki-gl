@@ -1,5 +1,35 @@
 #include <roki_gl/roki_glut.h>
 
+/* suggestion to add rkglLinkInfo rkgl_chain.h ********************************************/
+typedef struct{
+  int select; /* suggestion info */
+} rkglLinkInfo2;
+/* End of suggestion to add rkglLinkInfo rkgl_chain.h *************************************/
+
+rkglLinkInfo2 *gr_info2;
+
+/* suggestion to add rkglChainLoad() rkgl_chain.c *****************************************/
+bool rkglChainLoad_for_rkglLinkInfo2(rkChain *gc_chain)
+{
+  int i;
+
+  if( !( gr_info2 = zAlloc( rkglLinkInfo2, rkChainLinkNum(gc_chain) ) ) ){
+    ZALLOCERROR();
+    return false;
+  }
+  for( i=0; i<rkChainLinkNum(gc_chain); i++ ){
+    gr_info2[i].select = -1; /* suggestion code */
+  }
+  return true;
+}
+/* End of suggestion to add rkglChainLoad() rkgl_chain.c **********************************/
+
+void rkglChainUnload_for_rkglLinkInfo2()
+{
+  zFree( gr_info2 );
+}
+
+
 /* the number of FrameHandle parts */
 #define NOBJECTS 6
 /* the number of translation size (x,y,z : 3) */
@@ -120,30 +150,30 @@ void reset_link(int new_link_id)
 {
   if( new_link_id != g_selected.link_id ){
     if( g_selected.link_id >= 0 ){
-      gr.info[g_selected.link_id].select = INACTIVE_SELECT;
+      gr_info2[g_selected.link_id].select = INACTIVE_SELECT;
     } else{
       /* This may be redundant */
-      gr.info[g_selected.link_id].select = NOT_SELECTED;
+      gr_info2[g_selected.link_id].select = NOT_SELECTED;
     }
     g_selected.link_id = new_link_id;
   }
   if( new_link_id >= 0 ){
-    if( gr.info[new_link_id].select == NOT_SELECTED ){
+    if( gr_info2[new_link_id].select == NOT_SELECTED ){
       printf( "reset link     : pre gr.info[%d].list = %d, ", new_link_id, gr.info[new_link_id].list );
       printf( "list_alt = %d, ---> ", gr.info[new_link_id].list_alt );
       rkglChainLinkReset( &gr, new_link_id );
       printf( "list = %d, ", gr.info[new_link_id].list );
       printf( "list_alt = %d\n", gr.info[new_link_id].list_alt );
     }
-    gr.info[new_link_id].select = ACTIVE_SELECT;
+    gr_info2[new_link_id].select = ACTIVE_SELECT;
   } else{
     int i;
     for( i=0; i<rkChainLinkNum(gr.chain); i++ ){
-      if( gr.info[i].select != NOT_SELECTED ){
+      if( gr_info2[i].select != NOT_SELECTED ){
         printf( "reset_link : pre gr.info[%d].list = %d, ", i, gr.info[i].list );
         printf( "list_alt = %d, ---> ", gr.info[i].list_alt );
         rkglChainLinkReset( &gr, i );
-        gr.info[i].select = NOT_SELECTED;
+        gr_info2[i].select = NOT_SELECTED;
         printf( "list = %d, ", gr.info[i].list );
         printf( "list_alt = %d\n", gr.info[i].list_alt );
       }
@@ -426,7 +456,9 @@ void keyboard(unsigned char key, int x, int y)
   case 'h': move_link(-zDeg2Rad(5) ); break;
   case 'q': case 'Q': case '\033':
     rkglChainUnload( &gr );
+    rkglChainUnload_for_rkglLinkInfo2();
     rkChainDestroy( &g_chain );
+
     exit( EXIT_SUCCESS );
   default: ;
   }
@@ -459,7 +491,7 @@ void init_fh_parts(void)
   }
 }
 
-void init(void)
+bool init(void)
 {
   rkglSetCallbackParamGLUT( &cam, 0, 0, 0, 0, 0 );
 
@@ -473,10 +505,18 @@ void init(void)
   rkglChainAttr attr;
   rkglChainAttrInit( &attr );
   rkChainReadZTK( &g_chain, "../model/puma.ztk" );
-  rkglChainLoad( &gr, &g_chain, &attr, &light );
+  if( !rkglChainLoad( &gr, &g_chain, &attr, &light ) ){
+    ZRUNWARN( "Failed rkglChainLoad()" );
+    return false;
+  }
+  if( !rkglChainLoad_for_rkglLinkInfo2( &g_chain ) ){
+    ZRUNWARN( "Failed rkglChainLoad_for_rkglLinkInfo2()" );
+    return false;
+  }
   int i;
   for( i=0; i<rkChainLinkNum(gr.chain); i++ ){
-    gr.info[i].select = NOT_SELECTED;
+    /* definitons specific to this example code */
+    gr_info2[i].select = NOT_SELECTED;
   }
   rkChainCreateIK( &g_chain );
   rkChainRegIKJointAll( &g_chain, 0.001 );
@@ -486,6 +526,8 @@ void init(void)
   g_selected.fh_parts_id = -1;
 
   init_fh_parts();
+
+  return true;
 }
 
 void idle(void){ glutPostRedisplay(); }
@@ -504,7 +546,7 @@ int main(int argc, char *argv[])
   glutReshapeFunc( resize );
   glutKeyboardFunc( keyboard );
   glutIdleFunc( idle );
-  init();
+  if( !init() ) return 1;
   glutMainLoop();
   return 0;
 }
