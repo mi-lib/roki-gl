@@ -1,5 +1,53 @@
 #include <roki_gl/roki_glut.h>
 
+/* suggestion to add rk_shape.c ************************************************************/
+
+void rkglFrameAxisMaterial(zAxis a)
+{
+  zOpticalInfo oi;
+  switch(a){
+  case zX:
+    /* Red */
+    zOpticalInfoCreate( &oi, 0.5, 0.5, 0.5, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, NULL );
+    break;
+  case zY:
+    /* Green */
+    zOpticalInfoCreate( &oi, 0.5, 0.5, 0.5, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, NULL );
+    break;
+  case zZ:
+    /* Blue */
+    zOpticalInfoCreate( &oi, 0.5, 0.5, 0.5, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, NULL );
+    break;
+  default: return;
+  }
+  rkglMaterial( &oi );
+}
+
+void rkglFrameHandleArrowParts(zFrame3D *f, zAxis a, double l, double mag)
+{
+  zVec3D v, vb;
+
+  zVec3DMul( &zFrame3DAtt(f)->v[a], 0.5*l, &v );
+  zVec3DAdd( zFrame3DPos(f), &v, &vb );
+  rkglArrow( &vb, &v, mag );
+  zVec3DRevDRC( &v );
+  zVec3DAdd( zFrame3DPos(f), &v, &vb );
+  rkglArrow( &vb, &v, mag );
+}
+
+void rkglFrameHandleTorusParts(zFrame3D *f, zAxis a, double l, double mag)
+{
+  double r1, r2;
+
+  r1 = l * 0.5 + RKGL_ARROW_BOTTOM_RAD * mag;
+  r2 = l * 0.5 - RKGL_ARROW_BOTTOM_RAD * mag;
+
+  rkglTorus( zFrame3DPos(f), &zFrame3DAtt(f)->v[a], r1, r2, RKGL_ARROW_DIV*4, RKGL_ARROW_DIV, RKGL_FACE );
+}
+
+/* End of suggestion to add rk_shape.c *****************************************************/
+
+
 typedef struct{
   GLint list;
   int updown;
