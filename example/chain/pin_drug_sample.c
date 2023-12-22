@@ -449,8 +449,7 @@ void update_alljoint_by_ik_with_frame(zFrame3D *ref_frame )
   rkChainFK( &g_chain, dis ); /* copy state to mentatin result consistency */
   /* IK */
   int ret = rkChainIK( &g_chain, dis, zTOL, 0 );
-  if( ret >= 0 )
-  {
+  if( ret >= 0 ){
     rkChainSetJointDisAll( &g_chain, dis );
     rkChainUpdateFK( &g_chain );
   }
@@ -522,8 +521,7 @@ void mouse(int button, int state, int x, int y)
     break;
   default: break;
   } /* end of switch( button ) */
-  if( g_selected.obj != FRAMEHANDLE )
-  {
+  if( g_selected.obj != FRAMEHANDLE ){
     rkglMouseFuncGLUT(button, state, x, y);
   }
 }
@@ -556,7 +554,7 @@ void motion(int x, int y)
       zVec3D vp_radial_dir_center_to_goal;
       zVec3DSub( &vp_mouse_goal_3D, &g_vp_circle_center_3D, &vp_radial_dir_center_to_goal);
 
-      if ( !zVec3DIsTiny( &g_vp_radial_dir_center_to_start ) ){
+      if( !zVec3DIsTiny( &g_vp_radial_dir_center_to_start ) ){
         /* oval circle rotation on view port plane */
         double theta = zVec3DAngle( &g_vp_radial_dir_center_to_start, &vp_radial_dir_center_to_goal, &g_parts_axis_unit_3D_vector);
         zMat3D m;
