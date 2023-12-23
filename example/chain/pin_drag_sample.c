@@ -87,7 +87,7 @@ static const int ONLY_POS3D_PIN_LINK = 2;
 /* the weight of pink link for IK */
 #define IK_PIN_WEIGHT 1.0
 /* the weight of drag link for IK */
-#define IK_DRAG_WEIGHT 0.001
+#define IK_DRAG_WEIGHT 0.01
 
 /* the number of FrameHandle parts */
 #define NOBJECTS 6
@@ -468,7 +468,7 @@ void update_alljoint_by_IK_with_frame(zFrame3D *ref_frame )
   rkChainBindIK( &g_chain );
   /* set reference */
   if( pin == PIN_LINK
-      ||  is_rotation_mode( g_selected.fh_parts_id ) ){
+      || is_rotation_mode( g_selected.fh_parts_id ) ){
     zVec3D zyx;
     zMat3DToZYX( &(ref_frame->att), &zyx );
     rkIKCellSetRefVec( gr_info2[link_id].cell[0], &zyx );
