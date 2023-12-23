@@ -675,8 +675,7 @@ bool init(void)
   rkglLightMove( &g_light, 3, 5, 9 );
   rkglChainAttr attr;
   rkglChainAttrInit( &attr );
-  /* rkChainReadZTK( &g_chain, "../model/puma.ztk" ); */
-  rkChainReadZTK( &g_chain, "../model/mighty.ztk" );
+  rkChainReadZTK( &g_chain, "../model/puma.ztk" );
   if( !rkglChainLoad( &gr, &g_chain, &attr, &g_light ) ){
     ZRUNWARN( "Failed rkglChainLoad()" );
     return false;
