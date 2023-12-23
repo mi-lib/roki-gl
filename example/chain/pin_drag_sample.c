@@ -429,20 +429,22 @@ void update_alljoint_by_ik_with_frame(zFrame3D *ref_frame )
   /* register */
   rkIKAttr attr;
   attr.id = g_selected.link_id;
-  if( gr_info2[g_selected.link_id].pin == NOT_PIN_LINK ){
+  if( gr_info2[g_selected.link_id].pin != PIN_LINK ){
     if( is_rotation_mode( g_selected.fh_parts_id ) ){
       gr_info2[g_selected.link_id].cell[0] = rkChainRegIKCellWldAtt( &g_chain, &attr, RK_IK_ATTR_ID );
+      rkIKCellSetWeight( gr_info2[g_selected.link_id].cell[0], IK_DRAG_WEIGHT, IK_DRAG_WEIGHT, IK_DRAG_WEIGHT );
     }
-    gr_info2[g_selected.link_id].cell[1] = rkChainRegIKCellWldPos( &g_chain, &attr, RK_IK_ATTR_ID );
-    rkIKAttrSetWeight( &attr, IK_DRAG_WEIGHT, IK_DRAG_WEIGHT, IK_DRAG_WEIGHT );
+    if( gr_info2[g_selected.link_id].pin == NOT_PIN_LINK ){
+      gr_info2[g_selected.link_id].cell[1] = rkChainRegIKCellWldPos( &g_chain, &attr, RK_IK_ATTR_ID );
+      rkIKCellSetWeight( gr_info2[g_selected.link_id].cell[1], IK_DRAG_WEIGHT, IK_DRAG_WEIGHT, IK_DRAG_WEIGHT );
+    }
   }
   /* prepare IK */
   rkChainDeactivateIK( &g_chain );
   rkChainBindIK( &g_chain );
   /* set reference */
   if( gr_info2[g_selected.link_id].pin == PIN_LINK
-      || ( gr_info2[g_selected.link_id].pin == NOT_PIN_LINK
-           && is_rotation_mode( g_selected.fh_parts_id ) ) ){
+      ||  is_rotation_mode( g_selected.fh_parts_id ) ){
     zVec3D zyx;
     zMat3DToZYX( &(ref_frame->att), &zyx );
     rkIKCellSetRefVec( gr_info2[g_selected.link_id].cell[0], &zyx );
@@ -456,10 +458,12 @@ void update_alljoint_by_ik_with_frame(zFrame3D *ref_frame )
     rkChainUpdateFK( &g_chain );
   }
   /* un-regsiter */
-  if( gr_info2[g_selected.link_id].pin == NOT_PIN_LINK ){
-    rkChainUnregIKCell( &g_chain, gr_info2[g_selected.link_id].cell[1] );
+  if( gr_info2[g_selected.link_id].pin != PIN_LINK ){
     if( is_rotation_mode( g_selected.fh_parts_id ) ){
       rkChainUnregIKCell( &g_chain, gr_info2[g_selected.link_id].cell[0] );
+    }
+    if( gr_info2[g_selected.link_id].pin == NOT_PIN_LINK ){
+      rkChainUnregIKCell( &g_chain, gr_info2[g_selected.link_id].cell[1] );
     }
   }
 }
@@ -512,13 +516,13 @@ void mouse(int button, int state, int x, int y)
     if( state == GLUT_DOWN ){
       GLuint selbuf3[BUFSIZ];
       int hits = hits = rkglPick( &g_cam, draw_select_link, selbuf3, BUFSIZ, x, y, 1, 1 );
-      int org_obj = g_selected.obj;
+      /* int org_obj = g_selected.obj; */
       int new_selected_shape_id = select_object( selbuf3, hits );
       if( g_selected.obj == LINKFRAME ){
         switch_pin_link( new_selected_shape_id );
       }
       switch_status( new_selected_shape_id );
-      g_selected.obj = org_obj;
+      /* g_selected.obj = org_obj; */
     }
     break;
   default: break;
@@ -572,10 +576,10 @@ void motion(int x, int y)
           zMat3DFromZYX( &m, theta, 0, 0 );
         }
         zMulMat3DMat3D( &g_frame3D_org.att, &m, &g_fh.frame.att );
-      } else{
-        ZRUNERROR( "selected_parts_id is ERROR\n" );
       }
       /* end of if g_vp_radial_dir_center_to_start is not Tiny */
+    } else{
+      ZRUNERROR( "selected_parts_id is ERROR\n" );
     }
     /* end of rotate mode */
 
@@ -650,7 +654,8 @@ bool init(void)
   rkglLightMove( &g_light, 3, 5, 9 );
   rkglChainAttr attr;
   rkglChainAttrInit( &attr );
-  rkChainReadZTK( &g_chain, "../model/puma.ztk" );
+  /* rkChainReadZTK( &g_chain, "../model/puma.ztk" ); */
+  rkChainReadZTK( &g_chain, "../model/mighty.ztk" );
   if( !rkglChainLoad( &gr, &g_chain, &attr, &g_light ) ){
     ZRUNWARN( "Failed rkglChainLoad()" );
     return false;
