@@ -198,21 +198,22 @@ void draw_scene(void)
   /* drawing link frame */
   zOpticalInfo oi_alt;
   gr.attr.disptype = RKGL_FACE;
-  bool is_alt = ( gr.info[g_selected.link_id].list_alt == -1 );
+  int link_id = g_selected.link_id;
+  bool is_alt = ( gr.info[link_id].list_alt == -1 );
+  int pin = gr_info2[link_id].pin;
   /* re-drawing the selected link once after proccessing with rkglChainLinkReset() */
-  if( is_alt && gr_info2[g_selected.link_id].pin == PIN_LINK ){
+  if( is_alt && pin == PIN_LINK ){
     /* Red */
     zOpticalInfoCreate( &oi_alt, 1.0, 0.3, 0.3, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.3, NULL );
-    draw_alternate_link( &gr, g_selected.link_id, &oi_alt, &gr.attr, &g_light );
-  } else if( is_alt && gr_info2[g_selected.link_id].pin == ONLY_POS3D_PIN_LINK ){
+    draw_alternate_link( &gr, link_id, &oi_alt, &gr.attr, &g_light );
+  } else if( is_alt && pin == ONLY_POS3D_PIN_LINK ){
     /* Green */
     zOpticalInfoCreate( &oi_alt, 1.0, 8.0, 0.3, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.3, NULL );
-    draw_alternate_link( &gr, g_selected.link_id, &oi_alt, &gr.attr, &g_light );
-  } else if( g_selected.obj != NONE
-      && gr.info[g_selected.link_id].list_alt == -1 ){
+    draw_alternate_link( &gr, link_id, &oi_alt, &gr.attr, &g_light );
+  } else if( g_selected.obj != NONE && is_alt ){
     /* Blue */
     zOpticalInfoCreate( &oi_alt, 0.5, 0.7, 1.0, 0.5, 0.5, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.3, NULL );
-    draw_alternate_link( &gr, g_selected.link_id, &oi_alt, &gr.attr, &g_light );
+    draw_alternate_link( &gr, link_id, &oi_alt, &gr.attr, &g_light );
   } else{
     rkglChainDraw( &gr );
   }
@@ -363,6 +364,40 @@ void switch_pin_link(int new_link_id)
   printf("pin_link       : link_id = %d, pin status = PIN_LINK\n", new_link_id );
 }
 
+void register_drag_link_for_IK(void)
+{
+  int link_id = g_selected.link_id;
+  int pin = gr_info2[link_id].pin;
+  if( pin != PIN_LINK ){
+    rkIKAttr attr;
+    attr.id = link_id;
+    if( is_rotation_mode( g_selected.fh_parts_id ) ){
+      gr_info2[link_id].cell[0] = rkChainRegIKCellWldAtt( &g_chain, &attr, RK_IK_ATTR_ID );
+      rkIKCellSetWeight( gr_info2[link_id].cell[0], IK_DRAG_WEIGHT, IK_DRAG_WEIGHT, IK_DRAG_WEIGHT );
+    }
+    if( pin == NOT_PIN_LINK ){
+      gr_info2[link_id].cell[1] = rkChainRegIKCellWldPos( &g_chain, &attr, RK_IK_ATTR_ID );
+      rkIKCellSetWeight( gr_info2[link_id].cell[1], IK_DRAG_WEIGHT, IK_DRAG_WEIGHT, IK_DRAG_WEIGHT );
+    }
+  }
+  /* end of if( pin != PIN_LINK ) */
+}
+
+void unregister_drag_link_for_IK(void)
+{
+  int link_id = g_selected.link_id;
+  int pin = gr_info2[link_id].pin;
+  if( pin != PIN_LINK ){
+    if( is_rotation_mode( g_selected.fh_parts_id ) ){
+      rkChainUnregIKCell( &g_chain, gr_info2[link_id].cell[0] );
+    }
+    if( pin == NOT_PIN_LINK ){
+      rkChainUnregIKCell( &g_chain, gr_info2[link_id].cell[1] );
+    }
+  }
+  /* end of if( pin != PIN_LINK ) */
+}
+
 void select_fh_parts(int x, int y)
 {
   g_fh.partsInfo[ g_selected.fh_parts_id ].updown = 1;
@@ -420,51 +455,31 @@ void select_fh_parts(int x, int y)
 }
 
 /* inverse kinematics */
-void update_alljoint_by_ik_with_frame(zFrame3D *ref_frame )
+void update_alljoint_by_IK_with_frame(zFrame3D *ref_frame )
 {
   zVec dis;
   dis = zVecAlloc( rkChainJointSize( &g_chain ) );
   rkChainGetJointDisAll(&g_chain, dis);
 
-  /* register */
-  rkIKAttr attr;
-  attr.id = g_selected.link_id;
-  if( gr_info2[g_selected.link_id].pin != PIN_LINK ){
-    if( is_rotation_mode( g_selected.fh_parts_id ) ){
-      gr_info2[g_selected.link_id].cell[0] = rkChainRegIKCellWldAtt( &g_chain, &attr, RK_IK_ATTR_ID );
-      rkIKCellSetWeight( gr_info2[g_selected.link_id].cell[0], IK_DRAG_WEIGHT, IK_DRAG_WEIGHT, IK_DRAG_WEIGHT );
-    }
-    if( gr_info2[g_selected.link_id].pin == NOT_PIN_LINK ){
-      gr_info2[g_selected.link_id].cell[1] = rkChainRegIKCellWldPos( &g_chain, &attr, RK_IK_ATTR_ID );
-      rkIKCellSetWeight( gr_info2[g_selected.link_id].cell[1], IK_DRAG_WEIGHT, IK_DRAG_WEIGHT, IK_DRAG_WEIGHT );
-    }
-  }
-  /* prepare IK */
+  int link_id = g_selected.link_id;
+  int pin = gr_info2[link_id].pin;
+
   rkChainDeactivateIK( &g_chain );
   rkChainBindIK( &g_chain );
   /* set reference */
-  if( gr_info2[g_selected.link_id].pin == PIN_LINK
+  if( pin == PIN_LINK
       ||  is_rotation_mode( g_selected.fh_parts_id ) ){
     zVec3D zyx;
     zMat3DToZYX( &(ref_frame->att), &zyx );
-    rkIKCellSetRefVec( gr_info2[g_selected.link_id].cell[0], &zyx );
+    rkIKCellSetRefVec( gr_info2[link_id].cell[0], &zyx );
   }
-  rkIKCellSetRefVec( gr_info2[g_selected.link_id].cell[1], &(ref_frame->pos) );
+  rkIKCellSetRefVec( gr_info2[link_id].cell[1], &(ref_frame->pos) );
   rkChainFK( &g_chain, dis ); /* copy state to mentatin result consistency */
   /* IK */
   int ret = rkChainIK( &g_chain, dis, zTOL, 0 );
   if( ret >= 0 ){
     rkChainSetJointDisAll( &g_chain, dis );
     rkChainUpdateFK( &g_chain );
-  }
-  /* un-regsiter */
-  if( gr_info2[g_selected.link_id].pin != PIN_LINK ){
-    if( is_rotation_mode( g_selected.fh_parts_id ) ){
-      rkChainUnregIKCell( &g_chain, gr_info2[g_selected.link_id].cell[0] );
-    }
-    if( gr_info2[g_selected.link_id].pin == NOT_PIN_LINK ){
-      rkChainUnregIKCell( &g_chain, gr_info2[g_selected.link_id].cell[1] );
-    }
   }
 }
 
@@ -504,11 +519,16 @@ void mouse(int button, int state, int x, int y)
         /* update g_selected status */
         switch_status( new_selected_shape_id );
         select_fh_parts( x, y );
+        register_drag_link_for_IK();
       } else{
         GLuint selbuf2[BUFSIZ];
         hits = rkglPick( &g_cam, draw_select_link, selbuf2, BUFSIZ, x, y, 1, 1 );
         new_selected_shape_id = select_object( selbuf2, hits );
         switch_status( new_selected_shape_id );
+      }
+    } else if( state == GLUT_UP ){
+      if( g_selected.obj == FRAMEHANDLE ){
+        unregister_drag_link_for_IK();
       }
     }
     break;
@@ -541,7 +561,8 @@ void motion(int x, int y)
     zVec3D vp_mouse_goal_3D;
     rkglUnproject( &g_cam, x, y, g_znear, &vp_mouse_goal_3D );
 
-    if( is_translation_mode( g_selected.fh_parts_id ) ){
+    int fh_parts_id = g_selected.fh_parts_id;
+    if( is_translation_mode( fh_parts_id ) ){
       /* translate mode */
       zVec3D vp_mouse_drag_3D_vector;
       zVec3DSub( &vp_mouse_goal_3D, &g_vp_mouse_start_3D, &vp_mouse_drag_3D_vector );
@@ -555,7 +576,7 @@ void motion(int x, int y)
       zVec3DAdd( &g_frame3D_org.pos, &dir_3D, &g_fh.frame.pos );
 
       /* end of translate mode */
-    } else if( is_rotation_mode( g_selected.fh_parts_id ) ){
+    } else if( is_rotation_mode( fh_parts_id ) ){
       /* rotate mode */
       zVec3D vp_radial_dir_center_to_goal;
       zVec3DSub( &vp_mouse_goal_3D, &g_vp_circle_center_3D, &vp_radial_dir_center_to_goal);
@@ -565,13 +586,13 @@ void motion(int x, int y)
         double theta = zVec3DAngle( &g_vp_radial_dir_center_to_start, &vp_radial_dir_center_to_goal, &g_parts_axis_unit_3D_vector);
         zMat3D m;
         /* zVec3D axis; */
-        if( g_selected.fh_parts_id == 3 ){
+        if( fh_parts_id == 3 ){
           /* x */
           zMat3DFromZYX( &m, 0, 0, theta );
-        } else if( g_selected.fh_parts_id == 4 ){
+        } else if( fh_parts_id == 4 ){
           /* y */
           zMat3DFromZYX( &m, 0, theta, 0 );
-        } else if( g_selected.fh_parts_id == 5 ){
+        } else if( fh_parts_id == 5 ){
           /* z */
           zMat3DFromZYX( &m, theta, 0, 0 );
         }
@@ -583,7 +604,7 @@ void motion(int x, int y)
     }
     /* end of rotate mode */
 
-    update_alljoint_by_ik_with_frame( &g_fh.frame );
+    update_alljoint_by_IK_with_frame( &g_fh.frame );
   }
   /* end moving mode */
 }
