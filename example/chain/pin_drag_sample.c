@@ -665,6 +665,54 @@ void init_fh_parts(void)
   }
 }
 
+char *g_modelfile = NULL;
+
+#ifdef __WINDOWS__
+#include <direct.h>
+#define compat_getcwd(buf,length) ( _getcwd( buf, length ) )
+#define compat_chdir(path) ( _chdir( path ) )
+#else
+#include <unistd.h>
+#define compat_getcwd(buf,length) ( getcwd( buf, length ) )
+#define compat_chdir(path) ( chdir( path ) )
+#endif
+
+int change_dir(char *pathname, char *dirname, char *filename, char *cwd, size_t size)
+{
+  if( !compat_getcwd( cwd, size ) ){
+    ZRUNERROR( "astray from directory" );
+    return -1;
+  }
+  zGetDirFilename( pathname, dirname, filename, size );
+  if( *dirname ){
+    if( compat_chdir( dirname ) < 0 ){
+      ZRUNERROR( "cannot change directory to %s", dirname );
+      return -1;
+    }
+  }
+  return 0;
+}
+
+int return_dir(char *cwd)
+{
+  if( compat_chdir( cwd ) < 0 ){
+    ZRUNERROR( "cannot change directory to %s", cwd );
+    return -1;
+  }
+  return 0;
+}
+
+rkChain *extend_rkChainReadZTK(rkChain *chain, char *pathname)
+{
+  char dirname[BUFSIZ], filename[BUFSIZ], cwd[BUFSIZ];
+
+  change_dir( pathname, dirname, filename, cwd, BUFSIZ );
+  chain = rkChainReadZTK( chain, filename );
+  return_dir( cwd );
+  return chain;
+}
+
+
 bool init(void)
 {
   rkglSetCallbackParamGLUT( &g_cam, 0, 0, 0, 0, 0 );
@@ -675,7 +723,14 @@ bool init(void)
   rkglLightMove( &g_light, 3, 5, 9 );
   rkglChainAttr attr;
   rkglChainAttrInit( &attr );
-  rkChainReadZTK( &g_chain, "../model/puma.ztk" );
+  if( g_modelfile == NULL ){
+    g_modelfile = zStrClone( "../model/puma.ztk" );
+  }
+  printf( "modelfile = %s\n", g_modelfile );
+  if( !extend_rkChainReadZTK( &g_chain, g_modelfile ) ){
+    ZRUNWARN( "Failed extend_rkChainReadZTK()" );
+    return false;
+  }
   if( !rkglChainLoad( &gr, &g_chain, &attr, &g_light ) ){
     ZRUNWARN( "Failed rkglChainLoad()" );
     return false;
@@ -706,6 +761,9 @@ void idle(void){ glutPostRedisplay(); }
 
 int main(int argc, char *argv[])
 {
+  if( argc > 1 ){
+    g_modelfile = argv[1];
+  }
   /* initialize the location of frame handle object */
   zFrame3DFromAA( &g_fh.frame, 0.0, 0.0, 0.0,  0.0, 0.0, 1.0);
 
