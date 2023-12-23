@@ -58,16 +58,6 @@ typedef struct{
 
 rkglLinkInfo2 *gr_info2;
 
-/* the weight of pink link for IK */
-#define IK_PIN_WEIGHT 1.0
-/* the weight of drag link for IK */
-#define IK_DRAG_WEIGHT 0.001
-
-/* pin information */
-static const int NOT_PIN_LINK = 0;
-static const int PIN_LINK = 1;
-static const int ONLY_POS3D_PIN_LINK = 2;
-
 /* suggestion to add rkglChainLoad() rkgl_chain.c *****************************************/
 bool rkglChainLoad_for_rkglLinkInfo2(rkChain *gc_chain)
 {
@@ -78,18 +68,26 @@ bool rkglChainLoad_for_rkglLinkInfo2(rkChain *gc_chain)
   }
   for( i=0; i<rkChainLinkNum(gc_chain); i++ ){
     gr_info2[i].select = -1; /* suggestion code */
-    gr_info2[i].pin = NOT_PIN_LINK;
+    gr_info2[i].pin = -1;
   }
   return true;
 }
 /* End of suggestion to add rkglChainLoad() rkgl_chain.c **********************************/
-
 
 void rkglChainUnload_for_rkglLinkInfo2()
 {
   zFree( gr_info2 );
 }
 
+/* pin information */
+static const int NOT_PIN_LINK = -1;
+static const int PIN_LINK = 1;
+static const int ONLY_POS3D_PIN_LINK = 2;
+
+/* the weight of pink link for IK */
+#define IK_PIN_WEIGHT 1.0
+/* the weight of drag link for IK */
+#define IK_DRAG_WEIGHT 0.001
 
 /* the number of FrameHandle parts */
 #define NOBJECTS 6
@@ -114,13 +112,13 @@ rkChain g_chain;
 rkglChain gr;
 
 /* viewing parameters */
-rkglCamera cam;
-rkglLight light;
+rkglCamera g_cam;
+rkglLight g_light;
 static const GLdouble g_znear = -1000.0;
 static const GLdouble g_zfar  = 100.0;
 static double g_scale = 0.001;
 
-/* FrameHandle viewing parameters */
+/* FrameHandle shape property */
 static const double g_LENGTH = 0.2;
 static const double g_MAGNITUDE = g_LENGTH * 0.5;
 
@@ -145,14 +143,18 @@ typedef struct{
 
 selectInfo g_selected;
 
+/* judge whether the selected shape ID is translation moving parts or not */
 bool is_translation_mode(int fh_parts_id)
 {
+  /* define the range of translation ID */
   return (fh_parts_id >= 0 && fh_parts_id < NPOSSIZE);
 }
 
+/* judge whether the selected shape ID is rotation moving parts or not */
 bool is_rotation_mode(int fh_parts_id)
 {
-  return (fh_parts_id >= NPOSSIZE);
+  /* define the range of rotation ID */
+  return (fh_parts_id >= NPOSSIZE && fh_parts_id < NOBJECTS);
 }
 
 /* To avoid duplication between selected_link and selected_parts_id */
@@ -201,16 +203,16 @@ void draw_scene(void)
   if( is_alt && gr_info2[g_selected.link_id].pin == PIN_LINK ){
     /* Red */
     zOpticalInfoCreate( &oi_alt, 1.0, 0.3, 0.3, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.3, NULL );
-    draw_alternate_link( &gr, g_selected.link_id, &oi_alt, &gr.attr, &light );
+    draw_alternate_link( &gr, g_selected.link_id, &oi_alt, &gr.attr, &g_light );
   } else if( is_alt && gr_info2[g_selected.link_id].pin == ONLY_POS3D_PIN_LINK ){
     /* Green */
     zOpticalInfoCreate( &oi_alt, 1.0, 8.0, 0.3, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.3, NULL );
-    draw_alternate_link( &gr, g_selected.link_id, &oi_alt, &gr.attr, &light );
+    draw_alternate_link( &gr, g_selected.link_id, &oi_alt, &gr.attr, &g_light );
   } else if( g_selected.obj != NONE
       && gr.info[g_selected.link_id].list_alt == -1 ){
     /* Blue */
     zOpticalInfoCreate( &oi_alt, 0.5, 0.7, 1.0, 0.5, 0.5, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.3, NULL );
-    draw_alternate_link( &gr, g_selected.link_id, &oi_alt, &gr.attr, &light );
+    draw_alternate_link( &gr, g_selected.link_id, &oi_alt, &gr.attr, &g_light );
   } else{
     rkglChainDraw( &gr );
   }
@@ -219,8 +221,8 @@ void draw_scene(void)
 
 void display(void)
 {
-  rkglCALoad( &cam );
-  rkglLightPut( &light );
+  rkglCALoad( &g_cam );
+  rkglLightPut( &g_light );
   rkglClear();
   draw_scene();
   glutSwapBuffers();
@@ -367,9 +369,9 @@ void select_fh_parts(int x, int y)
   zFrame3DCopy( &g_fh.frame, &g_frame3D_org );
 
   zVec3D parts_axis_start_3D;
-  rkglUnproject( &cam, x, y, g_zmin, &parts_axis_start_3D );
+  rkglUnproject( &g_cam, x, y, g_zmin, &parts_axis_start_3D );
   /* project to view port */
-  rkglUnproject( &cam, x, y, g_znear, &g_vp_mouse_start_3D );
+  rkglUnproject( &g_cam, x, y, g_znear, &g_vp_mouse_start_3D );
 
   if( is_translation_mode( g_selected.fh_parts_id ) ){
     /* translate mode */
@@ -388,9 +390,9 @@ void select_fh_parts(int x, int y)
 
     /* project to view port */
     int ax, ay;
-    rkglProject( &cam, &parts_axis_unit_end_3D, &ax, &ay );
+    rkglProject( &g_cam, &parts_axis_unit_end_3D, &ax, &ay );
     zVec3D vp_parts_axis_unit_end_3D;
-    rkglUnproject( &cam, ax, ay, g_znear, &vp_parts_axis_unit_end_3D );
+    rkglUnproject( &g_cam, ax, ay, g_znear, &vp_parts_axis_unit_end_3D );
     zVec3DSub( &vp_parts_axis_unit_end_3D, &g_vp_mouse_start_3D, &g_vp_parts_axis_3D_vector );
 
     /* end of translate mode */
@@ -408,8 +410,8 @@ void select_fh_parts(int x, int y)
     }
     /* project to view port */
     int cx, cy;
-    rkglProject( &cam, &g_fh.frame.pos, &cx, &cy );
-    rkglUnproject( &cam, cx, cy, g_znear, &g_vp_circle_center_3D );
+    rkglProject( &g_cam, &g_fh.frame.pos, &cx, &cy );
+    rkglUnproject( &g_cam, cx, cy, g_znear, &g_vp_circle_center_3D );
     zVec3DSub( &g_vp_mouse_start_3D, &g_vp_circle_center_3D, &g_vp_radial_dir_center_to_start);
   } else{
     ZRUNERROR( "selected_parts_id is ERROR\n" );
@@ -492,7 +494,7 @@ void mouse(int button, int state, int x, int y)
   case GLUT_LEFT_BUTTON:
     if( state == GLUT_DOWN ){
       GLuint selbuf[BUFSIZ];
-      int hits = rkglPick( &cam, draw_select_fh_parts, selbuf, BUFSIZ, x, y, 1, 1 );
+      int hits = rkglPick( &g_cam, draw_select_fh_parts, selbuf, BUFSIZ, x, y, 1, 1 );
       int new_selected_shape_id = select_object( selbuf, hits );
       if( g_selected.obj == FRAMEHANDLE ){
         /* update g_selected status */
@@ -500,7 +502,7 @@ void mouse(int button, int state, int x, int y)
         select_fh_parts( x, y );
       } else{
         GLuint selbuf2[BUFSIZ];
-        hits = rkglPick( &cam, draw_select_link, selbuf2, BUFSIZ, x, y, 1, 1 );
+        hits = rkglPick( &g_cam, draw_select_link, selbuf2, BUFSIZ, x, y, 1, 1 );
         new_selected_shape_id = select_object( selbuf2, hits );
         switch_status( new_selected_shape_id );
       }
@@ -509,7 +511,7 @@ void mouse(int button, int state, int x, int y)
   case GLUT_RIGHT_BUTTON:
     if( state == GLUT_DOWN ){
       GLuint selbuf3[BUFSIZ];
-      int hits = hits = rkglPick( &cam, draw_select_link, selbuf3, BUFSIZ, x, y, 1, 1 );
+      int hits = hits = rkglPick( &g_cam, draw_select_link, selbuf3, BUFSIZ, x, y, 1, 1 );
       int org_obj = g_selected.obj;
       int new_selected_shape_id = select_object( selbuf3, hits );
       if( g_selected.obj == LINKFRAME ){
@@ -533,7 +535,7 @@ void motion(int x, int y)
   } else{
     /* moving mode */
     zVec3D vp_mouse_goal_3D;
-    rkglUnproject( &cam, x, y, g_znear, &vp_mouse_goal_3D );
+    rkglUnproject( &g_cam, x, y, g_znear, &vp_mouse_goal_3D );
 
     if( is_translation_mode( g_selected.fh_parts_id ) ){
       /* translate mode */
@@ -584,21 +586,21 @@ void motion(int x, int y)
 
 void resize(int w, int h)
 {
-  rkglVPCreate( &cam, 0, 0, w, h );
-  rkglOrthoScale( &cam, g_scale, g_znear, g_zfar );
+  rkglVPCreate( &g_cam, 0, 0, w, h );
+  rkglOrthoScale( &g_cam, g_scale, g_znear, g_zfar );
 }
 
 void keyboard(unsigned char key, int x, int y)
 {
   switch( key ){
-  case 'u': rkglCALockonPTR( &cam, 5, 0, 0 ); break;
-  case 'U': rkglCALockonPTR( &cam,-5, 0, 0 ); break;
-  case 'i': rkglCALockonPTR( &cam, 0, 5, 0 ); break;
-  case 'I': rkglCALockonPTR( &cam, 0,-5, 0 ); break;
-  case 'o': rkglCALockonPTR( &cam, 0, 0, 5 ); break;
-  case 'O': rkglCALockonPTR( &cam, 0, 0,-5 ); break;
-  case '8': g_scale += 0.0001; rkglOrthoScale( &cam, g_scale, g_znear, g_zfar ); break;
-  case '*': g_scale -= 0.0001; rkglOrthoScale( &cam, g_scale, g_znear, g_zfar ); break;
+  case 'u': rkglCALockonPTR( &g_cam, 5, 0, 0 ); break;
+  case 'U': rkglCALockonPTR( &g_cam,-5, 0, 0 ); break;
+  case 'i': rkglCALockonPTR( &g_cam, 0, 5, 0 ); break;
+  case 'I': rkglCALockonPTR( &g_cam, 0,-5, 0 ); break;
+  case 'o': rkglCALockonPTR( &g_cam, 0, 0, 5 ); break;
+  case 'O': rkglCALockonPTR( &g_cam, 0, 0,-5 ); break;
+  case '8': g_scale += 0.0001; rkglOrthoScale( &g_cam, g_scale, g_znear, g_zfar ); break;
+  case '*': g_scale -= 0.0001; rkglOrthoScale( &g_cam, g_scale, g_znear, g_zfar ); break;
   case 'g': move_link( zDeg2Rad(5) ); break;
   case 'h': move_link(-zDeg2Rad(5) ); break;
   case 'q': case 'Q': case '\033':
@@ -640,16 +642,16 @@ void init_fh_parts(void)
 
 bool init(void)
 {
-  rkglSetCallbackParamGLUT( &cam, 0, 0, 0, 0, 0 );
-  rkglBGSet( &cam, 0.5, 0.5, 0.5 );
-  rkglCASet( &cam, 1, 1, 1, 45, -30, 0 );
+  rkglSetCallbackParamGLUT( &g_cam, 0, 0, 0, 0, 0 );
+  rkglBGSet( &g_cam, 0.5, 0.5, 0.5 );
+  rkglCASet( &g_cam, 1, 1, 1, 45, -30, 0 );
   glEnable(GL_LIGHTING);
-  rkglLightCreate( &light, 0.5, 0.5, 0.5, 0.6, 0.6, 0.6, 0.2, 0.2, 0.2 );
-  rkglLightMove( &light, 3, 5, 9 );
+  rkglLightCreate( &g_light, 0.5, 0.5, 0.5, 0.6, 0.6, 0.6, 0.2, 0.2, 0.2 );
+  rkglLightMove( &g_light, 3, 5, 9 );
   rkglChainAttr attr;
   rkglChainAttrInit( &attr );
   rkChainReadZTK( &g_chain, "../model/puma.ztk" );
-  if( !rkglChainLoad( &gr, &g_chain, &attr, &light ) ){
+  if( !rkglChainLoad( &gr, &g_chain, &attr, &g_light ) ){
     ZRUNWARN( "Failed rkglChainLoad()" );
     return false;
   }
