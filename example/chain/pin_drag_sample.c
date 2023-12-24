@@ -87,7 +87,7 @@ static const int ONLY_POS3D_PIN_LINK = 2;
 /* the weight of pink link for IK */
 #define IK_PIN_WEIGHT 1.0
 /* the weight of drag link for IK */
-#define IK_DRAG_WEIGHT 0.01
+#define IK_DRAG_WEIGHT 0.0001
 
 /* the number of FrameHandle parts */
 #define NOBJECTS 6
@@ -476,7 +476,9 @@ void update_alljoint_by_IK_with_frame(zFrame3D *ref_frame )
   rkIKCellSetRefVec( gr_info2[link_id].cell[1], &(ref_frame->pos) );
   rkChainFK( &g_chain, dis ); /* copy state to mentatin result consistency */
   /* IK */
-  int ret = rkChainIK( &g_chain, dis, zTOL, 0 );
+  int iter = 100;
+  double ztol = zTOL;
+  int ret = rkChainIK( &g_chain, dis, ztol, iter );
   if( ret >= 0 ){
     rkChainSetJointDisAll( &g_chain, dis );
     rkChainUpdateFK( &g_chain );
