@@ -87,7 +87,7 @@ static const int ONLY_POS3D_PIN_LINK = 2;
 /* the weight of pink link for IK */
 #define IK_PIN_WEIGHT 1.0
 /* the weight of drag link for IK */
-#define IK_DRAG_WEIGHT 0.0001
+#define IK_DRAG_WEIGHT 0.01
 
 /* the number of FrameHandle parts */
 #define NOBJECTS 6
@@ -483,16 +483,20 @@ void update_alljoint_by_IK_with_frame(zFrame3D *ref_frame )
   /* backup in case the result of rkChainIK() is NaN */
   rkChain clone_chain;
   rkChainClone( &g_chain, &clone_chain );
-  int ret = rkChainIK( &g_chain, dis, ztol, iter );
+  rkChainIK( &g_chain, dis, ztol, iter );
   /* printf("post IK Joint[deg] = "); */
   /* zVecPrint(zVecMulDRC( zVecClone(dis), 180.0/zPI )); */
   if( zVecIsNan(dis) ){
     printf("the result of rkChainIK() is NaN\n");
-    rkChainCopyState( &clone_chain, &g_chain);
-  } else if( ret >= 0 ){
-    rkChainSetJointDisAll( &g_chain, dis );
-    rkChainUpdateFK( &g_chain );
+    rkChainCopyState( &clone_chain, &g_chain );
   }
+  unregister_drag_link_for_IK();
+  rkChainIK( &g_chain, dis, ztol, iter );
+  if( zVecIsNan(dis) ){
+    printf("the result of rkChainIK() is NaN\n");
+    rkChainCopyState( &clone_chain, &g_chain );
+  }
+  register_drag_link_for_IK();
 }
 
 
