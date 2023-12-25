@@ -476,10 +476,20 @@ void update_alljoint_by_IK_with_frame(zFrame3D *ref_frame )
   rkIKCellSetRefVec( gr_info2[link_id].cell[1], &(ref_frame->pos) );
   rkChainFK( &g_chain, dis ); /* copy state to mentatin result consistency */
   /* IK */
+  /* printf("pre IK Joint[deg]  = "); */
+  /* zVecPrint(zVecMulDRC( zVecClone(dis), 180.0/zPI )); */
   int iter = 100;
   double ztol = zTOL;
+  /* backup in case the result of rkChainIK() is NaN */
+  rkChain clone_chain;
+  rkChainClone( &g_chain, &clone_chain );
   int ret = rkChainIK( &g_chain, dis, ztol, iter );
-  if( ret >= 0 ){
+  /* printf("post IK Joint[deg] = "); */
+  /* zVecPrint(zVecMulDRC( zVecClone(dis), 180.0/zPI )); */
+  if( zVecIsNan(dis) ){
+    printf("the result of rkChainIK() is NaN\n");
+    rkChainCopyState( &clone_chain, &g_chain);
+  } else if( ret >= 0 ){
     rkChainSetJointDisAll( &g_chain, dis );
     rkChainUpdateFK( &g_chain );
   }
