@@ -1,3 +1,5 @@
+2023.12.26. Modified rkglTriFace, rkglHemisphere, rkglTube, rkglCyl, rkglECyl, and rkglCone to use rkglNormalRev. [rkgl_shape]
+2023.12.26. Added rkglNormalRev. [rkgl_shape]
 2023. 8.18. Reflected renamed zSeqCell. [app]
 2023. 8.10. Modified rk_view to apply zShape3DReadFilePLY. [app]
 2023. 8. 7. Modified rk_view to apply zShape3DReadFileDAE, zShape3DReadFileSTL, and zShape3DReadFileOBJ. [app]

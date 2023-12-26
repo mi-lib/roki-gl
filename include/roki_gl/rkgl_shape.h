@@ -28,8 +28,9 @@ __BEGIN_DECLS
 __ROKI_GL_EXPORT void rkglTranslate(zVec3D *v);
 __ROKI_GL_EXPORT void rkglXform(zFrame3D *f);
 
-#define rkglVertex(v)  glVertex3dv( (v)->e )
-#define rkglNormal(n)  glNormal3dv( (n)->e )
+#define rkglVertex(v)    glVertex3dv( (v)->e )
+#define rkglNormal(n)    glNormal3dv( (n)->e )
+#define rkglNormalRev(n) glNormal3d( -(n)->c.x, -(n)->c.y, -(n)->c.z )
 
 __ROKI_GL_EXPORT void rkglPoint(zVec3D *p);
 __ROKI_GL_EXPORT void rkglEdge(zEdge3D *e);
