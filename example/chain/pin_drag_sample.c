@@ -1,4 +1,6 @@
-#include <roki_gl/roki_glut.h>
+#include <roki_gl/roki_gl.h>
+#include <GLFW/glfw3.h>
+
 
 /* suggestion to add rk_shape.c ************************************************************/
 
@@ -47,6 +49,7 @@ void rkglFrameHandleTorusParts(zFrame3D *f, zAxis a, double l, double mag)
 
 /* End of suggestion to add rk_shape.c *****************************************************/
 
+GLFWwindow* g_window;
 
 /* suggestion to add rkglLinkInfo rkgl_chain.h ********************************************/
 typedef struct{
@@ -80,9 +83,11 @@ void rkglChainUnload_for_rkglLinkInfo2()
 }
 
 /* pin information */
-static const int NOT_PIN_LINK = -1;
-static const int PIN_LINK = 1;
-static const int ONLY_POS3D_PIN_LINK = 2;
+typedef enum{
+  NOT_PIN_LINK=-1,
+  PIN_LINK,
+  ONLY_POS3D_PIN_LINK,
+} pinStatus;
 
 /* the weight of pink link for IK */
 #define IK_PIN_WEIGHT 1.0
@@ -114,6 +119,8 @@ rkglChain gr;
 /* viewing parameters */
 rkglCamera g_cam;
 rkglLight g_light;
+rkglShadow g_shadow;
+
 static const GLdouble g_znear = -1000.0;
 static const GLdouble g_zfar  = 100.0;
 static double g_scale = 0.001;
@@ -220,13 +227,14 @@ void draw_scene(void)
   /* end of if( g_selected.obj != NONE ) */
 }
 
-void display(void)
+void display(GLFWwindow* window)
 {
   rkglCALoad( &g_cam );
   rkglLightPut( &g_light );
   rkglClear();
+
   draw_scene();
-  glutSwapBuffers();
+  glfwSwapBuffers( window );
 }
 
 static double g_zmin; /* selected depth of the nearest object */
@@ -264,6 +272,7 @@ void reset_selected_link(int new_link_id)
     gr_info2[new_link_id].select = ACTIVE_SELECT;
   } else{
     int i;
+    printf("reset_selected_link(): reset all link\n");
     for( i=0; i<rkChainLinkNum(gr.chain); i++ ){
       if( gr_info2[i].select != NOT_SELECTED
           && gr_info2[i].pin == NOT_PIN_LINK ){
@@ -302,6 +311,7 @@ int select_object(GLuint selbuf[], int hits)
   } else{
     g_selected.obj = NONE;
   }
+
   return nearest_shape_id;
 }
 
@@ -523,35 +533,130 @@ void draw_select_link(void)
   rkglChainDraw( &gr );
 }
 
-void mouse(int button, int state, int x, int y)
+int g_wheel;
+#define GLFW_WHEEL_UP 1
+#define GLFW_WHEEL_DOWN 2
+
+void rkglMouseFuncGLFW(int button, int event, int x, int y)
 {
-  switch( button ){
-  case GLUT_LEFT_BUTTON:
-    if( state == GLUT_DOWN ){
+  rkglMouseStoreInput( button, event, GLFW_PRESS, x, y, GLFW_KEY_LEFT_CONTROL );
+}
+
+void rkglMouseDragFuncGLFW(int x, int y)
+{
+  double dx, dy;
+
+  rkglMouseDragGetIncrementer( &g_cam, x, y, &dx, &dy );
+  switch( rkgl_mouse_button ){
+  case GLFW_MOUSE_BUTTON_LEFT:  rkglMouseDragCARotate(    &g_cam, dx, dy, GLFW_KEY_LEFT_CONTROL ); break;
+  case GLFW_MOUSE_BUTTON_RIGHT: rkglMouseDragCATranslate( &g_cam, dx, dy, GLFW_KEY_LEFT_CONTROL ); break;
+  case GLFW_MOUSE_BUTTON_MIDDLE: rkglMouseDragCAZoom(      &g_cam, dx, dy, GLFW_KEY_LEFT_CONTROL ); break;
+  default: ;
+  }
+  rkglMouseStoreXY( x, y );
+  glfwPostEmptyEvent();
+}
+
+
+bool g_mouse_left_button_clicked;
+bool g_mouse_right_button_clicked;
+int g_x;
+int g_y;
+
+void motion(GLFWwindow* window, double x, double y)
+{
+  g_x = floor(x);
+  g_y = floor(y);
+  if( g_mouse_left_button_clicked || g_mouse_right_button_clicked )
+  {
+    if( g_selected.obj != FRAMEHANDLE ){
+      /* rkglMouseDragFuncGLUT(x, y); */
+      rkglMouseDragFuncGLFW(g_x, g_y);
+    } else {
+      /* moving mode */
+      zVec3D vp_mouse_goal_3D;
+      rkglUnproject( &g_cam, g_x, g_y, g_znear, &vp_mouse_goal_3D );
+
+      int fh_parts_id = g_selected.fh_parts_id;
+      if( is_translation_mode( fh_parts_id ) ){
+        /* translate mode */
+        zVec3D vp_mouse_drag_3D_vector;
+        zVec3DSub( &vp_mouse_goal_3D, &g_vp_mouse_start_3D, &vp_mouse_drag_3D_vector );
+
+        double project_3D_scale = zVec3DInnerProd( &vp_mouse_drag_3D_vector, &g_vp_parts_axis_3D_vector ) / zVec3DSqrNorm( &g_vp_parts_axis_3D_vector );
+
+        zVec3D dir_3D;
+        zVec3DMul( &g_parts_axis_unit_3D_vector, project_3D_scale, &dir_3D );
+
+        /* translate frame */
+        zVec3DAdd( &g_frame3D_org.pos, &dir_3D, &g_fh.frame.pos );
+
+        /* end of translate mode */
+      } else if( is_rotation_mode( fh_parts_id ) ){
+        /* rotate mode */
+        zVec3D vp_radial_dir_center_to_goal;
+        zVec3DSub( &vp_mouse_goal_3D, &g_vp_circle_center_3D, &vp_radial_dir_center_to_goal);
+
+        if( !zVec3DIsTiny( &g_vp_radial_dir_center_to_start ) ){
+          /* oval circle rotation on view port plane */
+          double theta = zVec3DAngle( &g_vp_radial_dir_center_to_start, &vp_radial_dir_center_to_goal, &g_parts_axis_unit_3D_vector);
+          zMat3D m;
+          /* zVec3D axis; */
+          if( fh_parts_id == 3 ){
+            /* x */
+            zMat3DFromZYX( &m, 0, 0, theta );
+          } else if( fh_parts_id == 4 ){
+            /* y */
+            zMat3DFromZYX( &m, 0, theta, 0 );
+          } else if( fh_parts_id == 5 ){
+            /* z */
+            zMat3DFromZYX( &m, theta, 0, 0 );
+          }
+          zMulMat3DMat3D( &g_frame3D_org.att, &m, &g_fh.frame.att );
+        }
+        /* end of if g_vp_radial_dir_center_to_start is not Tiny */
+      } else{
+        ZRUNERROR( "selected_parts_id is ERROR\n" );
+      }
+      /* end of rotate mode */
+
+      update_alljoint_by_IK_with_frame( &g_fh.frame );
+    }
+    /* end moving mode */
+  }
+  /* end of if( g_mouse_left_button_clicked ) */
+}
+
+void mouse(GLFWwindow* window, int button, int state, int mods)
+{
+  if( button == GLFW_MOUSE_BUTTON_LEFT ){
+    if( state == GLFW_PRESS ){
+      g_mouse_left_button_clicked = true;
       GLuint selbuf[BUFSIZ];
-      int hits = rkglPick( &g_cam, draw_select_fh_parts, selbuf, BUFSIZ, x, y, 1, 1 );
+      int hits = rkglPick( &g_cam, draw_select_fh_parts, selbuf, BUFSIZ, g_x, g_y, 1, 1 );
       int new_selected_shape_id = select_object( selbuf, hits );
       if( g_selected.obj == FRAMEHANDLE ){
         /* update g_selected status */
         switch_status( new_selected_shape_id );
-        select_fh_parts( x, y );
+        select_fh_parts( g_x, g_y );
         register_drag_link_for_IK();
       } else{
         GLuint selbuf2[BUFSIZ];
-        hits = rkglPick( &g_cam, draw_select_link, selbuf2, BUFSIZ, x, y, 1, 1 );
+        hits = rkglPick( &g_cam, draw_select_link, selbuf2, BUFSIZ, g_x, g_y, 1, 1 );
         new_selected_shape_id = select_object( selbuf2, hits );
         switch_status( new_selected_shape_id );
       }
-    } else if( state == GLUT_UP ){
+    } else if( state == GLFW_RELEASE ){
+      g_mouse_left_button_clicked = false;
       if( g_selected.obj == FRAMEHANDLE ){
         unregister_drag_link_for_IK();
       }
     }
-    break;
-  case GLUT_RIGHT_BUTTON:
-    if( state == GLUT_DOWN ){
+  } else if( button == GLFW_MOUSE_BUTTON_RIGHT ){
+    if( state == GLFW_PRESS ){
+      g_mouse_right_button_clicked = true;
       GLuint selbuf3[BUFSIZ];
-      int hits = hits = rkglPick( &g_cam, draw_select_link, selbuf3, BUFSIZ, x, y, 1, 1 );
+      int hits = hits = rkglPick( &g_cam, draw_select_link, selbuf3, BUFSIZ, g_x, g_y, 1, 1 );
       /* int org_obj = g_selected.obj; */
       int new_selected_shape_id = select_object( selbuf3, hits );
       if( g_selected.obj == LINKFRAME ){
@@ -559,79 +664,41 @@ void mouse(int button, int state, int x, int y)
       }
       switch_status( new_selected_shape_id );
       /* g_selected.obj = org_obj; */
+    } else if( state == GLFW_RELEASE ){
+      g_mouse_right_button_clicked = false;
     }
-    break;
-  default: break;
-  } /* end of switch( button ) */
+  }
+
   if( g_selected.obj != FRAMEHANDLE ){
-    rkglMouseFuncGLUT(button, state, x, y);
+    /* rkglMouseFuncGLUT(button, state, x, y); */
+    rkglMouseFuncGLFW(button, state, g_x, g_y);
   }
 }
 
-void motion(int x, int y)
-{
-  if( g_selected.obj != FRAMEHANDLE ){
-    rkglMouseDragFuncGLUT(x, y);
-  } else{
-    /* moving mode */
-    zVec3D vp_mouse_goal_3D;
-    rkglUnproject( &g_cam, x, y, g_znear, &vp_mouse_goal_3D );
 
-    int fh_parts_id = g_selected.fh_parts_id;
-    if( is_translation_mode( fh_parts_id ) ){
-      /* translate mode */
-      zVec3D vp_mouse_drag_3D_vector;
-      zVec3DSub( &vp_mouse_goal_3D, &g_vp_mouse_start_3D, &vp_mouse_drag_3D_vector );
-
-      double project_3D_scale = zVec3DInnerProd( &vp_mouse_drag_3D_vector, &g_vp_parts_axis_3D_vector ) / zVec3DSqrNorm( &g_vp_parts_axis_3D_vector );
-
-      zVec3D dir_3D;
-      zVec3DMul( &g_parts_axis_unit_3D_vector, project_3D_scale, &dir_3D );
-
-      /* translate frame */
-      zVec3DAdd( &g_frame3D_org.pos, &dir_3D, &g_fh.frame.pos );
-
-      /* end of translate mode */
-    } else if( is_rotation_mode( fh_parts_id ) ){
-      /* rotate mode */
-      zVec3D vp_radial_dir_center_to_goal;
-      zVec3DSub( &vp_mouse_goal_3D, &g_vp_circle_center_3D, &vp_radial_dir_center_to_goal);
-
-      if( !zVec3DIsTiny( &g_vp_radial_dir_center_to_start ) ){
-        /* oval circle rotation on view port plane */
-        double theta = zVec3DAngle( &g_vp_radial_dir_center_to_start, &vp_radial_dir_center_to_goal, &g_parts_axis_unit_3D_vector);
-        zMat3D m;
-        /* zVec3D axis; */
-        if( fh_parts_id == 3 ){
-          /* x */
-          zMat3DFromZYX( &m, 0, 0, theta );
-        } else if( fh_parts_id == 4 ){
-          /* y */
-          zMat3DFromZYX( &m, 0, theta, 0 );
-        } else if( fh_parts_id == 5 ){
-          /* z */
-          zMat3DFromZYX( &m, theta, 0, 0 );
-        }
-        zMulMat3DMat3D( &g_frame3D_org.att, &m, &g_fh.frame.att );
-      }
-      /* end of if g_vp_radial_dir_center_to_start is not Tiny */
-    } else{
-      ZRUNERROR( "selected_parts_id is ERROR\n" );
-    }
-    /* end of rotate mode */
-
-    update_alljoint_by_IK_with_frame( &g_fh.frame );
+void mouse_wheel(GLFWwindow* window, double xoffset, double yoffset){
+  if ( yoffset < 0 ) {
+    g_wheel = GLFW_WHEEL_DOWN;
   }
-  /* end moving mode */
+  if ( yoffset > 0 ) {
+    g_wheel = GLFW_WHEEL_UP;
+  }
+  switch( g_wheel ){
+  case GLFW_WHEEL_UP:
+    g_scale += 0.0001; rkglOrthoScale( &g_cam, g_scale, g_znear, g_zfar ); break;
+  case GLFW_WHEEL_DOWN:
+    g_scale -= 0.0001; rkglOrthoScale( &g_cam, g_scale, g_znear, g_zfar ); break;
+  default: ;
+  }
 }
 
-void resize(int w, int h)
+void resize(GLFWwindow* window, int w, int h)
 {
   rkglVPCreate( &g_cam, 0, 0, w, h );
   rkglOrthoScale( &g_cam, g_scale, g_znear, g_zfar );
 }
 
-void keyboard(unsigned char key, int x, int y)
+void keyboard(GLFWwindow* window, unsigned int key)
 {
   switch( key ){
   case 'u': rkglCALockonPTR( &g_cam, 5, 0, 0 ); break;
@@ -731,12 +798,17 @@ rkChain *extend_rkChainReadZTK(rkChain *chain, char *pathname)
 
 bool init(void)
 {
-  rkglSetCallbackParamGLUT( &g_cam, 0, 0, 0, 0, 0 );
+  g_mouse_left_button_clicked = false;
+  g_mouse_right_button_clicked = false;
+
   rkglBGSet( &g_cam, 0.5, 0.5, 0.5 );
-  rkglCASet( &g_cam, 1, 1, 1, 45, -30, 0 );
+  /* rkglCASet( &g_cam, 1, 1, 1, 45, -30, 0 ); */
+  rkglCASet( &g_cam, 0, 0, 0, 45, -30, 0 );
   glEnable(GL_LIGHTING);
   rkglLightCreate( &g_light, 0.5, 0.5, 0.5, 0.6, 0.6, 0.6, 0.2, 0.2, 0.2 );
   rkglLightMove( &g_light, 3, 5, 9 );
+  rkglLightSetAttenuationConst( &g_light, 1.0 );
+
   rkglChainAttr attr;
   rkglChainAttrInit( &attr );
   if( g_modelfile == NULL ){
@@ -773,7 +845,10 @@ bool init(void)
   return true;
 }
 
-void idle(void){ glutPostRedisplay(); }
+void idle(void){
+  /* glutPostRedisplay(); */
+  glfwPostEmptyEvent();
+}
 
 int main(int argc, char *argv[])
 {
@@ -783,17 +858,56 @@ int main(int argc, char *argv[])
   /* initialize the location of frame handle object */
   zFrame3DFromAA( &g_fh.frame, 0.0, 0.0, 0.0,  0.0, 0.0, 1.0);
 
-  rkglInitGLUT( &argc, argv );
-  rkglWindowCreateGLUT( 0, 0, 320, 320, argv[0] );
+  /* rkglInitGLUT( &argc, argv ); */
+  if ( glfwInit() == GL_FALSE ){
+    ZRUNERROR("Failed glfwInit()");
+    return 1;
+  }
 
-  glutDisplayFunc( display );
-  glutMouseFunc( mouse );
-  glutMotionFunc( motion );
-  glutReshapeFunc( resize );
-  glutKeyboardFunc( keyboard );
-  glutIdleFunc( idle );
-  if( !init() ) return 1;
-  glutMainLoop();
+  int width = 640;
+  int height = 480;
+  /* rkglWindowCreateGLUT( 0, 0, 320, 320, argv[0] ); */
+  g_window = glfwCreateWindow(width, height, argv[0], NULL, NULL);
+  if ( g_window == NULL ){
+    ZRUNERROR("Failed glfwCreateWindow()");
+    glfwTerminate();
+    return 1;
+  }
+  glfwMakeContextCurrent( g_window );
+
+#ifdef __ROKI_GL_USE_GLEW
+  rkglInitGLEW();
+#endif /* __ROKI_GL_USE_GLEW */
+  rkglEnableDefault();
+
+  /* glutReshapeFunc( resize ); */
+  glfwSetWindowSizeCallback( g_window, resize );
+  /* glutMotionFunc( motion ); */
+  glfwSetCursorPosCallback( g_window, motion );
+  /* glutMouseFunc( mouse ); */
+  glfwSetMouseButtonCallback( g_window, mouse );
+  glfwSetScrollCallback( g_window, mouse_wheel );
+  /* glutKeyboardFunc( keyboard ); */
+  glfwSetCharCallback( g_window, keyboard );
+
+  if( !init() ){
+    glfwTerminate();
+    return 1;
+  }
+  resize( g_window, width, height );
+  glfwSwapInterval(1);
+
+  /* glutMainLoop(); */
+  while ( glfwWindowShouldClose( g_window ) == GL_FALSE ){
+    /* glutIdleFunc( idle ); */
+    idle();
+    /* glutDisplayFunc( display ); */
+    display(g_window);
+    /* glfwWaitEvents(); */
+    glfwPollEvents();
+  }
+  glfwDestroyWindow( g_window );
+  glfwTerminate();
 
   return 0;
 }
