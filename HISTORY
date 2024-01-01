@@ -1,3 +1,6 @@
+2024. 1. 3. Modified rkglAxis. [rkgl_shape]
+2024. 1. 3. Reimplemented rkglFrame as a wireframe object. [rkgl_shape]
+2024. 1. 3. Reimplemented rkglFrameHandle (thanks to Daishi Kaneta). [rkgl_shape, rkgl_framehandle, roki_gl]
 2023.12.26. Modified rkglTriFace, rkglHemisphere, rkglTube, rkglCyl, rkglECyl, and rkglCone to use rkglNormalRev. [rkgl_shape]
 2023.12.26. Added rkglNormalRev. [rkgl_shape]
 2023. 8.18. Reflected renamed zSeqCell. [app]

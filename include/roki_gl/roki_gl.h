@@ -9,6 +9,7 @@
  - visualization of kinematic chains
  - visualization of terrain models
  - object selection
+ - handle to manipulate objects
  - texture mapping
  - bump mapping
  - reflection and refraction mapping
@@ -24,7 +25,7 @@
 #include <roki_gl/rkgl_input.h>
 #include <roki_gl/rkgl_chain.h>
 #include <roki_gl/rkgl_terra.h>
-#include <roki_gl/rkgl_select.h>
+#include <roki_gl/rkgl_framehandle.h>
 #include <roki_gl/rkgl_envmap.h>
 
 __BEGIN_DECLS

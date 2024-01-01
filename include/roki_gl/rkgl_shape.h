@@ -72,8 +72,7 @@ __ROKI_GL_EXPORT void rkglPointCloud(zVec3DList *pc, zVec3D *center, short size)
 #define RKGL_ARROW_TIP_LEN    0.2
 __ROKI_GL_EXPORT void rkglArrow(zVec3D *bot, zVec3D *vec, double mag);
 
-__ROKI_GL_EXPORT void rkglFrame(zFrame3D *f, double l, double mag);
-__ROKI_GL_EXPORT void rkglFrameHandle(zFrame3D *f, double l, double mag);
+__ROKI_GL_EXPORT void rkglFrame(zFrame3D *f, double l, double w);
 
 __ROKI_GL_EXPORT void rkglAxis(zAxis axis, double d, double w, GLfloat color[]);
 __ROKI_GL_EXPORT void rkglGauge(zAxis axis1, double d1, zAxis axis2, double d2, double w, double step, GLfloat color[]);
