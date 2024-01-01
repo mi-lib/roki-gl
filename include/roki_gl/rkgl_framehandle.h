@@ -17,9 +17,12 @@ typedef struct{
   int name;
   int selected_id;
 
-  zVec3D anchor;
-  double depth;
+  zVec3D _anchor;
+  double _depth;
 } rkglFrameHandle;
+
+#define rkglFrameHandlePos(h) zFrame3DPos( &(h)->frame )
+#define rkglFrameHandleAtt(h) zFrame3DAtt( &(h)->frame )
 
 #define rkglFrameHandleUnselect(h)     ( (h)->selected_id = -1 )
 #define rkglFrameHandleIsUnselected(h) ( (h)->selected_id == -1 )

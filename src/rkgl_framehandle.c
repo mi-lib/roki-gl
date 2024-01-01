@@ -115,8 +115,8 @@ void rkglFrameHandleSelect(rkglFrameHandle *handle, rkglCamera *cam, int x, int 
                 rkglPick( cam, draw_func, selbuf, BUFSIZ, x, y, 1, 1 ) ) ) ) return;
   if( ns[3] != handle->name || ns[4] < 0 || ns[4] >= 6 ) return;
   handle->selected_id = ns[4];
-  handle->depth = rkglGetDepth( cam, x, y );
-  rkglUnproject( cam, x, y, handle->depth, &handle->anchor );
+  handle->_depth = rkglGetDepth( cam, x, y );
+  rkglUnproject( cam, x, y, handle->_depth, &handle->_anchor );
 }
 
 static void _rkglFrameHandleTranslate(rkglFrameHandle *handle, rkglCamera *cam, zVec3D *v)
@@ -125,13 +125,13 @@ static void _rkglFrameHandleTranslate(rkglFrameHandle *handle, rkglCamera *cam, 
   int px, py;
 
   a = zFrame3DVec(&handle->frame,handle->selected_id%3);
-  zVec3DSub( v, &handle->anchor, &d );
-  zVec3DAdd( &handle->anchor, a, &u );
+  zVec3DSub( v, &handle->_anchor, &d );
+  zVec3DAdd( &handle->_anchor, a, &u );
   rkglProject( cam, &u, &px, &py );
-  rkglUnproject( cam, px, py, handle->depth, &u );
-  zVec3DSubDRC( &u, &handle->anchor );
-  zVec3DCatDRC( zFrame3DPos(&handle->frame), zVec3DInnerProd(&d,&u)/zVec3DInnerProd(a,&u), a );
-  zVec3DCopy( v, &handle->anchor );
+  rkglUnproject( cam, px, py, handle->_depth, &u );
+  zVec3DSubDRC( &u, &handle->_anchor );
+  zVec3DCatDRC( rkglFrameHandlePos(handle), zVec3DInnerProd(&d,&u)/zVec3DInnerProd(a,&u), a );
+  zVec3DCopy( v, &handle->_anchor );
 }
 
 static void _rkglFrameHandleRotate(rkglFrameHandle *handle, rkglCamera *cam /* dummy */, zVec3D *v)
@@ -142,10 +142,10 @@ static void _rkglFrameHandleRotate(rkglFrameHandle *handle, rkglCamera *cam /* d
   a1 = zFrame3DVec(&handle->frame,(handle->selected_id+1)%3);
   a2 = zFrame3DVec(&handle->frame,(handle->selected_id+2)%3);
   rkglCAGetViewVec( cam, &u ); /* view vector */
-  zVec3DSub( &handle->anchor, zFrame3DPos(&handle->frame), &tmp );
+  zVec3DSub( &handle->_anchor, rkglFrameHandlePos(handle), &tmp );
   zVec3DOrthogonalize( &tmp, a0, &r0 ); /* anchor vector */
 
-  zVec3DSub( v, zFrame3DPos(&handle->frame), &d );
+  zVec3DSub( v, rkglFrameHandlePos(handle), &d );
   if( zIsTiny( zVec3DInnerProd(a0,&u) ) ){
     zVec3DOrthogonalize( &d, a0, &r );
   } else{
@@ -157,8 +157,8 @@ static void _rkglFrameHandleRotate(rkglFrameHandle *handle, rkglCamera *cam /* d
     zVec3DOrthogonalize( &tmp, a0, &r );
   }
   zVec3DAAError( &r0, &r, &aa );
-  zMat3DRotDRC( zFrame3DAtt(&handle->frame), &aa );
-  zVec3DAdd( zFrame3DPos(&handle->frame), &r, &handle->anchor );
+  zMat3DRotDRC( rkglFrameHandleAtt(handle), &aa );
+  zVec3DAdd( rkglFrameHandlePos(handle), &r, &handle->_anchor );
 }
 
 bool rkglFrameHandleMove(rkglFrameHandle *handle, rkglCamera *cam, int x, int y)
@@ -166,7 +166,7 @@ bool rkglFrameHandleMove(rkglFrameHandle *handle, rkglCamera *cam, int x, int y)
   zVec3D v;
 
   if( rkglFrameHandleIsUnselected( handle ) ) return false;
-  rkglUnproject( cam, x, y, handle->depth, &v );
+  rkglUnproject( cam, x, y, handle->_depth, &v );
   if( _rkglFrameHandleIsInTranslation( handle ) ){
     _rkglFrameHandleTranslate( handle, cam, &v );
   } else
