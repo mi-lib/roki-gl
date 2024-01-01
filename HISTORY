@@ -1,3 +1,7 @@
+2024. 1. 4. Modified rkAnimGetCamFrame in rk_anim. [app]
+2024. 1. 4. Modified _rkglFrameHandleRotate (thanks to Daishi Kaneta). [rkgl_framehandle]
+2024. 1. 4. Added rkglCAGetViewVec. [rkgl_camera]
+2024. 1. 4. Added rkglCAGetFrame3D. [rkgl_camera]
 2024. 1. 3. Modified rkglAxis. [rkgl_shape]
 2024. 1. 3. Reimplemented rkglFrame as a wireframe object. [rkgl_shape]
 2024. 1. 3. Reimplemented rkglFrameHandle (thanks to Daishi Kaneta). [rkgl_shape, rkgl_framehandle, roki_gl]

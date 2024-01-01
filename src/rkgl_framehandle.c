@@ -131,19 +131,34 @@ static void _rkglFrameHandleTranslate(rkglFrameHandle *handle, rkglCamera *cam, 
   rkglUnproject( cam, px, py, handle->depth, &u );
   zVec3DSubDRC( &u, &handle->anchor );
   zVec3DCatDRC( zFrame3DPos(&handle->frame), zVec3DInnerProd(&d,&u)/zVec3DInnerProd(a,&u), a );
+  zVec3DCopy( v, &handle->anchor );
 }
 
 static void _rkglFrameHandleRotate(rkglFrameHandle *handle, rkglCamera *cam /* dummy */, zVec3D *v)
 {
-  zVec3D *a, tmp, r0, r1, aa;
+  zVec3D *a0, *a1, *a2, u, d, tmp, tmp1, tmp2, tmp3, r0, r, aa;
 
-  a = zFrame3DVec(&handle->frame,handle->selected_id%3);
+  a0 = zFrame3DVec(&handle->frame,(handle->selected_id+0)%3);
+  a1 = zFrame3DVec(&handle->frame,(handle->selected_id+1)%3);
+  a2 = zFrame3DVec(&handle->frame,(handle->selected_id+2)%3);
+  rkglCAGetViewVec( cam, &u ); /* view vector */
   zVec3DSub( &handle->anchor, zFrame3DPos(&handle->frame), &tmp );
-  zVec3DOrthogonalize( &tmp, a, &r0 );
-  zVec3DSub( v, zFrame3DPos(&handle->frame), &tmp );
-  zVec3DOrthogonalize( &tmp, a, &r1 );
-  zVec3DAAError( &r0, &r1, &aa );
+  zVec3DOrthogonalize( &tmp, a0, &r0 ); /* anchor vector */
+
+  zVec3DSub( v, zFrame3DPos(&handle->frame), &d );
+  if( zIsTiny( zVec3DInnerProd(a0,&u) ) ){
+    zVec3DOrthogonalize( &d, a0, &r );
+  } else{
+    zVec3DOuterProd( a1, &u, &tmp1 );
+    zVec3DOuterProd( a2, &u, &tmp2 );
+    zVec3DOuterProd( &d, &u, &tmp3 );
+    zVec3DMul( a1, zVec3DInnerProd(a2,&tmp3) / zVec3DInnerProd(a2,&tmp1), &tmp );
+    zVec3DCatDRC( &tmp, zVec3DInnerProd(a1,&tmp3) / zVec3DInnerProd(a1,&tmp2), a2 );
+    zVec3DOrthogonalize( &tmp, a0, &r );
+  }
+  zVec3DAAError( &r0, &r, &aa );
   zMat3DRotDRC( zFrame3DAtt(&handle->frame), &aa );
+  zVec3DAdd( zFrame3DPos(&handle->frame), &r, &handle->anchor );
 }
 
 bool rkglFrameHandleMove(rkglFrameHandle *handle, rkglCamera *cam, int x, int y)
@@ -158,6 +173,5 @@ bool rkglFrameHandleMove(rkglFrameHandle *handle, rkglCamera *cam, int x, int y)
   if( _rkglFrameHandleIsInRotation( handle ) ){
     _rkglFrameHandleRotate( handle, cam, &v );
   }
-  zVec3DCopy( &v, &handle->anchor );
   return true;
 }

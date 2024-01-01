@@ -104,6 +104,30 @@ void rkglCAGet(rkglCamera *c)
   glGetDoublev( GL_MODELVIEW_MATRIX, c->ca );
 }
 
+zFrame3D *rkglCAGetFrame3D(rkglCamera *cam, zFrame3D *f)
+{
+  zMat3D m0;
+
+  zMat3DCreate( zFrame3DAtt(f),
+    cam->ca[0], cam->ca[1], cam->ca[2],
+    cam->ca[4], cam->ca[5], cam->ca[6],
+    cam->ca[8], cam->ca[9], cam->ca[10] );
+  zVec3DCreate( zFrame3DPos(f), -cam->ca[12], -cam->ca[13], -cam->ca[14] );
+  zMulMat3DVec3DDRC( zFrame3DAtt(f), zFrame3DPos(f) );
+  zMat3DCreate( &m0,
+    0, 0, 1,
+    1, 0, 0,
+    0, 1, 0 );
+  zMulMat3DMat3DTDRC( zFrame3DAtt(f), &m0 );
+  return f;
+}
+
+zVec3D *rkglCAGetViewVec(rkglCamera *cam, zVec3D *v)
+{
+  _zVec3DCreate( v, cam->ca[2], cam->ca[6], cam->ca[10] );
+  return v;
+}
+
 void rkglCAInit(void)
 {
   glMatrixMode( GL_MODELVIEW );
