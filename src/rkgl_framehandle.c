@@ -136,7 +136,7 @@ static void _rkglFrameHandleTranslate(rkglFrameHandle *handle, rkglCamera *cam, 
 
 static void _rkglFrameHandleRotate(rkglFrameHandle *handle, rkglCamera *cam /* dummy */, zVec3D *v)
 {
-  zVec3D *a0, *a1, *a2, u, d, tmp, tmp1, tmp2, tmp3, r0, r, aa;
+  zVec3D *a0, *a1, *a2, u, d, tmp, r0, r, aa;
 
   a0 = zFrame3DVec(&handle->frame,(handle->selected_id+0)%3);
   a1 = zFrame3DVec(&handle->frame,(handle->selected_id+1)%3);
@@ -144,16 +144,12 @@ static void _rkglFrameHandleRotate(rkglFrameHandle *handle, rkglCamera *cam /* d
   rkglCAGetViewVec( cam, &u ); /* view vector */
   zVec3DSub( &handle->_anchor, rkglFrameHandlePos(handle), &tmp );
   zVec3DOrthogonalize( &tmp, a0, &r0 ); /* anchor vector */
-
   zVec3DSub( v, rkglFrameHandlePos(handle), &d );
   if( zIsTiny( zVec3DInnerProd(a0,&u) ) ){
     zVec3DOrthogonalize( &d, a0, &r );
   } else{
-    zVec3DOuterProd( a1, &u, &tmp1 );
-    zVec3DOuterProd( a2, &u, &tmp2 );
-    zVec3DOuterProd( &d, &u, &tmp3 );
-    zVec3DMul( a1, zVec3DInnerProd(a2,&tmp3) / zVec3DInnerProd(a2,&tmp1), &tmp );
-    zVec3DCatDRC( &tmp, zVec3DInnerProd(a1,&tmp3) / zVec3DInnerProd(a1,&tmp2), a2 );
+    zVec3DMul( a1, zVec3DGrassmannProd(a2,&d,&u)/zVec3DGrassmannProd(a2,a1,&u), &tmp );
+    zVec3DCatDRC( &tmp, zVec3DGrassmannProd(a1,&d,&u)/zVec3DGrassmannProd(a1,a2,&u), a2 );
     zVec3DOrthogonalize( &tmp, a0, &r );
   }
   zVec3DAAError( &r0, &r, &aa );
