@@ -1,5 +1,5 @@
 2024. 1. 4. Added rkglFrameHandlePos and rkglFrameHandleAtt. [rkgl_framehandle]
-2024. 1. 4. Modified rkAnimGetCamFrame in rk_anim. [app]
+2024. 1. 4. Modified rkAnimGetCamFrame3D in rk_anim. [app]
 2024. 1. 4. Modified _rkglFrameHandleRotate (thanks to Daishi Kaneta). [rkgl_framehandle]
 2024. 1. 4. Added rkglCAGetViewVec. [rkgl_camera]
 2024. 1. 4. Added rkglCAGetFrame3D. [rkgl_camera]
