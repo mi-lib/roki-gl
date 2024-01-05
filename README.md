@@ -13,6 +13,7 @@ penGL. It includes
 - visualization of kinematic chains
 - visualization of terrain models
 - object selection
+- handle to manipulate objects
 - texture mapping
 - bump mapping
 - reflection and refraction mapping

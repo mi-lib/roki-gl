@@ -8,6 +8,7 @@
 #define __RKGL_CAMERA_H__
 
 #include <roki_gl/rkgl_misc.h>
+#include <zeo/zeo.h>
 
 __BEGIN_DECLS
 
@@ -63,6 +64,8 @@ __ROKI_GL_EXPORT void rkglFrustumScale(rkglCamera *c, double scale, GLdouble nea
 
 __ROKI_GL_EXPORT void rkglCALoad(rkglCamera *c);
 __ROKI_GL_EXPORT void rkglCAGet(rkglCamera *c);
+__ROKI_GL_EXPORT zFrame3D *rkglCAGetFrame3D(rkglCamera *cam, zFrame3D *f);
+__ROKI_GL_EXPORT zVec3D *rkglCAGetViewVec(rkglCamera *cam, zVec3D *v);
 
 #define rkglCACopy(cs,cd) memcpy( (cd)->ca, (cs)->ca, sizeof(GLdouble)*16 )
 

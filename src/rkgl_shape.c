@@ -44,15 +44,12 @@ void rkglEdge(zEdge3D *e)
 
 void rkglTriFace(zTri3D *t)
 {
-  zVec3D invnorm;
-
   glBegin( GL_TRIANGLES );
     rkglNormal( zTri3DNorm(t) );
     rkglVertex( zTri3DVert(t,0) );
     rkglVertex( zTri3DVert(t,1) );
     rkglVertex( zTri3DVert(t,2) );
-    zVec3DRev( zTri3DNorm(t), &invnorm );
-    rkglNormal( &invnorm );
+    rkglNormalRev( zTri3DNorm(t) );
     rkglVertex( zTri3DVert(t,0) );
     rkglVertex( zTri3DVert(t,2) );
     rkglVertex( zTri3DVert(t,1) );
@@ -178,7 +175,9 @@ void rkglHemisphere(zSphere3D *sphere, zVec3D *dir, ubyte disptype)
 {
   int i, j, i1, j1;
   int n1 = ( zIsOdd( zSphere3DDiv(sphere) ) ? zSphere3DDiv(sphere)+1 : zSphere3DDiv(sphere) ) / 2;
-  zVec3D vert[n1+1][zSphere3DDiv(sphere)+1], v, a, d, s, dr, aa;
+  zVec3D vert[n1+1][zSphere3DDiv(sphere)+1];
+  zVec3D norm[n1+1][zSphere3DDiv(sphere)+1];
+  zVec3D v, a, d, s, dr, aa;
   double phi;
 
   zVec3DNormalize( dir, &a );
@@ -191,7 +190,8 @@ void rkglHemisphere(zSphere3D *sphere, zVec3D *dir, ubyte disptype)
     zVec3DCatDRC( &dr, sin(phi), &s );
     for( j=0; j<=zSphere3DDiv(sphere); j++ ){
       zVec3DMul( &a, zPIx2 * j / zSphere3DDiv(sphere), &aa );
-      zVec3DRot( &dr, &aa, &vert[i][j] );
+      zVec3DRot( &dr, &aa, &norm[i][j] );
+      zVec3DAdd( zSphere3DCenter(sphere), &norm[i][j], &vert[i][j] );
     }
   }
   if( disptype & RKGL_FACE ){
@@ -201,14 +201,16 @@ void rkglHemisphere(zSphere3D *sphere, zVec3D *dir, ubyte disptype)
       for( j=1; j<=zSphere3DDiv(sphere); j++ ){
         j1 = j - 1;
         glBegin( GL_QUADS );
-          zVec3DAdd( &vert[i][j],   zSphere3DCenter(sphere), &v );
-          rkglNormal( &vert[i][j] );   rkglVertex( &v );
-          zVec3DAdd( &vert[i1][j],  zSphere3DCenter(sphere), &v );
-          rkglNormal( &vert[i1][j] );  rkglVertex( &v );
-          zVec3DAdd( &vert[i1][j1], zSphere3DCenter(sphere), &v );
-          rkglNormal( &vert[i1][j1] ); rkglVertex( &v );
-          zVec3DAdd( &vert[i][j1],  zSphere3DCenter(sphere), &v );
-          rkglNormal( &vert[i][j1] );  rkglVertex( &v );
+          /* outer face */
+          rkglNormal( &norm[i][j] );      rkglVertex( &vert[i][j] );
+          rkglNormal( &norm[i1][j] );     rkglVertex( &vert[i1][j] );
+          rkglNormal( &norm[i1][j1] );    rkglVertex( &vert[i1][j1] );
+          rkglNormal( &norm[i][j1] );     rkglVertex( &vert[i][j1] );
+          /* inner face */
+          rkglNormalRev( &norm[i][j1] );  rkglVertex( &vert[i][j1] );
+          rkglNormalRev( &norm[i1][j1] ); rkglVertex( &vert[i1][j1] );
+          rkglNormalRev( &norm[i1][j] );  rkglVertex( &vert[i1][j] );
+          rkglNormalRev( &norm[i][j] );   rkglVertex( &vert[i][j] );
         glEnd();
       }
     }
@@ -383,6 +385,12 @@ void rkglTube(zCyl3D *tube, ubyte disptype)
       rkglVertex( &vert[0][i] );
       rkglVertex( &vert[1][i] );
     }
+    /* inner faces */
+    for( i=0; i<=zCyl3DDiv(tube); i++ ){
+      rkglNormalRev( &norm[i] );
+      rkglVertex( &vert[1][i] );
+      rkglVertex( &vert[0][i] );
+    }
     glEnd();
   }
   if( disptype & RKGL_WIREFRAME ){
@@ -430,8 +438,7 @@ void rkglCyl(zCyl3D *cyl, ubyte disptype)
       rkglVertex( &vert[1][i] );
     glEnd();
     /* bottom faces */
-    zVec3DRevDRC( &d );
-    rkglNormal( &d );
+    rkglNormalRev( &d );
     glBegin( GL_TRIANGLE_FAN );
     for( i=0; i<zCyl3DDiv(cyl); i++ )
       rkglVertex( &vert[0][i] );
@@ -514,8 +521,7 @@ void rkglECyl(zECyl3D *ecyl, ubyte disptype)
       rkglVertex( &vert[1][i] );
     glEnd();
     /* bottom faces */
-    zVec3DRevDRC( &d );
-    rkglNormal( &d );
+    rkglNormalRev( &d );
     glBegin( GL_TRIANGLE_FAN );
     for( i=0; i<zECyl3DDiv(ecyl); i++ )
       rkglVertex( &vert[0][i] );
@@ -584,7 +590,7 @@ void rkglCone(zCone3D *cone, ubyte disptype)
     /* bottom faces */
     glShadeModel( GL_FLAT );
     glBegin( GL_TRIANGLE_FAN );
-    rkglNormal( zVec3DRevDRC( &d ) );
+    rkglNormalRev( &d );
     for( i=0; i<zCone3DDiv(cone); i++ )
       rkglVertex( &vert[i] );
     glEnd();
@@ -938,54 +944,36 @@ void rkglArrow(zVec3D *bot, zVec3D *vec, double mag)
   rkglCone( &cone, RKGL_FACE );
 }
 
-void rkglFrame(zFrame3D *f, double l, double mag)
+void rkglFrame(zFrame3D *f, double l, double w)
 {
-  zOpticalInfo oi;
-  zVec3D v;
+  bool lighting_is_enabled;
+  zVec3D *e1, *e2, p, pf;
+  int i;
+  zRGB color[] = {
+    { 1.0, 0.0, 0.0 },
+    { 0.0, 1.0, 0.0 },
+    { 0.0, 0.0, 1.0 } };
 
-  zOpticalInfoCreate( &oi, 0.5, 0.5, 0.5, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, NULL );
-  rkglMaterial( &oi );
-  zVec3DMul( &zFrame3DAtt(f)->b.x, l, &v );
-  rkglArrow( zFrame3DPos(f), &v, mag );
-  zOpticalInfoCreate( &oi, 0.5, 0.5, 0.5, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, NULL );
-  rkglMaterial( &oi );
-  zVec3DMul( &zFrame3DAtt(f)->b.y, l, &v );
-  rkglArrow( zFrame3DPos(f), &v, mag );
-  zOpticalInfoCreate( &oi, 0.5, 0.5, 0.5, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, NULL );
-  rkglMaterial( &oi );
-  zVec3DMul( &zFrame3DAtt(f)->b.z, l, &v );
-  rkglArrow( zFrame3DPos(f), &v, mag );
-}
-
-static void _rkglFrameHandleAxis(zFrame3D *f, zAxis a, double l, double mag, double r1, double r2)
-{
-  zVec3D v, vb;
-
-  zVec3DMul( &zFrame3DAtt(f)->v[a], 0.5*l, &v );
-  zVec3DAdd( zFrame3DPos(f), &v, &vb );
-  rkglArrow( &vb, &v, mag );
-  zVec3DRevDRC( &v );
-  zVec3DAdd( zFrame3DPos(f), &v, &vb );
-  rkglArrow( &vb, &v, mag );
-  rkglTorus( zFrame3DPos(f), &zFrame3DAtt(f)->v[a], r1, r2, RKGL_ARROW_DIV*4, RKGL_ARROW_DIV, RKGL_FACE );
-}
-
-void rkglFrameHandle(zFrame3D *f, double l, double mag)
-{
-  zOpticalInfo oi;
-  double r1, r2;
-
-  r1 = l * 0.5 + RKGL_ARROW_BOTTOM_RAD * mag;
-  r2 = l * 0.5 - RKGL_ARROW_BOTTOM_RAD * mag;
-  zOpticalInfoCreate( &oi, 0.5, 0.5, 0.5, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, NULL );
-  rkglMaterial( &oi );
-  _rkglFrameHandleAxis( f, zX, l, mag, r1, r2 );
-  zOpticalInfoCreate( &oi, 0.5, 0.5, 0.5, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, NULL );
-  rkglMaterial( &oi );
-  _rkglFrameHandleAxis( f, zY, l, mag, r1, r2 );
-  zOpticalInfoCreate( &oi, 0.5, 0.5, 0.5, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, NULL );
-  rkglMaterial( &oi );
-  _rkglFrameHandleAxis( f, zZ, l, mag, r1, r2 );
+  rkglSaveLighting( &lighting_is_enabled );
+  glLineWidth( w );
+  glBegin( GL_LINES );
+  for( i=0; i<3; i++ ){
+    rkglRGB( &color[i] );
+    e1 = zFrame3DVec(f, zX+i     );
+    e2 = zFrame3DVec(f,(zX+i+1)%3);
+    zVec3DCat( zFrame3DPos(f), l, e1, &p );
+    rkglVertex( zFrame3DPos(f) );
+    rkglVertex( &p );
+    zVec3DCat( &p,-0.1*l, e1, &pf );
+    zVec3DCatDRC( &pf, 0.05*l, e2 );
+    rkglVertex( &p );
+    rkglVertex( &pf );
+    zVec3DCatDRC( &pf,-0.10*l, e2 );
+    rkglVertex( &p );
+    rkglVertex( &pf );
+  }
+  glEnd();
+  rkglLoadLighting( lighting_is_enabled );
 }
 
 void rkglAxis(zAxis axis, double d, double w, GLfloat color[])
@@ -996,12 +984,9 @@ void rkglAxis(zAxis axis, double d, double w, GLfloat color[])
 
   rkglSaveLighting( &lighting_is_enabled );
   glLineWidth( w );
-  zVec3DZero( &e1 );
-  zVec3DZero( &e2 );
+  zVec3DZero( &e1 ); e1.e[(int)axis] = d;
+  zVec3DZero( &e2 ); e2.e[(int)axis] =-d;
   zEdge3DCreate( &edge, &e1, &e2 );
-  zEdge3DVert(&edge,0)->e[(int)axis] = d;
-  zEdge3DVert(&edge,1)->e[(int)axis] =-d;
-  zEdge3DCalcVec( &edge );
 
   glColor3fv( color );
   rkglEdge( &edge );

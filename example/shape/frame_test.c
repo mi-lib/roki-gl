@@ -59,7 +59,7 @@ void init(void)
   rkglLightMove( &light, 8, 0, 8 );
 
   f_id = rkglBeginList();
-  rkglFrameHandle( ZFRAME3DIDENT, 2, 1 );
+  rkglFrame( ZFRAME3DIDENT, 2, 3 );
   glEndList();
 }
 

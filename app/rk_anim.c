@@ -419,31 +419,16 @@ void rkAnimCamOptWrite(zVec3D *v, zVec3D *ptr)
   fflush( stdout );
 }
 
-void rkAnimGetCamFrame()
+void rkAnimGetCamFrame(void)
 {
-  zMat3D m, m0;
-  zVec3D v, ptr;
+  zFrame3D f;
+  zVec3D ptr;
 
   rkglCALoad( &cam );
-  zMat3DCreate( &m,
-    cam.ca[0], cam.ca[1], cam.ca[2],
-    cam.ca[4], cam.ca[5], cam.ca[6],
-    cam.ca[8], cam.ca[9], cam.ca[10] );
-  zMat3DCreate( &m0,
-    0, 0, 1,
-    1, 0, 0,
-    0, 1, 0 );
-  zVec3DCreate( &v, cam.ca[12], cam.ca[13], cam.ca[14] );
-
-  /* position */
-  zVec3DRevDRC( &v );
-  zMulMat3DVec3DDRC( &m, &v );
-
+  rkglCAGetFrame3D( &cam, &f );
   /* pan, tilt and roll angle */
-  zMulMat3DMat3DTDRC( &m, &m0 );
-  _zMat3DToPTR( &m, &ptr );
-
-  rkAnimCamOptWrite( &v, &ptr );
+  _zMat3DToPTR( zFrame3DAtt(&f), &ptr );
+  rkAnimCamOptWrite( zFrame3DPos(&f), &ptr );
 }
 
 /**********************************************************/

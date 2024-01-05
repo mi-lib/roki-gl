@@ -1,12 +1,14 @@
 #include <roki_gl/roki_glut.h>
 
 zOpticalInfo blue;
+zOpticalInfo green;
 zOpticalInfo red;
 zOpticalInfo yellow;
 zOpticalInfo orange;
 
 zSphere3D hemisphere;
 zCapsule3D capsule;
+zCyl3D tube;
 zVec3D hemisphere_dir;
 zEllips3D el;
 zECyl3D ec;
@@ -33,6 +35,8 @@ void display(void)
   rkglMaterial( &blue );
   rkglHemisphere( &hemisphere, &hemisphere_dir, DISPSWITCH );
   rkglCapsule( &capsule, DISPSWITCH );
+  rkglMaterial( &green );
+  rkglTube( &tube, DISPSWITCH );
   rkglMaterial( &red );
   zVec3DCreate( &c, 1, 0, 3 );
   zVec3DCreate( &d, 0, 1, 3 );
@@ -99,6 +103,11 @@ void init(void)
   zVec3DCreate( &c1, 0.0,  3, 0 );
   zSphere3DCreate( &hemisphere, &c1, 2, 0 );
   zVec3DCreate( &hemisphere_dir, 1, 0.5, 2 );
+
+  zOpticalInfoCreateSimple( &green, 0.0, 0.8, 0, NULL );
+  zVec3DCreate( &c1, 2,-3,-2 );
+  zVec3DCreate( &c2, 2,-3, 2 );
+  zCyl3DCreate( &tube, &c1, &c2, 1, 16 );
 
   zOpticalInfoCreateSimple( &red, 1.0, 0, 0, NULL );
 }
