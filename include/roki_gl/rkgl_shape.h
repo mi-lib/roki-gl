@@ -23,10 +23,11 @@ __BEGIN_DECLS
 #define RKGL_ELLIPS    0x20
 #define RKGL_BB        0x40
 
-/* 3D object drawing */
-
+/* transformation */
 __ROKI_GL_EXPORT void rkglTranslate(zVec3D *v);
 __ROKI_GL_EXPORT void rkglXform(zFrame3D *f);
+
+/* 3D object drawing */
 
 #define rkglVertex(v)    glVertex3dv( (v)->e )
 #define rkglNormal(n)    glNormal3dv( (n)->e )
@@ -38,6 +39,8 @@ __ROKI_GL_EXPORT void rkglTri(zTri3D *t);
 __ROKI_GL_EXPORT void rkglTriTexture(zTri3D *t, zTri2D *f);
 __ROKI_GL_EXPORT void rkglTriBump(zTri3D *t, zTri2D *f, zVec3D *lp);
 __ROKI_GL_EXPORT void rkglPolygon(zVec3D v[], int n, ...);
+
+/* primitive shapes */
 
 __ROKI_GL_EXPORT void rkglBox(zBox3D *box, ubyte disptype);
 __ROKI_GL_EXPORT void rkglHemisphere(zSphere3D *sphere, zVec3D *dir, ubyte disptype);
@@ -51,12 +54,21 @@ __ROKI_GL_EXPORT void rkglCone(zCone3D *cone, ubyte disptype);
 
 __ROKI_GL_EXPORT void rkglTorus(zVec3D *c, zVec3D *n, double r1, double r2, int div1, int div2, ubyte disptype);
 
+/* NURBS surface and curve */
+
 __ROKI_GL_EXPORT void rkglNURBS(zNURBS3D *nurbs, ubyte disptype);
 __ROKI_GL_EXPORT void rkglNURBSCP(zNURBS3D *nurbs, GLfloat size, zRGB *rgb);
+
+__ROKI_GL_EXPORT void rkglNURBSCurve(zNURBS3D *nurbs, zRGB *rgb);
+__ROKI_GL_EXPORT void rkglNURBSCurveCP(zNURBS3D *nurbs, GLfloat size, zRGB *rgb);
+
+/* polyhedron */
 
 __ROKI_GL_EXPORT void rkglPH(zPH3D *ph, ubyte disptype);
 __ROKI_GL_EXPORT void rkglPHTexture(zPH3D *ph, zOpticalInfo *oi, zTexture *texture);
 __ROKI_GL_EXPORT void rkglPHBump(zPH3D *ph, zTexture *bump, rkglLight *light);
+
+/* shape and multishape */
 
 __ROKI_GL_EXPORT void rkglShape(zShape3D *s, zOpticalInfo *oi_alt, ubyte disptype, rkglLight *light);
 __ROKI_GL_EXPORT int rkglShapeEntry(zShape3D *s, zOpticalInfo *oi_alt, ubyte disptype, rkglLight *light);
@@ -64,7 +76,11 @@ __ROKI_GL_EXPORT int rkglShapeEntry(zShape3D *s, zOpticalInfo *oi_alt, ubyte dis
 __ROKI_GL_EXPORT void rkglMShape(zMShape3D *s, ubyte disptype, rkglLight *light);
 __ROKI_GL_EXPORT int rkglMShapeEntry(zMShape3D *s, ubyte disptype, rkglLight *light);
 
+/* point cloud */
+
 __ROKI_GL_EXPORT void rkglPointCloud(zVec3DList *pc, zVec3D *center, short size);
+
+/* fancy geometries */
 
 #define RKGL_ARROW_DIV        8
 #define RKGL_ARROW_BOTTOM_RAD 0.05
