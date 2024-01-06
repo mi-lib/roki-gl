@@ -1,3 +1,4 @@
+2024. 1. 7. Abolished rkglChainNamedDraw, and defined rkglChainSetName. [rkgl_chain]
 2024. 1. 7. Modified rkglFrameHandleSelect to use rkglSelectionBuffer. [rkgl_framehandle]
 2024. 1. 7. Abolished rkglFindNearest, and defined rkglSelectNearest instead. [rkgl_select]
 2024. 1. 7. Defined rkglSelectionBuffer class, and reimplemented rkglSelect. [rkgl_select]

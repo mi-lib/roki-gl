@@ -8,8 +8,10 @@ rkglChain gr[2];
 
 void draw_scene(void)
 {
-  rkglChainNamedDraw( &gr[0], 0 );
-  rkglChainNamedDraw( &gr[1], 1 );
+  rkglChainSetName( &gr[0], 0 );
+  rkglChainDraw( &gr[0] );
+  rkglChainSetName( &gr[1], 1 );
+  rkglChainDraw( &gr[1] );
 }
 
 void display(void)

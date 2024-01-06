@@ -36,7 +36,8 @@ void select_link(rkglSelectionBuffer *sb)
 
   reset_link();
   if( !rkglSelectNearest( sb ) ) return;
-  selected_link = rkglSelectionName(sb,0); /* simple reference to link name */
+  if( rkglSelectionName(sb,0) != 0 ) return;
+  selected_link = rkglSelectionName(sb,1); /* simple reference to link name */
   zOpticalInfoCreateSimple( &oi_alt, 1.0, 0.0, 0.0, NULL );
   gr.attr.disptype = RKGL_FACE;
   rkglChainLinkAlt( &gr, selected_link, &oi_alt, &gr.attr, &light );
