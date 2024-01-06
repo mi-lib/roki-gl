@@ -30,14 +30,13 @@ void reset_link(void)
   }
 }
 
-void select_link(GLuint selbuf[], int hits)
+void select_link(rkglSelectionBuffer *sb)
 {
-  GLuint *ns;
   zOpticalInfo oi_alt;
 
   reset_link();
-  if( !( ns = rkglFindNearside( selbuf, hits ) ) ) return;
-  selected_link = ns[3]; /* simple reference to link name */
+  if( !rkglSelectNearest( sb ) ) return;
+  selected_link = rkglSelectionName(sb,0); /* simple reference to link name */
   zOpticalInfoCreateSimple( &oi_alt, 1.0, 0.0, 0.0, NULL );
   gr.attr.disptype = RKGL_FACE;
   rkglChainLinkAlt( &gr, selected_link, &oi_alt, &gr.attr, &light );
@@ -56,12 +55,14 @@ void move_link(double angle)
 
 void mouse(int button, int state, int x, int y)
 {
-  GLuint selbuf[BUFSIZ];
+  rkglSelectionBuffer sb;
 
   switch( button ){
   case GLUT_LEFT_BUTTON:
-    if( state == GLUT_DOWN )
-      select_link( selbuf, rkglPick( &cam, draw_scene, selbuf, BUFSIZ, x, y, 1, 1 ) );
+    if( state == GLUT_DOWN ){
+      rkglSelect( &sb, &cam, draw_scene, x, y, 1, 1 );
+      select_link( &sb );
+    }
     break;
   case GLUT_RIGHT_BUTTON:
     if( state == GLUT_DOWN )

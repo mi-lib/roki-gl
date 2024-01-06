@@ -105,17 +105,14 @@ void rkglFrameHandleDraw(rkglFrameHandle *handle)
   glPopMatrix();
 }
 
-void rkglFrameHandleSelect(rkglFrameHandle *handle, rkglCamera *cam, int x, int y, void (* draw_func)(void))
+void rkglFrameHandleSelect(rkglFrameHandle *handle, rkglSelectionBuffer *sb, rkglCamera *cam, int x, int y)
 {
-  GLuint selbuf[BUFSIZ];
-  GLuint *ns;
-
   rkglFrameHandleUnselect( handle );
-  if( !( ns = rkglFindNearside( selbuf,
-                rkglPick( cam, draw_func, selbuf, BUFSIZ, x, y, 1, 1 ) ) ) ) return;
-  if( ns[3] != handle->name || ns[4] < 0 || ns[4] >= 6 ) return;
-  handle->selected_id = ns[4];
-  handle->_depth = rkglGetDepth( cam, x, y );
+  if( !rkglSelectNearest( sb ) ) return;
+  if( rkglSelectionName(sb,0) != handle->name ||
+      rkglSelectionName(sb,1) < 0 || rkglSelectionName(sb,1) >= 6 ) return;
+  handle->selected_id = rkglSelectionName(sb,1);
+  handle->_depth = rkglSelectionZnearDepth(sb);
   rkglUnproject( cam, x, y, handle->_depth, &handle->_anchor );
 }
 

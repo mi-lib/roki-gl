@@ -31,7 +31,7 @@ void mouse(int button, int state, int x, int y)
   case GLUT_LEFT_BUTTON:
     if( state == GLUT_DOWN ){
       printf( "pressed at (%d,%d)\n", x, y );
-      rkglPickAndUnproject( &cam, x, y, &pxy );
+      rkglPickPoint( &cam, x, y, &pxy );
       zVec3DPrint( &pxy );
       rkglProject( &cam, &pxy, &x, &y );
       printf( "projected to (%d,%d)\n", x, y );
@@ -54,8 +54,8 @@ void resize(int w, int h)
 void keyboard(unsigned char key, int x, int y)
 {
   switch( key ){
-  case 'q': case 'Q': case '\033' /* ESC */:
-    exit( 0 );
+  case 'q': case 'Q': case '\033':
+    exit(0);
   default: ;
   }
 }
@@ -70,8 +70,6 @@ void init(void)
   rkglLightMove( &light, 4.0, 8.0, 6.0 );
 }
 
-void idle(void){ glutPostRedisplay(); }
-
 int main(int argc, char *argv[])
 {
   rkglInitGLUT( &argc, argv );
@@ -81,7 +79,7 @@ int main(int argc, char *argv[])
   glutMouseFunc( mouse );
   glutReshapeFunc( resize );
   glutKeyboardFunc( keyboard );
-  glutIdleFunc( idle );
+  glutIdleFunc( rkglIdleFuncGLUT );
   init();
   glutMainLoop();
   return 0;

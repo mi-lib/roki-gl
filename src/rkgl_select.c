@@ -34,16 +34,17 @@ double rkglGetDepth(rkglCamera *c, int x, int y)
   return (double)depth;
 }
 
-int rkglPickAndUnproject(rkglCamera *c, int x, int y, zVec3D *p)
+int rkglPickPoint(rkglCamera *c, int x, int y, zVec3D *p)
 {
   return rkglUnproject( c, x, y, rkglGetDepth( c, x, y ), p );
 }
 
-/* pick */
+/* select */
 
-int rkglPick(rkglCamera *c, void (* scene)(void), GLuint selbuf[], size_t size, int x, int y, int w, int h)
+int rkglSelect(rkglSelectionBuffer *sb, rkglCamera *cam, void (* scene)(void), int x, int y, int w, int h)
 {
-  glSelectBuffer( size, selbuf );
+  sb->cur = sb->buf;
+  glSelectBuffer( RKGL_SELECTION_BUF_SIZE, sb->buf );
   glRenderMode( GL_SELECT );
   glInitNames();
   glPushName( 0 );
@@ -51,29 +52,55 @@ int rkglPick(rkglCamera *c, void (* scene)(void), GLuint selbuf[], size_t size, 
   glMatrixMode( GL_PROJECTION );
   glPushMatrix();
   glLoadIdentity();
-  gluPickMatrix( x, c->vp[3]-y, w, h, c->vp );
-  glMultMatrixd( c->vv );
-  rkglCALoad( c );
+  gluPickMatrix( x, cam->vp[3]-y, w, h, cam->vp );
+  glMultMatrixd( cam->vv );
+  rkglCALoad( cam );
   scene();
   glMatrixMode( GL_PROJECTION );
   glPopMatrix();
-  return glRenderMode( GL_RENDER );
+  return ( sb->hits = glRenderMode( GL_RENDER ) );
 }
 
-GLuint *rkglFindNearside(GLuint selbuf[], int hits)
+GLuint *rkglSelectNearest(rkglSelectionBuffer *sb)
 {
-  GLuint *ptr, *ns;
-  GLuint zmin;
+  GLuint *ns;
   int i;
 
-  if( hits <= 0 || selbuf[0] == 0 ) return NULL;
-  zmin = selbuf[1];
-  for( ns=ptr=selbuf, i=0; i<hits; i++ ){
-    if( ptr[1] < zmin ){
-      zmin = ptr[1];
-      ns = ptr;
-    }
-    ptr += ptr[0] + 3;
+  if( sb->hits <= 0 ) return NULL;
+  rkglSelectionRewind( sb );
+  for( ns=sb->cur, i=0; i<sb->hits; i++ ){
+    if( ns[1] > rkglSelectionZnear(sb) )
+      ns = sb->cur;
+    rkglSelectionNext( sb );
   }
-  return ns;
+  return ( sb->cur = ns );
+}
+
+/* for debug */
+
+void rkglSelectionPrintName(rkglSelectionBuffer *sb)
+{
+  int i;
+
+  printf( "%d", rkglSelectionName(sb,0) );
+  for( i=1; i<rkglSelectionNameSize(sb); i++ ){
+    printf( "-%d", rkglSelectionName(sb,i) );
+  }
+}
+
+void rkglSelectionPrint(rkglSelectionBuffer *sb)
+{
+  int i;
+
+  printf( "\n%d hits.\n", sb->hits );
+  rkglSelectionRewind( sb );
+  for( i=0; i<sb->hits; i++ ){
+    printf( "number of stacks: %d\n", rkglSelectionNameSize(sb) );
+    printf( " z near = %g\n", rkglSelectionZnearDepth(sb) );
+    printf( " z far  = %g\n", rkglSelectionZfarDepth(sb) );
+    printf( " name: " );
+    rkglSelectionPrintName( sb );
+    printf( "\n" );
+    rkglSelectionNext( sb );
+  }
 }
