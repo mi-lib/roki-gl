@@ -18,3 +18,11 @@ endif
 ifeq ($(CONFIG_USE_GLUT),y)
 	OBJ += roki_glut.o
 endif
+
+ifeq ($(CONFIG_USE_GLUT),y)
+	OBJ += roki_glut.o
+endif
+
+ifeq ($(CONFIG_USE_GLFW),y)
+	OBJ += roki_glfw.o
+endif
