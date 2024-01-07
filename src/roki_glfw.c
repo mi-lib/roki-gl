@@ -19,12 +19,14 @@ int rkglInitGLFW(int *argc, char **argv)
 
 int rkglWindowCreateGLFW(GLFWwindow* window, int x, int y, int w, int h, const char *title)
 {
-  window = glfwCreateWindow(w, h, title, NULL, NULL);
+  /* Execute window = glfwCreateWindow(w, h, title, NULL, NULL); before calling this function */
   if ( window == NULL ){
     ZRUNERROR("Failed glfwCreateWindow()");
     glfwTerminate();
     return -1;
   }
+  glfwSetWindowPos( window, x, y );
+  glfwShowWindow( window );
   glfwMakeContextCurrent( window );
 
 #ifdef __ROKI_GL_USE_GLEW
@@ -105,13 +107,16 @@ void rkglSpecialFuncGLFW(GLFWwindow* window, int key, int x, int y)
 void rkglMouseFuncGLFW(int button, int event, int x, int y)
 {
   rkglMouseStoreInput( button, event, GLFW_PRESS, x, y, GLFW_KEY_LEFT_CONTROL );
-  switch( rkgl_mouse_button ){
-  case GLFW_WHEEL_UP:   rkglCAZoomIn( _glfw_cam, _glfw_dl ); break;
-  case GLFW_WHEEL_DOWN: rkglCAZoomOut(  _glfw_cam, _glfw_dl ); break;
-  default: ;
+}
+
+void rkglMouseWheelFuncGLFW(GLFWwindow* window, double xoffset, double yoffset)
+{
+  if ( yoffset < 0 ) {
+    rkglCAZoomIn( _glfw_cam, _glfw_dl );
   }
-  rkglMouseStoreXY( x, y );
-  glfwPostEmptyEvent();
+  if ( yoffset > 0 ) {
+    rkglCAZoomOut( _glfw_cam, _glfw_dl );
+  }
 }
 
 void rkglMouseDragFuncGLFW(int x, int y)
