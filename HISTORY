@@ -1,3 +1,4 @@
+2024. 1. 8. Modified rkglNURBS, rkglNURBSCP, rkglNURBSCurve, and rkglNURBSCurveCP to name components. [rkgl_shape]
 2024. 1. 7. Abolished rkglChainNamedDraw, and defined rkglChainSetName. [rkgl_chain]
 2024. 1. 7. Modified rkglFrameHandleSelect to use rkglSelectionBuffer. [rkgl_framehandle]
 2024. 1. 7. Abolished rkglFindNearest, and defined rkglSelectNearest instead. [rkgl_select]
