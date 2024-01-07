@@ -41,6 +41,13 @@ int rkglPickPoint(rkglCamera *c, int x, int y, zVec3D *p)
 
 /* select */
 
+void rkglSelectionInit(rkglSelectionBuffer *sb)
+{
+  sb->cur = sb->buf;
+  sb->buf[0] = 0;
+  sb->hits = 0;
+}
+
 int rkglSelect(rkglSelectionBuffer *sb, rkglCamera *cam, void (* scene)(void), int x, int y, int w, int h)
 {
   sb->cur = sb->buf;
