@@ -39,9 +39,10 @@ ZDEF_STRUCT( __ROKI_GL_CLASS_EXPORT, rkglSelectionBuffer ){
 #define rkglSelectionNext(sb)     ( (sb)->cur += 3 + rkglSelectionNameSize(sb) )
 
 __ROKI_GL_EXPORT void rkglSelectionInit(rkglSelectionBuffer *sb);
+__ROKI_GL_EXPORT GLuint *rkglSelectionFindNearest(rkglSelectionBuffer *sb);
 
 __ROKI_GL_EXPORT int rkglSelect(rkglSelectionBuffer *sb, rkglCamera *cam, void (* scene)(void), int x, int y, int w, int h);
-__ROKI_GL_EXPORT GLuint *rkglSelectNearest(rkglSelectionBuffer *sb);
+__ROKI_GL_EXPORT GLuint *rkglSelectNearest(rkglSelectionBuffer *sb, rkglCamera *cam, void (* scene)(void), int x, int y, int w, int h);
 
 /* for debug */
 __ROKI_GL_EXPORT void rkglSelectionPrintName(rkglSelectionBuffer *sb);

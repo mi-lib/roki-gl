@@ -51,7 +51,7 @@ void mouse(int button, int state, int x, int y)
     if( state == GLUT_DOWN ){
       rkglSelect( &sb, &cam, draw_scene, x, y, 1, 1 );
       rkglSelectionPrint( &sb );
-      if( rkglSelectNearest( &sb ) ){
+      if( rkglSelectionFindNearest( &sb ) ){
         printf( "[nearest] " );
         rkglSelectionPrintName( &sb );
         printf( "\n" );

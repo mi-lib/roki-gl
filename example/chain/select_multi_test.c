@@ -39,7 +39,7 @@ void select_link(rkglSelectionBuffer *sb)
   zOpticalInfo oi_alt;
 
   reset_link();
-  if( !rkglSelectNearest( sb ) ) return;
+  if( !rkglSelectionFindNearest( sb ) ) return;
   selected_chain = rkglSelectionName(sb,0);
   selected_link  = rkglSelectionName(sb,1);
   zOpticalInfoCreateSimple( &oi_alt, 1.0, 0.0, 0.0, NULL );

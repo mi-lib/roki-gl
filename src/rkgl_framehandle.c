@@ -108,7 +108,7 @@ void rkglFrameHandleDraw(rkglFrameHandle *handle)
 void rkglFrameHandleSelect(rkglFrameHandle *handle, rkglSelectionBuffer *sb, rkglCamera *cam, int x, int y)
 {
   rkglFrameHandleUnselect( handle );
-  if( !rkglSelectNearest( sb ) ) return;
+  if( !rkglSelectionFindNearest( sb ) ) return;
   if( rkglSelectionName(sb,0) != handle->name ||
       rkglSelectionName(sb,1) < 0 || rkglSelectionName(sb,1) >= 6 ) return;
   handle->selected_id = rkglSelectionName(sb,1);

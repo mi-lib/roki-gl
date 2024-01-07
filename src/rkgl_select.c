@@ -48,6 +48,21 @@ void rkglSelectionInit(rkglSelectionBuffer *sb)
   sb->hits = 0;
 }
 
+GLuint *rkglSelectionFindNearest(rkglSelectionBuffer *sb)
+{
+  GLuint *ns;
+  int i;
+
+  if( sb->hits <= 0 ) return NULL;
+  rkglSelectionRewind( sb );
+  for( ns=sb->cur, i=0; i<sb->hits; i++ ){
+    if( ns[1] > rkglSelectionZnear(sb) )
+      ns = sb->cur;
+    rkglSelectionNext( sb );
+  }
+  return ( sb->cur = ns );
+}
+
 int rkglSelect(rkglSelectionBuffer *sb, rkglCamera *cam, void (* scene)(void), int x, int y, int w, int h)
 {
   sb->cur = sb->buf;
@@ -68,19 +83,10 @@ int rkglSelect(rkglSelectionBuffer *sb, rkglCamera *cam, void (* scene)(void), i
   return ( sb->hits = glRenderMode( GL_RENDER ) );
 }
 
-GLuint *rkglSelectNearest(rkglSelectionBuffer *sb)
+GLuint *rkglSelectNearest(rkglSelectionBuffer *sb, rkglCamera *cam, void (* scene)(void), int x, int y, int w, int h)
 {
-  GLuint *ns;
-  int i;
-
-  if( sb->hits <= 0 ) return NULL;
-  rkglSelectionRewind( sb );
-  for( ns=sb->cur, i=0; i<sb->hits; i++ ){
-    if( ns[1] > rkglSelectionZnear(sb) )
-      ns = sb->cur;
-    rkglSelectionNext( sb );
-  }
-  return ( sb->cur = ns );
+  rkglSelect( sb, cam, scene, x, y, w, h );
+  return rkglSelectionFindNearest( sb );
 }
 
 /* for debug */

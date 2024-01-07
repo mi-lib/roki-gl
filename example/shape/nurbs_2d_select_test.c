@@ -5,8 +5,12 @@ rkglLight light;
 
 zOpticalInfo oi;
 zNURBS3D nurbs;
+int selected_cp = -1;
 
 rkglSelectionBuffer sb;
+
+#define NAME_NURBS 100
+#define NAME_OTHER 200
 
 #define NUM_CP   6
 #define SIZE_CP 10.0
@@ -16,10 +20,10 @@ void draw_scene(void)
   zRGB rgb;
 
   glPushMatrix();
-  glLoadName( 200 );
+  glLoadName( NAME_OTHER );
   rkglFrame( ZFRAME3DIDENT, 1.0, 2 );
   zRGBSet( &rgb, 1.0, 1.0, 1.0 );
-  glLoadName( 100 );
+  glLoadName( NAME_NURBS );
   glLineWidth( 3 );
   rkglNURBSCurve( &nurbs, &rgb );
   zRGBSet( &rgb, 0.5, 1.0, 0.5 );
@@ -62,13 +66,32 @@ void keyboard(unsigned char key, int x, int y)
   }
 }
 
+int find_cp(rkglSelectionBuffer *sb)
+{
+  int i;
+
+  rkglSelectionRewind( sb );
+  selected_cp = -1;
+  for( i=0; i<sb->hits; i++ ){
+    if( rkglSelectionName(sb,0) == NAME_NURBS &&
+        rkglSelectionName(sb,1) >= 0 && rkglSelectionName(sb,1) < zNURBS3D1CPNum(&nurbs) ){
+      selected_cp = rkglSelectionName(sb,1);
+      break;
+    }
+    rkglSelectionNext( sb );
+  }
+  return selected_cp;
+}
+
 void mouse(int button, int state, int x, int y)
 {
+  rkglSelectionInit( &sb );
   switch( button ){
   case GLUT_LEFT_BUTTON:
     if( state == GLUT_DOWN ){
       rkglSelect( &sb, &cam, draw_scene, x, y, SIZE_CP, SIZE_CP );
-      rkglSelectionPrint( &sb );
+      if( find_cp( &sb ) >= 0 )
+        eprintf( "Selected control point [%d]\n", selected_cp );
     }
     break;
   case GLUT_MIDDLE_BUTTON:
@@ -83,10 +106,17 @@ void mouse(int button, int state, int x, int y)
 
 void motion(int x, int y)
 {
-  if( sb.hits == 0 )
-    rkglMouseDragFuncGLUT( x, y );
-}
+  zVec3D p;
 
+  if( sb.hits == 0 ){
+    rkglMouseDragFuncGLUT( x, y );
+    return;
+  }
+  if( selected_cp >= 0 && selected_cp < zNURBS3D1CPNum(&nurbs) ){
+    rkglUnproject( &cam, x, y, rkglSelectionZnearDepth(&sb), &p );
+    zVec3DCopy( &p, zNURBS3D1CP(&nurbs,selected_cp) );
+  }
+}
 
 void reshape(int w, int h)
 {
