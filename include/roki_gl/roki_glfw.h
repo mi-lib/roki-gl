@@ -12,12 +12,6 @@
 
 __BEGIN_DECLS
 
-/* I don't know why, but mouse wheel actions are not defined in the original
- * freeglut (even in freeglut_ext, though it has glutMouseWheelFunc).
- */
-#define GLFW_WHEEL_UP   0x0003
-#define GLFW_WHEEL_DOWN 0x0004
-
 __ROKI_GL_EXPORT int rkglInitGLFW(int *argc, char **argv);
 __ROKI_GL_EXPORT int rkglWindowCreateGLFW(GLFWwindow* window, int x, int y, int w, int h, const char *title);
 
@@ -30,6 +24,7 @@ __ROKI_GL_EXPORT void rkglIdleFuncGLFW(void);
 __ROKI_GL_EXPORT void rkglKeyFuncGLFW(unsigned char key, int x, int y);
 __ROKI_GL_EXPORT void rkglSpecialFuncGLFW(GLFWwindow* window, int key, int x, int y);
 __ROKI_GL_EXPORT void rkglMouseFuncGLFW(int button, int event, int x, int y);
+__ROKI_GL_EXPORT void rkglMouseWheelFuncGLFW(GLFWwindow* window, double xoffset, double yoffset);
 __ROKI_GL_EXPORT void rkglMouseDragFuncGLFW(int x, int y);
 __ROKI_GL_EXPORT void rkglVisFuncGLFW(GLFWwindow* window);
 
