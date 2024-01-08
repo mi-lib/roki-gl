@@ -57,7 +57,7 @@ void rkglSetCallbackParamGLFW(rkglCamera *c, double vv_width, double vv_near, do
   _glfw_da = da;
 }
 
-void rkglReshapeFuncGLFW(int w, int h)
+void rkglReshapeFuncGLFW(GLFWwindow* window, int w, int h)
 {
   double x, y;
 
@@ -72,7 +72,7 @@ void rkglIdleFuncGLFW(void)
   glfwPostEmptyEvent();
 }
 
-void rkglKeyFuncGLFW(unsigned char key, int x, int y)
+void rkglKeyFuncGLFW(GLFWwindow* window, unsigned char key)
 {
   switch( key ){
   case 'h': rkglCARelMoveLeft(  _glfw_cam, _glfw_dl ); break;
@@ -104,9 +104,9 @@ void rkglSpecialFuncGLFW(GLFWwindow* window, int key, int x, int y)
   glfwPostEmptyEvent();
 }
 
-void rkglMouseFuncGLFW(int button, int event, int x, int y)
+void rkglMouseFuncGLFW(GLFWwindow* window, int button, int state, int x, int y)
 {
-  rkglMouseStoreInput( button, event, GLFW_PRESS, x, y, GLFW_KEY_LEFT_CONTROL );
+  rkglMouseStoreInput( button, state, GLFW_PRESS, x, y, GLFW_KEY_LEFT_CONTROL );
 }
 
 void rkglMouseWheelFuncGLFW(GLFWwindow* window, double xoffset, double yoffset)
@@ -119,7 +119,7 @@ void rkglMouseWheelFuncGLFW(GLFWwindow* window, double xoffset, double yoffset)
   }
 }
 
-void rkglMouseDragFuncGLFW(int x, int y)
+void rkglMouseDragFuncGLFW(GLFWwindow* window, int x, int y)
 {
   double dx, dy;
 
