@@ -98,11 +98,12 @@ void rkglFrameHandleDraw(rkglFrameHandle *handle)
 int rkglFrameHandleSelect(rkglFrameHandle *handle, rkglSelectionBuffer *sb, rkglCamera *cam, int x, int y)
 {
   rkglFrameHandleUnselect( handle );
-  if( !rkglSelectionFindNearest( sb ) ) return;
+  if( !rkglSelectionFindNearest( sb ) ) goto TERMINATE;
   if( rkglSelectionName(sb,0) != handle->name ||
-      rkglSelectionName(sb,1) < 0 || rkglSelectionName(sb,1) >= 6 ) return;
+      rkglSelectionName(sb,1) < 0 || rkglSelectionName(sb,1) >= 6 ) goto TERMINATE;
   handle->selected_id = rkglSelectionName(sb,1);
   handle->_depth = rkglSelectionZnearDepth(sb);
+ TERMINATE:
   rkglUnproject( cam, x, y, handle->_depth, &handle->_anchor );
   return handle->selected_id;
 }
