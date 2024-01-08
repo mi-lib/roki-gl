@@ -79,7 +79,7 @@ void display(void)
 
 void init()
 {
-  rkglSetCallbackParamGLUT( &cam, 1.0, 1, 20, 1.0, 5.0 );
+  rkglSetDefaultCallbackParam( &cam, 1.0, 1, 20, 1.0, 5.0 );
 
   rkglBGSet( &cam, 0.5, 0.5, 0.5 );
   rkglCASet( &cam, 10, 0, 0, 0, 0, 0 );
@@ -99,6 +99,7 @@ int main(int argc, char *argv[])
 
   glutDisplayFunc( display );
   glutVisibilityFunc( rkglVisFuncGLUT );
+  glutIdleFunc( rkglIdleFuncGLUT );
   glutReshapeFunc( rkglReshapeFuncGLUT );
   glutKeyboardFunc( keyfunc );
   glutSpecialFunc( rkglSpecialFuncGLUT );

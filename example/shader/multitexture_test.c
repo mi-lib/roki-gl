@@ -101,7 +101,7 @@ void display(void)
 
 void init(void)
 {
-  rkglSetCallbackParamGLUT( &cam, 2.0, 2, 60, 1.0, 5.0 );
+  rkglSetDefaultCallbackParam( &cam, 2.0, 2, 60, 1.0, 5.0 );
 
   rkglBGSet( &cam, 0.5, 0.5, 0.5 );
   rkglCASet( &cam, 10, 0, 5, 0, -30, 0 );

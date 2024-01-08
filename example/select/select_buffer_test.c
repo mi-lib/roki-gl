@@ -87,7 +87,7 @@ void init(void)
   rkglBGSet( &cam, 0.5, 0.5, 0.5 );
   rkglCALookAt( &cam, 5.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 );
 
-  glEnable(GL_LIGHTING);
+  glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.5, 0.5, 0.5, 1, 1, 1, 0, 0, 0 );
   rkglLightMove( &light, 10.0, 0.0, 10.0 );
 }

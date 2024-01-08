@@ -21,12 +21,10 @@ void display(void)
   glutSwapBuffers();
 }
 
-void idle(void){ glutPostRedisplay(); }
-
 void resize(int w, int h)
 {
   rkglVPCreate( &cam, 0, 0, w, h );
-  rkglFrustumScale( &cam, 1.0/1000, 0.5, 10 );
+  rkglFrustumScaleH( &cam, 1.0/1000, 0.5, 10 );
 }
 
 #define toggle_disptype( gr, type ) do{\
@@ -140,9 +138,9 @@ int main(int argc, char *argv[])
   rkglWindowCreateGLUT( 0, 0, 480, 480, argv[0] );
 
   glutDisplayFunc( display );
-  glutIdleFunc( idle );
   glutReshapeFunc( resize );
   glutKeyboardFunc( keyboard );
+  glutIdleFunc( rkglIdleFuncGLUT );
   init();
   glutMainLoop();
   return 0;

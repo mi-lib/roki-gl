@@ -110,14 +110,9 @@ void rkglWindowAddEventGLX(Window win, long event)
 
 /* default callback functions */
 
-void rkglReshapeGLX(rkglCamera *cam, int w, int h, double vvwidth, double vvnear, double vvfar)
+void rkglReshapeGLX(rkglCamera *cam, int w, int h, double width, double near, double far)
 {
-  double x, y;
-
-  rkglVPCreate( cam, 0, 0, w, h );
-  x = 0.5 * vvwidth;
-  y = x / rkglVPAspect(cam);
-  rkglFrustum( cam, -x, x, -y, y, vvnear, vvfar );
+  rkglFrustumFit2VP( cam, w, h, width, near, far );
 }
 
 int rkglKeyFuncGLX(rkglCamera *cam, double dl, double da)
