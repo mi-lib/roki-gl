@@ -95,7 +95,7 @@ void rkglFrameHandleDraw(rkglFrameHandle *handle)
   glPopMatrix();
 }
 
-void rkglFrameHandleSelect(rkglFrameHandle *handle, rkglSelectionBuffer *sb, rkglCamera *cam, int x, int y)
+int rkglFrameHandleSelect(rkglFrameHandle *handle, rkglSelectionBuffer *sb, rkglCamera *cam, int x, int y)
 {
   rkglFrameHandleUnselect( handle );
   if( !rkglSelectionFindNearest( sb ) ) return;
@@ -104,6 +104,7 @@ void rkglFrameHandleSelect(rkglFrameHandle *handle, rkglSelectionBuffer *sb, rkg
   handle->selected_id = rkglSelectionName(sb,1);
   handle->_depth = rkglSelectionZnearDepth(sb);
   rkglUnproject( cam, x, y, handle->_depth, &handle->_anchor );
+  return handle->selected_id;
 }
 
 static void _rkglFrameHandleTranslate(rkglFrameHandle *handle, rkglCamera *cam, zVec3D *v)
