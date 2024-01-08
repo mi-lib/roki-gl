@@ -42,16 +42,6 @@ static void _rkglFrameHandleDrawRingPart(zFrame3D *f, zAxis axis, double l, doub
   rkglTube( &ring, RKGL_FACE );
 }
 
-static bool _rkglFrameHandleIsInTranslation(rkglFrameHandle *handle)
-{
-  return handle->selected_id >=0 && handle->selected_id <= 2;
-}
-
-static bool _rkglFrameHandleIsInRotation(rkglFrameHandle *handle)
-{
-  return handle->selected_id >=3 && handle->selected_id <= 5;
-}
-
 static int _rkglFrameHandleCreatePart(zFrame3D *frame, zAxis axis, double l, double mag, void (*draw_part)(zFrame3D*,zAxis,double,double))
 {
   int id;
@@ -154,16 +144,26 @@ static void _rkglFrameHandleRotate(rkglFrameHandle *handle, rkglCamera *cam /* d
   zVec3DAdd( rkglFrameHandlePos(handle), &r, &handle->_anchor );
 }
 
+bool rkglFrameHandleIsInTranslation(rkglFrameHandle *handle)
+{
+  return handle->selected_id >=0 && handle->selected_id <= 2;
+}
+
+bool rkglFrameHandleIsInRotation(rkglFrameHandle *handle)
+{
+  return handle->selected_id >=3 && handle->selected_id <= 5;
+}
+
 bool rkglFrameHandleMove(rkglFrameHandle *handle, rkglCamera *cam, int x, int y)
 {
   zVec3D v;
 
   if( rkglFrameHandleIsUnselected( handle ) ) return false;
   rkglUnproject( cam, x, y, handle->_depth, &v );
-  if( _rkglFrameHandleIsInTranslation( handle ) ){
+  if( rkglFrameHandleIsInTranslation( handle ) ){
     _rkglFrameHandleTranslate( handle, cam, &v );
   } else
-  if( _rkglFrameHandleIsInRotation( handle ) ){
+  if( rkglFrameHandleIsInRotation( handle ) ){
     _rkglFrameHandleRotate( handle, cam, &v );
   }
   return true;

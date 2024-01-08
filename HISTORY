@@ -1,3 +1,4 @@
+2024. 1.10. Renamed _rkglFrameHandleIsInTranslation and _rkglFrameHandleIsInRotation to rkglFrameHandleIsInTranslation and rkglFrameHandleIsInRotation, respectively, and made them public. [rkgl_framehandle]
 2024. 1. 9. Reimplemented rkglReshapeFuncGLUT, rkglKeyFuncGLUT, rkglSpecialFuncGLUT, rkglMouseFuncGLUT, and rkglMouseDragFuncGLUT. [roki_glut, app]
 2024. 1. 9. Abolished _glut_cam, _glut_vv_width, _glut_vv_near, _glut_vv_far, _glut_dl, _glut_da, and rkglSetCallbackParamGLUT. [roki_glut]
 2024. 1. 9. Defined rkglSetDefaultCallbackParam. [rkgl_camera]

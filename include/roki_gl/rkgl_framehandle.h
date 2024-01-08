@@ -33,6 +33,10 @@ __ROKI_GL_EXPORT void rkglFrameHandleDestroy(rkglFrameHandle *handle);
 __ROKI_GL_EXPORT void rkglFrameHandleDraw(rkglFrameHandle *handle);
 
 __ROKI_GL_EXPORT void rkglFrameHandleSelect(rkglFrameHandle *handle, rkglSelectionBuffer *sb, rkglCamera *cam, int x, int y);
+
+__ROKI_GL_EXPORT bool rkglFrameHandleIsInTranslation(rkglFrameHandle *handle);
+__ROKI_GL_EXPORT bool rkglFrameHandleIsInRotation(rkglFrameHandle *handle);
+
 __ROKI_GL_EXPORT bool rkglFrameHandleMove(rkglFrameHandle *handle, rkglCamera *cam, int x, int y);
 
 __END_DECLS
