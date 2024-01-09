@@ -99,8 +99,8 @@ bool is_rotation_mode(rkglFrameHandle *handle)
 }
 
 /* To avoid duplication between selected_link and selected_parts_id */
-/* NOFFSET must be enough large than rkChainLinkNum(gr.chain)  */
-#define NOFFSET 50
+/* NAME_FRAMEHANDLE_OFFSET must be enough large than rkChainLinkNum(gr.chain)  */
+#define NAME_FRAMEHANDLE_OFFSET 50
 
 /* draw FrameHandle parts shape */
 void draw_fh_parts(void)
@@ -205,18 +205,18 @@ void reset_selected_link(int new_link_id)
 }
 
 
-int select_link(rkglCamera *cam, int x, int y, void (* draw_func)(void))
+int select_link(rkglSelectionBuffer *sb)
 {
-  /* If LINKFRAME is selected, g_selected.link_id is not changed. (ignore this function) */
-  GLuint selbuf[BUFSIZ];
+  /* If LINKFRAME is selected, g_selected.link_id is not changed. (skipped this function) */
   int nearest_shape_id = -1;
-  GLuint *ns;
 
-  int hits = rkglPick( cam, draw_func, selbuf, BUFSIZ, x, y, 1, 1 );
-  if( !( ns = rkglFindNearside( selbuf, hits ) ) ){
+  if( !rkglSelectionFindNearest( sb ) ){
     return nearest_shape_id;
   }
-  nearest_shape_id = ns[3];
+  if( rkglSelectionName( sb, 0 ) != 0 ){
+    return nearest_shape_id;
+  }
+  nearest_shape_id = rkglSelectionName( sb, 1 );
   if( nearest_shape_id < 0 || nearest_shape_id >= rkChainLinkNum(gr.chain) ){
     nearest_shape_id = -1;
   }
@@ -398,15 +398,19 @@ void motion(GLFWwindow* window, double x, double y)
 
 void mouse(GLFWwindow* window, int button, int state, int mods)
 {
+  rkglSelectionBuffer sb;
+
   if( button == GLFW_MOUSE_BUTTON_LEFT ){
     if( state == GLFW_PRESS ){
       g_mouse_left_button_clicked = true;
-      rkglFrameHandleSelect( &g_fh, &g_cam, g_x, g_y, draw_fh_parts );
+      rkglSelect( &sb, &g_cam, draw_fh_parts, g_x, g_y, 1, 1 );
+      rkglFrameHandleSelect( &g_fh, &sb, &g_cam, g_x, g_y );
       if( !rkglFrameHandleIsUnselected( &g_fh ) ){
         g_selected.obj = FRAMEHANDLE;
         register_drag_link_for_IK();
       } else{
-        int new_link_id = select_link( &g_cam, g_x, g_y, draw_select_link );
+        rkglSelect( &sb, &g_cam, draw_select_link, g_x, g_y, 1, 1 );
+        int new_link_id = select_link( &sb );
         reset_link_select_status( new_link_id );
         if( rkglChainLinkIsUnselected( new_link_id ) ){
           g_selected.obj = NONE;
@@ -426,7 +430,8 @@ void mouse(GLFWwindow* window, int button, int state, int mods)
   } else if( button == GLFW_MOUSE_BUTTON_RIGHT ){
     if( state == GLFW_PRESS ){
       g_mouse_right_button_clicked = true;
-      int new_link_id = select_link( &g_cam, g_x, g_y, draw_select_link );
+      rkglSelect( &sb, &g_cam, draw_select_link, g_x, g_y, 1, 1 );
+      int new_link_id = select_link( &sb );
       if( !rkglChainLinkIsUnselected( new_link_id ) ){
         switch_pin_link( new_link_id );
       }
@@ -581,7 +586,7 @@ bool init(void)
   g_selected.obj = NONE;
   g_selected.link_id = -1;
   /* frame handle */
-  rkglFrameHandleCreate( &g_fh, 0, g_LENGTH, g_MAGNITUDE );
+  rkglFrameHandleCreate( &g_fh, NAME_FRAMEHANDLE_OFFSET, g_LENGTH, g_MAGNITUDE );
 
   return true;
 }
