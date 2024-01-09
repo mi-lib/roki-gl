@@ -100,6 +100,7 @@ bool is_rotation_mode(rkglFrameHandle *handle)
 
 /* To avoid duplication between selected_link and selected_parts_id */
 /* NAME_FRAMEHANDLE_OFFSET must be enough large than rkChainLinkNum(gr.chain)  */
+#define NAME_CHAIN 0
 #define NAME_FRAMEHANDLE_OFFSET 50
 
 /* draw FrameHandle parts shape */
@@ -115,6 +116,7 @@ void draw_alternate_link(rkglChain *gc, int id, zOpticalInfo *oi_alt, rkglChainA
     printf( "list_alt = %d, ---> ", gc->info[id].list_alt );
     /* TODO : reuse selected link list value */
     /* (the current implementation generates new list value by glNewList() ) */
+    rkglChainSetName( gc, NAME_CHAIN );
     rkglChainLinkAlt( gc, id, oi_alt, attr, light );
     printf( "list = %d, ", gc->info[id].list );
     printf( "list_alt = %d\n", gc->info[id].list_alt );
