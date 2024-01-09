@@ -232,3 +232,15 @@ void rkglChainCOMDraw(rkglChain *gc, double r)
   zSphere3DCreate( &com, rkChainWldCOM(gc->chain), r, 0 );
   rkglSphere( &com, RKGL_FACE );
 }
+
+
+int rkglChainLinkSelect(rkglChain *gc, rkglSelectionBuffer *sb)
+{
+  int selected_id = -1;
+
+  if( !rkglSelectionFindNearest( sb ) ) return selected_id;
+  if( rkglSelectionName(sb,0) != gc->name ||
+      rkglSelectionName(sb,1) < 0 ||
+      rkglSelectionName(sb,1) >= rkChainLinkNum(gc->chain) ) return selected_id;
+  return ( selected_id = rkglSelectionName(sb,1) );
+}

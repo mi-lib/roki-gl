@@ -6,8 +6,11 @@ rkglLight light;
 rkChain chain;
 rkglChain gr;
 
+#define NAME_CHAIN 0
+
 void draw_scene(void)
 {
+  rkglChainSetName( &gr, NAME_CHAIN );
   rkglChainDraw( &gr );
 }
 
@@ -35,9 +38,7 @@ void select_link(rkglSelectionBuffer *sb)
   zOpticalInfo oi_alt;
 
   reset_link();
-  if( !rkglSelectionFindNearest( sb ) ) return;
-  if( rkglSelectionName(sb,0) != 0 ) return;
-  selected_link = rkglSelectionName(sb,1); /* simple reference to link name */
+  selected_link = rkglChainLinkSelect( &gr, sb ); /* simple reference to link name */
   zOpticalInfoCreateSimple( &oi_alt, 1.0, 0.0, 0.0, NULL );
   gr.attr.disptype = RKGL_FACE;
   rkglChainLinkAlt( &gr, selected_link, &oi_alt, &gr.attr, &light );

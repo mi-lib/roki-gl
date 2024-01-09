@@ -9,6 +9,7 @@
 
 #include <roki_gl/rkgl_shape.h>
 #include <roki/rk_chain.h>
+#include <roki_gl/rkgl_select.h>
 
 __BEGIN_DECLS
 
@@ -56,6 +57,8 @@ __ROKI_GL_EXPORT void rkglChainDraw(rkglChain *gc);
 __ROKI_GL_EXPORT int rkglChainDrawSeethru(rkglChain *gc, double alpha, rkglLight *light);
 
 __ROKI_GL_EXPORT void rkglChainCOMDraw(rkglChain *gc, double r);
+
+__ROKI_GL_EXPORT int rkglChainLinkSelect(rkglChain *gc, rkglSelectionBuffer *sb);
 
 __END_DECLS
 
