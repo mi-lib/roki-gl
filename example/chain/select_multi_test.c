@@ -8,8 +8,10 @@ rkglChain gr[2];
 
 void draw_scene(void)
 {
-  rkglChainNamedDraw( &gr[0], 0 );
-  rkglChainNamedDraw( &gr[1], 1 );
+  rkglChainSetName( &gr[0], 0 );
+  rkglChainDraw( &gr[0] );
+  rkglChainSetName( &gr[1], 1 );
+  rkglChainDraw( &gr[1] );
 }
 
 void display(void)
@@ -32,15 +34,14 @@ void reset_link(void)
   selected_link = -1;
 }
 
-void select_link(GLuint selbuf[], int hits)
+void select_link(rkglSelectionBuffer *sb)
 {
-  GLuint *ns;
   zOpticalInfo oi_alt;
 
   reset_link();
-  if( !( ns = rkglFindNearside( selbuf, hits ) ) ) return;
-  selected_chain = ns[3];
-  selected_link  = ns[4];
+  if( !rkglSelectionFindNearest( sb ) ) return;
+  selected_chain = rkglSelectionName(sb,0);
+  selected_link  = rkglSelectionName(sb,1);
   zOpticalInfoCreateSimple( &oi_alt, 1.0, 0.0, 0.0, NULL );
   gr[selected_chain].attr.disptype = RKGL_FACE;
   rkglChainLinkAlt( &gr[selected_chain], selected_link, &oi_alt, &gr[selected_chain].attr, &light );
@@ -59,12 +60,14 @@ void move_link(double angle)
 
 void mouse(int button, int state, int x, int y)
 {
-  GLuint selbuf[BUFSIZ];
+  rkglSelectionBuffer sb;
 
   switch( button ){
   case GLUT_LEFT_BUTTON:
-    if( state == GLUT_DOWN )
-      select_link( selbuf, rkglPick( &cam, draw_scene, selbuf, BUFSIZ, x, y, 1, 1 ) );
+    if( state == GLUT_DOWN ){
+      rkglSelect( &sb, &cam, draw_scene, x, y, 1, 1 );
+      select_link( &sb );
+    }
     break;
   case GLUT_RIGHT_BUTTON:
     if( state == GLUT_DOWN )

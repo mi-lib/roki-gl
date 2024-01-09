@@ -49,9 +49,10 @@ __ROKI_GL_EXPORT void rkglChainLinkAlt(rkglChain *gc, int id, zOpticalInfo *oi_a
 __ROKI_GL_EXPORT void rkglChainLinkReset(rkglChain *gc, int id);
 
 __ROKI_GL_EXPORT void rkglChainLinkDraw(rkglChain *gc, int id);
-__ROKI_GL_EXPORT void rkglChainDraw(rkglChain *gc);
-__ROKI_GL_EXPORT void rkglChainNamedDraw(rkglChain *gc, GLuint name);
 
+__ROKI_GL_EXPORT void rkglChainSetName(rkglChain *gc, GLuint name);
+
+__ROKI_GL_EXPORT void rkglChainDraw(rkglChain *gc);
 __ROKI_GL_EXPORT int rkglChainDrawSeethru(rkglChain *gc, double alpha, rkglLight *light);
 
 __ROKI_GL_EXPORT void rkglChainCOMDraw(rkglChain *gc, double r);

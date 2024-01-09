@@ -698,6 +698,7 @@ void rkglNURBS(zNURBS3D *nurbs, ubyte disptype)
       zNURBS3DVecNorm( nurbs, u, v, &vert[i][j], &norm[i][j] );
     }
   }
+  glPushName( -1 );
   if( disptype & RKGL_FACE ){
     glShadeModel( GL_SMOOTH );
     for( i=0; i<nurbs->ns[0]; i++ ){
@@ -729,22 +730,33 @@ void rkglNURBS(zNURBS3D *nurbs, ubyte disptype)
     }
     rkglLoadLighting( lighting_is_enabled );
   }
+  glPopName();
 }
 static void _rkglNURBS(void *nurbs, ubyte disptype){ rkglNURBS( (zNURBS3D *)nurbs, disptype ); }
 
 void rkglNURBSCP(zNURBS3D *nurbs, GLfloat size, zRGB *rgb)
 {
   int i, j;
+  bool lighting_is_enabled;
 
   glPointSize( size );
-  glDisable( GL_LIGHTING );
+  rkglSaveLighting( &lighting_is_enabled );
   rkglRGB( rgb );
-  glBegin( GL_POINTS );
-  for( i=0; i<zNURBS3DCPNum(nurbs,0); i++ )
-    for( j=0; j<zNURBS3DCPNum(nurbs,1); j++ )
-      rkglVertex( zNURBS3DCP(nurbs,i,j) );
-  glEnd();
-  for( i=0; i<zNURBS3DCPNum(nurbs,0); i++ )
+  glPushName( 0 );
+  for( i=0; i<zNURBS3DCPNum(nurbs,0); i++ ){
+    glLoadName( i );
+    glPushName( 0 );
+    for( j=0; j<zNURBS3DCPNum(nurbs,1); j++ ){
+      glLoadName( j );
+      glBegin( GL_POINTS );
+        rkglVertex( zNURBS3DCP(nurbs,i,j) );
+      glEnd();
+    }
+    glPopName();
+  }
+  glPopName();
+  glPushName( -1 );
+  for( i=0; i<zNURBS3DCPNum(nurbs,0); i++ ){
     for( j=0; j<zNURBS3DCPNum(nurbs,1); j++ ){
       if( i > 0 ){
         glBegin(GL_LINES);
@@ -759,7 +771,59 @@ void rkglNURBSCP(zNURBS3D *nurbs, GLfloat size, zRGB *rgb)
         glEnd();
       }
     }
-  glEnable( GL_LIGHTING );
+  }
+  glPopName();
+  rkglLoadLighting( lighting_is_enabled );
+}
+
+void rkglNURBSCurve(zNURBS3D *nurbs, zRGB *rgb)
+{
+  int i;
+  zVec3D vert;
+  double u;
+  bool lighting_is_enabled;
+
+  rkglSaveLighting( &lighting_is_enabled );
+  rkglRGB( rgb );
+  glPushName( -1 );
+  glBegin( GL_LINE_STRIP );
+  for( i=0; i<=zNURBS3D1SliceNum(nurbs); i++ ){
+    u = zNURBS3D1KnotSlice( nurbs, i );
+    zNURBS3D1Vec( nurbs, u, &vert );
+    rkglVertex( &vert );
+  }
+  glEnd();
+  glPopName();
+  rkglLoadLighting( lighting_is_enabled );
+}
+
+void rkglNURBSCurveCP(zNURBS3D *nurbs, GLfloat size, zRGB *rgb)
+{
+  int i;
+  bool lighting_is_enabled;
+
+  glPointSize( size );
+  rkglSaveLighting( &lighting_is_enabled );
+  rkglRGB( rgb );
+  glPushName( 0 );
+  for( i=0; i<zNURBS3D1CPNum(nurbs); i++ ){
+    glLoadName( i );
+    glBegin( GL_POINTS );
+      rkglVertex( zNURBS3D1CP(nurbs,i) );
+    glEnd();
+  }
+  glPopName();
+  glPushName( -1 );
+  for( i=0; i<zNURBS3D1CPNum(nurbs); i++ ){
+    if( i > 0 ){
+      glBegin(GL_LINES);
+      rkglVertex( zNURBS3D1CP(nurbs,i) );
+      rkglVertex( zNURBS3D1CP(nurbs,i-1) );
+      glEnd();
+    }
+  }
+  glPopName();
+  rkglLoadLighting( lighting_is_enabled );
 }
 
 void rkglPH(zPH3D *ph, ubyte disptype)

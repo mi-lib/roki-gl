@@ -34,33 +34,33 @@ void display(void)
   glutSwapBuffers();
 }
 
-void manip(GLuint selbuf[], int hits)
+void manip(rkglSelectionBuffer *sb)
 {
-  unsigned int *ptr, j, n;
+  unsigned int i;
 
-  for( ptr=selbuf; hits>0; hits-- ){
-    n = *ptr;
-    ptr += 3;
-    for( j=0; j<n; j++, ptr++ ){
-      if( object[*ptr].updown == 0 ){
-        object[*ptr].y = 1.5;
-        object[*ptr].updown = 1;
-      } else{
-        object[*ptr].y = 0.0;
-        object[*ptr].updown = 0;
-      }
+  rkglSelectionRewind( sb );
+  for( i=0; i<sb->hits; i++ ){
+    if( object[rkglSelectionName(sb,0)].updown == 0 ){
+      object[rkglSelectionName(sb,0)].y = 1.5;
+      object[rkglSelectionName(sb,0)].updown = 1;
+    } else{
+      object[rkglSelectionName(sb,0)].y = 0.0;
+      object[rkglSelectionName(sb,0)].updown = 0;
     }
+    rkglSelectionNext( sb );
   }
 }
 
 void mouse(int button, int state, int x, int y)
 {
-  GLuint selbuf[BUFSIZ];
+  rkglSelectionBuffer sb;
 
   switch( button ){
   case GLUT_LEFT_BUTTON:
-    if( state == GLUT_DOWN )
-      manip( selbuf, rkglPick( &cam, draw_scene, selbuf, BUFSIZ, x, y, 1, 1 ) );
+    if( state == GLUT_DOWN ){
+      rkglSelect( &sb, &cam, draw_scene, x, y, 1, 1 );
+      manip( &sb );
+    }
     break;
   case GLUT_MIDDLE_BUTTON:
     break;
@@ -78,13 +78,10 @@ void resize(int w, int h)
 
 void keyboard(unsigned char key, int x, int y)
 {
-  switch (key) {
-  case 'q':
-  case 'Q':
-  case '\033':
-    exit(0);  /* '\033' は ESC の ASCII コード */
-  default:
-    break;
+  switch( key ){
+  case 'q': case 'Q': case '\033':
+    exit(0);
+  default: ;
   }
 }
 
@@ -117,8 +114,6 @@ void init(void)
   }
 }
 
-void idle(void){ glutPostRedisplay(); }
-
 int main(int argc, char *argv[])
 {
   rkglInitGLUT( &argc, argv );
@@ -128,7 +123,7 @@ int main(int argc, char *argv[])
   glutMouseFunc( mouse );
   glutReshapeFunc( resize );
   glutKeyboardFunc( keyboard );
-  glutIdleFunc( idle );
+  glutIdleFunc( rkglIdleFuncGLUT );
   init();
   glutMainLoop();
   return 0;

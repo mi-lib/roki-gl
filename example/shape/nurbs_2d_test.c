@@ -3,25 +3,38 @@
 rkglCamera cam;
 rkglLight light;
 
-zRGB rgb;
 zOpticalInfo oi;
 zNURBS3D nurbs;
 
-bool show_ctl = false;
-bool show_wf = false;
+#define NUM_CP 6
+#define VMAX 0.0001
+zVec3D vel[NUM_CP];
 
-void init_surface(void)
+void init_curve(void)
 {
-  int i, j;
+  int i;
 
-  for( i=0; i<zNURBS3DCPNum(&nurbs,0); i++ )
-    for( j=0; j<zNURBS3DCPNum(&nurbs,1); j++ ){
-      zNURBS3DCP(&nurbs,i,j)->e[0] = 2 * ( (double)i/zNURBS3DCPNum(&nurbs,0) - 0.5 );
-      zNURBS3DCP(&nurbs,i,j)->e[1] = 2 * ( (double)j/zNURBS3DCPNum(&nurbs,1) - 0.5 );
-      zNURBS3DCP(&nurbs,i,j)->e[2] =
-        ( i == 0 || i == zNURBS3DCPNum(&nurbs,0)-1 || j == 0 || j == zNURBS3DCPNum(&nurbs,1)-1 ) ? 0 : zRandF( -1.0, 1.0 );
-    }
+  for( i=0; i<zNURBS3D1CPNum(&nurbs); i++ ){
+    zVec3DCreate( zNURBS3D1CP(&nurbs,i), zRandF(-1.0,1.0), zRandF(-1.0,1.0), zRandF(-1.0,1.0) );
+    zVec3DCreate( &vel[i], zRandF(-VMAX,VMAX), zRandF(-VMAX,VMAX), zRandF(-VMAX,VMAX) );
+  }
   zOpticalInfoCreateSimple( &oi, zRandF(0.0,1.0), zRandF(0.0,1.0), zRandF(0.0,1.0), NULL );
+}
+
+void update_curve(void)
+{
+  static int count = 0;
+  int i;
+
+  if( ++count > 1000 ){
+    for( i=0; i<NUM_CP; i++ ){
+      zVec3DCreate( &vel[i], zRandF(-VMAX,VMAX), zRandF(-VMAX,VMAX), zRandF(-VMAX,VMAX) );
+    }
+    count = 0;
+  }
+  for( i=0; i<zNURBS3D1CPNum(&nurbs); i++ ){
+    zVec3DAddDRC( zNURBS3D1CP(&nurbs,i), &vel[i] );
+  }
 }
 
 void keyboard(unsigned char key, int x, int y)
@@ -29,22 +42,29 @@ void keyboard(unsigned char key, int x, int y)
   switch( key ){
   case 'q':
     zNURBS3DDestroy( &nurbs );
-    exit(1);
+    exit( 1 );
     break;
   case 'i':
-    init_surface();
-    glutPostRedisplay();
-    break;
-  case 'w':
-    show_wf = 1 - show_wf;
-    glutPostRedisplay();
-    break;
-  case 'p':
-    show_ctl = 1 - show_ctl;
+    init_curve();
     glutPostRedisplay();
     break;
   default: ;
   }
+}
+
+void draw_scene(void)
+{
+  zRGB rgb;
+
+  glPushMatrix();
+  rkglFrame( ZFRAME3DIDENT, 1.0, 2 );
+  zRGBSet( &rgb, 1.0, 1.0, 1.0 );
+  glLineWidth( 3 );
+  rkglNURBSCurve( &nurbs, &rgb );
+  zRGBSet( &rgb, 0.5, 1.0, 0.5 );
+  glLineWidth( 1 );
+  rkglNURBSCurveCP( &nurbs, 10.0, &rgb );
+  glPopMatrix();
 }
 
 void display(void)
@@ -52,15 +72,8 @@ void display(void)
   rkglCALoad( &cam );
   rkglLightPut( &light );
   rkglClear();
-  glPushMatrix();
-  rkglMaterial( &oi );
-  glLineWidth( 2 );
-  rkglNURBS( &nurbs, RKGL_FACE | ( show_wf ? 0 : RKGL_WIREFRAME ) );
-  if( show_ctl ){
-    glLineWidth( 1 );
-    rkglNURBSCP( &nurbs, 10.0, &rgb );
-  }
-  glPopMatrix();
+  draw_scene();
+  update_curve();
   glutSwapBuffers();
 }
 
@@ -69,8 +82,6 @@ void reshape(int w, int h)
   rkglVPCreate( &cam, 0, 0, w, h );
   rkglPerspective( &cam, 45.0, (GLdouble)w/(GLdouble)h, 1.0, 10.0 );
 }
-
-void idle(void){ glutPostRedisplay(); }
 
 void init(void)
 {
@@ -87,10 +98,9 @@ void init(void)
   rkglLightCreate( &light, 0.0, 0.0, 0.0, 1, 1, 1, 0, 0, 0 );
   rkglLightMove( &light, 0, 0, 10 );
 
-  zRGBSet( &rgb, 0.5, 1.0, 0.5 );
-  zNURBS3DAlloc( &nurbs, 6, 6, 3, 3 );
-  zNURBS3DSetSliceNum( &nurbs, 50, 50 );
-  init_surface();
+  zNURBS3D1Alloc( &nurbs, NUM_CP, 3 );
+  zNURBS3D1SetSliceNum( &nurbs, 50 );
+  init_curve();
 }
 
 int main(int argc, char **argv)
@@ -99,11 +109,11 @@ int main(int argc, char **argv)
   rkglWindowCreateGLUT( 0, 0, 640, 480, argv[0] );
 
   glutDisplayFunc( display );
-  glutIdleFunc( idle );
   glutReshapeFunc( reshape );
   glutMouseFunc( rkglMouseFuncGLUT );
   glutMotionFunc( rkglMouseDragFuncGLUT );
   glutKeyboardFunc( keyboard );
+  glutIdleFunc( rkglIdleFuncGLUT );
   init();
   glutMainLoop();
   return 0;

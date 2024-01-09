@@ -30,10 +30,14 @@ void display(void)
 
 void mouse(int button, int state, int x, int y)
 {
+  rkglSelectionBuffer sb;
+
   switch( button ){
   case GLUT_LEFT_BUTTON:
-    if( state == GLUT_DOWN )
-      rkglFrameHandleSelect( &fh, &g_cam, x, y, draw_scene );
+    if( state == GLUT_DOWN ){
+      rkglSelect( &sb, &g_cam, draw_scene, x, y, 1, 1 );
+      rkglFrameHandleSelect( &fh, &sb, &g_cam, x, y );
+    }
     break;
   case GLUT_MIDDLE_BUTTON:
     break;
@@ -90,8 +94,6 @@ void init(void)
   rkglFrameHandleCreate( &fh, 0, g_LENGTH, g_MAGNITUDE );
 }
 
-void idle(void){ glutPostRedisplay(); }
-
 int main(int argc, char *argv[])
 {
   rkglInitGLUT( &argc, argv );
@@ -102,7 +104,7 @@ int main(int argc, char *argv[])
   glutMotionFunc( motion );
   glutReshapeFunc( resize );
   glutKeyboardFunc( keyboard );
-  glutIdleFunc( idle );
+  glutIdleFunc( rkglIdleFuncGLUT );
   init();
   glutMainLoop();
   return 0;

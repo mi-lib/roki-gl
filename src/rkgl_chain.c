@@ -180,23 +180,17 @@ void rkglChainLinkDraw(rkglChain *gc, int id)
   glPopMatrix();
 }
 
+void rkglChainSetName(rkglChain *gc, GLuint name)
+{
+  gc->name = name;
+  glLoadName( name );
+}
+
 void rkglChainDraw(rkglChain *gc)
 {
   int i;
 
-  for( i=0; i<rkChainLinkNum(gc->chain); i++ ){
-    glLoadName( i );
-    rkglChainLinkDraw( gc, i );
-  }
-}
-
-void rkglChainNamedDraw(rkglChain *gc, GLuint name)
-{
-  int i;
-
-  gc->name = name;
-  glLoadName( name );
-  glPushName( 0 ); /* dummy name */
+  glPushName( 0 );
   for( i=0; i<rkChainLinkNum(gc->chain); i++ ){
     glLoadName( i );
     rkglChainLinkDraw( gc, i );
