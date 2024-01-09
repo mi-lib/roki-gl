@@ -39,6 +39,7 @@ void select_link(rkglSelectionBuffer *sb)
 
   reset_link();
   selected_link = rkglChainLinkSelect( &gr, sb ); /* simple reference to link name */
+  if( selected_link < 0 ) return;
   zOpticalInfoCreateSimple( &oi_alt, 1.0, 0.0, 0.0, NULL );
   gr.attr.disptype = RKGL_FACE;
   rkglChainLinkAlt( &gr, selected_link, &oi_alt, &gr.attr, &light );
