@@ -214,7 +214,7 @@ int select_link(rkglSelectionBuffer *sb)
   if( !rkglSelectionFindNearest( sb ) ){
     return nearest_shape_id;
   }
-  if( rkglSelectionName( sb, 0 ) != 0 ){
+  if( rkglSelectionName( sb, 0 ) != NAME_CHAIN ){
     return nearest_shape_id;
   }
   nearest_shape_id = rkglSelectionName( sb, 1 );
