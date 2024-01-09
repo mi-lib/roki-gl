@@ -116,7 +116,6 @@ void draw_alternate_link(rkglChain *gc, int id, zOpticalInfo *oi_alt, rkglChainA
     printf( "list_alt = %d, ---> ", gc->info[id].list_alt );
     /* TODO : reuse selected link list value */
     /* (the current implementation generates new list value by glNewList() ) */
-    rkglChainSetName( gc, NAME_CHAIN );
     rkglChainLinkAlt( gc, id, oi_alt, attr, light );
     printf( "list = %d, ", gc->info[id].list );
     printf( "list_alt = %d\n", gc->info[id].list_alt );
@@ -248,7 +247,7 @@ void switch_pin_link(int new_link_id)
     rkIKCellSetWeight( gr_info2[new_link_id].cell[1], IK_DRAG_WEIGHT, IK_DRAG_WEIGHT, IK_DRAG_WEIGHT );
     rkChainUnregIKCell( &g_chain, gr_info2[new_link_id].cell[1] );
   }
-  /* reset only pin link drawing */
+  /* reset for only pin link drawing */
   reset_link_drawing( new_link_id );
   printf("pin_link       : link_id = %d, pin status = PIN_LINK\n", new_link_id );
 }
@@ -345,7 +344,15 @@ void move_link(double angle)
 
 void draw_select_link(void)
 {
+  rkglChainSetName( &gr, NAME_CHAIN );
   rkglChainDraw( &gr );
+}
+
+void draw_select_object(void)
+{
+  /* first drawn objects are selected first */
+  draw_fh_parts();
+  draw_select_link();
 }
 
 void rkglMouseFuncGLFW(int button, int event, int x, int y)
@@ -398,13 +405,12 @@ void mouse(GLFWwindow* window, int button, int state, int mods)
   if( button == GLFW_MOUSE_BUTTON_LEFT ){
     if( state == GLFW_PRESS ){
       g_mouse_left_button_clicked = true;
-      rkglSelect( &sb, &g_cam, draw_fh_parts, g_x, g_y, 1, 1 );
+      rkglSelect( &sb, &g_cam, draw_select_object, g_x, g_y, 1, 1 );
       rkglFrameHandleSelect( &g_fh, &sb, &g_cam, g_x, g_y );
       if( !rkglFrameHandleIsUnselected( &g_fh ) ){
         g_selected.obj = FRAMEHANDLE;
         register_drag_link_for_IK();
       } else{
-        rkglSelect( &sb, &g_cam, draw_select_link, g_x, g_y, 1, 1 );
         int new_link_id = select_link( &sb );
         reset_link_select_status( new_link_id );
         if( rkglChainLinkIsUnselected( new_link_id ) ){
