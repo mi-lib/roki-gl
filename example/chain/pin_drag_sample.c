@@ -206,7 +206,6 @@ void reset_selected_link(int new_link_id)
   }
 }
 
-
 int select_link(rkglSelectionBuffer *sb)
 {
   /* If LINKFRAME is selected, g_selected.link_id is not changed. (skipped this function) */
@@ -349,10 +348,6 @@ void draw_select_link(void)
   rkglChainDraw( &gr );
 }
 
-int g_wheel;
-#define GLFW_WHEEL_UP 1
-#define GLFW_WHEEL_DOWN 2
-
 void rkglMouseFuncGLFW(int button, int event, int x, int y)
 {
   rkglMouseStoreInput( button, event, GLFW_PRESS, x, y, GLFW_KEY_LEFT_CONTROL );
@@ -373,7 +368,6 @@ void rkglMouseDragFuncGLFW(int x, int y)
   glfwPostEmptyEvent();
 }
 
-
 bool g_mouse_left_button_clicked;
 bool g_mouse_right_button_clicked;
 int g_x;
@@ -386,7 +380,6 @@ void motion(GLFWwindow* window, double x, double y)
   if( g_mouse_left_button_clicked || g_mouse_right_button_clicked )
   {
     if( g_selected.obj != FRAMEHANDLE || g_mouse_right_button_clicked ){
-      /* rkglMouseDragFuncGLUT(x, y); */
       rkglMouseDragFuncGLFW(g_x, g_y);
     } else if( g_mouse_left_button_clicked ){
       /* moving mode */
@@ -446,25 +439,17 @@ void mouse(GLFWwindow* window, int button, int state, int mods)
   printf( "fh_parts_id = %d \n", g_fh.selected_id );
 
   if( g_selected.obj != FRAMEHANDLE || g_mouse_right_button_clicked ){
-    /* rkglMouseFuncGLUT(button, state, x, y); */
     rkglMouseFuncGLFW(button, state, g_x, g_y);
   }
 }
 
-
-void mouse_wheel(GLFWwindow* window, double xoffset, double yoffset){
+void mouse_wheel(GLFWwindow* window, double xoffset, double yoffset)
+{
   if ( yoffset < 0 ) {
-    g_wheel = GLFW_WHEEL_DOWN;
+    g_scale -= 0.0001; rkglOrthoScale( &g_cam, g_scale, g_znear, g_zfar );
   }
   if ( yoffset > 0 ) {
-    g_wheel = GLFW_WHEEL_UP;
-  }
-  switch( g_wheel ){
-  case GLFW_WHEEL_UP:
-    g_scale += 0.0001; rkglOrthoScale( &g_cam, g_scale, g_znear, g_zfar ); break;
-  case GLFW_WHEEL_DOWN:
-    g_scale -= 0.0001; rkglOrthoScale( &g_cam, g_scale, g_znear, g_zfar ); break;
-  default: ;
+    g_scale += 0.0001; rkglOrthoScale( &g_cam, g_scale, g_znear, g_zfar );
   }
 }
 
@@ -594,7 +579,6 @@ bool init(void)
 }
 
 void idle(void){
-  /* glutPostRedisplay(); */
   glfwPostEmptyEvent();
 }
 
@@ -606,7 +590,6 @@ int main(int argc, char *argv[])
   /* initialize the location of frame handle object */
   zFrame3DFromAA( &g_fh.frame, 0.0, 0.0, 0.0,  0.0, 0.0, 1.0);
 
-  /* rkglInitGLUT( &argc, argv ); */
   if ( glfwInit() == GL_FALSE ){
     ZRUNERROR("Failed glfwInit()");
     return 1;
@@ -614,8 +597,7 @@ int main(int argc, char *argv[])
 
   int width = 640;
   int height = 480;
-  /* rkglWindowCreateGLUT( 0, 0, 320, 320, argv[0] ); */
-  g_window = glfwCreateWindow(width, height, argv[0], NULL, NULL);
+  g_window = glfwCreateWindow( width, height, argv[0], NULL, NULL );
   if ( g_window == NULL ){
     ZRUNERROR("Failed glfwCreateWindow()");
     glfwTerminate();
@@ -628,14 +610,10 @@ int main(int argc, char *argv[])
 #endif /* __ROKI_GL_USE_GLEW */
   rkglEnableDefault();
 
-  /* glutReshapeFunc( resize ); */
   glfwSetWindowSizeCallback( g_window, resize );
-  /* glutMotionFunc( motion ); */
   glfwSetCursorPosCallback( g_window, motion );
-  /* glutMouseFunc( mouse ); */
   glfwSetMouseButtonCallback( g_window, mouse );
   glfwSetScrollCallback( g_window, mouse_wheel );
-  /* glutKeyboardFunc( keyboard ); */
   glfwSetCharCallback( g_window, keyboard );
 
   if( !init() ){
@@ -645,13 +623,9 @@ int main(int argc, char *argv[])
   resize( g_window, width, height );
   glfwSwapInterval(1);
 
-  /* glutMainLoop(); */
   while ( glfwWindowShouldClose( g_window ) == GL_FALSE ){
-    /* glutIdleFunc( idle ); */
     idle();
-    /* glutDisplayFunc( display ); */
     display(g_window);
-    /* glfwWaitEvents(); */
     glfwPollEvents();
   }
   glfwDestroyWindow( g_window );
