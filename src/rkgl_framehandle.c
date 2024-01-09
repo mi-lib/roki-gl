@@ -42,12 +42,12 @@ static void _rkglFrameHandleDrawRingPart(zFrame3D *f, zAxis axis, double l, doub
   rkglTube( &ring, RKGL_FACE );
 }
 
-static bool _rkglFrameHandleIsInTranslation(rkglFrameHandle *handle)
+bool rkglFrameHandleIsInTranslation(rkglFrameHandle *handle)
 {
   return handle->selected_id >=0 && handle->selected_id <= 2;
 }
 
-static bool _rkglFrameHandleIsInRotation(rkglFrameHandle *handle)
+bool rkglFrameHandleIsInRotation(rkglFrameHandle *handle)
 {
   return handle->selected_id >=3 && handle->selected_id <= 5;
 }
@@ -160,10 +160,10 @@ bool rkglFrameHandleMove(rkglFrameHandle *handle, rkglCamera *cam, int x, int y)
 
   if( rkglFrameHandleIsUnselected( handle ) ) return false;
   rkglUnproject( cam, x, y, handle->_depth, &v );
-  if( _rkglFrameHandleIsInTranslation( handle ) ){
+  if( rkglFrameHandleIsInTranslation( handle ) ){
     _rkglFrameHandleTranslate( handle, cam, &v );
   } else
-  if( _rkglFrameHandleIsInRotation( handle ) ){
+  if( rkglFrameHandleIsInRotation( handle ) ){
     _rkglFrameHandleRotate( handle, cam, &v );
   }
   return true;

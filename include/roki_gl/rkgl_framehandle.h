@@ -27,6 +27,8 @@ typedef struct{
 #define rkglFrameHandleUnselect(h)     ( (h)->selected_id = -1 )
 #define rkglFrameHandleIsUnselected(h) ( (h)->selected_id == -1 )
 
+__ROKI_GL_EXPORT bool rkglFrameHandleIsInTranslation(rkglFrameHandle *handle);
+__ROKI_GL_EXPORT bool rkglFrameHandleIsInRotation(rkglFrameHandle *handle);
 __ROKI_GL_EXPORT void rkglFrameHandleCreate(rkglFrameHandle *handle, int name, double l, double mag);
 __ROKI_GL_EXPORT void rkglFrameHandleDestroy(rkglFrameHandle *handle);
 
