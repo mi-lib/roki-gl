@@ -66,7 +66,7 @@ void resize(int w, int h)
   rkglClear();
   rkglBGSet( &cam, 0.3, 0.3, 0.3 );
   rkglVPCreate( &cam, 10, 10, w-20, h-20 );
-  rkglFrustumScale( &cam, 1.0/320, 1.0, 10.0 );
+  rkglFrustumScaleH( &cam, 1.0/320, 1.0, 10.0 );
 }
 
 void keyboard(unsigned char key, int x, int y)

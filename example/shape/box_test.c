@@ -28,7 +28,7 @@ void display(void)
 void resize(int w, int h)
 {
   rkglVPCreate( &cam, 0, 0, w, h );
-  rkglFrustumScale( &cam, 1.0/160, 1, 10 );
+  rkglFrustumScaleH( &cam, 1.0/160, 1, 10 );
 }
 
 void keyboard(unsigned char key, int x, int y)
@@ -70,7 +70,7 @@ void init(void)
 {
   zVec3D c1, c2;
 
-  rkglSetCallbackParamGLUT( &cam, 0, 0, 0, 0, 0 );
+  rkglSetDefaultCallbackParam( &cam, 0, 0, 0, 0, 0 );
 
   rkglBGSet( &cam, 0.5, 0.5, 0.5 );
   rkglCASet( &cam, 6, 0, 3, 0, -30, 0 );

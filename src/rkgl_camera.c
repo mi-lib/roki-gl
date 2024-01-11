@@ -62,6 +62,70 @@ void rkglFrustum(rkglCamera *c, GLdouble left, GLdouble right, GLdouble bottom, 
   rkglVVGet( c );
 }
 
+void rkglOrthoCenter(rkglCamera *c, GLdouble x, GLdouble y, GLdouble near, GLdouble far)
+{
+  rkglOrtho( c, -x, x, -y, y, near, far );
+}
+
+void rkglFrustumCenter(rkglCamera *c, GLdouble x, GLdouble y, GLdouble near, GLdouble far)
+{
+  rkglFrustum( c, -x, x, -y, y, near, far );
+}
+
+static void _rkglVVFitW2XY(rkglCamera *c, double width, double *x, double *y)
+{
+  *x = 0.5 * width;
+  *y = *x / rkglVPAspect(c);
+}
+
+static void _rkglVVFitH2XY(rkglCamera *c, double height, double *x, double *y)
+{
+  *y = 0.5 * height;
+  *x = *y * rkglVPAspect(c);
+}
+
+static void _rkglVVScaleW2XY(rkglCamera *c, double scale, double *x, double *y)
+{
+  _rkglVVFitW2XY( c, rkglVPWidth(c) * scale, x, y );
+}
+
+static void _rkglVVScaleH2XY(rkglCamera *c, double scale, double *x, double *y)
+{
+  _rkglVVFitH2XY( c, rkglVPHeight(c) * scale, x, y );
+}
+
+void rkglOrthoScaleW(rkglCamera *c, double scale, GLdouble near, GLdouble far)
+{
+  GLdouble x, y;
+
+  _rkglVVScaleW2XY( c, scale, &x, &y );
+  rkglOrthoCenter( c, x, y, near, far );
+}
+
+void rkglFrustumScaleW(rkglCamera *c, double scale, GLdouble near, GLdouble far)
+{
+  GLdouble x, y;
+
+  _rkglVVScaleW2XY( c, scale, &x, &y );
+  rkglFrustumCenter( c, x, y, near, far );
+}
+
+void rkglOrthoScaleH(rkglCamera *c, double scale, GLdouble near, GLdouble far)
+{
+  GLdouble x, y;
+
+  _rkglVVScaleH2XY( c, scale, &x, &y );
+  rkglOrthoCenter( c, x, y, near, far );
+}
+
+void rkglFrustumScaleH(rkglCamera *c, double scale, GLdouble near, GLdouble far)
+{
+  GLdouble x, y;
+
+  _rkglVVScaleH2XY( c, scale, &x, &y );
+  rkglFrustumCenter( c, x, y, near, far );
+}
+
 void rkglPerspective(rkglCamera *c, GLdouble fovy, GLdouble aspect, GLdouble near, GLdouble far)
 {
   rkglVVInit();
@@ -69,26 +133,13 @@ void rkglPerspective(rkglCamera *c, GLdouble fovy, GLdouble aspect, GLdouble nea
   rkglVVGet( c );
 }
 
-static void _rkglVVScale(rkglCamera *c, double scale, double *x, double *y)
+void rkglFrustumFit2VP(rkglCamera *cam, int w, int h, double width, double near, double far)
 {
-  *y = 0.5 * rkglVPHeight(c) * scale;
-  *x = *y * rkglVPAspect(c);
-}
+  double x, y;
 
-void rkglOrthoScale(rkglCamera *c, double scale, GLdouble near, GLdouble far)
-{
-  GLdouble x, y;
-
-  _rkglVVScale( c, scale, &x, &y );
-  rkglOrtho( c, -x, x, -y, y, near, far );
-}
-
-void rkglFrustumScale(rkglCamera *c, double scale, GLdouble near, GLdouble far)
-{
-  GLdouble x, y;
-
-  _rkglVVScale( c, scale, &x, &y );
-  rkglFrustum( c, -x, x, -y, y, near, far );
+  rkglVPCreate( cam, 0, 0, w, h );
+  _rkglVVFitW2XY( cam, width, &x, &y );
+  rkglFrustumCenter( cam, x, y, near, far );
 }
 
 /* camera angle */
@@ -234,3 +285,22 @@ void rkglCAAngleUp(rkglCamera *cam, double angle){    rkglCALockonRotate( cam, a
 void rkglCAAngleDown(rkglCamera *cam, double angle){  rkglCALockonRotate( cam, angle,-1, 0, 0 ); }
 void rkglCARoundLeft(rkglCamera *cam, double angle){  rkglCALockonRotate( cam, angle, 0, 1, 0 ); }
 void rkglCARoundRight(rkglCamera *cam, double angle){ rkglCALockonRotate( cam, angle, 0,-1, 0 ); }
+
+/* default camera parameters */
+
+rkglCamera *rkgl_default_cam;
+double rkgl_default_vv_width;
+double rkgl_default_vv_near;
+double rkgl_default_vv_far;
+double rkgl_default_key_delta_trans;
+double rkgl_default_key_delta_angle;
+
+void rkglSetDefaultCallbackParam(rkglCamera *cam, double width, double near, double far, double dl, double da)
+{
+  rkgl_default_cam = cam;
+  rkgl_default_vv_width = width;
+  rkgl_default_vv_near = near;
+  rkgl_default_vv_far = far;
+  rkgl_default_key_delta_trans = dl;
+  rkgl_default_key_delta_angle = da;
+}

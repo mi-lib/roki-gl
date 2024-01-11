@@ -42,16 +42,6 @@ static void _rkglFrameHandleDrawRingPart(zFrame3D *f, zAxis axis, double l, doub
   rkglTube( &ring, RKGL_FACE );
 }
 
-static bool _rkglFrameHandleIsInTranslation(rkglFrameHandle *handle)
-{
-  return handle->selected_id >=0 && handle->selected_id <= 2;
-}
-
-static bool _rkglFrameHandleIsInRotation(rkglFrameHandle *handle)
-{
-  return handle->selected_id >=3 && handle->selected_id <= 5;
-}
-
 static int _rkglFrameHandleCreatePart(zFrame3D *frame, zAxis axis, double l, double mag, void (*draw_part)(zFrame3D*,zAxis,double,double))
 {
   int id;
@@ -105,18 +95,17 @@ void rkglFrameHandleDraw(rkglFrameHandle *handle)
   glPopMatrix();
 }
 
-void rkglFrameHandleSelect(rkglFrameHandle *handle, rkglCamera *cam, int x, int y, void (* draw_func)(void))
+int rkglFrameHandleSelect(rkglFrameHandle *handle, rkglSelectionBuffer *sb, rkglCamera *cam, int x, int y)
 {
-  GLuint selbuf[BUFSIZ];
-  GLuint *ns;
-
   rkglFrameHandleUnselect( handle );
-  if( !( ns = rkglFindNearside( selbuf,
-                rkglPick( cam, draw_func, selbuf, BUFSIZ, x, y, 1, 1 ) ) ) ) return;
-  if( ns[3] != handle->name || ns[4] < 0 || ns[4] >= 6 ) return;
-  handle->selected_id = ns[4];
-  handle->_depth = rkglGetDepth( cam, x, y );
+  if( !rkglSelectionFindNearest( sb ) ) goto TERMINATE;
+  if( rkglSelectionName(sb,0) != handle->name ||
+      rkglSelectionName(sb,1) < 0 || rkglSelectionName(sb,1) >= 6 ) goto TERMINATE;
+  handle->selected_id = rkglSelectionName(sb,1);
+  handle->_depth = rkglSelectionZnearDepth(sb);
+ TERMINATE:
   rkglUnproject( cam, x, y, handle->_depth, &handle->_anchor );
+  return handle->selected_id;
 }
 
 static void _rkglFrameHandleTranslate(rkglFrameHandle *handle, rkglCamera *cam, zVec3D *v)
@@ -157,16 +146,26 @@ static void _rkglFrameHandleRotate(rkglFrameHandle *handle, rkglCamera *cam /* d
   zVec3DAdd( rkglFrameHandlePos(handle), &r, &handle->_anchor );
 }
 
+bool rkglFrameHandleIsInTranslation(rkglFrameHandle *handle)
+{
+  return handle->selected_id >=0 && handle->selected_id <= 2;
+}
+
+bool rkglFrameHandleIsInRotation(rkglFrameHandle *handle)
+{
+  return handle->selected_id >=3 && handle->selected_id <= 5;
+}
+
 bool rkglFrameHandleMove(rkglFrameHandle *handle, rkglCamera *cam, int x, int y)
 {
   zVec3D v;
 
   if( rkglFrameHandleIsUnselected( handle ) ) return false;
   rkglUnproject( cam, x, y, handle->_depth, &v );
-  if( _rkglFrameHandleIsInTranslation( handle ) ){
+  if( rkglFrameHandleIsInTranslation( handle ) ){
     _rkglFrameHandleTranslate( handle, cam, &v );
   } else
-  if( _rkglFrameHandleIsInRotation( handle ) ){
+  if( rkglFrameHandleIsInRotation( handle ) ){
     _rkglFrameHandleRotate( handle, cam, &v );
   }
   return true;

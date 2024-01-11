@@ -71,7 +71,7 @@ void keyboard(unsigned char key, int x, int y)
 void init()
 {
   zRandInit();
-  rkglSetCallbackParamGLUT( &cam, 0, 0, 0, 0, 0 );
+  rkglSetDefaultCallbackParam( &cam, 0, 0, 0, 0, 0 );
 
   rkglBGSet( &cam, 0.8, 0.8, 0.8 );
   rkglCALookAt( &cam, 5, 0, 5, 0, 0, 0, 0, 0, 1 );

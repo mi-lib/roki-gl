@@ -30,10 +30,14 @@ void display(void)
 
 void mouse(int button, int state, int x, int y)
 {
+  rkglSelectionBuffer sb;
+
   switch( button ){
   case GLUT_LEFT_BUTTON:
-    if( state == GLUT_DOWN )
-      rkglFrameHandleSelect( &fh, &g_cam, x, y, draw_scene );
+    if( state == GLUT_DOWN ){
+      rkglSelect( &sb, &g_cam, draw_scene, x, y, 1, 1 );
+      rkglFrameHandleSelect( &fh, &sb, &g_cam, x, y );
+    }
     break;
   case GLUT_MIDDLE_BUTTON:
     break;
@@ -54,7 +58,7 @@ void motion(int x, int y)
 void resize(int w, int h)
 {
   rkglVPCreate( &g_cam, 0, 0, w, h );
-  rkglOrthoScale( &g_cam, g_scale, g_znear, g_zfar );
+  rkglOrthoScaleH( &g_cam, g_scale, g_znear, g_zfar );
 }
 
 void keyboard(unsigned char key, int x, int y)
@@ -66,8 +70,8 @@ void keyboard(unsigned char key, int x, int y)
   case 'I': rkglCALockonPTR( &g_cam, 0,-5, 0 ); break;
   case 'o': rkglCALockonPTR( &g_cam, 0, 0, 5 ); break;
   case 'O': rkglCALockonPTR( &g_cam, 0, 0,-5 ); break;
-  case '8': g_scale += 0.001; rkglOrthoScale( &g_cam, g_scale, g_znear, g_zfar ); break;
-  case '*': g_scale -= 0.001; rkglOrthoScale( &g_cam, g_scale, g_znear, g_zfar ); break;
+  case '8': g_scale += 0.001; rkglOrthoScaleH( &g_cam, g_scale, g_znear, g_zfar ); break;
+  case '*': g_scale -= 0.001; rkglOrthoScaleH( &g_cam, g_scale, g_znear, g_zfar ); break;
   case '9': rkglCARelMove( &g_cam, 0, 0.05, 0 ); break;
   case '(': rkglCARelMove( &g_cam, 0,-0.05, 0 ); break;
   case '0': rkglCARelMove( &g_cam, 0, 0, 0.05 ); break;
@@ -80,7 +84,7 @@ void keyboard(unsigned char key, int x, int y)
 
 void init(void)
 {
-  rkglSetCallbackParamGLUT( &g_cam, 0, 0, 0, 0, 0 );
+  rkglSetDefaultCallbackParam( &g_cam, 0, 0, 0, 0, 0 );
   rkglBGSet( &g_cam, 0.5, 0.5, 0.5 );
   rkglCASet( &g_cam, 5, 0, 2, 0, -20, 0 );
   glEnable( GL_LIGHTING );
@@ -89,8 +93,6 @@ void init(void)
   /* frame handle */
   rkglFrameHandleCreate( &fh, 0, g_LENGTH, g_MAGNITUDE );
 }
-
-void idle(void){ glutPostRedisplay(); }
 
 int main(int argc, char *argv[])
 {
@@ -102,7 +104,7 @@ int main(int argc, char *argv[])
   glutMotionFunc( motion );
   glutReshapeFunc( resize );
   glutKeyboardFunc( keyboard );
-  glutIdleFunc( idle );
+  glutIdleFunc( rkglIdleFuncGLUT );
   init();
   glutMainLoop();
   return 0;
