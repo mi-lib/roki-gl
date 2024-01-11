@@ -1,13 +1,8 @@
 #include <roki_gl/roki_glfw.h>
 #include <signal.h>
 
-enum{
-  TEST_CUBE = 0,
-  TEST_NUM,
-};
-
 rkglCamera g_cam;
-rkglLight light;
+rkglLight g_light;
 static GLFWwindow* g_window;
 
 zBox3D g_box;
@@ -24,7 +19,7 @@ void display(GLFWwindow* window)
   zOpticalInfoCreateSimple( &oi, 0.2, 0.4, 0.9, NULL );
   rkglClear();
   rkglCALoad( &g_cam );
-  rkglLightPut( &light );
+  rkglLightPut( &g_light );
   glPushMatrix();
 
   rkglMaterial( &oi );
@@ -42,8 +37,8 @@ void init(void)
   rkglCASet( &g_cam, 10.0, 0.0, 0.0, 0.0, 0.0, 0.0 );
 
   glEnable( GL_LIGHTING );
-  rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
-  rkglLightMove( &light, 10, 10, 10 );
+  rkglLightCreate( &g_light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
+  rkglLightMove( &g_light, 10, 10, 10 );
 
   zVec3D center;
   zVec3DCreate( &center, 0, 0, 0 );
