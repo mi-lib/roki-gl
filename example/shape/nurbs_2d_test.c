@@ -5,10 +5,41 @@ rkglLight light;
 
 zOpticalInfo oi;
 zNURBS3D nurbs;
+int selected_cp = -1;
 
-#define NUM_CP 6
-#define VMAX 0.0001
-zVec3D vel[NUM_CP];
+rkglSelectionBuffer sb;
+
+#define NAME_NURBS 100
+#define NAME_OTHER 200
+
+#define NUM_CP   6
+#define SIZE_CP 10.0
+
+void draw_scene(void)
+{
+  zRGB rgb;
+
+  glPushMatrix();
+  glLoadName( NAME_OTHER );
+  rkglFrame( ZFRAME3DIDENT, 1.0, 2 );
+  zRGBSet( &rgb, 1.0, 1.0, 1.0 );
+  glLoadName( NAME_NURBS );
+  glLineWidth( 3 );
+  rkglNURBSCurve( &nurbs, &rgb );
+  zRGBSet( &rgb, 0.5, 1.0, 0.5 );
+  glLineWidth( 1 );
+  rkglNURBSCurveCP( &nurbs, SIZE_CP, &rgb );
+  glPopMatrix();
+}
+
+void display(void)
+{
+  rkglCALoad( &cam );
+  rkglLightPut( &light );
+  rkglClear();
+  draw_scene();
+  glutSwapBuffers();
+}
 
 void init_curve(void)
 {
@@ -16,25 +47,8 @@ void init_curve(void)
 
   for( i=0; i<zNURBS3D1CPNum(&nurbs); i++ ){
     zVec3DCreate( zNURBS3D1CP(&nurbs,i), zRandF(-1.0,1.0), zRandF(-1.0,1.0), zRandF(-1.0,1.0) );
-    zVec3DCreate( &vel[i], zRandF(-VMAX,VMAX), zRandF(-VMAX,VMAX), zRandF(-VMAX,VMAX) );
   }
   zOpticalInfoCreateSimple( &oi, zRandF(0.0,1.0), zRandF(0.0,1.0), zRandF(0.0,1.0), NULL );
-}
-
-void update_curve(void)
-{
-  static int count = 0;
-  int i;
-
-  if( ++count > 1000 ){
-    for( i=0; i<NUM_CP; i++ ){
-      zVec3DCreate( &vel[i], zRandF(-VMAX,VMAX), zRandF(-VMAX,VMAX), zRandF(-VMAX,VMAX) );
-    }
-    count = 0;
-  }
-  for( i=0; i<zNURBS3D1CPNum(&nurbs); i++ ){
-    zVec3DAddDRC( zNURBS3D1CP(&nurbs,i), &vel[i] );
-  }
 }
 
 void keyboard(unsigned char key, int x, int y)
@@ -52,29 +66,56 @@ void keyboard(unsigned char key, int x, int y)
   }
 }
 
-void draw_scene(void)
+int find_cp(rkglSelectionBuffer *sb)
 {
-  zRGB rgb;
+  int i;
 
-  glPushMatrix();
-  rkglFrame( ZFRAME3DIDENT, 1.0, 2 );
-  zRGBSet( &rgb, 1.0, 1.0, 1.0 );
-  glLineWidth( 3 );
-  rkglNURBSCurve( &nurbs, &rgb );
-  zRGBSet( &rgb, 0.5, 1.0, 0.5 );
-  glLineWidth( 1 );
-  rkglNURBSCurveCP( &nurbs, 10.0, &rgb );
-  glPopMatrix();
+  rkglSelectionRewind( sb );
+  selected_cp = -1;
+  for( i=0; i<sb->hits; i++ ){
+    if( rkglSelectionName(sb,0) == NAME_NURBS &&
+        rkglSelectionName(sb,1) >= 0 && rkglSelectionName(sb,1) < zNURBS3D1CPNum(&nurbs) ){
+      selected_cp = rkglSelectionName(sb,1);
+      break;
+    }
+    rkglSelectionNext( sb );
+  }
+  return selected_cp;
 }
 
-void display(void)
+void mouse(int button, int state, int x, int y)
 {
-  rkglCALoad( &cam );
-  rkglLightPut( &light );
-  rkglClear();
-  draw_scene();
-  update_curve();
-  glutSwapBuffers();
+  rkglSelectionInit( &sb );
+  switch( button ){
+  case GLUT_LEFT_BUTTON:
+    if( state == GLUT_DOWN ){
+      rkglSelect( &sb, &cam, draw_scene, x, y, SIZE_CP, SIZE_CP );
+      if( find_cp( &sb ) >= 0 )
+        eprintf( "Selected control point [%d]\n", selected_cp );
+    }
+    break;
+  case GLUT_MIDDLE_BUTTON:
+    break;
+  case GLUT_RIGHT_BUTTON:
+    break;
+  default: ;
+  }
+  if( sb.hits == 0 )
+    rkglMouseFuncGLUT( button, state, x, y );
+}
+
+void motion(int x, int y)
+{
+  zVec3D p;
+
+  if( sb.hits == 0 ){
+    rkglMouseDragFuncGLUT( x, y );
+    return;
+  }
+  if( selected_cp >= 0 && selected_cp < zNURBS3D1CPNum(&nurbs) ){
+    rkglUnproject( &cam, x, y, rkglSelectionZnearDepth(&sb), &p );
+    zVec3DCopy( &p, zNURBS3D1CP(&nurbs,selected_cp) );
+  }
 }
 
 void reshape(int w, int h)
@@ -86,7 +127,7 @@ void reshape(int w, int h)
 void init(void)
 {
   zRandInit();
-  rkglSetCallbackParamGLUT( &cam, 0, 0, 0, 0, 0 );
+  rkglSetDefaultCallbackParam( &cam, 0, 0, 0, 0, 0 );
 
   rkglBGSet( &cam, 0.0, 0.0, 0.0 );
   rkglCALookAt( &cam, 3, 0, 1, 0, 0, 0, 0, 0, 1 );
@@ -110,8 +151,8 @@ int main(int argc, char **argv)
 
   glutDisplayFunc( display );
   glutReshapeFunc( reshape );
-  glutMouseFunc( rkglMouseFuncGLUT );
-  glutMotionFunc( rkglMouseDragFuncGLUT );
+  glutMouseFunc( mouse );
+  glutMotionFunc( motion );
   glutKeyboardFunc( keyboard );
   glutIdleFunc( rkglIdleFuncGLUT );
   init();

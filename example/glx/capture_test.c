@@ -45,7 +45,7 @@ GLvoid init(GLsizei width, GLsizei height)
 
   rkglBGSet( &cam, 0.5, 0.5, 0.5 );
   rkglVPCreate( &cam, 0, 0, width, height );
-  rkglFrustumScale( &cam, 1.0/180, 3, 10 );
+  rkglFrustumScaleH( &cam, 1.0/180, 3, 10 );
   rkglCALookAt( &cam, 5,-3, 3, 0, 0, 0, 0, 0, 1 );
 
   glEnable( GL_LIGHTING );

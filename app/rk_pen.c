@@ -502,7 +502,7 @@ void rk_penInit(void)
   if( opt[OPT_SMOOTH].flag ) glEnable( GL_LINE_SMOOTH );
   if( opt[OPT_FOG].flag ) glEnable( GL_FOG );
 
-  rkglSetCallbackParamGLUT( &cam, vv_width, vv_near, vv_far, 0.02, 5.0 );
+  rkglSetDefaultCallbackParam( &cam, vv_width, vv_near, vv_far, 0.02, 5.0 );
   if( opt[OPT_SHADOW].flag )
     glutDisplayFunc( display_shadow );
   else

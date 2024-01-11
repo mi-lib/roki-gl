@@ -9,7 +9,7 @@ zTexture bump;
 
 static void init(void)
 {
-  rkglSetCallbackParamGLUT( &cam, 2.0, 1, 100, 1.0, 5.0 );
+  rkglSetDefaultCallbackParam( &cam, 2.0, 1, 100, 1.0, 5.0 );
   rkglBGSet( &cam, 0.5, 0.5, 0.5 );
   rkglCASet( &cam, 3, 0, 3, 0, -45, 0 );
   glEnable( GL_LIGHTING );

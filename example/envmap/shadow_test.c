@@ -21,12 +21,16 @@ void display(void)
 
 void reshape(int w, int h)
 {
+#if 0
   double x, y;
 
   rkglVPCreate( &cam, 0, 0, w, h );
   x = 0.5 * 5.0;
   y = x / rkglVPAspect(&cam);
   rkglFrustum( &cam, -x, x, -y, y, 5.0, 40.0 );
+#else
+  rkglFrustumFit2VP( &cam, w, h, 5.0, 5.0, 40.0 );
+#endif
 }
 
 /* 1024x1024 texture only available with framebuffer */
@@ -42,7 +46,7 @@ void init(void)
   zBox3D box3d;
   zVec3D c1, c2;
 
-  rkglSetCallbackParamGLUT( &cam, 5.0, 5, 40, 1.0, 5.0 );
+  rkglSetDefaultCallbackParam( &cam, 5.0, 5, 40, 1.0, 5.0 );
   rkglBGSet( &cam, 0.5, 0.5, 0.5 );
   rkglCASet( &cam, 10, 0, 4, 0, -30, 0 );
   rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );

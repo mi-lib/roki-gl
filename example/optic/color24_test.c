@@ -52,15 +52,10 @@ void display(void)
   glutSwapBuffers();
 }
 
-void idle(void)
-{
-  glutPostRedisplay();
-}
-
 void resize(int w, int h)
 {
   rkglVPCreate( &cam, 0, 0, w, h );
-  rkglFrustumScale( &cam, 1.0/160, 1, 10 );
+  rkglFrustumScaleH( &cam, 1.0/160, 1, 10 );
 }
 
 void keyboard(unsigned char key, int x, int y)
@@ -112,9 +107,9 @@ int main(int argc, char *argv[])
   rkglWindowCreateGLUT( 0, 0, 320, 240, argv[0] );
 
   glutDisplayFunc( display );
-  glutIdleFunc( idle );
   glutReshapeFunc( resize );
   glutKeyboardFunc( keyboard );
+  glutIdleFunc( rkglIdleFuncGLUT );
   init();
   glutMainLoop();
   return 0;

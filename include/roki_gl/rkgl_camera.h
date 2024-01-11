@@ -56,9 +56,19 @@ __ROKI_GL_EXPORT void rkglVVInit(void);
 
 __ROKI_GL_EXPORT void rkglOrtho(rkglCamera *c, GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near, GLdouble far);
 __ROKI_GL_EXPORT void rkglFrustum(rkglCamera *c, GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near, GLdouble far);
+
+__ROKI_GL_EXPORT void rkglOrthoCenter(rkglCamera *c, GLdouble x, GLdouble y, GLdouble near, GLdouble far);
+__ROKI_GL_EXPORT void rkglFrustumCenter(rkglCamera *c, GLdouble x, GLdouble y, GLdouble near, GLdouble far);
+
+__ROKI_GL_EXPORT void rkglOrthoScaleW(rkglCamera *c, double scale, GLdouble near, GLdouble far);
+__ROKI_GL_EXPORT void rkglFrustumScaleW(rkglCamera *c, double scale, GLdouble near, GLdouble far);
+
+__ROKI_GL_EXPORT void rkglOrthoScaleH(rkglCamera *c, double scale, GLdouble near, GLdouble far);
+__ROKI_GL_EXPORT void rkglFrustumScaleH(rkglCamera *c, double scale, GLdouble near, GLdouble far);
+
 __ROKI_GL_EXPORT void rkglPerspective(rkglCamera *c, GLdouble fovy, GLdouble aspect, GLdouble near, GLdouble far);
-__ROKI_GL_EXPORT void rkglOrthoScale(rkglCamera *c, double scale, GLdouble near, GLdouble far);
-__ROKI_GL_EXPORT void rkglFrustumScale(rkglCamera *c, double scale, GLdouble near, GLdouble far);
+
+__ROKI_GL_EXPORT void rkglFrustumFit2VP(rkglCamera *cam, int w, int h, double width, double near, double far);
 
 /* camera angle */
 
@@ -112,6 +122,17 @@ __ROKI_GL_EXPORT void rkglCARoundRight(rkglCamera *cam, double angle);
 /*
 void rkglCameraFRead(FILE *fp, rkglCamera *cam);
 */
+
+/* default camera parameters */
+
+__ROKI_GL_EXPORT rkglCamera *rkgl_default_cam;
+__ROKI_GL_EXPORT double rkgl_default_vv_width;
+__ROKI_GL_EXPORT double rkgl_default_vv_near;
+__ROKI_GL_EXPORT double rkgl_default_vv_far;
+__ROKI_GL_EXPORT double rkgl_default_key_delta_trans;
+__ROKI_GL_EXPORT double rkgl_default_key_delta_angle;
+
+__ROKI_GL_EXPORT void rkglSetDefaultCallbackParam(rkglCamera *cam, double width, double near, double far, double dl, double da);
 
 __END_DECLS
 

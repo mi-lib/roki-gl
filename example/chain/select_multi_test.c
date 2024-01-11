@@ -80,7 +80,7 @@ void mouse(int button, int state, int x, int y)
 void resize(int w, int h)
 {
   rkglVPCreate( &cam, 0, 0, w, h );
-  rkglFrustumScale( &cam, 1.0/1000, 0.5, 10 );
+  rkglFrustumScaleH( &cam, 1.0/1000, 0.5, 10 );
 }
 
 void keyboard(unsigned char key, int x, int y)
@@ -125,8 +125,6 @@ void init(void)
   rkChainUpdateFK( &chain[1] );
 }
 
-void idle(void){ glutPostRedisplay(); }
-
 int main(int argc, char *argv[])
 {
   rkglInitGLUT( &argc, argv );
@@ -136,7 +134,7 @@ int main(int argc, char *argv[])
   glutMouseFunc( mouse );
   glutReshapeFunc( resize );
   glutKeyboardFunc( keyboard );
-  glutIdleFunc( idle );
+  glutIdleFunc( rkglIdleFuncGLUT );
   init();
   glutMainLoop();
   return 0;
