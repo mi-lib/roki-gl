@@ -13,6 +13,7 @@ int rkglInitGLFW(int *argc, char **argv)
     ZRUNERROR("Failed glfwInit()");
     return -1;
   }
+  rkgl_mouse_button = -1;
   return 0;
 }
 
@@ -77,13 +78,13 @@ void rkglKeyFuncGLFW(GLFWwindow *window, int key, int scancode, int action, int 
   }
 }
 
-void rkglMouseFuncGLFW(GLFWwindow* window, int button, int state, int x, int y)
+void rkglMouseFuncGLFW(GLFWwindow* window, int button, int state, int mods)
 {
   int ctrl_key;
 
   /* get modifier */
   ctrl_key = ( glfwGetKey( window, GLFW_KEY_LEFT_CONTROL ) & GLFW_PRESS ) ? GLFW_KEY_LEFT_CONTROL : 0;
-  rkglMouseStoreInput( button, state, GLFW_PRESS, x, y, ctrl_key );
+  rkglMouseStoreInput( button, state, GLFW_PRESS, rkgl_mouse_x, rkgl_mouse_y, ctrl_key );
 }
 
 void rkglMouseWheelFuncGLFW(GLFWwindow* window, double xoffset, double yoffset)
@@ -96,18 +97,20 @@ void rkglMouseWheelFuncGLFW(GLFWwindow* window, double xoffset, double yoffset)
   }
 }
 
-void rkglMouseDragFuncGLFW(GLFWwindow* window, int x, int y)
+void rkglMouseDragFuncGLFW(GLFWwindow* window, double x, double y)
 {
   double dx, dy;
+  int px = floor(x);
+  int py = floor(y);
 
-  rkglMouseDragGetIncrementer( rkgl_default_cam, x, y, &dx, &dy );
+  rkglMouseDragGetIncrementer( rkgl_default_cam, px, py, &dx, &dy );
   switch( rkgl_mouse_button ){
   case GLFW_MOUSE_BUTTON_LEFT:   rkglMouseDragCARotate(    rkgl_default_cam, dx, dy, GLFW_KEY_LEFT_CONTROL ); break;
   case GLFW_MOUSE_BUTTON_RIGHT:  rkglMouseDragCATranslate( rkgl_default_cam, dx, dy, GLFW_KEY_LEFT_CONTROL ); break;
   case GLFW_MOUSE_BUTTON_MIDDLE: rkglMouseDragCAZoom(      rkgl_default_cam, dx, dy, GLFW_KEY_LEFT_CONTROL ); break;
   default: ;
   }
-  rkglMouseStoreXY( x, y );
+  rkglMouseStoreXY( px, py );
   glfwPostEmptyEvent();
 }
 

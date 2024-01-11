@@ -34,39 +34,6 @@ void display(GLFWwindow* window)
   glfwSwapBuffers( window );
 }
 
-bool g_mouse_left_button_clicked;
-bool g_mouse_right_button_clicked;
-int g_x;
-int g_y;
-
-void mouse(GLFWwindow* window, int button, int state, int mods)
-{
-  if( button == GLFW_MOUSE_BUTTON_LEFT ){
-    if( state == GLFW_PRESS ){
-      g_mouse_left_button_clicked = true;
-    } else if( state == GLFW_RELEASE ){
-      g_mouse_left_button_clicked = false;
-    }
-  } else if( button == GLFW_MOUSE_BUTTON_RIGHT ){
-    if( state == GLFW_PRESS ){
-      g_mouse_right_button_clicked = true;
-    } else if( state == GLFW_RELEASE ){
-      g_mouse_right_button_clicked = false;
-    }
-  }
-  rkglMouseFuncGLFW( window, button, state, g_x, g_y );
-}
-
-void motion(GLFWwindow* window, double x, double y)
-{
-  g_x = floor(x);
-  g_y = floor(y);
-  if( g_mouse_left_button_clicked || g_mouse_right_button_clicked )
-  {
-    rkglMouseDragFuncGLFW( window, g_x, g_y );
-  }
-}
-
 void init(void)
 {
   rkglSetDefaultCallbackParam( &g_cam, 1.0, 1.0, 20.0, 1.0, 5.0 );
@@ -101,9 +68,9 @@ int main(int argc, char *argv[])
   glfwSetWindowSizeCallback( g_window, rkglReshapeFuncGLFW );
   glfwSetCharCallback( g_window, rkglCharFuncGLFW );
   glfwSetKeyCallback( g_window, rkglKeyFuncGLFW );
-  glfwSetMouseButtonCallback( g_window, mouse );
+  glfwSetMouseButtonCallback( g_window, rkglMouseFuncGLFW );
   glfwSetScrollCallback( g_window, rkglMouseWheelFuncGLFW );
-  glfwSetCursorPosCallback( g_window, motion );
+  glfwSetCursorPosCallback( g_window, rkglMouseDragFuncGLFW );
 
   init();
 
