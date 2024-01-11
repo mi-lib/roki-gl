@@ -6,66 +6,15 @@ enum{
   TEST_NUM,
 };
 
-bool sw[TEST_NUM];
 rkglCamera g_cam;
 rkglLight light;
 static GLFWwindow* g_window;
 
-void keyfunc(GLFWwindow* window, unsigned int key)
-{
-  int val=-1;
-
-  switch( key ){
-  case 'a': val = TEST_CUBE;                break;
-  case 'q': case 'Q': case '\033':
-    raise( SIGTERM );
-    exit( EXIT_SUCCESS );
-  default: ;
-  }
-  if( val>=0 && val<TEST_NUM ) sw[val] = 1 - sw[val];
-  glfwPostEmptyEvent();
-}
-
-/* Normals for the 6 faces of a cube. */
-GLfloat g_normals[6][3] = { { -1.0, 0.0,  0.0 },
-                            { 0.0,  1.0,  0.0 },
-                            { 1.0,  0.0,  0.0 },
-                            { 0.0, -1.0,  0.0 },
-                            { 0.0,  0.0,  1.0 },
-                            { 0.0,  0.0, -1.0 } };
-/* Vertex indices for the 6 faces of a cube. */
-GLint g_faces[6][4] = { {0, 1, 2, 3},
-                        {3, 2, 6, 7},
-                        {7, 6, 5, 4},
-                        {4, 5, 1, 0},
-                        {5, 6, 2, 1},
-                        {7, 4, 0, 3} };
-/* X,Y,Z vertexes. */
-GLfloat g_v[8][3];
-
-void initCube(void)
-{
-  g_v[0][0] = g_v[1][0] = g_v[2][0] = g_v[3][0] = -1;
-  g_v[4][0] = g_v[5][0] = g_v[6][0] = g_v[7][0] = 1;
-  g_v[0][1] = g_v[1][1] = g_v[4][1] = g_v[5][1] = -1;
-  g_v[2][1] = g_v[3][1] = g_v[6][1] = g_v[7][1] = 1;
-  g_v[0][2] = g_v[3][2] = g_v[4][2] = g_v[7][2] = 1;
-  g_v[1][2] = g_v[2][2] = g_v[5][2] = g_v[6][2] = -1;
-}
+zBox3D g_box;
 
 void drawCube(void)
 {
-  int i;
-
-  for(i = 0; i < 6; i++){
-    glBegin( GL_POLYGON );
-    glNormal3fv( &g_normals[i][0] );
-    glVertex3fv( &g_v[ g_faces[i][0] ][0] );
-    glVertex3fv( &g_v[ g_faces[i][1] ][0] );
-    glVertex3fv( &g_v[ g_faces[i][2] ][0] );
-    glVertex3fv( &g_v[ g_faces[i][3] ][0] );
-    glEnd();
-  }
+  rkglBox( &g_box, RKGL_FACE | RKGL_WIREFRAME );
 }
 
 void display(GLFWwindow* window)
@@ -79,7 +28,7 @@ void display(GLFWwindow* window)
   glPushMatrix();
 
   rkglMaterial( &oi );
-  if( sw[TEST_CUBE] ) drawCube();
+  drawCube();
 
   glPopMatrix();
   glfwSwapBuffers( window );
@@ -120,22 +69,19 @@ void motion(GLFWwindow* window, double x, double y)
 
 void init(void)
 {
-  double znear = 1.0;
-  double zfar = 100.0;
-  double dl = 0.1;
-  double da = 5.0;
-  rkglSetCallbackParamGLFW( &g_cam, 2.0, znear, zfar, dl, da );
-
-  initCube();
+  rkglSetDefaultCallbackParam( &g_cam, 1.0, 1.0, 20.0, 1.0, 5.0 );
 
   rkglBGSet( &g_cam, 0.5, 0.5, 0.5 );
-  rkglCASet( &g_cam, 10, 0, 0, 0, 0, 0 );
+  rkglCASet( &g_cam, 10.0, 0.0, 0.0, 0.0, 0.0, 0.0 );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
   rkglLightMove( &light, 10, 10, 10 );
 
-  memset( sw, 0, sizeof(sw) );
+  zVec3D center;
+  zVec3DCreate( &center, 0, 0, 0 );
+  zBox3DCreateAlign( &g_box, &center, 1.5, 1.5, 1.5 );
+
   zRandInit();
 }
 
@@ -152,9 +98,9 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  /* not use rkglVisFuncGLFW, rkglSpecialFuncGLFW */
   glfwSetWindowSizeCallback( g_window, rkglReshapeFuncGLFW );
-  glfwSetCharCallback( g_window, keyfunc );
+  glfwSetCharCallback( g_window, rkglCharFuncGLFW );
+  glfwSetKeyCallback( g_window, rkglKeyFuncGLFW );
   glfwSetMouseButtonCallback( g_window, mouse );
   glfwSetScrollCallback( g_window, rkglMouseWheelFuncGLFW );
   glfwSetCursorPosCallback( g_window, motion );
@@ -164,10 +110,7 @@ int main(int argc, char *argv[])
   rkglReshapeFuncGLFW( g_window, width, height );
   glfwSwapInterval(1);
 
-  printf( "a: cube\n" );
-
   while ( glfwWindowShouldClose( g_window ) == GL_FALSE ){
-    rkglIdleFuncGLFW();
     display(g_window);
     glfwPollEvents();
   }

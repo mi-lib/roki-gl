@@ -17,11 +17,9 @@ __ROKI_GL_EXPORT int rkglWindowCreateGLFW(GLFWwindow* window, int x, int y, int 
 
 /* default callback functions */
 
-__ROKI_GL_EXPORT void rkglSetCallbackParamGLFW(rkglCamera *c, double vv_width, double vv_near, double vv_far, double dl_key, double da_key);
-
 __ROKI_GL_EXPORT void rkglReshapeFuncGLFW(GLFWwindow* window, int w, int h);
-__ROKI_GL_EXPORT void rkglIdleFuncGLFW(void);
-__ROKI_GL_EXPORT void rkglKeyFuncGLFW(GLFWwindow* window, unsigned char key);
+__ROKI_GL_EXPORT void rkglCharFuncGLFW(GLFWwindow* window, unsigned int codepoint);
+__ROKI_GL_EXPORT void rkglKeyFuncGLFW(GLFWwindow *window, int key, int scancode, int action, int mods);
 __ROKI_GL_EXPORT void rkglSpecialFuncGLFW(GLFWwindow* window, int key, int x, int y);
 __ROKI_GL_EXPORT void rkglMouseFuncGLFW(GLFWwindow* window, int button, int state, int x, int y);
 __ROKI_GL_EXPORT void rkglMouseWheelFuncGLFW(GLFWwindow* window, double xoffset, double yoffset);
