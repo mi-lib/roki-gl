@@ -200,17 +200,17 @@ void rkglHemisphere(zSphere3D *sphere, zVec3D *dir, ubyte disptype)
       i1 = i - 1;
       for( j=1; j<=zSphere3DDiv(sphere); j++ ){
         j1 = j - 1;
-        glBegin( GL_QUADS );
+        glBegin( GL_TRIANGLE_STRIP );
           /* outer face */
           rkglNormal( &norm[i][j] );      rkglVertex( &vert[i][j] );
           rkglNormal( &norm[i1][j] );     rkglVertex( &vert[i1][j] );
-          rkglNormal( &norm[i1][j1] );    rkglVertex( &vert[i1][j1] );
           rkglNormal( &norm[i][j1] );     rkglVertex( &vert[i][j1] );
+          rkglNormal( &norm[i1][j1] );    rkglVertex( &vert[i1][j1] );
           /* inner face */
           rkglNormalRev( &norm[i][j1] );  rkglVertex( &vert[i][j1] );
           rkglNormalRev( &norm[i1][j1] ); rkglVertex( &vert[i1][j1] );
-          rkglNormalRev( &norm[i1][j] );  rkglVertex( &vert[i1][j] );
           rkglNormalRev( &norm[i][j] );   rkglVertex( &vert[i][j] );
+          rkglNormalRev( &norm[i1][j] );  rkglVertex( &vert[i1][j] );
         glEnd();
       }
     }
@@ -254,15 +254,15 @@ void rkglSphere(zSphere3D *sphere, ubyte disptype)
     for( i=1; i<=zSphere3DDiv(sphere); i++ )
       for( j=1; j<=n2; j++ ){
         i1 = i - 1; j1 = j - 1;
-        glBegin( GL_QUADS );
+        glBegin( GL_TRIANGLE_STRIP );
           zVec3DAdd( &vert[i][j],   zSphere3DCenter(sphere), &v );
           rkglNormal( &vert[i][j] );   rkglVertex( &v );
           zVec3DAdd( &vert[i1][j],  zSphere3DCenter(sphere), &v );
           rkglNormal( &vert[i1][j] );  rkglVertex( &v );
-          zVec3DAdd( &vert[i1][j1], zSphere3DCenter(sphere), &v );
-          rkglNormal( &vert[i1][j1] ); rkglVertex( &v );
           zVec3DAdd( &vert[i][j1],  zSphere3DCenter(sphere), &v );
           rkglNormal( &vert[i][j1] );  rkglVertex( &v );
+          zVec3DAdd( &vert[i1][j1], zSphere3DCenter(sphere), &v );
+          rkglNormal( &vert[i1][j1] ); rkglVertex( &v );
         glEnd();
       }
   }
@@ -326,11 +326,11 @@ void rkglEllips(zEllips3D *ellips, ubyte disptype)
     for( i=1; i<=zEllips3DDiv(ellips); i++ )
       for( j=1; j<=n2; j++ ){
         i1 = i - 1; j1 = j - 1;
-        glBegin( GL_QUADS );
+        glBegin( GL_TRIANGLE_STRIP );
           rkglNormal( &norm[i ][j ] ); rkglVertex( &vert[i ][j ] );
           rkglNormal( &norm[i1][j ] ); rkglVertex( &vert[i1][j ] );
-          rkglNormal( &norm[i1][j1] ); rkglVertex( &vert[i1][j1] );
           rkglNormal( &norm[i ][j1] ); rkglVertex( &vert[i ][j1] );
+          rkglNormal( &norm[i1][j1] ); rkglVertex( &vert[i1][j1] );
         glEnd();
       }
   }
@@ -379,7 +379,7 @@ void rkglTube(zCyl3D *tube, ubyte disptype)
   if( disptype & RKGL_FACE ){
     /* side faces */
     glShadeModel( GL_SMOOTH );
-    glBegin( GL_QUAD_STRIP );
+    glBegin( GL_TRIANGLE_STRIP );
     for( i=0; i<=zCyl3DDiv(tube); i++ ){
       rkglNormal( &norm[i] );
       rkglVertex( &vert[0][i] );
@@ -445,7 +445,7 @@ void rkglCyl(zCyl3D *cyl, ubyte disptype)
     glEnd();
     /* side faces */
     glShadeModel( GL_SMOOTH );
-    glBegin( GL_QUAD_STRIP );
+    glBegin( GL_TRIANGLE_STRIP );
     for( i=0; i<=zCyl3DDiv(cyl); i++ ){
       rkglNormal( &norm[i] );
       rkglVertex( &vert[0][i] );
@@ -528,7 +528,7 @@ void rkglECyl(zECyl3D *ecyl, ubyte disptype)
     glEnd();
     /* side faces */
     glShadeModel( GL_SMOOTH );
-    glBegin( GL_QUAD_STRIP );
+    glBegin( GL_TRIANGLE_STRIP );
     for( i=0; i<=zECyl3DDiv(ecyl); i++ ){
       rkglNormal( &norm[i] );
       rkglVertex( &vert[0][i] );
@@ -596,7 +596,7 @@ void rkglCone(zCone3D *cone, ubyte disptype)
     glEnd();
     /* side faces */
     glShadeModel( GL_SMOOTH );
-    glBegin( GL_QUAD_STRIP );
+    glBegin( GL_TRIANGLE_STRIP );
     for( i=zCone3DDiv(cone); i>=0; i-- ){
       rkglNormal( &norm[i] );
       rkglVertex( zCone3DVert(cone) );
@@ -656,7 +656,7 @@ void rkglTorus(zVec3D *c, zVec3D *n, double r1, double r2, int div1, int div2, u
   if( disptype & RKGL_FACE ){
     glShadeModel( GL_SMOOTH );
     for( i=0; i<div1; i++ ){
-      glBegin( GL_QUAD_STRIP );
+      glBegin( GL_TRIANGLE_STRIP );
       for( j=0; j<=div2; j++ ){
         rkglNormal( &norm[i][j] );   rkglVertex( &vert[i][j] );
         rkglNormal( &norm[i+1][j] ); rkglVertex( &vert[i+1][j] );
@@ -703,11 +703,11 @@ void rkglNURBS(zNURBS3D *nurbs, ubyte disptype)
     glShadeModel( GL_SMOOTH );
     for( i=0; i<nurbs->ns[0]; i++ ){
       for( j=0; j<nurbs->ns[1]; j++ ){
-        glBegin( GL_QUADS );
+        glBegin( GL_TRIANGLE_STRIP );
         rkglNormal( &norm[i][j] );     rkglVertex( &vert[i][j] );
         rkglNormal( &norm[i+1][j] );   rkglVertex( &vert[i+1][j] );
-        rkglNormal( &norm[i+1][j+1] ); rkglVertex( &vert[i+1][j+1] );
         rkglNormal( &norm[i][j+1] );   rkglVertex( &vert[i][j+1] );
+        rkglNormal( &norm[i+1][j+1] ); rkglVertex( &vert[i+1][j+1] );
         glEnd();
       }
     }
@@ -1114,12 +1114,12 @@ void rkglCheckerBoard(zVec3D *pc0, zVec3D *pc1, zVec3D *pc2, int div1, int div2,
       zVec3DAdd( &d12, &d22, &v[2] ); zVec3DAddDRC( &v[2], pc0 );
       zVec3DAdd( &d11, &d22, &v[3] ); zVec3DAddDRC( &v[3], pc0 );
       rkglMaterial( ( i + j ) % 2 == 0 ? oi1 : oi2 );
-      glBegin( GL_QUADS );
+      glBegin( GL_TRIANGLE_STRIP );
       rkglNormal( &n );
       rkglVertex( &v[0] );
       rkglVertex( &v[1] );
-      rkglVertex( &v[2] );
       rkglVertex( &v[3] );
+      rkglVertex( &v[2] );
       glEnd();
     }
   }

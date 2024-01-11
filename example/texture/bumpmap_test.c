@@ -31,12 +31,12 @@ bool make_check_texture(zTexture *texture, int width, int height, int div)
 
 void square_tex(zVec3D *norm, zVec3D *v1, zVec3D *v2, zVec3D *v3, zVec3D *v4)
 {
-  glBegin( GL_QUADS );
+  glBegin( GL_TRIANGLE_STRIP );
     rkglNormal( norm );
     glTexCoord2f( 0.0, 1.0 ); rkglVertex( v1 );
     glTexCoord2f( 1.0, 1.0 ); rkglVertex( v2 );
-    glTexCoord2f( 1.0, 0.0 ); rkglVertex( v3 );
     glTexCoord2f( 0.0, 0.0 ); rkglVertex( v4 );
+    glTexCoord2f( 1.0, 0.0 ); rkglVertex( v3 );
   glEnd();
 }
 
@@ -48,16 +48,16 @@ void square_bump(zVec3D *norm, zVec3D *v1, zVec3D *v2, zVec3D *v3, zVec3D *v4)
   glGetDoublev( GL_MODELVIEW_MATRIX, m );
   _zVec3DCreate( &lp_world, light.pos[0], light.pos[1], light.pos[2] );
   rkglXformInvd( m, lp_world.e, lp.e );
-  glBegin( GL_QUADS );
+  glBegin( GL_TRIANGLE_STRIP );
     rkglNormal( norm );
     glTexCoord2f( 0.0, 1.0 );
     _zVec3DSub( &lp, v1, &lv ); glMultiTexCoord3d( GL_TEXTURE1, lv.c.x, lv.c.y, lv.c.z ); rkglVertex( v1 );
     glTexCoord2f( 1.0, 1.0 );
     _zVec3DSub( &lp, v2, &lv ); glMultiTexCoord3d( GL_TEXTURE1, lv.c.x, lv.c.y, lv.c.z ); rkglVertex( v2 );
-    glTexCoord2f( 1.0, 0.0 );
-    _zVec3DSub( &lp, v3, &lv ); glMultiTexCoord3d( GL_TEXTURE1, lv.c.x, lv.c.y, lv.c.z ); rkglVertex( v3 );
     glTexCoord2f( 0.0, 0.0 );
     _zVec3DSub( &lp, v4, &lv ); glMultiTexCoord3d( GL_TEXTURE1, lv.c.x, lv.c.y, lv.c.z ); rkglVertex( v4 );
+    glTexCoord2f( 1.0, 0.0 );
+    _zVec3DSub( &lp, v3, &lv ); glMultiTexCoord3d( GL_TEXTURE1, lv.c.x, lv.c.y, lv.c.z ); rkglVertex( v3 );
   glEnd();
 }
 

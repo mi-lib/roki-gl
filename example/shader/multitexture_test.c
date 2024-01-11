@@ -38,12 +38,12 @@ bool make_check_texture(zTexture *texture, int width, int height, int div)
 
 void square(GLfloat norm[3], GLfloat v1[3], GLfloat v2[3], GLfloat v3[3], GLfloat v4[3])
 {
-  glBegin( GL_QUADS );
+  glBegin( GL_TRIANGLE_STRIP );
     glNormal3fv( norm );
     multi_texcoord( 0.0, 1.0 ); glVertex3fv( v1 );
     multi_texcoord( 1.0, 1.0 ); glVertex3fv( v2 );
-    multi_texcoord( 1.0, 0.0 ); glVertex3fv( v3 );
     multi_texcoord( 0.0, 0.0 ); glVertex3fv( v4 );
+    multi_texcoord( 1.0, 0.0 ); glVertex3fv( v3 );
   glEnd();
 }
 
