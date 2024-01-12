@@ -78,13 +78,23 @@ void rkglKeyFuncGLFW(GLFWwindow *window, int key, int scancode, int action, int 
   }
 }
 
+/* This function is suggestion for rkgl_input.h/c ***************************************/
+
+void rkglMouseSotreButtonMod(int button, int state, int presscode, int mod)
+{
+  rkgl_mouse_button = state == presscode ? button : -1;
+  rkgl_key_mod = mod;
+}
+
+/* end of suggestion ******************************************************************/
+
 void rkglMouseFuncGLFW(GLFWwindow* window, int button, int state, int mods)
 {
   int ctrl_key;
 
   /* get modifier */
   ctrl_key = ( glfwGetKey( window, GLFW_KEY_LEFT_CONTROL ) & GLFW_PRESS ) ? GLFW_KEY_LEFT_CONTROL : 0;
-  rkglMouseStoreInput( button, state, GLFW_PRESS, rkgl_mouse_x, rkgl_mouse_y, ctrl_key );
+  rkglMouseSotreButtonMod( button, state, GLFW_PRESS, ctrl_key );
 }
 
 void rkglMouseWheelFuncGLFW(GLFWwindow* window, double xoffset, double yoffset)
