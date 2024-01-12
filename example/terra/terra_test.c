@@ -31,15 +31,10 @@ void display(void)
   glutSwapBuffers();
 }
 
-void idle(void)
-{
-  glutPostRedisplay();
-}
-
 void resize(int w, int h)
 {
   rkglVPCreate( &cam, 0, 0, w, h );
-  rkglFrustumScale( &cam, 1.0/160, 1, 30 );
+  rkglFrustumScaleH( &cam, 1.0/160, 1.0, 100 );
 }
 
 void keyboard(unsigned char key, int x, int y)
@@ -76,9 +71,9 @@ void init(void)
   zOpticalInfo oi1, oi2;
   zRGB rgb1, rgb2;
 
-  rkglSetCallbackParamGLUT( &cam, 0, 0, 0, 0, 0 );
+  rkglSetDefaultCallbackParam( &cam, 0, 0, 0, 0, 0 );
   rkglBGSet( &cam, 0.3, 0.3, 0.3 );
-  rkglCASet( &cam, 8, 2, 2, 0, -30, 0 );
+  rkglCASet( &cam, 7, 2, 2, 0, -30, 0 );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
@@ -124,7 +119,7 @@ int main(int argc, char *argv[])
   rkglWindowCreateGLUT( 0, 0, 640, 480, argv[0] );
 
   glutDisplayFunc( display );
-  glutIdleFunc( idle );
+  glutIdleFunc( rkglIdleFuncGLUT );
   glutReshapeFunc( resize );
   glutKeyboardFunc( keyboard );
   glutMouseFunc( rkglMouseFuncGLUT );

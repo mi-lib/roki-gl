@@ -23,7 +23,7 @@ void display(void)
 void resize(int w, int h)
 {
   rkglVPCreate( &cam, 0, 0, w, h );
-  rkglFrustumScale( &cam, 0.001, 2, 10 );
+  rkglFrustumScaleH( &cam, 0.001, 2, 10 );
 }
 
 void keyboard(unsigned char key, int x, int y)
@@ -95,7 +95,7 @@ void make_mebious(void)
 
 void init(void)
 {
-  rkglSetCallbackParamGLUT( &cam, 0, 0, 0, 0, 0 );
+  rkglSetDefaultCallbackParam( &cam, 0, 0, 0, 0, 0 );
 
   rkglBGSet( &cam, 0.5, 0.5, 0.5 );
   rkglCALookAt( &cam, 5, 0, 3, 0, 0, 0, 0, 0, 1 );

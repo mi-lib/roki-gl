@@ -9,7 +9,7 @@ rkglShadow shadow;
 void resize(int w, int h)
 {
   rkglVPCreate( &cam, 0, 0, w, h );
-  rkglFrustumScale( &cam, 1.0/160, 2, 100 );
+  rkglFrustumScaleH( &cam, 1.0/160, 2, 100 );
 }
 
 void draw(void)
@@ -71,7 +71,7 @@ void init(void)
   zVec3D pc0, pc1, pc2;
   zOpticalInfo oi, oi2;
 
-  rkglSetCallbackParamGLUT( &cam, 0, 0, 0, 0, 0 );
+  rkglSetDefaultCallbackParam( &cam, 0, 0, 0, 0, 0 );
 
   rkglBGSet( &cam, 0.5, 1.0, 1.0 );
 

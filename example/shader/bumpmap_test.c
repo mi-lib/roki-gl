@@ -36,12 +36,12 @@ void square_bump(zVec3D *norm, zVec3D *v1, zVec3D *v2, zVec3D *v3, zVec3D *v4)
   zVec3D tan1;
 
   rkglShaderSetBumpmapTangent( shader_program, zVec3DSub( v2, v1, &tan1 ) );
-  glBegin( GL_QUADS );
+  glBegin( GL_TRIANGLE_STRIP );
     rkglNormal( norm );
     glTexCoord2f( 0.0, 1.0 ); rkglVertex( v1 );
     glTexCoord2f( 1.0, 1.0 ); rkglVertex( v2 );
-    glTexCoord2f( 1.0, 0.0 ); rkglVertex( v3 );
     glTexCoord2f( 0.0, 0.0 ); rkglVertex( v4 );
+    glTexCoord2f( 1.0, 0.0 ); rkglVertex( v3 );
   glEnd();
 }
 
@@ -98,7 +98,7 @@ void display(void)
 
 void init(double depth)
 {
-  rkglSetCallbackParamGLUT( &cam, 2.0, 2, 60, 1.0, 5.0 );
+  rkglSetDefaultCallbackParam( &cam, 2.0, 2, 60, 1.0, 5.0 );
 
   rkglBGSet( &cam, 0.5, 0.5, 0.5 );
   rkglCASet( &cam, 10, 0, 5, 0, -30, 0 );

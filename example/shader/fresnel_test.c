@@ -21,7 +21,7 @@ zBox3D box;
 void resize(int w, int h)
 {
   rkglVPCreate( &cam, 0, 0, w, h );
-  rkglFrustumScale( &cam, 1.0/160, 2, 30 );
+  rkglFrustumScaleH( &cam, 1.0/160, 2, 30 );
 }
 
 void draw(void)
@@ -84,7 +84,7 @@ void init(void)
   zVec3D c, pc0, pc1, pc2;
   zOpticalInfo oi, oi2;
 
-  rkglSetCallbackParamGLUT( &cam, 0, 0, 0, 0, 0 );
+  rkglSetDefaultCallbackParam( &cam, 0, 0, 0, 0, 0 );
 
   rkglBGSet( &cam, 0.5, 1.0, 1.0 );
   rkglCASet( &cam, 6, 0, 6, 0, -30, 0 );

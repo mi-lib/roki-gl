@@ -128,11 +128,11 @@ void rkglTerraMesh(zTerra *terra, zOpticalInfo *oi_zmin, zOpticalInfo *oi_zmax)
   glShadeModel( GL_SMOOTH );
   for( i=1; i<zTerraXSize(terra); i++ )
     for( j=1; j<zTerraYSize(terra); j++ ){
-      glBegin( GL_QUADS );
+      glBegin( GL_TRIANGLE_STRIP );
       _rkglTerraMeshGrid( terra, i-1, j-1, zmin, zmax, oi_zmin, oi_zmax );
       _rkglTerraMeshGrid( terra, i,   j-1, zmin, zmax, oi_zmin, oi_zmax );
-      _rkglTerraMeshGrid( terra, i,   j,   zmin, zmax, oi_zmin, oi_zmax );
       _rkglTerraMeshGrid( terra, i-1, j,   zmin, zmax, oi_zmin, oi_zmax );
+      _rkglTerraMeshGrid( terra, i,   j,   zmin, zmax, oi_zmin, oi_zmax );
       glEnd();
     }
 }
@@ -169,11 +169,11 @@ static void _rkglTerraCellPatch(zTerraCell *cell, double x, double y, double dx,
 {
   double _x, _y;
 
-  glBegin( GL_QUADS );
+  glBegin( GL_TRIANGLE_STRIP );
   _x = x + dx, _y = y + dy; glVertex3d( _x, _y, zTerraCellZ(cell,_x,_y) );
   _x = x - dx, _y = y + dy; glVertex3d( _x, _y, zTerraCellZ(cell,_x,_y) );
-  _x = x - dx, _y = y - dy; glVertex3d( _x, _y, zTerraCellZ(cell,_x,_y) );
   _x = x + dx, _y = y - dy; glVertex3d( _x, _y, zTerraCellZ(cell,_x,_y) );
+  _x = x - dx, _y = y - dy; glVertex3d( _x, _y, zTerraCellZ(cell,_x,_y) );
   rkglNormal( &cell->norm );
   glEnd();
 }
