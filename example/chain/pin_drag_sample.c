@@ -84,20 +84,6 @@ static double g_scale = 0.001;
 static const double g_LENGTH = 0.2;
 static const double g_MAGNITUDE = g_LENGTH * 0.5;
 
-/* judge whether the selected shape ID is translation moving parts or not */
-bool is_translation_mode(rkglFrameHandle *handle)
-{
-  /* define the range of translation ID */
-  return handle->selected_id >=3 && handle->selected_id <= 5;
-}
-
-/* judge whether the selected shape ID is rotation moving parts or not */
-bool is_rotation_mode(rkglFrameHandle *handle)
-{
-  /* define the range of rotation ID */
-  return handle->selected_id >=3 && handle->selected_id <= 5;
-}
-
 /* To avoid duplication between selected_link and selected_parts_id */
 /* NAME_FRAMEHANDLE_OFFSET must be enough large than rkChainLinkNum(gr.chain)  */
 #define NAME_CHAIN 0
@@ -259,7 +245,7 @@ void register_drag_link_for_IK(void)
   if( pin != PIN_LINK ){
     rkIKAttr attr;
     attr.id = link_id;
-    if( is_rotation_mode( &g_fh ) ){
+    if( rkglFrameHandleIsInRotation( &g_fh ) ){
       gr_info2[link_id].cell[0] = rkChainRegIKCellWldAtt( &g_chain, &attr, RK_IK_ATTR_ID );
       rkIKCellSetWeight( gr_info2[link_id].cell[0], IK_DRAG_WEIGHT, IK_DRAG_WEIGHT, IK_DRAG_WEIGHT );
     }
@@ -276,7 +262,7 @@ void unregister_drag_link_for_IK(void)
   int link_id = g_selected.link_id;
   int pin = gr_info2[link_id].pin;
   if( pin != PIN_LINK ){
-    if( is_rotation_mode( &g_fh ) ){
+    if( rkglFrameHandleIsInRotation( &g_fh ) ){
       rkChainUnregIKCell( &g_chain, gr_info2[link_id].cell[0] );
     }
     if( pin == NOT_PIN_LINK ){
@@ -300,7 +286,7 @@ void update_alljoint_by_IK_with_frame(zFrame3D *ref_frame )
   rkChainBindIK( &g_chain );
   /* set reference */
   if( pin == PIN_LINK
-      || is_rotation_mode( &g_fh ) ){
+      || rkglFrameHandleIsInRotation( &g_fh ) ){
     zVec3D zyx;
     zMat3DToZYX( &(ref_frame->att), &zyx );
     rkIKCellSetRefVec( gr_info2[link_id].cell[0], &zyx );
