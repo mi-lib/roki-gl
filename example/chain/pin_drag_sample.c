@@ -194,19 +194,13 @@ void reset_selected_link(int new_link_id)
 int select_link(rkglSelectionBuffer *sb)
 {
   /* If LINKFRAME is selected, g_selected.link_id is not changed. (skipped this function) */
-  int nearest_shape_id = -1;
+  int selected_link_id = -1;
 
-  if( !rkglSelectionFindNearest( sb ) ){
-    return nearest_shape_id;
-  }
-  if( rkglSelectionName( sb, 0 ) != NAME_CHAIN ){
-    return nearest_shape_id;
-  }
-  nearest_shape_id = rkglSelectionName( sb, 1 );
-  if( nearest_shape_id < 0 || nearest_shape_id >= rkChainLinkNum(gr.chain) ){
-    nearest_shape_id = -1;
-  }
-  return nearest_shape_id;
+  if( !rkglSelectionFindNearest( sb ) ) return selected_link_id;
+  if( rkglSelectionName( sb, 0 ) != NAME_CHAIN ||
+      rkglSelectionName( sb, 1 ) < 0 ||
+      rkglSelectionName( sb, 1 ) >= rkChainLinkNum(gr.chain) ) return selected_link_id;
+  return ( selected_link_id = rkglSelectionName( sb, 1 ) );
 }
 
 void switch_pin_link(int new_link_id)
