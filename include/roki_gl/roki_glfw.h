@@ -1,5 +1,6 @@
 /* RoKi-GL - Robot Kinetics library: visualization using OpenGL
- * Copyright (C) ***
+ * Copyright (C) 2000 Tomomichi Sugihara (Zhidao)
+ * contributer: 2023- Daishi Kaneta
  *
  * roki_glfw - GLFW wrapper (on OpenGL FrameWork)
  */
@@ -13,7 +14,8 @@
 __BEGIN_DECLS
 
 __ROKI_GL_EXPORT int rkglInitGLFW(int *argc, char **argv);
-__ROKI_GL_EXPORT int rkglWindowCreateGLFW(GLFWwindow* window, int x, int y, int w, int h, const char *title);
+__ROKI_GL_EXPORT void rkglWindowOpenGLFW(GLFWwindow* window, int x, int y);
+__ROKI_GL_EXPORT GLFWwindow *rkglWindowCreateAndOpenGLFW(int x, int y, int width, int height, const char *title);
 
 /* default callback functions */
 __ROKI_GL_EXPORT void rkglReshapeFuncGLFW(GLFWwindow* window, int w, int h);

@@ -3,12 +3,12 @@
 
 rkglCamera g_cam;
 rkglLight g_light;
-static GLFWwindow* g_window;
 
 zBox3D g_box;
 
 void drawCube(void)
 {
+  glLineWidth( 2 );
   rkglBox( &g_box, RKGL_FACE | RKGL_WIREFRAME );
 }
 
@@ -16,21 +16,21 @@ void display(GLFWwindow* window)
 {
   zOpticalInfo oi;
 
-  zOpticalInfoCreateSimple( &oi, 0.2, 0.4, 0.9, NULL );
   rkglClear();
   rkglCALoad( &g_cam );
   rkglLightPut( &g_light );
   glPushMatrix();
-
+  zOpticalInfoCreateSimple( &oi, 0.2, 0.4, 0.9, NULL );
   rkglMaterial( &oi );
   drawCube();
-
   glPopMatrix();
   glfwSwapBuffers( window );
 }
 
 void init(void)
 {
+  zVec3D center;
+
   rkglSetDefaultCallbackParam( &g_cam, 1.0, 1.0, 20.0, 1.0, 5.0 );
 
   rkglBGSet( &g_cam, 0.5, 0.5, 0.5 );
@@ -40,44 +40,38 @@ void init(void)
   rkglLightCreate( &g_light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
   rkglLightMove( &g_light, 10, 10, 10 );
 
-  zVec3D center;
   zVec3DCreate( &center, 0, 0, 0 );
   zBox3DCreateAlign( &g_box, &center, 1.5, 1.5, 1.5 );
-
-  zRandInit();
 }
 
 int main(int argc, char *argv[])
 {
-  if( rkglInitGLFW( &argc, argv ) < 0 ){
-    return 1;
-  }
-  int width = 640;
-  int height = 480;
-  glfwWindowHint( GLFW_VISIBLE, false );
-  g_window = glfwCreateWindow(width, height, argv[0], NULL, NULL);
-  if( rkglWindowCreateGLFW( g_window, 0, 0, width, height, argv[0] ) < 0 ) {
-    return 1;
-  }
+  GLFWwindow* window;
+  int width, height;
 
-  glfwSetWindowSizeCallback( g_window, rkglReshapeFuncGLFW );
-  glfwSetCharCallback( g_window, rkglCharFuncGLFW );
-  glfwSetKeyCallback( g_window, rkglKeyFuncGLFW );
-  glfwSetMouseButtonCallback( g_window, rkglMouseFuncGLFW );
-  glfwSetScrollCallback( g_window, rkglMouseWheelFuncGLFW );
-  glfwSetCursorPosCallback( g_window, rkglMouseDragFuncGLFW );
+  if( rkglInitGLFW( &argc, argv ) < 0 )
+    return 1;
+  glfwWindowHint( GLFW_VISIBLE, false );
+  width = 640;
+  height = 480;
+  if( !( window = rkglWindowCreateAndOpenGLFW( 0, 0, width, height, argv[0] ) ) )
+    return 1;
+
+  glfwSetWindowSizeCallback( window, rkglReshapeFuncGLFW );
+  glfwSetCharCallback( window, rkglCharFuncGLFW );
+  glfwSetKeyCallback( window, rkglKeyFuncGLFW );
+  glfwSetMouseButtonCallback( window, rkglMouseFuncGLFW );
+  glfwSetScrollCallback( window, rkglMouseWheelFuncGLFW );
+  glfwSetCursorPosCallback( window, rkglMouseDragFuncGLFW );
 
   init();
-
-  rkglReshapeFuncGLFW( g_window, width, height );
-  glfwSwapInterval(1);
-
-  while ( glfwWindowShouldClose( g_window ) == GL_FALSE ){
-    display(g_window);
+  rkglReshapeFuncGLFW( window, width, height );
+  glfwSwapInterval( 1 );
+  while( glfwWindowShouldClose( window ) == GL_FALSE ){
+    display( window );
     glfwPollEvents();
   }
-  glfwDestroyWindow( g_window );
+  glfwDestroyWindow( window );
   glfwTerminate();
-
   return 0;
 }
