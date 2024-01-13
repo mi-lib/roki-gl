@@ -1,3 +1,5 @@
+2024. 1.13. Modified rkgl_framehandle to include rkgl_shape.h. [rkgl_shape]
+2024. 1.13. Modified rkgl_shape not to include rkgl_shape.h. [rkgl_shape]
 2024. 1.12. Replaced GL_QUADS in example codes with GL_TRIANGLE_STRIP in order to comply to the specification of OpenGL 3.0. [example]
 2024. 1.12. Modified rkglTerraMesh and _rkglTerraCellPatch to replace GL_QUADS with GL_TRIANGLE_STRIP in order to comply to the specification of OpenGL 3.0. [rkgl_terra]
 2024. 1.12. Modified rkglTube, rkglCyl, rkglECyl, rkglCone, and rkglTorus to replace GL_QUAD_STRIP with GL_TRIANGLE_STRIP in order to comply to the specification of OpenGL 3.0. [rkgl_shape]
