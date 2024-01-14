@@ -180,6 +180,24 @@ void rkglChainLinkDraw(rkglChain *gc, int id)
   glPopMatrix();
 }
 
+void rkglChainLinkDrawSeethru(rkglChain *gc, int id, double alpha, rkglLight *light)
+{
+  zShapeListCell *sp;
+  zOpticalInfo oi;
+  rkLink *link;
+
+  link = rkChainLink(gc->chain,id);
+  if( !gc->info[id].visible || rkLinkShapeIsEmpty( link ) ) return;
+  glPushMatrix();
+  rkglXform( rkLinkWldFrame(link) );
+  zListForEach( rkLinkShapeList(link), sp ){
+    zOpticalInfoCopy( zShape3DOptic(zShapeListCellShape(sp)), &oi );
+    oi.alpha = alpha;
+    rkglShape( zShapeListCellShape(sp), &oi, RKGL_FACE, light );
+  }
+  glPopMatrix();
+}
+
 void rkglChainSetName(rkglChain *gc, GLuint name)
 {
   gc->name = name;
@@ -200,24 +218,11 @@ void rkglChainDraw(rkglChain *gc)
 
 int rkglChainDrawSeethru(rkglChain *gc, double alpha, rkglLight *light)
 {
-  rkLink *l;
-  zShapeListCell *sp;
-  zOpticalInfo oi;
   int i, result;
 
   result = rkglBeginList();
-  for( i=0; i<rkChainLinkNum(gc->chain); i++ ){
-    l = rkChainLink( gc->chain , i );
-    if( !gc->info[i].visible || rkLinkShapeIsEmpty(l) ) continue;
-    glPushMatrix();
-    rkglXform( rkLinkWldFrame(l) );
-    zListForEach( rkLinkShapeList(l), sp ){
-      zOpticalInfoCopy( zShape3DOptic(zShapeListCellShape(sp)), &oi );
-      oi.alpha = alpha;
-      rkglShape( zShapeListCellShape(sp), &oi, RKGL_FACE, light );
-    }
-    glPopMatrix();
-  }
+  for( i=0; i<rkChainLinkNum(gc->chain); i++ )
+    rkglChainLinkDrawSeethru( gc, i, alpha, light );
   glEndList();
   return result;
 }
