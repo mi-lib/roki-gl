@@ -1,3 +1,5 @@
+2024. 1.15. Renamed rkglFrameHandleSelect to rkglFrameHandleAnchor, and moved rkglSelectionFindNearest out of the function. [rkgl_framehandle]
+2024. 1.15. Renamed rkglFrameHandleSelect to rkglFrameHandleAnchor, and moved rkglSelectionFindNearest out of the function. [rkgl_framehandle]
 2024. 1.14. Renamed rkglWindowCreateGLFW to rkglWindowOpenGLFW, and added rkglWindowCreateAndOpenGLFW. [roki_glfw]
 2024. 1.14. Added roki_glfw with a contribution of Daishi Kaneta. [roki_glfw]
 2024. 1.14. Added rkglMouseStoreButtonMod and modified rkglMouseStoreInput (thanks to Daishi Kaneta). [rkgl_input]
