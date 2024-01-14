@@ -1,20 +1,5 @@
 #include <roki_gl/roki_glut.h>
 
-/* This is suggstion code for rkgl_chain.c **************************************/
-
-int rkglChainLinkSelect(rkglChain *gc, rkglSelectionBuffer *sb)
-{
-  int selected_id = -1;
-
-  if( !rkglSelectionFindNearest( sb ) ) return selected_id;
-  if( rkglSelectionName(sb,0) != gc->name ||
-      rkglSelectionName(sb,1) < 0 ||
-      rkglSelectionName(sb,1) >= rkChainLinkNum(gc->chain) ) return selected_id;
-  return ( selected_id = rkglSelectionName(sb,1) );
-}
-
-/* end of suggstion code for rkgl_chain.c ***************************************/
-
 rkglCamera cam;
 rkglLight light;
 
@@ -53,8 +38,7 @@ void select_link(rkglSelectionBuffer *sb)
   zOpticalInfo oi_alt;
 
   reset_link();
-  selected_link = rkglChainLinkSelect( &gr, sb ); /* simple reference to link name */
-  if( selected_link < 0 ) return;
+  if( ( selected_link = rkglChainLinkFindSelected( &gr, sb ) ) < 0 ) return;
   zOpticalInfoCreateSimple( &oi_alt, 1.0, 0.0, 0.0, NULL );
   gr.attr.disptype = RKGL_FACE;
   rkglChainLinkAlt( &gr, selected_link, &oi_alt, &gr.attr, &light );
@@ -78,8 +62,11 @@ void mouse(int button, int state, int x, int y)
   switch( button ){
   case GLUT_LEFT_BUTTON:
     if( state == GLUT_DOWN ){
-      rkglSelect( &sb, &cam, draw_scene, x, y, 1, 1 );
-      select_link( &sb );
+      if( rkglSelectNearest( &sb, &cam, draw_scene, x, y, 1, 1 ) ){
+        select_link( &sb );
+      } else{
+        reset_link();
+      }
     }
     break;
   case GLUT_RIGHT_BUTTON:

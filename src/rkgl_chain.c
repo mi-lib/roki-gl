@@ -48,7 +48,7 @@ bool rkglChainLoad(rkglChain *gc, rkChain *c, rkglChainAttr *attr, rkglLight *li
   }
   for( i=0; i<rkChainLinkNum(gc->chain); i++ ){
     gc->info[i].list = rkglLinkEntry( rkChainLink(gc->chain,i), NULL, &gc->attr, light );
-    gc->info[i].list_alt = -1;
+    gc->info[i]._list_backup = -1;
     gc->info[i].visible = ( gc->info[i].list >= 0 ) ? true : false;
   }
   return true;
@@ -151,10 +151,10 @@ int rkglLinkEntry(rkLink *l, zOpticalInfo *oi_alt, rkglChainAttr *attr, rkglLigh
 
 void rkglChainLinkAlt(rkglChain *gc, int id, zOpticalInfo *oi_alt, rkglChainAttr *attr, rkglLight *light)
 {
-  if( gc->info[id].list_alt >= 0 )
+  if( gc->info[id]._list_backup >= 0 )
     glDeleteLists( gc->info[id].list, 1 );
   else
-    gc->info[id].list_alt = gc->info[id].list;
+    gc->info[id]._list_backup = gc->info[id].list;
 
   gc->info[id].list = rkglLinkEntry( rkChainLink(gc->chain,id), oi_alt, attr, light );
 }
@@ -163,11 +163,11 @@ void rkglChainLinkReset(rkglChain *gc, int id)
 {
   int alt;
 
-  if( gc->info[id].list_alt >= 0 ){
+  if( gc->info[id]._list_backup >= 0 ){
     alt = gc->info[id].list;
-    gc->info[id].list = gc->info[id].list_alt;
+    gc->info[id].list = gc->info[id]._list_backup;
     glDeleteLists( alt, 1 );
-    gc->info[id].list_alt = -1;
+    gc->info[id]._list_backup = -1;
   }
 }
 
@@ -231,4 +231,12 @@ void rkglChainCOMDraw(rkglChain *gc, double r)
   rkglMaterialOpticalInfo( &oi );
   zSphere3DCreate( &com, rkChainWldCOM(gc->chain), r, 0 );
   rkglSphere( &com, RKGL_FACE );
+}
+
+int rkglChainLinkFindSelected(rkglChain *gc, rkglSelectionBuffer *sb)
+{
+  return ( rkglSelectionName(sb,0) == gc->name &&
+           rkglSelectionName(sb,1) >= 0 &&
+           rkglSelectionName(sb,1) < rkChainLinkNum(gc->chain) ) ?
+    rkglSelectionName(sb,1) : -1;
 }

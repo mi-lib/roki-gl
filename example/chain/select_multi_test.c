@@ -3,15 +3,18 @@
 rkglCamera cam;
 rkglLight light;
 
-rkChain chain[2];
-rkglChain gr[2];
+#define NUM_CHAIN 5
+rkChain chain[NUM_CHAIN];
+rkglChain gr[NUM_CHAIN];
 
 void draw_scene(void)
 {
-  rkglChainSetName( &gr[0], 0 );
-  rkglChainDraw( &gr[0] );
-  rkglChainSetName( &gr[1], 1 );
-  rkglChainDraw( &gr[1] );
+  int i;
+
+  for( i=0; i<NUM_CHAIN; i++ ){
+    rkglChainSetName( &gr[i], i );
+    rkglChainDraw( &gr[i] );
+  }
 }
 
 void display(void)
@@ -28,7 +31,7 @@ static int selected_link = -1;
 
 void reset_link(void)
 {
-  if( selected_chain < 0 || selected_link < 0 )  return;
+  if( selected_chain < 0 || selected_link < 0 ) return;
   rkglChainLinkReset( &gr[selected_chain], selected_link );
   selected_chain = -1;
   selected_link = -1;
@@ -37,11 +40,16 @@ void reset_link(void)
 void select_link(rkglSelectionBuffer *sb)
 {
   zOpticalInfo oi_alt;
+  int i;
 
   reset_link();
-  if( !rkglSelectionFindNearest( sb ) ) return;
-  selected_chain = rkglSelectionName(sb,0);
-  selected_link  = rkglSelectionName(sb,1);
+  for( i=0; i<NUM_CHAIN; i++ ){
+    if( ( selected_link = rkglChainLinkFindSelected( &gr[i], sb ) ) >= 0 ){
+      selected_chain = i;
+      break;
+    }
+  }
+  if( selected_chain < 0 ) return;
   zOpticalInfoCreateSimple( &oi_alt, 1.0, 0.0, 0.0, NULL );
   gr[selected_chain].attr.disptype = RKGL_FACE;
   rkglChainLinkAlt( &gr[selected_chain], selected_link, &oi_alt, &gr[selected_chain].attr, &light );
@@ -65,8 +73,11 @@ void mouse(int button, int state, int x, int y)
   switch( button ){
   case GLUT_LEFT_BUTTON:
     if( state == GLUT_DOWN ){
-      rkglSelect( &sb, &cam, draw_scene, x, y, 1, 1 );
-      select_link( &sb );
+      if( rkglSelectNearest( &sb, &cam, draw_scene, x, y, 1, 1 ) ){
+        select_link( &sb );
+      } else{
+        reset_link();
+      }
     }
     break;
   case GLUT_RIGHT_BUTTON:
@@ -85,6 +96,8 @@ void resize(int w, int h)
 
 void keyboard(unsigned char key, int x, int y)
 {
+  int i;
+
   switch( key ){
   case 'u': rkglCALockonPTR( &cam, 5, 0, 0 ); break;
   case 'U': rkglCALockonPTR( &cam,-5, 0, 0 ); break;
@@ -95,10 +108,10 @@ void keyboard(unsigned char key, int x, int y)
   case 'g': move_link( zDeg2Rad(5) ); break;
   case 'h': move_link(-zDeg2Rad(5) ); break;
   case 'q': case 'Q': case '\033':
-    rkglChainUnload( &gr[0] );
-    rkglChainUnload( &gr[1] );
-    rkChainDestroy( &chain[0] );
-    rkChainDestroy( &chain[1] );
+    for( i=0; i<NUM_CHAIN; i++ ){
+      rkglChainUnload( &gr[i] );
+      rkChainDestroy( &chain[i] );
+    }
     exit( EXIT_SUCCESS );
   default: ;
   }
@@ -107,6 +120,7 @@ void keyboard(unsigned char key, int x, int y)
 void init(void)
 {
   rkglChainAttr attr;
+  int i;
 
   rkglBGSet( &cam, 0.5, 0.5, 0.5 );
   rkglCASet( &cam, 1, 1, 1, 45, -30, 0 );
@@ -116,19 +130,18 @@ void init(void)
   rkglLightMove( &light, 1, 3, 6 );
 
   rkglChainAttrInit( &attr );
-  rkChainReadZTK( &chain[0], "../model/puma.ztk" );
-  rkglChainLoad( &gr[0], &chain[0], &attr, &light );
-  rkChainReadZTK( &chain[1], "../model/puma.ztk" );
-  rkglChainLoad( &gr[1], &chain[1], &attr, &light );
-
-  zVec3DCreate( rkChainLinkOrgPos(&chain[1],0), 0, 0.2, 0 );
-  rkChainUpdateFK( &chain[1] );
+  for( i=0; i<NUM_CHAIN; i++ ){
+    rkChainReadZTK( &chain[i], "../model/puma.ztk" );
+    rkglChainLoad( &gr[i], &chain[i], &attr, &light );
+    zVec3DCreate( rkChainLinkOrgPos(&chain[i],0), 0, 0.3*i-0.9, 0 );
+    rkChainUpdateFK( &chain[i] );
+  }
 }
 
 int main(int argc, char *argv[])
 {
   rkglInitGLUT( &argc, argv );
-  rkglWindowCreateGLUT( 0, 0, 320, 320, argv[0] );
+  rkglWindowCreateGLUT( 0, 0, 640, 480, argv[0] );
 
   glutDisplayFunc( display );
   glutMouseFunc( mouse );
