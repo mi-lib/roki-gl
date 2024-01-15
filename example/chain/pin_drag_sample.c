@@ -205,6 +205,23 @@ int rkglChainLinkSelect(rkglChain* gc, rkglSelectionBuffer *sb)
   return ( selected_link_id = rkglSelectionName( sb, 1 ) );
 }
 
+void update_framehandle_location(rkglSelectionBuffer *sb, rkglCamera *cam, int x, int y, int link_id)
+{
+  zVec3D selected_point;
+  double depth;
+
+  /* the origin position of the selected link mode */
+  zFrame3DCopy( rkChainLinkWldFrame( gr.chain, link_id ), &g_fh.frame );
+
+  /* key optional */
+  if( rkgl_key_mod & GLFW_KEY_LEFT_CONTROL ){
+    /* selected position mode */
+    depth = rkglSelectionZnearDepth(sb);
+    rkglUnproject( cam, x, y, depth, &selected_point );
+    zFrame3DSetPos( &g_fh.frame, &selected_point );
+  }
+}
+
 void switch_pin_link(int new_link_id)
 {
   rkIKAttr attr;
@@ -214,7 +231,7 @@ void switch_pin_link(int new_link_id)
     gr_info2[new_link_id].pin = PIN_LINK;
     attr.id = new_link_id;
     gr_info2[new_link_id].cell[0] = rkChainRegIKCellWldAtt( &g_chain, &attr, RK_IK_ATTR_ID );
-    gr_info2[new_link_id].cell[1] = rkChainRegIKCellWldPos( &g_chain, &attr, RK_IK_ATTR_ID );
+    gr_info2[new_link_id].cell[1] = rkChainRegIKCellWldPos( &g_chain, &attr, RK_IK_ATTR_ID | RK_IK_ATTR_AP );
     rkIKAttrSetWeight( &attr, IK_PIN_WEIGHT, IK_PIN_WEIGHT, IK_PIN_WEIGHT );
     break;
   case PIN_LINK:
@@ -249,10 +266,14 @@ void register_drag_link_for_IK(int link_id)
       rkIKCellSetWeight( gr_info2[link_id].cell[0], IK_DRAG_WEIGHT, IK_DRAG_WEIGHT, IK_DRAG_WEIGHT );
     }
     if( pin == NOT_PIN_LINK ){
-      gr_info2[link_id].cell[1] = rkChainRegIKCellWldPos( &g_chain, &attr, RK_IK_ATTR_ID );
+      gr_info2[link_id].cell[1] = rkChainRegIKCellWldPos( &g_chain, &attr, RK_IK_ATTR_ID | RK_IK_ATTR_AP );
       rkIKCellSetWeight( gr_info2[link_id].cell[1], IK_DRAG_WEIGHT, IK_DRAG_WEIGHT, IK_DRAG_WEIGHT );
     }
   } /* end of if( pin != PIN_LINK ) */
+  zVec3D ap;
+  /* transform Wolrd -> Link frame */
+  zXform3DInv( rkChainLinkWldFrame(&g_chain, link_id), zFrame3DPos(&g_fh.frame), &ap );
+  zVec3DCopy( &ap, rkIKCellAP(gr_info2[link_id].cell[1]) );
 }
 
 void unregister_drag_link_for_IK(int link_id)
@@ -353,6 +374,9 @@ void mouse(GLFWwindow* window, int button, int state, int mods)
 {
   rkglSelectionBuffer sb;
 
+  /* store button when state == GLFW_PRESS */
+  rkglMouseFuncGLFW( window, button, state, mods );
+
   if( button == GLFW_MOUSE_BUTTON_LEFT ){
     if( state == GLFW_PRESS ){
       rkglSelect( &sb, &g_cam, draw_select_object, rkgl_mouse_x, rkgl_mouse_y, 1, 1 );
@@ -368,7 +392,7 @@ void mouse(GLFWwindow* window, int button, int state, int mods)
         } else{
           g_selected.obj = LINKFRAME;
           /* update frame handle location */
-          zFrame3DCopy( rkChainLinkWldFrame( gr.chain, new_link_id ), &g_fh.frame );
+          update_framehandle_location(&sb, &g_cam, rkgl_mouse_x, rkgl_mouse_y, new_link_id);
         }
         reset_selected_link( new_link_id );
       }
@@ -389,9 +413,6 @@ void mouse(GLFWwindow* window, int button, int state, int mods)
   }
   printf( "selected       : link_id = %d, ", g_selected.link_id );
   printf( "fh_parts_id = %d \n", g_fh.selected_id );
-
-  /* store button when state == GLFW_PRESS */
-  rkglMouseFuncGLFW( window, button, state, mods );
 }
 
 void mouse_wheel(GLFWwindow* window, double xoffset, double yoffset)
