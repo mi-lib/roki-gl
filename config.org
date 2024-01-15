@@ -10,6 +10,10 @@ CONFIG_USE_GLX=y
 # (libglut required.)
 CONFIG_USE_GLUT=y
 
+# GLFW
+# (libglfw required.)
+CONFIG_USE_GLFW=y
+
 # GLEW
 # (libGLEW required.)
 CONFIG_USE_GLEW=y

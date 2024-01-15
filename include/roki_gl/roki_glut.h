@@ -23,8 +23,6 @@ __ROKI_GL_EXPORT int rkglWindowCreateGLUT(int x, int y, int w, int h, const char
 
 /* default callback functions */
 
-__ROKI_GL_EXPORT void rkglSetCallbackParamGLUT(rkglCamera *c, double vv_width, double vv_near, double vv_far, double dl_key, double da_key);
-
 __ROKI_GL_EXPORT void rkglReshapeFuncGLUT(int w, int h);
 __ROKI_GL_EXPORT void rkglIdleFuncGLUT(void);
 __ROKI_GL_EXPORT void rkglKeyFuncGLUT(unsigned char key, int x, int y);

@@ -8,7 +8,7 @@
 #define __RKGL_SELECT_H__
 
 #include <roki_gl/rkgl_camera.h>
-#include <roki_gl/rkgl_shape.h>
+#include <zeo/zeo_frame3d.h>
 
 __BEGIN_DECLS
 

@@ -29,6 +29,7 @@ __ROKI_GL_EXPORT int rkgl_mouse_y;
   rkgl_mouse_y = (y);\
 } while(0)
 
+__ROKI_GL_EXPORT void rkglMouseStoreButtonMod(int button, int state, int presscode, int mod);
 __ROKI_GL_EXPORT void rkglMouseStoreInput(int button, int state, int presscode, int x, int y, int mod);
 __ROKI_GL_EXPORT void rkglMouseDragGetIncrementer(rkglCamera *cam, int x, int y, double *dx, double *dy);
 

@@ -27,11 +27,16 @@ int rkgl_mouse_x;
 int rkgl_mouse_y;
 int rkgl_key_mod;
 
-void rkglMouseStoreInput(int button, int state, int presscode, int x, int y, int mod)
+void rkglMouseStoreButtonMod(int button, int state, int presscode, int mod)
 {
   rkgl_mouse_button = state == presscode ? button : -1;
-  rkglMouseStoreXY( x, y );
   rkgl_key_mod = mod;
+}
+
+void rkglMouseStoreInput(int button, int state, int presscode, int x, int y, int mod)
+{
+  rkglMouseStoreButtonMod( button, state, presscode, mod );
+  rkglMouseStoreXY( x, y );
 }
 
 void rkglMouseDragGetIncrementer(rkglCamera *cam, int x, int y, double *dx, double *dy)

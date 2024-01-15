@@ -5,6 +5,7 @@
  */
 
 #include <roki_gl/rkgl_framehandle.h>
+#include <roki_gl/rkgl_shape.h>
 
 static void _rkglFrameHandleSetAxisMaterial(zAxis axis)
 {
