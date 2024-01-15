@@ -240,7 +240,6 @@ void switch_pin_link(int new_link_id)
 
 void register_drag_link_for_IK(int link_id)
 {
-  /* int link_id = g_selected.link_id; */
   int pin = gr_info2[link_id].pin;
   if( pin != PIN_LINK ){
     rkIKAttr attr;
@@ -253,13 +252,11 @@ void register_drag_link_for_IK(int link_id)
       gr_info2[link_id].cell[1] = rkChainRegIKCellWldPos( &g_chain, &attr, RK_IK_ATTR_ID );
       rkIKCellSetWeight( gr_info2[link_id].cell[1], IK_DRAG_WEIGHT, IK_DRAG_WEIGHT, IK_DRAG_WEIGHT );
     }
-  }
-  /* end of if( pin != PIN_LINK ) */
+  } /* end of if( pin != PIN_LINK ) */
 }
 
 void unregister_drag_link_for_IK(int link_id)
 {
-  /* int link_id = g_selected.link_id; */
   int pin = gr_info2[link_id].pin;
   if( pin != PIN_LINK ){
     if( rkglFrameHandleIsInRotation( &g_fh ) ){
@@ -268,8 +265,7 @@ void unregister_drag_link_for_IK(int link_id)
     if( pin == NOT_PIN_LINK ){
       rkChainUnregIKCell( &g_chain, gr_info2[link_id].cell[1] );
     }
-  }
-  /* end of if( pin != PIN_LINK ) */
+  } /* end of if( pin != PIN_LINK ) */
 }
 
 /* inverse kinematics */
@@ -523,12 +519,10 @@ bool init(void)
   g_selected.link_id = -1;
   /* frame handle */
   rkglFrameHandleCreate( &g_fh, NAME_FRAMEHANDLE_OFFSET, g_LENGTH, g_MAGNITUDE );
+  /* initialize the location of frame handle object */
+  zFrame3DFromAA( &g_fh.frame, 0.0, 0.0, 0.0,  0.0, 0.0, 1.0);
 
   return true;
-}
-
-void idle(void){
-  glfwPostEmptyEvent();
 }
 
 int main(int argc, char *argv[])
@@ -536,9 +530,6 @@ int main(int argc, char *argv[])
   if( argc > 1 ){
     g_modelfile = argv[1];
   }
-  /* initialize the location of frame handle object */
-  zFrame3DFromAA( &g_fh.frame, 0.0, 0.0, 0.0,  0.0, 0.0, 1.0);
-
   if( rkglInitGLFW( &argc, argv ) < 0 ){
     return 1;
   }
@@ -561,7 +552,6 @@ int main(int argc, char *argv[])
   glfwSwapInterval(1);
 
   while ( glfwWindowShouldClose( g_window ) == GL_FALSE ){
-    idle();
     display(g_window);
     glfwPollEvents();
   }
