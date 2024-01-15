@@ -1,5 +1,4 @@
-#include <roki_gl/roki_gl.h>
-#include <GLFW/glfw3.h>
+#include <roki_gl/roki_glfw.h>
 
 GLFWwindow* g_window;
 
@@ -335,47 +334,17 @@ void draw_select_object(void)
   draw_select_link();
 }
 
-void rkglMouseFuncGLFW(int button, int event, int x, int y)
-{
-  rkglMouseStoreInput( button, event, GLFW_PRESS, x, y, GLFW_KEY_LEFT_CONTROL );
-}
-
-void rkglMouseDragFuncGLFW(int x, int y)
-{
-  double dx, dy;
-
-  rkglMouseDragGetIncrementer( &g_cam, x, y, &dx, &dy );
-  switch( rkgl_mouse_button ){
-  case GLFW_MOUSE_BUTTON_LEFT:  rkglMouseDragCARotate(    &g_cam, dx, dy, GLFW_KEY_LEFT_CONTROL ); break;
-  case GLFW_MOUSE_BUTTON_RIGHT: rkglMouseDragCATranslate( &g_cam, dx, dy, GLFW_KEY_LEFT_CONTROL ); break;
-  case GLFW_MOUSE_BUTTON_MIDDLE: rkglMouseDragCAZoom(      &g_cam, dx, dy, GLFW_KEY_LEFT_CONTROL ); break;
-  default: ;
-  }
-  rkglMouseStoreXY( x, y );
-  glfwPostEmptyEvent();
-}
-
-bool g_mouse_left_button_clicked;
-bool g_mouse_right_button_clicked;
-int g_x;
-int g_y;
-
 void motion(GLFWwindow* window, double x, double y)
 {
-  g_x = floor(x);
-  g_y = floor(y);
-  if( g_mouse_left_button_clicked || g_mouse_right_button_clicked )
-  {
-    if( g_selected.obj != FRAMEHANDLE || g_mouse_right_button_clicked ){
-      rkglMouseDragFuncGLFW(g_x, g_y);
-    } else if( g_mouse_left_button_clicked ){
-      /* moving mode */
-      rkglFrameHandleMove( &g_fh, &g_cam, g_x, g_y );
-      update_alljoint_by_IK_with_frame( &g_fh.frame );
-    }
-    /* end moving mode */
+  if( g_selected.obj != FRAMEHANDLE ||
+      rkgl_mouse_button == GLFW_MOUSE_BUTTON_RIGHT ){
+    rkglMouseDragFuncGLFW( window, x, y );
+  } else if( rkgl_mouse_button == GLFW_MOUSE_BUTTON_LEFT ){
+    /* moving mode */
+    rkglFrameHandleMove( &g_fh, &g_cam, rkgl_mouse_x, rkgl_mouse_y );
+    update_alljoint_by_IK_with_frame( &g_fh.frame );
   }
-  /* end of if( g_mouse_left_button_clicked ) */
+  rkglMouseStoreXY( floor(x), floor(y) );
 }
 
 void mouse(GLFWwindow* window, int button, int state, int mods)
@@ -384,9 +353,8 @@ void mouse(GLFWwindow* window, int button, int state, int mods)
 
   if( button == GLFW_MOUSE_BUTTON_LEFT ){
     if( state == GLFW_PRESS ){
-      g_mouse_left_button_clicked = true;
-      rkglSelect( &sb, &g_cam, draw_select_object, g_x, g_y, 1, 1 );
-      rkglFrameHandleSelect( &g_fh, &sb, &g_cam, g_x, g_y );
+      rkglSelect( &sb, &g_cam, draw_select_object, rkgl_mouse_x, rkgl_mouse_y, 1, 1 );
+      rkglFrameHandleSelect( &g_fh, &sb, &g_cam, rkgl_mouse_x, rkgl_mouse_y );
       if( !rkglFrameHandleIsUnselected( &g_fh ) ){
         g_selected.obj = FRAMEHANDLE;
         register_drag_link_for_IK();
@@ -403,30 +371,25 @@ void mouse(GLFWwindow* window, int button, int state, int mods)
         reset_selected_link( new_link_id );
       }
     } else if( state == GLFW_RELEASE ){
-      g_mouse_left_button_clicked = false;
       if( !rkglFrameHandleIsUnselected( &g_fh ) ){
         unregister_drag_link_for_IK();
       }
     }
   } else if( button == GLFW_MOUSE_BUTTON_RIGHT ){
     if( state == GLFW_PRESS ){
-      g_mouse_right_button_clicked = true;
-      rkglSelect( &sb, &g_cam, draw_select_link, g_x, g_y, 1, 1 );
+      rkglSelect( &sb, &g_cam, draw_select_link, rkgl_mouse_x, rkgl_mouse_y, 1, 1 );
       int new_link_id = select_link( &sb );
       if( !rkglChainLinkIsUnselected( new_link_id ) ){
         switch_pin_link( new_link_id );
       }
       reset_selected_link( new_link_id );
-    } else if( state == GLFW_RELEASE ){
-      g_mouse_right_button_clicked = false;
     }
   }
   printf( "selected       : link_id = %d, ", g_selected.link_id );
   printf( "fh_parts_id = %d \n", g_fh.selected_id );
 
-  if( g_selected.obj != FRAMEHANDLE || g_mouse_right_button_clicked ){
-    rkglMouseFuncGLFW(button, state, g_x, g_y);
-  }
+  /* store button when state == GLFW_PRESS */
+  rkglMouseFuncGLFW( window, button, state, mods );
 }
 
 void mouse_wheel(GLFWwindow* window, double xoffset, double yoffset)
@@ -517,8 +480,7 @@ rkChain *extend_rkChainReadZTK(rkChain *chain, char *pathname)
 
 bool init(void)
 {
-  g_mouse_left_button_clicked = false;
-  g_mouse_right_button_clicked = false;
+  rkglSetDefaultCallbackParam( &g_cam, 1.0, g_znear, g_zfar, 1.0, 5.0 );
 
   rkglBGSet( &g_cam, 0.5, 0.5, 0.5 );
   /* rkglCASet( &g_cam, 1, 1, 1, 45, -30, 0 ); */
@@ -576,25 +538,13 @@ int main(int argc, char *argv[])
   /* initialize the location of frame handle object */
   zFrame3DFromAA( &g_fh.frame, 0.0, 0.0, 0.0,  0.0, 0.0, 1.0);
 
-  if ( glfwInit() == GL_FALSE ){
-    ZRUNERROR("Failed glfwInit()");
+  if( rkglInitGLFW( &argc, argv ) < 0 ){
     return 1;
   }
-
   int width = 640;
   int height = 480;
-  g_window = glfwCreateWindow( width, height, argv[0], NULL, NULL );
-  if ( g_window == NULL ){
-    ZRUNERROR("Failed glfwCreateWindow()");
-    glfwTerminate();
+  if( !( g_window = rkglWindowCreateAndOpenGLFW( 0, 0, width, height, argv[0] ) ) )
     return 1;
-  }
-  glfwMakeContextCurrent( g_window );
-
-#ifdef __ROKI_GL_USE_GLEW
-  rkglInitGLEW();
-#endif /* __ROKI_GL_USE_GLEW */
-  rkglEnableDefault();
 
   glfwSetWindowSizeCallback( g_window, resize );
   glfwSetCursorPosCallback( g_window, motion );
