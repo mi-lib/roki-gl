@@ -7,9 +7,9 @@ GLFWwindow* g_window;
 /* rkglLinkInfo2.select information */
 typedef enum{
   NOT_SELECTED=-1,
-  INACTIVE_SELECT,
-  ACTIVE_SELECT,
-} selectStatus;
+  INACTIVE_SELECTED,
+  ACTIVE_SELECTED,
+} selectedStatus;
 
 /* rkglLinkInfo2.pin information */
 typedef enum{
@@ -19,7 +19,7 @@ typedef enum{
 } pinStatus;
 
 typedef struct{
-  selectStatus select;
+  selectedStatus select;
   pinStatus pin;
   rkIKCell *cell[2];
 } rkglLinkInfo2;
@@ -103,12 +103,12 @@ void draw_fh_parts(void)
 
 void draw_alternate_link(rkglChain *gc, int id, zOpticalInfo *oi_alt, rkglChainAttr *attr, rkglLight *light){
     printf( "alternate link : pre gr.info[%d].list = %d, ", id, gc->info[id].list );
-    printf( "list_alt = %d, ---> ", gc->info[id].list_alt );
+    printf( "_list_backup = %d, ---> ", gc->info[id]._list_backup );
     /* TODO : reuse selected link list value */
     /* (the current implementation generates new list value by glNewList() ) */
     rkglChainLinkAlt( gc, id, oi_alt, attr, light );
     printf( "list = %d, ", gc->info[id].list );
-    printf( "list_alt = %d\n", gc->info[id].list_alt );
+    printf( "_list_backup = %d\n", gc->info[id]._list_backup );
 }
 
 void draw_scene(void)
@@ -120,7 +120,7 @@ void draw_scene(void)
   zOpticalInfo oi_alt;
   gr.attr.disptype = RKGL_FACE;
   int link_id = g_selected.link_id;
-  bool is_alt = ( link_id>=0 && gr.info[link_id].list_alt == -1 );
+  bool is_alt = ( link_id>=0 && gr.info[link_id]._list_backup == -1 );
   int pin = gr_info2[link_id].pin;
   /* re-drawing the selected link once after proccessing with rkglChainLinkReset() */
   if( is_alt && pin == PIN_LINK ){
@@ -154,16 +154,16 @@ void display(GLFWwindow* window)
 void reset_link_drawing(int new_link_id)
 {
   printf( "reset link     : pre gr.info[%d].list = %d, ", new_link_id, gr.info[new_link_id].list );
-  printf( "list_alt = %d, ---> ", gr.info[new_link_id].list_alt );
+  printf( "_list_backup = %d, ---> ", gr.info[new_link_id]._list_backup );
   rkglChainLinkReset( &gr, new_link_id );
   printf( "list = %d, ", gr.info[new_link_id].list );
-  printf( "list_alt = %d\n", gr.info[new_link_id].list_alt );
+  printf( "_list_backup = %d\n", gr.info[new_link_id]._list_backup );
 }
 
-void reset_link_select_status(int new_link_id)
+void reset_link_selected_status(int new_link_id)
 {
   if( !rkglChainLinkIsUnselected( g_selected.link_id ) ){
-    gr_info2[g_selected.link_id].select = INACTIVE_SELECT;
+    gr_info2[g_selected.link_id].select = INACTIVE_SELECTED;
   } else{
     /* This may be redundant */
     gr_info2[g_selected.link_id].select = NOT_SELECTED;
@@ -172,37 +172,23 @@ void reset_link_select_status(int new_link_id)
     if( gr_info2[new_link_id].select == NOT_SELECTED ){
       reset_link_drawing( new_link_id );
     }
-    gr_info2[new_link_id].select = ACTIVE_SELECT;
-  } else{
+    gr_info2[new_link_id].select = ACTIVE_SELECTED;
+  } else {
     int i;
-    printf("reset_link_select_status(): reset all link\n");
+    printf("reset_all_link_selected_status(): reset all link\n");
     for( i=0; i<rkChainLinkNum(gr.chain); i++ ){
       if( gr_info2[i].select != NOT_SELECTED
           && gr_info2[i].pin == NOT_PIN_LINK ){
         reset_link_drawing( i );
         gr_info2[i].select = NOT_SELECTED;
       }
-    }
-    /* end of for( i=0; i<rkChainLinkNum(gr.chain); i++ ) */
-  }
-  /* end of if( new_link_id >= 0 ) else */
+    } /* end of for */
+  } /* end of if( !rkglChainLinkIsUnselected( new_link_id ) ) else */
 }
 
-void reset_selected_link(int new_link_id)
+void update_selected_link(int new_link_id)
 {
   g_selected.link_id = new_link_id;
-}
-
-int rkglChainLinkSelect(rkglChain* gc, rkglSelectionBuffer *sb)
-{
-  /* If LINKFRAME is selected, g_selected.link_id is not changed. (skipped this function) */
-  int selected_link_id = -1;
-
-  if( !rkglSelectionFindNearest( sb ) ) return selected_link_id;
-  if( rkglSelectionName( sb, 0 ) != gc->name ||
-      rkglSelectionName( sb, 1 ) < 0 ||
-      rkglSelectionName( sb, 1 ) >= rkChainLinkNum(gc->chain) ) return selected_link_id;
-  return ( selected_link_id = rkglSelectionName( sb, 1 ) );
 }
 
 void update_framehandle_location(rkglSelectionBuffer *sb, rkglCamera *cam, int x, int y, int link_id)
@@ -230,7 +216,7 @@ void switch_pin_link(int new_link_id)
   case NOT_PIN_LINK:
     gr_info2[new_link_id].pin = PIN_LINK;
     attr.id = new_link_id;
-    gr_info2[new_link_id].cell[0] = rkChainRegIKCellWldAtt( &g_chain, &attr, RK_IK_ATTR_ID );
+    gr_info2[new_link_id].cell[0] = rkChainRegIKCellWldAtt( &g_chain, &attr, RK_IK_ATTR_ID | RK_IK_ATTR_AP );
     gr_info2[new_link_id].cell[1] = rkChainRegIKCellWldPos( &g_chain, &attr, RK_IK_ATTR_ID | RK_IK_ATTR_AP );
     rkIKAttrSetWeight( &attr, IK_PIN_WEIGHT, IK_PIN_WEIGHT, IK_PIN_WEIGHT );
     break;
@@ -244,7 +230,7 @@ void switch_pin_link(int new_link_id)
     break;
   case ONLY_POS3D_PIN_LINK:
     gr_info2[new_link_id].pin = NOT_PIN_LINK;
-    /* un-register pos */
+    /* un-register pos ( the state un-registered pos & rot both pin weight ) */
     rkIKCellSetWeight( gr_info2[new_link_id].cell[1], IK_DRAG_WEIGHT, IK_DRAG_WEIGHT, IK_DRAG_WEIGHT );
     rkChainUnregIKCell( &g_chain, gr_info2[new_link_id].cell[1] );
     break;
@@ -258,22 +244,22 @@ void switch_pin_link(int new_link_id)
 void register_drag_link_for_IK(int link_id)
 {
   int pin = gr_info2[link_id].pin;
-  if( pin != PIN_LINK ){
-    rkIKAttr attr;
-    attr.id = link_id;
-    if( rkglFrameHandleIsInRotation( &g_fh ) ){
-      gr_info2[link_id].cell[0] = rkChainRegIKCellWldAtt( &g_chain, &attr, RK_IK_ATTR_ID );
+  rkIKAttr attr;
+  attr.id = link_id;
+  if( pin == NOT_PIN_LINK ){
+    gr_info2[link_id].cell[1] = rkChainRegIKCellWldPos( &g_chain, &attr, RK_IK_ATTR_ID | RK_IK_ATTR_AP );
+    rkIKCellSetWeight( gr_info2[link_id].cell[1], IK_DRAG_WEIGHT, IK_DRAG_WEIGHT, IK_DRAG_WEIGHT );
+  }
+  if( rkglFrameHandleIsInRotation( &g_fh ) ){
+    if( pin != PIN_LINK ){
+      gr_info2[link_id].cell[0] = rkChainRegIKCellWldAtt( &g_chain, &attr, RK_IK_ATTR_ID | RK_IK_ATTR_AP );
       rkIKCellSetWeight( gr_info2[link_id].cell[0], IK_DRAG_WEIGHT, IK_DRAG_WEIGHT, IK_DRAG_WEIGHT );
     }
-    if( pin == NOT_PIN_LINK ){
-      gr_info2[link_id].cell[1] = rkChainRegIKCellWldPos( &g_chain, &attr, RK_IK_ATTR_ID | RK_IK_ATTR_AP );
-      rkIKCellSetWeight( gr_info2[link_id].cell[1], IK_DRAG_WEIGHT, IK_DRAG_WEIGHT, IK_DRAG_WEIGHT );
-    }
-  } /* end of if( pin != PIN_LINK ) */
-  zVec3D ap;
-  /* transform Wolrd -> Link frame */
-  zXform3DInv( rkChainLinkWldFrame(&g_chain, link_id), zFrame3DPos(&g_fh.frame), &ap );
-  zVec3DCopy( &ap, rkIKCellAP(gr_info2[link_id].cell[1]) );
+    zVec3D ap;
+    /* transform Wolrd -> Link frame */
+    zXform3DInv( rkChainLinkWldFrame(&g_chain, link_id), zFrame3DPos(&g_fh.frame), &ap );
+    zVec3DCopy( &ap, rkIKCellAP(gr_info2[link_id].cell[1]) );
+  }
 }
 
 void unregister_drag_link_for_IK(int link_id)
@@ -350,11 +336,10 @@ void draw_select_link(void)
   rkglChainDraw( &gr );
 }
 
-void draw_select_object(void)
+void draw_select_fh_parts(void)
 {
   /* first drawn objects are selected first */
   draw_fh_parts();
-  draw_select_link();
 }
 
 void motion(GLFWwindow* window, double x, double y)
@@ -372,6 +357,7 @@ void motion(GLFWwindow* window, double x, double y)
 
 void mouse(GLFWwindow* window, int button, int state, int mods)
 {
+  int new_link_id = -1;
   rkglSelectionBuffer sb;
 
   /* store button when state == GLFW_PRESS */
@@ -379,22 +365,24 @@ void mouse(GLFWwindow* window, int button, int state, int mods)
 
   if( button == GLFW_MOUSE_BUTTON_LEFT ){
     if( state == GLFW_PRESS ){
-      rkglSelect( &sb, &g_cam, draw_select_object, rkgl_mouse_x, rkgl_mouse_y, 1, 1 );
-      rkglFrameHandleSelect( &g_fh, &sb, &g_cam, rkgl_mouse_x, rkgl_mouse_y );
-      if( !rkglFrameHandleIsUnselected( &g_fh ) ){
+      /* draw only frame handle */
+      if( rkglSelectNearest( &sb, &g_cam, draw_select_fh_parts, rkgl_mouse_x, rkgl_mouse_y, 1, 1 )
+          && rkglFrameHandleAnchor( &g_fh, &sb, &g_cam, rkgl_mouse_x, rkgl_mouse_y ) >= 0 ){
         g_selected.obj = FRAMEHANDLE;
         register_drag_link_for_IK( g_selected.link_id );
+        new_link_id = g_selected.link_id;
       } else{
-        int new_link_id = rkglChainLinkSelect( &gr, &sb );
-        reset_link_select_status( new_link_id );
-        if( rkglChainLinkIsUnselected( new_link_id ) ){
-          g_selected.obj = NONE;
-        } else{
+        /* draw only chain */
+        if( rkglSelectNearest( &sb, &g_cam, draw_select_link, rkgl_mouse_x, rkgl_mouse_y, 1, 1 )
+            && ( new_link_id = rkglChainLinkFindSelected( &gr, &sb ) ) >= 0 ){
           g_selected.obj = LINKFRAME;
-          /* update frame handle location */
-          update_framehandle_location(&sb, &g_cam, rkgl_mouse_x, rkgl_mouse_y, new_link_id);
+          update_framehandle_location( &sb, &g_cam, rkgl_mouse_x, rkgl_mouse_y, new_link_id );
+        } else{
+          g_selected.obj = NONE;
         }
-        reset_selected_link( new_link_id );
+        reset_link_selected_status( new_link_id );
+        update_selected_link( new_link_id );
+        rkglFrameHandleUnselect( &g_fh );
       }
     } else if( state == GLFW_RELEASE ){
       if( !rkglFrameHandleIsUnselected( &g_fh ) ){
@@ -403,12 +391,11 @@ void mouse(GLFWwindow* window, int button, int state, int mods)
     }
   } else if( button == GLFW_MOUSE_BUTTON_RIGHT ){
     if( state == GLFW_PRESS ){
-      rkglSelect( &sb, &g_cam, draw_select_link, rkgl_mouse_x, rkgl_mouse_y, 1, 1 );
-      int new_link_id = rkglChainLinkSelect( &gr, &sb );
-      if( !rkglChainLinkIsUnselected( new_link_id ) ){
+      if( rkglSelectNearest( &sb, &g_cam, draw_select_link, rkgl_mouse_x, rkgl_mouse_y, 1, 1 )
+          && ( new_link_id = rkglChainLinkFindSelected( &gr, &sb ) ) >= 0 ){
         switch_pin_link( new_link_id );
       }
-      reset_selected_link( new_link_id );
+      update_selected_link( new_link_id );
     }
   }
   printf( "selected       : link_id = %d, ", g_selected.link_id );
