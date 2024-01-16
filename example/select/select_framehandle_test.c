@@ -35,8 +35,12 @@ void mouse(int button, int state, int x, int y)
   switch( button ){
   case GLUT_LEFT_BUTTON:
     if( state == GLUT_DOWN ){
-      rkglSelect( &sb, &g_cam, draw_scene, x, y, 1, 1 );
-      rkglFrameHandleSelect( &fh, &sb, &g_cam, x, y );
+      if( rkglSelectNearest( &sb, &g_cam, draw_scene, x, y, 1, 1 ) ){
+        rkglFrameHandleAnchor( &fh, &sb, &g_cam, x, y );
+      }
+    } else
+    if( state == GLUT_UP ){
+      rkglFrameHandleUnselect( &fh );
     }
     break;
   case GLUT_MIDDLE_BUTTON:

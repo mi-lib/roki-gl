@@ -8,6 +8,7 @@
 #define __RKGL_CHAIN_H__
 
 #include <roki_gl/rkgl_shape.h>
+#include <roki_gl/rkgl_select.h>
 #include <roki/rk_chain.h>
 
 __BEGIN_DECLS
@@ -27,7 +28,7 @@ __ROKI_GL_EXPORT void rkglChainAttrCopy(rkglChainAttr *src, rkglChainAttr *dest)
 typedef struct{
   bool visible;
   GLint list;
-  GLint list_alt; /* alternative drawing */
+  GLint _list_backup; /* for alternative drawing */
 } rkglLinkInfo;
 
 typedef struct{
@@ -56,6 +57,8 @@ __ROKI_GL_EXPORT void rkglChainDraw(rkglChain *gc);
 __ROKI_GL_EXPORT int rkglChainDrawSeethru(rkglChain *gc, double alpha, rkglLight *light);
 
 __ROKI_GL_EXPORT void rkglChainCOMDraw(rkglChain *gc, double r);
+
+__ROKI_GL_EXPORT int rkglChainLinkFindSelected(rkglChain *gc, rkglSelectionBuffer *sb);
 
 __END_DECLS
 

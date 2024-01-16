@@ -96,16 +96,25 @@ void rkglFrameHandleDraw(rkglFrameHandle *handle)
   glPopMatrix();
 }
 
-int rkglFrameHandleSelect(rkglFrameHandle *handle, rkglSelectionBuffer *sb, rkglCamera *cam, int x, int y)
+bool rkglFrameHandleIsInTranslation(rkglFrameHandle *handle)
+{
+  return handle->selected_id >=0 && handle->selected_id <= 2;
+}
+
+bool rkglFrameHandleIsInRotation(rkglFrameHandle *handle)
+{
+  return handle->selected_id >=3 && handle->selected_id <= 5;
+}
+
+int rkglFrameHandleAnchor(rkglFrameHandle *handle, rkglSelectionBuffer *sb, rkglCamera *cam, int x, int y)
 {
   rkglFrameHandleUnselect( handle );
-  if( !rkglSelectionFindNearest( sb ) ) goto TERMINATE;
-  if( rkglSelectionName(sb,0) != handle->name ||
-      rkglSelectionName(sb,1) < 0 || rkglSelectionName(sb,1) >= 6 ) goto TERMINATE;
-  handle->selected_id = rkglSelectionName(sb,1);
-  handle->_depth = rkglSelectionZnearDepth(sb);
- TERMINATE:
-  rkglUnproject( cam, x, y, handle->_depth, &handle->_anchor );
+  if( rkglSelectionName(sb,0) == handle->name &&
+      rkglSelectionName(sb,1) >= 0 && rkglSelectionName(sb,1) < 6 ){
+    handle->selected_id = rkglSelectionName(sb,1);
+    handle->_depth = rkglSelectionZnearDepth(sb);
+    rkglUnproject( cam, x, y, handle->_depth, &handle->_anchor );
+  }
   return handle->selected_id;
 }
 
@@ -145,16 +154,6 @@ static void _rkglFrameHandleRotate(rkglFrameHandle *handle, rkglCamera *cam /* d
   zVec3DAAError( &r0, &r, &aa );
   zMat3DRotDRC( rkglFrameHandleAtt(handle), &aa );
   zVec3DAdd( rkglFrameHandlePos(handle), &r, &handle->_anchor );
-}
-
-bool rkglFrameHandleIsInTranslation(rkglFrameHandle *handle)
-{
-  return handle->selected_id >=0 && handle->selected_id <= 2;
-}
-
-bool rkglFrameHandleIsInRotation(rkglFrameHandle *handle)
-{
-  return handle->selected_id >=3 && handle->selected_id <= 5;
 }
 
 bool rkglFrameHandleMove(rkglFrameHandle *handle, rkglCamera *cam, int x, int y)
