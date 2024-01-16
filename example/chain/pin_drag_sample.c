@@ -61,6 +61,7 @@ typedef enum{
 typedef struct{
   selectedObj obj;
   int link_id;
+  zVec3D ap;
 } selectInfo;
 
 selectInfo g_selected;
@@ -205,6 +206,10 @@ void update_framehandle_location(rkglSelectionBuffer *sb, rkglCamera *cam, int x
     depth = rkglSelectionZnearDepth(sb);
     rkglUnproject( cam, x, y, depth, &selected_point );
     zFrame3DSetPos( &g_fh.frame, &selected_point );
+    /* transform Wolrd -> Link frame */
+    zXform3DInv( rkChainLinkWldFrame(&g_chain, link_id), zFrame3DPos(&g_fh.frame), &g_selected.ap );
+  } else{
+    zVec3DZero( &g_selected.ap );
   }
 }
 
@@ -216,7 +221,7 @@ void switch_pin_link(int new_link_id)
   case NOT_PIN_LINK:
     gr_info2[new_link_id].pin = PIN_LINK;
     attr.id = new_link_id;
-    gr_info2[new_link_id].cell[0] = rkChainRegIKCellWldAtt( &g_chain, &attr, RK_IK_ATTR_ID | RK_IK_ATTR_AP );
+    gr_info2[new_link_id].cell[0] = rkChainRegIKCellWldAtt( &g_chain, &attr, RK_IK_ATTR_ID );
     gr_info2[new_link_id].cell[1] = rkChainRegIKCellWldPos( &g_chain, &attr, RK_IK_ATTR_ID | RK_IK_ATTR_AP );
     rkIKAttrSetWeight( &attr, IK_PIN_WEIGHT, IK_PIN_WEIGHT, IK_PIN_WEIGHT );
     break;
@@ -252,14 +257,12 @@ void register_drag_link_for_IK(int link_id)
   }
   if( rkglFrameHandleIsInRotation( &g_fh ) ){
     if( pin != PIN_LINK ){
-      gr_info2[link_id].cell[0] = rkChainRegIKCellWldAtt( &g_chain, &attr, RK_IK_ATTR_ID | RK_IK_ATTR_AP );
+      gr_info2[link_id].cell[0] = rkChainRegIKCellWldAtt( &g_chain, &attr, RK_IK_ATTR_ID );
       rkIKCellSetWeight( gr_info2[link_id].cell[0], IK_DRAG_WEIGHT, IK_DRAG_WEIGHT, IK_DRAG_WEIGHT );
     }
-    zVec3D ap;
-    /* transform Wolrd -> Link frame */
-    zXform3DInv( rkChainLinkWldFrame(&g_chain, link_id), zFrame3DPos(&g_fh.frame), &ap );
-    zVec3DCopy( &ap, rkIKCellAP(gr_info2[link_id].cell[1]) );
   }
+  zVec3DCopy( &g_selected.ap, rkIKCellAP(gr_info2[link_id].cell[1]) );
+  /* if(rkglFrameHandleIsUnselected( &g_fh ) ) */
 }
 
 void unregister_drag_link_for_IK(int link_id)
@@ -317,6 +320,11 @@ void update_alljoint_by_IK_with_frame(int link_id, zFrame3D *ref_frame)
     rkChainCopyState( &clone_chain, &g_chain );
   }
   register_drag_link_for_IK( link_id );
+
+  /* keep FrameHandle position */
+  if( rkglFrameHandleIsInRotation( &g_fh ) )
+    zFrame3DCopy( rkChainLinkWldFrame( gr.chain, link_id ), &g_fh.frame );
+  zXform3D( rkChainLinkWldFrame(&g_chain, link_id), &g_selected.ap, zFrame3DPos(&g_fh.frame) );
 }
 
 void move_link(double angle)
