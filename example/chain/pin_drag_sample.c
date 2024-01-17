@@ -267,6 +267,31 @@ void unregister_one_link_for_IK(int link_id)
   rkChainUnregIKCell( &g_chain, gr_info2[link_id].cell[1] );
 }
 
+void register_drag_weight_link_for_IK(int drag_link_id)
+{
+  int id;
+  register_one_link_for_IK( drag_link_id );
+  for( id=0; id<rkChainLinkNum(gr.chain); id++ ){
+    if( id != drag_link_id && gr_info2[id].pin == ONLY_POS3D_PIN_LINK ){
+      rkIKAttr attr;
+      attr.id = id;
+      gr_info2[id].cell[0] = rkChainRegIKCellWldAtt( &g_chain, &attr, RK_IK_ATTR_ID );
+      rkIKCellSetWeight( gr_info2[id].cell[0], IK_DRAG_WEIGHT, IK_DRAG_WEIGHT, IK_DRAG_WEIGHT );
+    }
+  }
+}
+
+void unregister_drag_weight_link_for_IK(int drag_link_id)
+{
+  int id;
+  unregister_one_link_for_IK( drag_link_id );
+  for( id=0; id<rkChainLinkNum(gr.chain); id++ ){
+    if( id != drag_link_id && gr_info2[id].pin == ONLY_POS3D_PIN_LINK ){
+      rkChainUnregIKCell( &g_chain, gr_info2[id].cell[0] );
+    }
+  }
+}
+
 void register_link_for_IK(int drag_link_id)
 {
   int id;
@@ -288,6 +313,7 @@ void unregister_link_for_IK(int drag_link_id)
 /* inverse kinematics */
 void update_alljoint_by_IK_with_frame(int drag_link_id, zFrame3D *ref_frame)
 {
+  if( g_selected.link_id < 0 ) return;
   zVec dis; /* joints zVec pointer */
   dis = zVecAlloc( rkChainJointSize( &g_chain ) );
   rkChainGetJointDisAll(&g_chain, dis);
@@ -320,13 +346,15 @@ void update_alljoint_by_IK_with_frame(int drag_link_id, zFrame3D *ref_frame)
     rkChainCopyState( &clone_chain, &g_chain );
   }
   /* IK again with only pin link */
-  unregister_one_link_for_IK( drag_link_id );
+  /* unregister_one_link_for_IK( drag_link_id ); */
+  unregister_drag_weight_link_for_IK( drag_link_id );
   rkChainIK( &g_chain, dis, ztol, iter );
   if( zVecIsNan(dis) ){
     printf("the result of rkChainIK() is NaN\n");
     rkChainCopyState( &clone_chain, &g_chain );
   }
-  register_one_link_for_IK( drag_link_id );
+  /* register_one_link_for_IK( drag_link_id ); */
+  register_drag_weight_link_for_IK( drag_link_id );
 
   /* keep FrameHandle position */
   if( rkglFrameHandleIsInRotation( &g_fh ) )
@@ -362,7 +390,8 @@ void motion(GLFWwindow* window, double x, double y)
   if( g_selected.obj != FRAMEHANDLE ||
       rkgl_mouse_button == GLFW_MOUSE_BUTTON_RIGHT ){
     rkglMouseDragFuncGLFW( window, x, y );
-  } else if( rkgl_mouse_button == GLFW_MOUSE_BUTTON_LEFT ){
+  } else if( g_selected.obj == FRAMEHANDLE &&
+             rkgl_mouse_button == GLFW_MOUSE_BUTTON_LEFT ){
     /* moving mode */
     rkglFrameHandleMove( &g_fh, &g_cam, rkgl_mouse_x, rkgl_mouse_y );
     update_alljoint_by_IK_with_frame( g_selected.link_id, &g_fh.frame );
