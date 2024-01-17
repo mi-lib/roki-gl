@@ -82,7 +82,8 @@ static const double g_MAGNITUDE = g_LENGTH * 0.7;
 /* draw FrameHandle parts shape */
 void draw_fh_parts(void)
 {
-  if( g_selected.link_id >= 0 ){
+  if( g_selected.link_id >= 0 &&
+      gr_info2[g_selected.link_id].is_selected ){
     rkglFrameHandleDraw( &g_fh );
   }
 }
@@ -156,8 +157,8 @@ void reset_link_selected_status(int new_link_id)
     int i;
     printf("reset_all_link_selected_status(): reset all link\n");
     for( i=0; i<rkChainLinkNum(gr.chain); i++ ){
-      if( gr_info2[i].is_selected
-          && gr_info2[i].pin == PIN_LOCK_OFF ){
+      if( gr_info2[i].is_selected &&
+          gr_info2[i].pin == PIN_LOCK_OFF ){
         reset_link_drawing( i );
         gr_info2[i].is_selected = false;
       }
@@ -178,7 +179,7 @@ void update_framehandle_location(rkglSelectionBuffer *sb, rkglCamera *cam, int x
   /* the origin position of the selected link mode */
   zFrame3DCopy( rkChainLinkWldFrame( gr.chain, link_id ), &g_fh.frame );
 
-  /* key optional */
+  /* ctrl key optional */
   if( rkgl_key_mod & GLFW_KEY_LEFT_CONTROL ){
     /* selected position mode */
     depth = rkglSelectionZnearDepth(sb);
@@ -293,8 +294,8 @@ void update_alljoint_by_IK_with_frame(int drag_link_id, zFrame3D *ref_frame)
   rkChainDeactivateIK( &g_chain );
   rkChainBindIK( &g_chain );
   /* set rotation reference */
-  if( gr_info2[drag_link_id].pin == PIN_LOCK_6D
-      || rkglFrameHandleIsInRotation( &g_fh ) ){
+  if( gr_info2[drag_link_id].pin == PIN_LOCK_6D ||
+      rkglFrameHandleIsInRotation( &g_fh ) ){
     zVec3D zyx;
     zMat3DToZYX( &(ref_frame->att), &zyx );
     rkIKCellSetRefVec( gr_info2[drag_link_id].cell[0], &zyx );
@@ -377,13 +378,13 @@ void mouse(GLFWwindow* window, int button, int state, int mods)
   if( button == GLFW_MOUSE_BUTTON_LEFT ){
     if( state == GLFW_PRESS ){
       /* draw only frame handle */
-      if( rkglSelectNearest( &sb, &g_cam, draw_select_fh_parts, rkgl_mouse_x, rkgl_mouse_y, 1, 1 )
-          && rkglFrameHandleAnchor( &g_fh, &sb, &g_cam, rkgl_mouse_x, rkgl_mouse_y ) >= 0 ){
+      if( rkglSelectNearest( &sb, &g_cam, draw_select_fh_parts, rkgl_mouse_x, rkgl_mouse_y, 1, 1 ) &&
+          rkglFrameHandleAnchor( &g_fh, &sb, &g_cam, rkgl_mouse_x, rkgl_mouse_y ) >= 0 ){
         register_link_for_IK( g_selected.link_id );
       } else{
         /* draw only chain */
-        if( rkglSelectNearest( &sb, &g_cam, draw_select_link, rkgl_mouse_x, rkgl_mouse_y, 1, 1 )
-            && ( new_link_id = rkglChainLinkFindSelected( &gr, &sb ) ) >= 0 ){
+        if( rkglSelectNearest( &sb, &g_cam, draw_select_link, rkgl_mouse_x, rkgl_mouse_y, 1, 1 ) &&
+            ( new_link_id = rkglChainLinkFindSelected( &gr, &sb ) ) >= 0 ){
           update_framehandle_location( &sb, &g_cam, rkgl_mouse_x, rkgl_mouse_y, new_link_id );
         }
         reset_link_selected_status( new_link_id );
@@ -397,8 +398,8 @@ void mouse(GLFWwindow* window, int button, int state, int mods)
     }
   } else if( button == GLFW_MOUSE_BUTTON_RIGHT ){
     if( state == GLFW_PRESS ){
-      if( rkglSelectNearest( &sb, &g_cam, draw_select_link, rkgl_mouse_x, rkgl_mouse_y, 1, 1 )
-          && ( new_link_id = rkglChainLinkFindSelected( &gr, &sb ) ) >= 0 ){
+      if( rkglSelectNearest( &sb, &g_cam, draw_select_link, rkgl_mouse_x, rkgl_mouse_y, 1, 1 ) &&
+          ( new_link_id = rkglChainLinkFindSelected( &gr, &sb ) ) >= 0 ){
         switch_pin_link( new_link_id );
       }
       update_selected_link( new_link_id );
