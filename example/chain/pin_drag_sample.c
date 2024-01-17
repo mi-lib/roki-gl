@@ -43,16 +43,8 @@ void rkglChainUnload_for_rkglLinkInfo2()
 /* the weight of drag link for IK */
 #define IK_DRAG_WEIGHT 0.01
 
-/* mouse selected object type information */
-typedef enum{
-  NONE=1,
-  LINKFRAME,
-  FRAMEHANDLE,
-} selectedObj;
-
 /* active selected the one object & link id */
 typedef struct{
-  selectedObj obj;
   int link_id;
   zVec3D ap;
 } selectInfo;
@@ -90,7 +82,7 @@ static const double g_MAGNITUDE = g_LENGTH * 0.7;
 /* draw FrameHandle parts shape */
 void draw_fh_parts(void)
 {
-  if( g_selected.obj != NONE ){
+  if( g_selected.link_id >= 0 ){
     rkglFrameHandleDraw( &g_fh );
   }
 }
@@ -125,14 +117,13 @@ void draw_scene(void)
     /* Green */
     zOpticalInfoCreate( &oi_alt, 1.0, 8.0, 0.3, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.3, NULL );
     draw_alternate_link( &gr, link_id, &oi_alt, &gr.attr, &g_light );
-  } else if( is_alt && g_selected.obj != NONE ){
+  } else if( is_alt && gr_info2[link_id].is_selected ){
     /* Blue */
     zOpticalInfoCreate( &oi_alt, 0.5, 0.7, 1.0, 0.5, 0.5, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.3, NULL );
     draw_alternate_link( &gr, link_id, &oi_alt, &gr.attr, &g_light );
   } else{
     rkglChainDraw( &gr );
   }
-  /* end of if( g_selected.obj != NONE ) */
 }
 
 void display(GLFWwindow* window)
@@ -362,11 +353,11 @@ void draw_select_fh_parts(void)
 
 void motion(GLFWwindow* window, double x, double y)
 {
-  if( g_selected.obj != FRAMEHANDLE ||
-      rkgl_mouse_button == GLFW_MOUSE_BUTTON_RIGHT ){
+  if( rkgl_mouse_button == GLFW_MOUSE_BUTTON_RIGHT ||
+      rkglFrameHandleIsUnselected( &g_fh ) ){
     rkglMouseDragFuncGLFW( window, x, y );
-  } else if( g_selected.obj == FRAMEHANDLE &&
-             rkgl_mouse_button == GLFW_MOUSE_BUTTON_LEFT ){
+  } else if( rkgl_mouse_button == GLFW_MOUSE_BUTTON_LEFT &&
+             !rkglFrameHandleIsUnselected( &g_fh ) ){
     /* moving mode */
     rkglFrameHandleMove( &g_fh, &g_cam, rkgl_mouse_x, rkgl_mouse_y );
     update_alljoint_by_IK_with_frame( g_selected.link_id, &g_fh.frame );
@@ -387,16 +378,12 @@ void mouse(GLFWwindow* window, int button, int state, int mods)
       /* draw only frame handle */
       if( rkglSelectNearest( &sb, &g_cam, draw_select_fh_parts, rkgl_mouse_x, rkgl_mouse_y, 1, 1 )
           && rkglFrameHandleAnchor( &g_fh, &sb, &g_cam, rkgl_mouse_x, rkgl_mouse_y ) >= 0 ){
-        g_selected.obj = FRAMEHANDLE;
         register_link_for_IK( g_selected.link_id );
       } else{
         /* draw only chain */
         if( rkglSelectNearest( &sb, &g_cam, draw_select_link, rkgl_mouse_x, rkgl_mouse_y, 1, 1 )
             && ( new_link_id = rkglChainLinkFindSelected( &gr, &sb ) ) >= 0 ){
-          g_selected.obj = LINKFRAME;
           update_framehandle_location( &sb, &g_cam, rkgl_mouse_x, rkgl_mouse_y, new_link_id );
-        } else{
-          g_selected.obj = NONE;
         }
         reset_link_selected_status( new_link_id );
         update_selected_link( new_link_id );
@@ -541,7 +528,6 @@ bool init(void)
   rkChainCreateIK( &g_chain );
   rkChainRegIKJointAll( &g_chain, IK_DRAG_WEIGHT );
   /* select */
-  g_selected.obj = NONE;
   g_selected.link_id = -1;
   /* frame handle */
   rkglFrameHandleCreate( &g_fh, NAME_FRAMEHANDLE_OFFSET, g_LENGTH, g_MAGNITUDE );
