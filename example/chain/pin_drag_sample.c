@@ -4,22 +4,15 @@ GLFWwindow* g_window;
 
 /* the definition of select & pin information *****************************************/
 
-/* rkglLinkInfo2.select information */
-typedef enum{
-  NOT_SELECTED=-1,
-  INACTIVE_SELECTED,
-  ACTIVE_SELECTED,
-} selectedStatus;
-
 /* rkglLinkInfo2.pin information */
 typedef enum{
-  NOT_PIN_LINK=-1,
-  PIN_LINK,
-  ONLY_POS3D_PIN_LINK
+  PIN_LOCK_OFF=-1,
+  PIN_LOCK_6D,
+  PIN_LOCK_POS3D
 } pinStatus;
 
 typedef struct{
-  selectedStatus select;
+  bool is_selected;
   pinStatus pin;
   rkIKCell *cell[2];
 } rkglLinkInfo2;
@@ -34,8 +27,8 @@ bool rkglChainLoad_for_rkglLinkInfo2(rkChain *gc_chain)
     return false;
   }
   for( i=0; i<rkChainLinkNum(gc_chain); i++ ){
-    gr_info2[i].select = NOT_SELECTED;
-    gr_info2[i].pin = NOT_PIN_LINK;
+    gr_info2[i].is_selected = false;
+    gr_info2[i].pin = PIN_LOCK_OFF;
   }
   return true;
 }
@@ -124,11 +117,11 @@ void draw_scene(void)
   bool is_alt = ( link_id>=0 && gr.info[link_id]._list_backup == -1 );
   int pin = gr_info2[link_id].pin;
   /* re-drawing the selected link once after proccessing with rkglChainLinkReset() */
-  if( is_alt && pin == PIN_LINK ){
+  if( is_alt && pin == PIN_LOCK_6D ){
     /* Red */
     zOpticalInfoCreate( &oi_alt, 1.0, 0.3, 0.3, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.3, NULL );
     draw_alternate_link( &gr, link_id, &oi_alt, &gr.attr, &g_light );
-  } else if( is_alt && pin == ONLY_POS3D_PIN_LINK ){
+  } else if( is_alt && pin == PIN_LOCK_POS3D ){
     /* Green */
     zOpticalInfoCreate( &oi_alt, 1.0, 8.0, 0.3, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.3, NULL );
     draw_alternate_link( &gr, link_id, &oi_alt, &gr.attr, &g_light );
@@ -163,25 +156,19 @@ void reset_link_drawing(int new_link_id)
 
 void reset_link_selected_status(int new_link_id)
 {
-  if( !rkglChainLinkIsUnselected( g_selected.link_id ) ){
-    gr_info2[g_selected.link_id].select = INACTIVE_SELECTED;
-  } else{
-    /* This may be redundant */
-    gr_info2[g_selected.link_id].select = NOT_SELECTED;
-  }
   if( !rkglChainLinkIsUnselected( new_link_id ) ){
-    if( gr_info2[new_link_id].select == NOT_SELECTED ){
+    if( !gr_info2[new_link_id].is_selected ){
       reset_link_drawing( new_link_id );
     }
-    gr_info2[new_link_id].select = ACTIVE_SELECTED;
+    gr_info2[new_link_id].is_selected = true;
   } else {
     int i;
     printf("reset_all_link_selected_status(): reset all link\n");
     for( i=0; i<rkChainLinkNum(gr.chain); i++ ){
-      if( gr_info2[i].select != NOT_SELECTED
-          && gr_info2[i].pin == NOT_PIN_LINK ){
+      if( gr_info2[i].is_selected
+          && gr_info2[i].pin == PIN_LOCK_OFF ){
         reset_link_drawing( i );
-        gr_info2[i].select = NOT_SELECTED;
+        gr_info2[i].is_selected = false;
       }
     } /* end of for */
   } /* end of if( !rkglChainLinkIsUnselected( new_link_id ) ) else */
@@ -216,20 +203,20 @@ void update_framehandle_location(rkglSelectionBuffer *sb, rkglCamera *cam, int x
 void switch_pin_link(int new_link_id)
 {
   switch( gr_info2[new_link_id].pin ){
-  case NOT_PIN_LINK:
-    gr_info2[new_link_id].pin = PIN_LINK;
+  case PIN_LOCK_OFF:
+    gr_info2[new_link_id].pin = PIN_LOCK_6D;
     break;
-  case PIN_LINK:
-    gr_info2[new_link_id].pin = ONLY_POS3D_PIN_LINK;
+  case PIN_LOCK_6D:
+    gr_info2[new_link_id].pin = PIN_LOCK_POS3D;
     break;
-  case ONLY_POS3D_PIN_LINK:
-    gr_info2[new_link_id].pin = NOT_PIN_LINK;
+  case PIN_LOCK_POS3D:
+    gr_info2[new_link_id].pin = PIN_LOCK_OFF;
     break;
   default: ;
   }
   /* reset for only pin link drawing */
   reset_link_drawing( new_link_id );
-  printf("pin_link       : link_id = %d, pin status = PIN_LINK\n", new_link_id );
+  printf("pin_link       : link_id = %d, pin status = %d\n", new_link_id, gr_info2[new_link_id].pin );
 }
 
 void register_one_link_for_IK(int link_id)
@@ -239,15 +226,15 @@ void register_one_link_for_IK(int link_id)
   gr_info2[link_id].cell[0] = rkChainRegIKCellWldAtt( &g_chain, &attr, RK_IK_ATTR_ID );
   gr_info2[link_id].cell[1] = rkChainRegIKCellWldPos( &g_chain, &attr, RK_IK_ATTR_ID | RK_IK_ATTR_AP );
   switch( gr_info2[link_id].pin ){
-  case PIN_LINK:
+  case PIN_LOCK_6D:
     rkIKCellSetWeight( gr_info2[link_id].cell[0], IK_PIN_WEIGHT, IK_PIN_WEIGHT, IK_PIN_WEIGHT );
     rkIKCellSetWeight( gr_info2[link_id].cell[1], IK_PIN_WEIGHT, IK_PIN_WEIGHT, IK_PIN_WEIGHT );
     break;
-  case ONLY_POS3D_PIN_LINK:
+  case PIN_LOCK_POS3D:
     rkIKCellSetWeight( gr_info2[link_id].cell[0], IK_DRAG_WEIGHT, IK_DRAG_WEIGHT, IK_DRAG_WEIGHT );
     rkIKCellSetWeight( gr_info2[link_id].cell[1], IK_PIN_WEIGHT, IK_PIN_WEIGHT, IK_PIN_WEIGHT );
     break;
-  case NOT_PIN_LINK:
+  case PIN_LOCK_OFF:
     rkIKCellSetWeight( gr_info2[link_id].cell[0], IK_DRAG_WEIGHT, IK_DRAG_WEIGHT, IK_DRAG_WEIGHT );
     rkIKCellSetWeight( gr_info2[link_id].cell[1], IK_DRAG_WEIGHT, IK_DRAG_WEIGHT, IK_DRAG_WEIGHT );
     break;
@@ -267,7 +254,7 @@ void register_drag_weight_link_for_IK(int drag_link_id)
   int id;
   register_one_link_for_IK( drag_link_id );
   for( id=0; id<rkChainLinkNum(gr.chain); id++ ){
-    if( id != drag_link_id && gr_info2[id].pin == ONLY_POS3D_PIN_LINK ){
+    if( id != drag_link_id && gr_info2[id].pin == PIN_LOCK_POS3D ){
       rkIKAttr attr;
       attr.id = id;
       gr_info2[id].cell[0] = rkChainRegIKCellWldAtt( &g_chain, &attr, RK_IK_ATTR_ID );
@@ -281,7 +268,7 @@ void unregister_drag_weight_link_for_IK(int drag_link_id)
   int id;
   unregister_one_link_for_IK( drag_link_id );
   for( id=0; id<rkChainLinkNum(gr.chain); id++ ){
-    if( id != drag_link_id && gr_info2[id].pin == ONLY_POS3D_PIN_LINK )
+    if( id != drag_link_id && gr_info2[id].pin == PIN_LOCK_POS3D )
       rkChainUnregIKCell( &g_chain, gr_info2[id].cell[0] );
   }
 }
@@ -290,7 +277,7 @@ void register_link_for_IK(int drag_link_id)
 {
   int id;
   for( id=0; id<rkChainLinkNum(gr.chain); id++ ){
-    if( id == drag_link_id || gr_info2[id].pin != NOT_PIN_LINK )
+    if( id == drag_link_id || gr_info2[id].pin != PIN_LOCK_OFF )
       register_one_link_for_IK( id );
   }
 }
@@ -299,7 +286,7 @@ void unregister_link_for_IK(int drag_link_id)
 {
   int id;
   for( id=0; id<rkChainLinkNum(gr.chain); id++ ){
-    if( id == drag_link_id || gr_info2[id].pin != NOT_PIN_LINK )
+    if( id == drag_link_id || gr_info2[id].pin != PIN_LOCK_OFF )
       unregister_one_link_for_IK( id );
   }
 }
@@ -315,7 +302,7 @@ void update_alljoint_by_IK_with_frame(int drag_link_id, zFrame3D *ref_frame)
   rkChainDeactivateIK( &g_chain );
   rkChainBindIK( &g_chain );
   /* set rotation reference */
-  if( gr_info2[drag_link_id].pin == PIN_LINK
+  if( gr_info2[drag_link_id].pin == PIN_LOCK_6D
       || rkglFrameHandleIsInRotation( &g_fh ) ){
     zVec3D zyx;
     zMat3DToZYX( &(ref_frame->att), &zyx );
