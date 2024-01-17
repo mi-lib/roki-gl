@@ -184,11 +184,6 @@ void reset_link_selected_status(int new_link_id)
         gr_info2[i].select = NOT_SELECTED;
       }
     } /* end of for */
-    printf("pin=[");
-    for( i=0; i<rkChainLinkNum(gr.chain); i++ ){
-      if( gr_info2[i].pin != NOT_PIN_LINK ) printf("%02d:%d, ", i, gr_info2[i].pin );
-    }
-    printf("]\n");
   } /* end of if( !rkglChainLinkIsUnselected( new_link_id ) ) else */
 }
 
@@ -286,9 +281,8 @@ void unregister_drag_weight_link_for_IK(int drag_link_id)
   int id;
   unregister_one_link_for_IK( drag_link_id );
   for( id=0; id<rkChainLinkNum(gr.chain); id++ ){
-    if( id != drag_link_id && gr_info2[id].pin == ONLY_POS3D_PIN_LINK ){
+    if( id != drag_link_id && gr_info2[id].pin == ONLY_POS3D_PIN_LINK )
       rkChainUnregIKCell( &g_chain, gr_info2[id].cell[0] );
-    }
   }
 }
 
@@ -313,17 +307,15 @@ void unregister_link_for_IK(int drag_link_id)
 /* inverse kinematics */
 void update_alljoint_by_IK_with_frame(int drag_link_id, zFrame3D *ref_frame)
 {
-  if( g_selected.link_id < 0 ) return;
+  if( drag_link_id < 0 ) return;
   zVec dis; /* joints zVec pointer */
   dis = zVecAlloc( rkChainJointSize( &g_chain ) );
   rkChainGetJointDisAll(&g_chain, dis);
   /* prepare IK */
   rkChainDeactivateIK( &g_chain );
   rkChainBindIK( &g_chain );
-  /* set reference */
   /* set rotation reference */
-  int pin = gr_info2[drag_link_id].pin;
-  if( pin == PIN_LINK
+  if( gr_info2[drag_link_id].pin == PIN_LINK
       || rkglFrameHandleIsInRotation( &g_fh ) ){
     zVec3D zyx;
     zMat3DToZYX( &(ref_frame->att), &zyx );
@@ -346,20 +338,17 @@ void update_alljoint_by_IK_with_frame(int drag_link_id, zFrame3D *ref_frame)
     rkChainCopyState( &clone_chain, &g_chain );
   }
   /* IK again with only pin link */
-  /* unregister_one_link_for_IK( drag_link_id ); */
   unregister_drag_weight_link_for_IK( drag_link_id );
   rkChainIK( &g_chain, dis, ztol, iter );
   if( zVecIsNan(dis) ){
     printf("the result of rkChainIK() is NaN\n");
     rkChainCopyState( &clone_chain, &g_chain );
   }
-  /* register_one_link_for_IK( drag_link_id ); */
   register_drag_weight_link_for_IK( drag_link_id );
-
   /* keep FrameHandle position */
   if( rkglFrameHandleIsInRotation( &g_fh ) )
     zFrame3DCopy( rkChainLinkWldFrame( gr.chain, drag_link_id ), &g_fh.frame );
-  zXform3D( rkChainLinkWldFrame(&g_chain, drag_link_id), &g_selected.ap, zFrame3DPos(&g_fh.frame) );
+  zXform3D( rkChainLinkWldFrame( &g_chain, drag_link_id ), &g_selected.ap, zFrame3DPos( &g_fh.frame ) );
 }
 
 void move_link(double angle)
@@ -381,7 +370,6 @@ void draw_select_link(void)
 
 void draw_select_fh_parts(void)
 {
-  /* first drawn objects are selected first */
   draw_fh_parts();
 }
 
@@ -413,7 +401,6 @@ void mouse(GLFWwindow* window, int button, int state, int mods)
       if( rkglSelectNearest( &sb, &g_cam, draw_select_fh_parts, rkgl_mouse_x, rkgl_mouse_y, 1, 1 )
           && rkglFrameHandleAnchor( &g_fh, &sb, &g_cam, rkgl_mouse_x, rkgl_mouse_y ) >= 0 ){
         g_selected.obj = FRAMEHANDLE;
-        /* new_link_id = g_selected.link_id; */
         register_link_for_IK( g_selected.link_id );
       } else{
         /* draw only chain */
