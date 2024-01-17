@@ -87,7 +87,7 @@ static double g_scale = 0.001;
 
 /* FrameHandle shape property */
 static const double g_LENGTH = 0.2;
-static const double g_MAGNITUDE = g_LENGTH * 0.5;
+static const double g_MAGNITUDE = g_LENGTH * 0.7;
 
 /* To avoid duplication between selected_link and selected_parts_id */
 /* NAME_FRAMEHANDLE_OFFSET must be enough large than rkChainLinkNum(gr.chain)  */
@@ -184,6 +184,11 @@ void reset_link_selected_status(int new_link_id)
         gr_info2[i].select = NOT_SELECTED;
       }
     } /* end of for */
+    printf("pin=[");
+    for( i=0; i<rkChainLinkNum(gr.chain); i++ ){
+      if( gr_info2[i].pin != NOT_PIN_LINK ) printf("%02d:%d, ", i, gr_info2[i].pin );
+    }
+    printf("]\n");
   } /* end of if( !rkglChainLinkIsUnselected( new_link_id ) ) else */
 }
 
@@ -215,29 +220,15 @@ void update_framehandle_location(rkglSelectionBuffer *sb, rkglCamera *cam, int x
 
 void switch_pin_link(int new_link_id)
 {
-  rkIKAttr attr;
-  int pin = gr_info2[new_link_id].pin;
-  switch( pin ){
+  switch( gr_info2[new_link_id].pin ){
   case NOT_PIN_LINK:
     gr_info2[new_link_id].pin = PIN_LINK;
-    attr.id = new_link_id;
-    gr_info2[new_link_id].cell[0] = rkChainRegIKCellWldAtt( &g_chain, &attr, RK_IK_ATTR_ID );
-    gr_info2[new_link_id].cell[1] = rkChainRegIKCellWldPos( &g_chain, &attr, RK_IK_ATTR_ID | RK_IK_ATTR_AP );
-    rkIKAttrSetWeight( &attr, IK_PIN_WEIGHT, IK_PIN_WEIGHT, IK_PIN_WEIGHT );
     break;
   case PIN_LINK:
     gr_info2[new_link_id].pin = ONLY_POS3D_PIN_LINK;
-    /* pos weight up */
-    rkIKCellSetWeight( gr_info2[new_link_id].cell[1], IK_PIN_WEIGHT, IK_PIN_WEIGHT, IK_PIN_WEIGHT );
-    /* un-register rot */
-    rkIKCellSetWeight( gr_info2[new_link_id].cell[0], IK_DRAG_WEIGHT, IK_DRAG_WEIGHT, IK_DRAG_WEIGHT );
-    rkChainUnregIKCell( &g_chain, gr_info2[new_link_id].cell[0] );
     break;
   case ONLY_POS3D_PIN_LINK:
     gr_info2[new_link_id].pin = NOT_PIN_LINK;
-    /* un-register pos ( the state un-registered pos & rot both pin weight ) */
-    rkIKCellSetWeight( gr_info2[new_link_id].cell[1], IK_DRAG_WEIGHT, IK_DRAG_WEIGHT, IK_DRAG_WEIGHT );
-    rkChainUnregIKCell( &g_chain, gr_info2[new_link_id].cell[1] );
     break;
   default: ;
   }
@@ -246,40 +237,56 @@ void switch_pin_link(int new_link_id)
   printf("pin_link       : link_id = %d, pin status = PIN_LINK\n", new_link_id );
 }
 
-void register_drag_link_for_IK(int link_id)
+void register_one_link_for_IK(int link_id)
 {
-  int pin = gr_info2[link_id].pin;
   rkIKAttr attr;
   attr.id = link_id;
-  if( pin == NOT_PIN_LINK ){
-    gr_info2[link_id].cell[1] = rkChainRegIKCellWldPos( &g_chain, &attr, RK_IK_ATTR_ID | RK_IK_ATTR_AP );
+  gr_info2[link_id].cell[0] = rkChainRegIKCellWldAtt( &g_chain, &attr, RK_IK_ATTR_ID );
+  gr_info2[link_id].cell[1] = rkChainRegIKCellWldPos( &g_chain, &attr, RK_IK_ATTR_ID | RK_IK_ATTR_AP );
+  switch( gr_info2[link_id].pin ){
+  case PIN_LINK:
+    rkIKCellSetWeight( gr_info2[link_id].cell[0], IK_PIN_WEIGHT, IK_PIN_WEIGHT, IK_PIN_WEIGHT );
+    rkIKCellSetWeight( gr_info2[link_id].cell[1], IK_PIN_WEIGHT, IK_PIN_WEIGHT, IK_PIN_WEIGHT );
+    break;
+  case ONLY_POS3D_PIN_LINK:
+    rkIKCellSetWeight( gr_info2[link_id].cell[0], IK_DRAG_WEIGHT, IK_DRAG_WEIGHT, IK_DRAG_WEIGHT );
+    rkIKCellSetWeight( gr_info2[link_id].cell[1], IK_PIN_WEIGHT, IK_PIN_WEIGHT, IK_PIN_WEIGHT );
+    break;
+  case NOT_PIN_LINK:
+    rkIKCellSetWeight( gr_info2[link_id].cell[0], IK_DRAG_WEIGHT, IK_DRAG_WEIGHT, IK_DRAG_WEIGHT );
     rkIKCellSetWeight( gr_info2[link_id].cell[1], IK_DRAG_WEIGHT, IK_DRAG_WEIGHT, IK_DRAG_WEIGHT );
-  }
-  if( rkglFrameHandleIsInRotation( &g_fh ) ){
-    if( pin != PIN_LINK ){
-      gr_info2[link_id].cell[0] = rkChainRegIKCellWldAtt( &g_chain, &attr, RK_IK_ATTR_ID );
-      rkIKCellSetWeight( gr_info2[link_id].cell[0], IK_DRAG_WEIGHT, IK_DRAG_WEIGHT, IK_DRAG_WEIGHT );
-    }
+    break;
+  default: ;
   }
   zVec3DCopy( &g_selected.ap, rkIKCellAP(gr_info2[link_id].cell[1]) );
-  /* if(rkglFrameHandleIsUnselected( &g_fh ) ) */
 }
 
-void unregister_drag_link_for_IK(int link_id)
+void unregister_one_link_for_IK(int link_id)
 {
-  int pin = gr_info2[link_id].pin;
-  if( pin != PIN_LINK ){
-    if( rkglFrameHandleIsInRotation( &g_fh ) ){
-      rkChainUnregIKCell( &g_chain, gr_info2[link_id].cell[0] );
-    }
-    if( pin == NOT_PIN_LINK ){
-      rkChainUnregIKCell( &g_chain, gr_info2[link_id].cell[1] );
-    }
-  } /* end of if( pin != PIN_LINK ) */
+  rkChainUnregIKCell( &g_chain, gr_info2[link_id].cell[0] );
+  rkChainUnregIKCell( &g_chain, gr_info2[link_id].cell[1] );
+}
+
+void register_link_for_IK(int drag_link_id)
+{
+  int id;
+  for( id=0; id<rkChainLinkNum(gr.chain); id++ ){
+    if( id == drag_link_id || gr_info2[id].pin != NOT_PIN_LINK )
+      register_one_link_for_IK( id );
+  }
+}
+
+void unregister_link_for_IK(int drag_link_id)
+{
+  int id;
+  for( id=0; id<rkChainLinkNum(gr.chain); id++ ){
+    if( id == drag_link_id || gr_info2[id].pin != NOT_PIN_LINK )
+      unregister_one_link_for_IK( id );
+  }
 }
 
 /* inverse kinematics */
-void update_alljoint_by_IK_with_frame(int link_id, zFrame3D *ref_frame)
+void update_alljoint_by_IK_with_frame(int drag_link_id, zFrame3D *ref_frame)
 {
   zVec dis; /* joints zVec pointer */
   dis = zVecAlloc( rkChainJointSize( &g_chain ) );
@@ -289,15 +296,15 @@ void update_alljoint_by_IK_with_frame(int link_id, zFrame3D *ref_frame)
   rkChainBindIK( &g_chain );
   /* set reference */
   /* set rotation reference */
-  int pin = gr_info2[link_id].pin;
+  int pin = gr_info2[drag_link_id].pin;
   if( pin == PIN_LINK
       || rkglFrameHandleIsInRotation( &g_fh ) ){
     zVec3D zyx;
     zMat3DToZYX( &(ref_frame->att), &zyx );
-    rkIKCellSetRefVec( gr_info2[link_id].cell[0], &zyx );
+    rkIKCellSetRefVec( gr_info2[drag_link_id].cell[0], &zyx );
   }
   /* set position reference */
-  rkIKCellSetRefVec( gr_info2[link_id].cell[1], &(ref_frame->pos) );
+  rkIKCellSetRefVec( gr_info2[drag_link_id].cell[1], &(ref_frame->pos) );
   rkChainFK( &g_chain, dis ); /* copy state to mentatin result consistency */
   /* IK */
   /* printf("pre IK Joint[deg]  = "); zVecPrint(zVecMulDRC(zVecClone(dis),180.0/zPI)); */
@@ -313,18 +320,18 @@ void update_alljoint_by_IK_with_frame(int link_id, zFrame3D *ref_frame)
     rkChainCopyState( &clone_chain, &g_chain );
   }
   /* IK again with only pin link */
-  unregister_drag_link_for_IK( link_id );
+  unregister_one_link_for_IK( drag_link_id );
   rkChainIK( &g_chain, dis, ztol, iter );
   if( zVecIsNan(dis) ){
     printf("the result of rkChainIK() is NaN\n");
     rkChainCopyState( &clone_chain, &g_chain );
   }
-  register_drag_link_for_IK( link_id );
+  register_one_link_for_IK( drag_link_id );
 
   /* keep FrameHandle position */
   if( rkglFrameHandleIsInRotation( &g_fh ) )
-    zFrame3DCopy( rkChainLinkWldFrame( gr.chain, link_id ), &g_fh.frame );
-  zXform3D( rkChainLinkWldFrame(&g_chain, link_id), &g_selected.ap, zFrame3DPos(&g_fh.frame) );
+    zFrame3DCopy( rkChainLinkWldFrame( gr.chain, drag_link_id ), &g_fh.frame );
+  zXform3D( rkChainLinkWldFrame(&g_chain, drag_link_id), &g_selected.ap, zFrame3DPos(&g_fh.frame) );
 }
 
 void move_link(double angle)
@@ -377,8 +384,8 @@ void mouse(GLFWwindow* window, int button, int state, int mods)
       if( rkglSelectNearest( &sb, &g_cam, draw_select_fh_parts, rkgl_mouse_x, rkgl_mouse_y, 1, 1 )
           && rkglFrameHandleAnchor( &g_fh, &sb, &g_cam, rkgl_mouse_x, rkgl_mouse_y ) >= 0 ){
         g_selected.obj = FRAMEHANDLE;
-        register_drag_link_for_IK( g_selected.link_id );
-        new_link_id = g_selected.link_id;
+        /* new_link_id = g_selected.link_id; */
+        register_link_for_IK( g_selected.link_id );
       } else{
         /* draw only chain */
         if( rkglSelectNearest( &sb, &g_cam, draw_select_link, rkgl_mouse_x, rkgl_mouse_y, 1, 1 )
@@ -394,7 +401,7 @@ void mouse(GLFWwindow* window, int button, int state, int mods)
       }
     } else if( state == GLFW_RELEASE ){
       if( !rkglFrameHandleIsUnselected( &g_fh ) ){
-        unregister_drag_link_for_IK( g_selected.link_id );
+        unregister_link_for_IK( g_selected.link_id );
       }
     }
   } else if( button == GLFW_MOUSE_BUTTON_RIGHT ){
