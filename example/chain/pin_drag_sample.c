@@ -114,7 +114,7 @@ void draw_scene(void)
     zOpticalInfoCreate( &oi_alt, 1.0, 0.3, 0.3, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.3, NULL );
     draw_alternate_link( &gr, link_id, &oi_alt, &gr.attr, &g_light );
   } else if( is_alt && pin == PIN_LOCK_POS3D ){
-    /* Green */
+    /* Yellow */
     zOpticalInfoCreate( &oi_alt, 1.0, 8.0, 0.3, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.3, NULL );
     draw_alternate_link( &gr, link_id, &oi_alt, &gr.attr, &g_light );
   } else if( is_alt && gr_info2[link_id].is_selected ){
@@ -310,7 +310,6 @@ void update_alljoint_by_IK_with_frame(int drag_link_id, zFrame3D *ref_frame)
   rkChain clone_chain;
   rkChainClone( &g_chain, &clone_chain );
   rkChainIK( &g_chain, dis, ztol, iter );
-  /* printf("post IK Joint[deg] = "); zVecPrint(zVecMulDRC(zVecClone(dis),180.0/zPI)); */
   if( zVecIsNan(dis) ){
     printf("the result of rkChainIK() is NaN\n");
     rkChainCopyState( &clone_chain, &g_chain );
@@ -323,6 +322,8 @@ void update_alljoint_by_IK_with_frame(int drag_link_id, zFrame3D *ref_frame)
     rkChainCopyState( &clone_chain, &g_chain );
   }
   register_drag_weight_link_for_IK( drag_link_id );
+  /* printf("post IK Joint[deg] = "); zVecPrint(zVecMulDRC(zVecClone(dis),180.0/zPI)); */
+
   /* keep FrameHandle position */
   if( rkglFrameHandleIsInRotation( &g_fh ) )
     zFrame3DCopy( rkChainLinkWldFrame( gr.chain, drag_link_id ), &g_fh.frame );
@@ -492,13 +493,11 @@ rkChain *extend_rkChainReadZTK(rkChain *chain, char *pathname)
   return chain;
 }
 
-
 bool init(void)
 {
   rkglSetDefaultCallbackParam( &g_cam, 1.0, g_znear, g_zfar, 1.0, 5.0 );
 
   rkglBGSet( &g_cam, 0.5, 0.5, 0.5 );
-  /* rkglCASet( &g_cam, 1, 1, 1, 45, -30, 0 ); */
   rkglCASet( &g_cam, 0, 0, 0, 45, -30, 0 );
 
   glEnable(GL_LIGHTING);
