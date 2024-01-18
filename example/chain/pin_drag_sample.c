@@ -58,9 +58,6 @@ rkglFrameHandle g_fh;
 rkChain g_chain;
 rkglChain gr;
 
-/* an imitation of rkglFrameHandleIsUnselected() */
-#define rkglChainLinkIsUnselected(selected_link_id) ( selected_link_id == -1 )
-
 /* viewing parameters */
 rkglCamera g_cam;
 rkglLight g_light;
@@ -150,26 +147,6 @@ void reset_link_drawing(int new_link_id)
   rkglChainLinkReset( &gr, new_link_id );
   printf( "list = %d, ", gr.info[new_link_id].list );
   printf( "_list_backup = %d\n", gr.info[new_link_id]._list_backup );
-}
-
-void reset_link_selected_status(int new_link_id)
-{
-  if( !rkglChainLinkIsUnselected( new_link_id ) ){
-    if( !gr_info2[new_link_id].is_selected ){
-      reset_link_drawing( new_link_id );
-    }
-    gr_info2[new_link_id].is_selected = true;
-  } else {
-    int i;
-    printf("reset_all_link_selected_status(): reset all link\n");
-    for( i=0; i<rkChainLinkNum(gr.chain); i++ ){
-      if( gr_info2[i].is_selected &&
-          gr_info2[i].pin == PIN_LOCK_OFF ){
-        reset_link_drawing( i );
-        gr_info2[i].is_selected = false;
-      }
-    } /* end of for */
-  } /* end of if( !rkglChainLinkIsUnselected( new_link_id ) ) else */
 }
 
 void update_selected_link(int new_link_id)
@@ -377,15 +354,30 @@ void mouse(GLFWwindow* window, int button, int state, int mods)
           rkglFrameHandleAnchor( &g_fh, &sb, &g_cam, rkgl_mouse_x, rkgl_mouse_y ) >= 0 ){
         register_link_for_IK( g_selected.link_id );
       } else{
-        /* draw only chain */
+        rkglFrameHandleUnselect( &g_fh );
+        /* draw only chain link */
         if( rkglSelectNearest( &sb, &g_cam, draw_chain, rkgl_mouse_x, rkgl_mouse_y, 1, 1 ) &&
             ( new_link_id = rkglChainLinkFindSelected( &gr, &sb ) ) >= 0 ){
+          /* a link is selected */
           update_framehandle_location( &sb, &g_cam, rkgl_mouse_x, rkgl_mouse_y, new_link_id );
-        }
-        reset_link_selected_status( new_link_id );
+          if( !gr_info2[new_link_id].is_selected ){
+            reset_link_drawing( new_link_id );
+          }
+          gr_info2[new_link_id].is_selected = true;
+        } else{
+          /* no link is selected */
+          int i;
+          printf("reset_all_link_selected_status(): reset all link\n");
+          for( i=0; i<rkChainLinkNum(gr.chain); i++ ){
+            if( gr_info2[i].is_selected &&
+                gr_info2[i].pin == PIN_LOCK_OFF ){
+              reset_link_drawing( i );
+              gr_info2[i].is_selected = false;
+            }
+          } /* end of for */
+        } /* end of if-else link is selected */
         update_selected_link( new_link_id );
-        rkglFrameHandleUnselect( &g_fh );
-      }
+      } /* end of if-else FrameHandle is selected */
     } else if( state == GLFW_RELEASE ){
       if( !rkglFrameHandleIsUnselected( &g_fh ) ){
         unregister_link_for_IK( g_selected.link_id );
