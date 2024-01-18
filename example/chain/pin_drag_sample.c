@@ -88,6 +88,12 @@ void draw_fh_parts(void)
   }
 }
 
+void draw_chain(void)
+{
+  rkglChainSetName( &gr, NAME_CHAIN );
+  rkglChainDraw( &gr );
+}
+
 void draw_alternate_link(rkglChain *gc, int id, zOpticalInfo *oi_alt, rkglChainAttr *attr, rkglLight *light){
     printf( "alternate link : pre gr.info[%d].list = %d, ", id, gc->info[id].list );
     printf( "_list_backup = %d, ---> ", gc->info[id]._list_backup );
@@ -123,7 +129,7 @@ void draw_scene(void)
     zOpticalInfoCreate( &oi_alt, 0.5, 0.7, 1.0, 0.5, 0.5, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.3, NULL );
     draw_alternate_link( &gr, link_id, &oi_alt, &gr.attr, &g_light );
   } else{
-    rkglChainDraw( &gr );
+    draw_chain();
   }
 }
 
@@ -342,17 +348,6 @@ void move_link(double angle)
   rkChainUpdateFK( &g_chain );
 }
 
-void draw_select_link(void)
-{
-  rkglChainSetName( &gr, NAME_CHAIN );
-  rkglChainDraw( &gr );
-}
-
-void draw_select_fh_parts(void)
-{
-  draw_fh_parts();
-}
-
 void motion(GLFWwindow* window, double x, double y)
 {
   if( rkgl_mouse_button == GLFW_MOUSE_BUTTON_RIGHT ||
@@ -378,12 +373,12 @@ void mouse(GLFWwindow* window, int button, int state, int mods)
   if( button == GLFW_MOUSE_BUTTON_LEFT ){
     if( state == GLFW_PRESS ){
       /* draw only frame handle */
-      if( rkglSelectNearest( &sb, &g_cam, draw_select_fh_parts, rkgl_mouse_x, rkgl_mouse_y, 1, 1 ) &&
+      if( rkglSelectNearest( &sb, &g_cam, draw_fh_parts, rkgl_mouse_x, rkgl_mouse_y, 1, 1 ) &&
           rkglFrameHandleAnchor( &g_fh, &sb, &g_cam, rkgl_mouse_x, rkgl_mouse_y ) >= 0 ){
         register_link_for_IK( g_selected.link_id );
       } else{
         /* draw only chain */
-        if( rkglSelectNearest( &sb, &g_cam, draw_select_link, rkgl_mouse_x, rkgl_mouse_y, 1, 1 ) &&
+        if( rkglSelectNearest( &sb, &g_cam, draw_chain, rkgl_mouse_x, rkgl_mouse_y, 1, 1 ) &&
             ( new_link_id = rkglChainLinkFindSelected( &gr, &sb ) ) >= 0 ){
           update_framehandle_location( &sb, &g_cam, rkgl_mouse_x, rkgl_mouse_y, new_link_id );
         }
@@ -398,7 +393,7 @@ void mouse(GLFWwindow* window, int button, int state, int mods)
     }
   } else if( button == GLFW_MOUSE_BUTTON_RIGHT ){
     if( state == GLFW_PRESS ){
-      if( rkglSelectNearest( &sb, &g_cam, draw_select_link, rkgl_mouse_x, rkgl_mouse_y, 1, 1 ) &&
+      if( rkglSelectNearest( &sb, &g_cam, draw_chain, rkgl_mouse_x, rkgl_mouse_y, 1, 1 ) &&
           ( new_link_id = rkglChainLinkFindSelected( &gr, &sb ) ) >= 0 ){
         switch_pin_link( new_link_id );
       }
