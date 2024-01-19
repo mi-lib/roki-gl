@@ -327,14 +327,13 @@ void move_link(double angle)
 
 void motion(GLFWwindow* window, double x, double y)
 {
-  if( rkgl_mouse_button == GLFW_MOUSE_BUTTON_RIGHT ||
-      rkglFrameHandleIsUnselected( &g_fh ) ){
-    rkglMouseDragFuncGLFW( window, x, y );
-  } else if( rkgl_mouse_button == GLFW_MOUSE_BUTTON_LEFT &&
+  if( rkgl_mouse_button == GLFW_MOUSE_BUTTON_LEFT &&
              !rkglFrameHandleIsUnselected( &g_fh ) ){
     /* moving mode */
     rkglFrameHandleMove( &g_fh, &g_cam, rkgl_mouse_x, rkgl_mouse_y );
     update_alljoint_by_IK_with_frame( g_selected.link_id, &g_fh.frame );
+  } else{
+    rkglMouseDragFuncGLFW( window, x, y );
   }
   rkglMouseStoreXY( floor(x), floor(y) );
 }
