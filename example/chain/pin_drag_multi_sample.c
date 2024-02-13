@@ -1,6 +1,13 @@
 #include <roki/rk_cd.h>
 #include <roki_gl/roki_glfw.h>
 
+/* #define DEBUG_PRINT */
+#ifdef DEBUG_PRINT
+#define debug_printf(...) printf(__VA_ARGS__)
+#else
+#define debug_printf(...)
+#endif
+
 GLFWwindow* g_window;
 
 /* the definition of select & pin information *****************************************/
@@ -14,6 +21,7 @@ typedef enum{
 
 typedef struct{
   bool is_selected;
+  bool is_collision;
   pinStatus pin;
   rkIKCell *cell[2];
 } rkglLinkInfo2;
@@ -98,6 +106,14 @@ void rkglChainUnload_for_rkglChainBlock(rkglChainBlock *gcb)
   zFree( gcb->info2 );
 }
 
+void reset_link_drawing(int new_chain_id, int new_link_id)
+{
+  debug_printf( "reset link     : rkglChain[%d].info[%d] : list = %d, ", new_chain_id, new_link_id, grs[new_chain_id].glChain.info[new_link_id].list );
+  debug_printf( "_list_backup = %d, ---> ", grs[new_chain_id].glChain.info[new_link_id]._list_backup );
+  rkglChainLinkReset( &grs[new_chain_id].glChain, new_link_id );
+  debug_printf( "list = %d, ", grs[new_chain_id].glChain.info[new_link_id].list );
+  debug_printf( "_list_backup = %d\n", grs[new_chain_id].glChain.info[new_link_id]._list_backup );
+}
 
 /* draw FrameHandle parts shape */
 void draw_fh_parts(void)
@@ -110,7 +126,7 @@ void draw_fh_parts(void)
 
 void draw_chain(void)
 {
-  int i=0;
+  int i;
 
   for( i=0; i<g_chainNUM; i++ ){
     rkglChainSetName( &grs[i].glChain, i ); /* NAME_CHAIN = i */
@@ -119,38 +135,18 @@ void draw_chain(void)
 }
 
 void draw_alternate_link(rkglChain *gc, int chain_id, int id, zOpticalInfo *oi_alt, rkglChainAttr *attr, rkglLight *light){
-  printf( "alternate link : rkglChain[%d].info[%d] : list = %d, ", chain_id, id, gc->info[id].list );
-  printf( "_list_backup = %d, ---> ", gc->info[id]._list_backup );
+  debug_printf( "alternate link : rkglChain[%d].info[%d] : list = %d, ", chain_id, id, gc->info[id].list );
+  debug_printf( "_list_backup = %d, ---> ", gc->info[id]._list_backup );
   /* TODO : reuse selected link list value */
   /* (the current implementation generates new list value by glNewList() ) */
   rkglChainLinkAlt( gc, id, oi_alt, attr, light );
-  printf( "list = %d, ", gc->info[id].list );
-  printf( "_list_backup = %d\n", gc->info[id]._list_backup );
+  debug_printf( "list = %d, ", gc->info[id].list );
+  debug_printf( "_list_backup = %d\n", gc->info[id]._list_backup );
 }
 
-void draw_scene(void)
+bool draw_pindrag_link(int chain_id, int link_id, bool is_alt)
 {
-  /* Transparency depends on drawing order */
-  /* 1st, drawing FrameHandle */
-  draw_fh_parts();
-  /* 2nd, drawing each glChain, and its link frame */
   zOpticalInfo oi_alt;
-  if( g_is_collision ){
-    printf("\n\n is_collision == true ================================= \n");
-    /* Red */
-    zOpticalInfoCreateSimple( &oi_alt, 1.0, 0.0, 0.0, NULL );
-    cdInfoCell *cdcell;
-    zListForEachRew( &g_cdlist, cdcell ){
-      if( grs[cdcell->data.chain_id].glChain.info[cdcell->data.link_id]._list_backup==-1 ){
-        grs[cdcell->data.chain_id].glChain.attr.disptype = RKGL_FACE;
-        draw_alternate_link( &grs[cdcell->data.chain_id].glChain, cdcell->data.chain_id, cdcell->data.link_id, &oi_alt, &grs[cdcell->data.chain_id].glChain.attr, &g_light );
-      }
-    }
-    printf("end of is_collision == true ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ \n\n");
-  }
-  int chain_id = g_selected.chain_id;
-  int link_id = g_selected.link_id;
-  bool is_alt = ( chain_id>=0 && link_id>=0 && grs[chain_id].glChain.info[link_id]._list_backup==-1 );
   /* re-drawing the selected link once after proccessing with rkglChainLinkReset() */
   int pin = is_alt ? grs[chain_id].info2[link_id].pin : -1;
   if( is_alt ) grs[chain_id].glChain.attr.disptype = RKGL_FACE;
@@ -167,8 +163,61 @@ void draw_scene(void)
     zOpticalInfoCreate( &oi_alt, 0.5, 0.7, 1.0, 0.5, 0.5, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.3, NULL );
     draw_alternate_link( &grs[chain_id].glChain, chain_id, link_id, &oi_alt, &grs[chain_id].glChain.attr, &g_light );
   } else {
-    draw_chain();
+    return false;
   }
+
+  return true;
+}
+
+void draw_collision_link(void)
+{
+  zOpticalInfo oi_alt;
+  if( g_is_collision ){
+    debug_printf("\n\n is_collision == true ================================= \n");
+    /* Red */
+    zOpticalInfoCreateSimple( &oi_alt, 1.0, 0.0, 0.0, NULL );
+    cdInfoCell *cdcell;
+    zListForEachRew( &g_cdlist, cdcell ){
+      if( grs[cdcell->data.chain_id].glChain.info[cdcell->data.link_id]._list_backup==-1 ){
+        grs[cdcell->data.chain_id].glChain.attr.disptype = RKGL_FACE;
+        draw_alternate_link( &grs[cdcell->data.chain_id].glChain, cdcell->data.chain_id, cdcell->data.link_id, &oi_alt, &grs[cdcell->data.chain_id].glChain.attr, &g_light );
+      }
+    }
+    debug_printf("end of is_collision == true ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ \n\n");
+  }
+  g_is_collision = false;
+}
+
+void draw_other_all_chain_link(void)
+{
+  int chain_id, link_id;
+  bool is_pindrag = false;
+
+  for( chain_id=0; chain_id<g_chainNUM; chain_id++ ){
+    for( link_id=0; link_id<rkChainLinkNum(grs[chain_id].glChain.chain); link_id++ ){
+      if( grs[chain_id].glChain.info[link_id]._list_backup==-1 &&
+          !grs[chain_id].info2[link_id].is_collision ){
+        is_pindrag = draw_pindrag_link( chain_id, link_id, true );
+      }
+      if( !is_pindrag )
+        rkglChainLinkDraw( &grs[chain_id].glChain, link_id );
+    }
+  }
+}
+
+void draw_scene(void)
+{
+  /* Transparency depends on drawing order */
+  /* 1st, drawing FrameHandle */
+  draw_fh_parts();
+  /* 2nd, drawing each glChain, and its link frame */
+  draw_collision_link();
+  draw_other_all_chain_link();
+  /* int chain_id = g_selected.chain_id; */
+  /* int link_id = g_selected.link_id; */
+  /* bool is_alt = ( chain_id>=0 && link_id>=0 && grs[chain_id].glChain.info[link_id]._list_backup==-1 ); */
+  /* if( !draw_pindrag_link( chain_id, link_id, is_alt) ) */
+  /*   draw_other_all_chain_link(); */
 }
 
 void display(GLFWwindow* window)
@@ -181,14 +230,6 @@ void display(GLFWwindow* window)
   glfwSwapBuffers( window );
 }
 
-void reset_link_drawing(int new_chain_id, int new_link_id)
-{
-  printf( "reset link     : rkglChain[%d].info[%d] : list = %d, ", new_chain_id, new_link_id, grs[new_chain_id].glChain.info[new_link_id].list );
-  printf( "_list_backup = %d, ---> ", grs[new_chain_id].glChain.info[new_link_id]._list_backup );
-  rkglChainLinkReset( &grs[new_chain_id].glChain, new_link_id );
-  printf( "list = %d, ", grs[new_chain_id].glChain.info[new_link_id].list );
-  printf( "_list_backup = %d\n", grs[new_chain_id].glChain.info[new_link_id]._list_backup );
-}
 
 bool is_select_chain_link(rkglSelectionBuffer *sb, int *chain_id, int *link_id)
 {
@@ -248,7 +289,7 @@ void switch_pin_link(int new_chain_id, int new_link_id)
   }
   /* reset for only pin link drawing */
   reset_link_drawing( new_chain_id, new_link_id );
-  printf("pin_link       : chain_id = %d, link_id = %d, pin status = %d\n", new_chain_id, new_link_id, grs[new_chain_id].info2[new_link_id].pin );
+  debug_printf("pin_link       : chain_id = %d, link_id = %d, pin status = %d\n", new_chain_id, new_link_id, grs[new_chain_id].info2[new_link_id].pin );
 }
 
 void register_one_link_for_IK(int chain_id, int link_id)
@@ -354,14 +395,17 @@ int get_link_num(rkChain *chain, rkLink* link)
 bool is_collision_detected()
 {
   rkCDPair* cp;
-  /* int chain0_id, chain1_id, link0_id, link1_id; */
   bool is_collision = false;
-
-  rkCDColChkGJK( &g_cd );
+  cdInfoCell *cdcell;
+  zListForEachRew( &g_cdlist, cdcell ){
+    reset_link_drawing( cdcell->data.chain_id, cdcell->data.link_id );
+    grs[cdcell->data.chain_id].info2[cdcell->data.link_id].is_collision = false;
+    grs[cdcell->data.chain_id].info2[cdcell->data.link_id].is_collision = false;
+  }
   zListDestroy( cdInfoCell, &g_cdlist );
-	zListForEach( &(g_cd.plist), cp ){
-		if ( cp->data.is_col ){
-      printf("Collision !\n");
+  rkCDColChkGJK( &g_cd );
+  zListForEach( &(g_cd.plist), cp ){
+    if ( cp->data.is_col ){
       cdInfoCell* cdcell0 = zAlloc( cdInfoCell, 1 );
       cdInfoCell* cdcell1 = zAlloc( cdInfoCell, 1 );
       cdcell0->data.chain_id = get_chain_num( cp->data.cell[0]->data.chain );
@@ -370,9 +414,11 @@ bool is_collision_detected()
       cdcell1->data.link_id  = get_link_num( cp->data.cell[1]->data.chain, cp->data.cell[1]->data.link );
       reset_link_drawing( cdcell0->data.chain_id, cdcell0->data.link_id );
       reset_link_drawing( cdcell1->data.chain_id, cdcell1->data.link_id );
+      grs[cdcell0->data.chain_id].info2[cdcell0->data.link_id].is_collision = true;
+      grs[cdcell1->data.chain_id].info2[cdcell1->data.link_id].is_collision = true;
       zQueueEnqueue( &g_cdlist, cdcell0 );
       zQueueEnqueue( &g_cdlist, cdcell1 );
-      printf( "%s : chain[%d] %s link[%d] %s %s : chain[%d] %s link[%d] %s %s\n",
+      debug_printf("Collision is %s : chain[%d] %s link[%d] %s %s : chain[%d] %s link[%d] %s %s\n",
         zBoolStr(cp->data.is_col),
         cdcell0->data.chain_id,
           zName(cp->data.cell[0]->data.chain),
@@ -432,8 +478,6 @@ void update_alljoint_by_IK_with_frame(int drag_chain_id, int drag_link_id, zFram
   /* printf("post IK Joint[deg] = "); zVecPrint(zVecMulDRC(zVecClone(dis),180.0/zPI)); */
   zVecFree(dis);
 
-  g_is_collision = is_collision_detected();
-
   /* keep FrameHandle position */
   if( rkglFrameHandleIsInRotation( &g_fh ) )
     zFrame3DCopy( rkChainLinkWldFrame( &grs[drag_chain_id].chain, drag_link_id ), &g_fh.frame );
@@ -458,6 +502,7 @@ void motion(GLFWwindow* window, double x, double y)
     /* moving mode */
     rkglFrameHandleMove( &g_fh, &g_cam, rkgl_mouse_x, rkgl_mouse_y );
     update_alljoint_by_IK_with_frame( g_selected.chain_id, g_selected.link_id, &g_fh.frame );
+    g_is_collision = is_collision_detected();
   } else{
     rkglMouseDragFuncGLFW( window, x, y );
   }
@@ -493,7 +538,7 @@ void mouse(GLFWwindow* window, int button, int state, int mods)
         } else{
           /* no link is selected */
           int i, j;
-          printf("reset_all_link_selected_status(): reset all link\n");
+          debug_printf("reset_all_link_selected_status(): reset all link\n");
           for( i=0; i<g_chainNUM; i++ ){
             for( j=0; j<rkChainLinkNum( &grs[i].chain ); j++ ){
               if( grs[i].info2[j].is_selected &&
@@ -515,7 +560,6 @@ void mouse(GLFWwindow* window, int button, int state, int mods)
           zVec dis; /* joints zVec pointer */
           dis = zVecAlloc( rkChainJointSize( &grs[i].chain ) );
           rkChainGetJointDisAll( &grs[i].chain, dis );
-          /* printf("chain[%d] = ", i); zVecPrint(zVecMulDRC(zVecClone(dis),180.0/zPI)); */
           printf("chain[%d] = ", i); zVecPrint(dis);
           zVecFree( dis );
         }
@@ -532,8 +576,8 @@ void mouse(GLFWwindow* window, int button, int state, int mods)
       }
     }
   }
-  printf( "selected       : link_id = %d, ", g_selected.link_id );
-  printf( "fh_parts_id = %d \n", g_fh.selected_id );
+  debug_printf( "selected       : link_id = %d, ", g_selected.link_id );
+  debug_printf( "fh_parts_id = %d \n", g_fh.selected_id );
 }
 
 void mouse_wheel(GLFWwindow* window, double xoffset, double yoffset)
