@@ -191,11 +191,12 @@ void draw_collision_link(void)
 void draw_all_chain_link(void)
 {
   int chain_id, link_id;
-  bool is_pindrag = false;
+  bool is_pindrag;
 
   draw_collision_link();
   for( chain_id=0; chain_id < g_chainNUM; chain_id++ ){
     for( link_id=0; link_id < rkChainLinkNum(grs[chain_id].glChain.chain); link_id++ ){
+      is_pindrag = false;
       if( grs[chain_id].glChain.info[link_id]._list_backup == -1 &&
           !grs[chain_id].info2[link_id].is_collision )
         is_pindrag = draw_pindrag_link( chain_id, link_id, true );
@@ -537,9 +538,9 @@ void mouse(GLFWwindow* window, int button, int state, int mods)
             for( j=0; j < rkChainLinkNum( &grs[i].chain ); j++ ){
               if( grs[i].info2[j].is_selected &&
                   grs[i].info2[j].pin == PIN_LOCK_OFF ){
-                reset_link_drawing( i, j );
                 grs[i].info2[j].is_selected = false;
               }
+              reset_link_drawing( i, j );
             } /* end of for j : 0 -> rkChainLinkNum */
           } /* end of for i : 0 -> g_chainNUM */
         } /* end of if-else chain link is selected */
