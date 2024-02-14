@@ -500,7 +500,7 @@ void print_status(void)
         printf("att :\n");   zMat3DPrint( rkChainLinkWldAtt( &grs[chain_id].chain, link_id ) );
         printf("pos : "); zVec3DPrint( rkChainLinkWldPos( &grs[chain_id].chain, link_id ) );
         printf("\n");
-      } else if( grs[chain_id].info2[link_id].pin == PIN_LOCK_6D ){
+      } else if( grs[chain_id].info2[link_id].pin == PIN_LOCK_POS3D ){
         printf("- PIN_LOCK_POS3D : link[%d] %s ------------------\n",
                link_id, zName( rkChainLink(&grs[chain_id].chain, link_id) ) );
         printf("pos : "); zVec3DPrint( rkChainLinkWldPos( &grs[chain_id].chain, link_id ) );
@@ -569,7 +569,8 @@ void mouse(GLFWwindow* window, int button, int state, int mods)
             is_select_chain_link( &sb, &new_chain_id, &new_link_id ) ){
           /* a link of a chain is selected. At the same time, new_chain_id >= 0. */
           update_framehandle_location( &sb, &g_cam, rkgl_mouse_x, rkgl_mouse_y, new_chain_id, new_link_id );
-          if( !grs[new_chain_id].info2[new_link_id].is_selected ){
+          if( !grs[new_chain_id].info2[new_link_id].is_selected &&
+              !grs[new_chain_id].info2[new_link_id].is_collision ){
             reset_link_drawing( new_chain_id, new_link_id );
           }
           grs[new_chain_id].info2[new_link_id].is_selected = true;
@@ -580,10 +581,11 @@ void mouse(GLFWwindow* window, int button, int state, int mods)
           for( i=0; i < g_chainNUM; i++ ){
             for( j=0; j < rkChainLinkNum( &grs[i].chain ); j++ ){
               if( grs[i].info2[j].is_selected &&
-                  grs[i].info2[j].pin == PIN_LOCK_OFF ){
+                  grs[i].info2[j].pin == PIN_LOCK_OFF &&
+                  !grs[i].info2[j].is_collision ){
                 grs[i].info2[j].is_selected = false;
+                reset_link_drawing( i, j );
               }
-              reset_link_drawing( i, j );
             } /* end of for j : 0 -> rkChainLinkNum */
           } /* end of for i : 0 -> g_chainNUM */
         } /* end of if-else chain link is selected */
@@ -597,9 +599,9 @@ void mouse(GLFWwindow* window, int button, int state, int mods)
     }
   } else if( button == GLFW_MOUSE_BUTTON_RIGHT ){
     if( state == GLFW_PRESS ){
-      grs[g_selected.chain_id].info2[g_selected.link_id].is_selected = false;
       if( rkglSelectNearest( &sb, &g_cam, draw_chain, rkgl_mouse_x, rkgl_mouse_y, 1, 1 ) &&
           is_select_chain_link( &sb, &new_chain_id, &new_link_id ) ){
+        grs[new_chain_id].info2[new_link_id].is_selected = false;
         switch_pin_link( new_chain_id, new_link_id );
         update_selected_chain_link( new_chain_id, new_link_id );
       }
