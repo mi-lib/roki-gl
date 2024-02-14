@@ -40,14 +40,6 @@ typedef struct{
 
 selectInfo g_selected;
 
-typedef struct{
-  int chain_id;
-  int link_id;
-} cdInfoCellDat;
-zListClass( cdInfoCellList, cdInfoCell, cdInfoCellDat );
-cdInfoCellList g_cdlist;
-bool g_is_collision;
-
 /* end of the definition of select & pin information **********************************/
 
 /* the main targets of this sample code */
@@ -58,10 +50,18 @@ typedef struct{
   rkglChain glChain;
 } rkglChainBlock;
 
-rkglChainBlock *grs;
+rkglChainBlock *grs; /* main data */
 int g_chainNUM;
 
-rkCD g_cd;
+/* the collision detector & the result list */
+rkCD g_cd; /* collision detector */
+typedef struct{
+  int chain_id;
+  int link_id;
+} cdInfoCellDat;
+zListClass( cdInfoCellList, cdInfoCell, cdInfoCellDat );
+cdInfoCellList g_cdlist; /* the result list of collided chain & link IDs by rkCDColChk**() */
+bool g_is_collision; /* simple summary result whether collision occured or not */
 
 /* viewing parameters */
 rkglCamera g_cam;
@@ -226,7 +226,7 @@ void display(GLFWwindow* window)
 }
 
 
-bool is_select_chain_link(rkglSelectionBuffer *sb, int *chain_id, int *link_id)
+bool is_selected_chain_link(rkglSelectionBuffer *sb, int *chain_id, int *link_id)
 {
   int i;
 
@@ -431,24 +431,24 @@ bool is_collision_detected()
 
 
 /* inverse kinematics */
-void update_alljoint_by_IK_with_frame(int drag_chain_id, int drag_link_id, zFrame3D *ref_frame)
+void update_alljoint_by_IK_with_frame(int drag_chain_id, int drag_link_id, zVec ref_joint, zFrame3D *ref_frame)
 {
   if( drag_link_id < 0 ) return;
-  zVec dis; /* joints zVec pointer */
-  dis = zVecAlloc( rkChainJointSize( &grs[drag_chain_id].chain ) );
-  rkChainGetJointDisAll( &grs[drag_chain_id].chain, dis );
+  zVec dis = zVecClone( ref_joint ); /* joints zVec pointer */
   /* prepare IK */
   rkChainDeactivateIK( &grs[drag_chain_id].chain );
   rkChainBindIK( &grs[drag_chain_id].chain );
-  /* set rotation reference */
-  if( grs[drag_chain_id].info2[drag_link_id].pin == PIN_LOCK_6D ||
-      rkglFrameHandleIsInRotation( &g_fh ) ){
-    zVec3D zyx;
-    zMat3DToZYX( &(ref_frame->att), &zyx );
-    rkIKCellSetRefVec( grs[drag_chain_id].info2[drag_link_id].cell[0], &zyx );
+  if( ref_frame != NULL ) {
+    /* set rotation reference */
+    if( grs[drag_chain_id].info2[drag_link_id].pin == PIN_LOCK_6D ||
+        rkglFrameHandleIsInRotation( &g_fh ) ){
+      zVec3D zyx;
+      zMat3DToZYX( &(ref_frame->att), &zyx );
+      rkIKCellSetRefVec( grs[drag_chain_id].info2[drag_link_id].cell[0], &zyx );
+    }
+    /* set position reference */
+    rkIKCellSetRefVec( grs[drag_chain_id].info2[drag_link_id].cell[1], &(ref_frame->pos) );
   }
-  /* set position reference */
-  rkIKCellSetRefVec( grs[drag_chain_id].info2[drag_link_id].cell[1], &(ref_frame->pos) );
   rkChainFK( &grs[drag_chain_id].chain, dis ); /* copy state to mentatin result consistency */
   /* IK */
   /* printf("pre IK Joint[deg]  = "); zVecPrint(zVecMulDRC(zVecClone(dis),180.0/zPI)); */
@@ -539,7 +539,13 @@ void motion(GLFWwindow* window, double x, double y)
              !rkglFrameHandleIsUnselected( &g_fh ) ){
     /* moving mode */
     rkglFrameHandleMove( &g_fh, &g_cam, rkgl_mouse_x, rkgl_mouse_y );
-    update_alljoint_by_IK_with_frame( g_selected.chain_id, g_selected.link_id, &g_fh.frame );
+    /* IK */
+    zVec ref_joint;
+    ref_joint = zVecAlloc( rkChainJointSize( &grs[g_selected.chain_id].chain ) );
+    rkChainGetJointDisAll( &grs[g_selected.chain_id].chain, ref_joint );
+    update_alljoint_by_IK_with_frame( g_selected.chain_id, g_selected.link_id, ref_joint, &g_fh.frame );
+    zVecFree( ref_joint );
+    /* Collision Detection */
     g_is_collision = is_collision_detected();
   } else{
     rkglMouseDragFuncGLFW( window, x, y );
@@ -566,7 +572,7 @@ void mouse(GLFWwindow* window, int button, int state, int mods)
         rkglFrameHandleUnselect( &g_fh );
         /* draw only chain links */
         if( rkglSelectNearest( &sb, &g_cam, draw_chain, rkgl_mouse_x, rkgl_mouse_y, 1, 1 ) &&
-            is_select_chain_link( &sb, &new_chain_id, &new_link_id ) ){
+            is_selected_chain_link( &sb, &new_chain_id, &new_link_id ) ){
           /* a link of a chain is selected. At the same time, new_chain_id >= 0. */
           update_framehandle_location( &sb, &g_cam, rkgl_mouse_x, rkgl_mouse_y, new_chain_id, new_link_id );
           if( !grs[new_chain_id].info2[new_link_id].is_selected &&
@@ -600,7 +606,7 @@ void mouse(GLFWwindow* window, int button, int state, int mods)
   } else if( button == GLFW_MOUSE_BUTTON_RIGHT ){
     if( state == GLFW_PRESS ){
       if( rkglSelectNearest( &sb, &g_cam, draw_chain, rkgl_mouse_x, rkgl_mouse_y, 1, 1 ) &&
-          is_select_chain_link( &sb, &new_chain_id, &new_link_id ) ){
+          is_selected_chain_link( &sb, &new_chain_id, &new_link_id ) ){
         grs[new_chain_id].info2[new_link_id].is_selected = false;
         switch_pin_link( new_chain_id, new_link_id );
         update_selected_chain_link( new_chain_id, new_link_id );
