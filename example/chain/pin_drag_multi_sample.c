@@ -479,6 +479,49 @@ void update_alljoint_by_IK_with_frame(int drag_chain_id, int drag_link_id, zFram
   zXform3D( rkChainLinkWldFrame( &grs[drag_chain_id].chain, drag_link_id ), &g_selected.ap, zFrame3DPos( &g_fh.frame ) );
 }
 
+void print_status(void)
+{
+  int chain_id, link_id;
+  printf("# Status ###################################################\n");
+  for( chain_id=0; chain_id < g_chainNUM; chain_id++ ){
+    printf("=== chain[%d] %s ========================================\n",
+           chain_id, zName(&grs[chain_id].chain));
+    printf("- Joint ( Size ( Joints [m,rad] ) ) ------------------------\n");
+    zVec dis; /* joints zVec pointer */
+    dis = zVecAlloc( rkChainJointSize( &grs[chain_id].chain ) );
+    rkChainGetJointDisAll( &grs[chain_id].chain, dis );
+    printf("  "); zVecPrint(dis); printf("\n");
+    zVecFree( dis );
+    /* printf("- Pin Link ---------------------------------------\n"); */
+    for( link_id=0; link_id < rkChainLinkNum( &grs[chain_id].chain ); link_id++ ){
+      if( grs[chain_id].info2[link_id].pin == PIN_LOCK_6D ){
+        printf("- PIN_LOCK_6D : link[%d] %s ---------------------\n",
+               link_id, zName( rkChainLink(&grs[chain_id].chain, link_id) ) );
+        printf("att :\n");   zMat3DPrint( rkChainLinkWldAtt( &grs[chain_id].chain, link_id ) );
+        printf("pos : "); zVec3DPrint( rkChainLinkWldPos( &grs[chain_id].chain, link_id ) );
+        printf("\n");
+      } else if( grs[chain_id].info2[link_id].pin == PIN_LOCK_6D ){
+        printf("- PIN_LOCK_POS3D : link[%d] %s ------------------\n",
+               link_id, zName( rkChainLink(&grs[chain_id].chain, link_id) ) );
+        printf("pos : "); zVec3DPrint( rkChainLinkWldPos( &grs[chain_id].chain, link_id ) );
+        printf("\n");
+      }
+    }
+    /* printf("-------------------------------------------------------\n"); */
+  }
+  if( g_selected.chain_id >=0 && g_selected.link_id >=0 &&
+      grs[g_selected.chain_id].info2[g_selected.link_id].is_selected ){
+    printf("=== Drag(Select) : chain[%d] %s : link[%d] %s ================\n",
+           g_selected.chain_id,
+           zName( &grs[g_selected.chain_id].chain ),
+           g_selected.link_id,
+           zName( rkChainLink(&grs[g_selected.chain_id].chain, g_selected.link_id) ) );
+    printf("att :\n");   zMat3DPrint( rkChainLinkWldAtt( &grs[g_selected.chain_id].chain, g_selected.link_id ) );
+    printf("pos : "); zVec3DPrint( rkChainLinkWldPos( &grs[g_selected.chain_id].chain, g_selected.link_id ) );
+  }
+  printf("############################################################\n\n\n");
+}
+
 void move_link(double angle)
 {
   double dis;
@@ -549,17 +592,8 @@ void mouse(GLFWwindow* window, int button, int state, int mods)
     } else if( state == GLFW_RELEASE ){
       if( !rkglFrameHandleIsUnselected( &g_fh ) ){
         unregister_link_for_IK( g_selected.chain_id, g_selected.link_id );
-        int i;
-        printf("\n=== ChainJoint ( Size ( Values[m,rad] ) ) =============\n");
-        for( i=0; i < g_chainNUM; i++ ){
-          zVec dis; /* joints zVec pointer */
-          dis = zVecAlloc( rkChainJointSize( &grs[i].chain ) );
-          rkChainGetJointDisAll( &grs[i].chain, dis );
-          printf("chain[%d] %s : ", i, zName(&grs[i].chain) ); zVecPrint(dis);
-          zVecFree( dis );
-        }
-        printf("=======================================================\n\n");
       }
+      print_status();
     }
   } else if( button == GLFW_MOUSE_BUTTON_RIGHT ){
     if( state == GLFW_PRESS ){
