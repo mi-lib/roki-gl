@@ -1,6 +1,62 @@
 #include <roki/rk_cd.h>
 #include <roki_gl/roki_glfw.h>
 
+/* This is suggstion code for rkgl_chain.c **************************************/
+void rkglChainLinkDrawOpticalAlt(rkglChain *gc, int id, double alpha, zOpticalInfo *oi_alt, rkglLight *light)
+{
+  zShapeListCell *sp;
+  rkLink *link;
+  double org_alpha;
+  zOpticalInfo *oi;
+  zShape3D *s;
+  link = rkChainLink(gc->chain,id);
+  if( !gc->info[id].visible || rkLinkShapeIsEmpty( link ) ) return;
+  glPushMatrix();
+  rkglXform( rkLinkWldFrame(link) );
+  zListForEach( rkLinkShapeList(link), sp ){
+    s = zShapeListCellShape(sp);
+    oi = zShape3DOptic(s);
+    org_alpha = oi->alpha;
+    oi->alpha = alpha;
+    rkglShape( s, oi_alt, RKGL_FACE, light );
+    oi->alpha = org_alpha;
+  }
+  glPopMatrix();
+}
+
+int rkglChainDrawOpticalAlt(rkglChain *gc, double alpha, zOpticalInfo *oi_alt[], rkglLight *light)
+{
+  int i, result;
+
+  result = rkglBeginList();
+  for( i=0; i<rkChainLinkNum(gc->chain); i++ )
+    rkglChainLinkDrawOpticalAlt( gc, i, alpha, oi_alt[i], light );
+  glEndList();
+  return result;
+}
+
+int rkglChainCreateGhostDisplay(rkChain* chain, double alpha, zOpticalInfo **oi_alt, rkglLight* light)
+{
+  int i, display_id;
+  rkglChain display_gr;
+  rkglChainAttr attr;
+
+  rkglChainAttrInit( &attr );
+  if( !rkglChainLoad( &display_gr, chain, &attr, light ) ){
+    ZRUNWARN( "Failed rkglChainLoad(&display_gr)" );
+    return -1;
+  }
+  display_id = rkglChainDrawOpticalAlt( &display_gr, alpha, &oi_alt[0], light);
+  for( i=0; i < rkChainLinkNum( chain ); i++ ){
+    if( oi_alt[i] ) zOpticalInfoDestroy( oi_alt[i] );
+  }
+  rkglChainUnload( &display_gr );
+
+  return display_id;
+}
+/* end of suggstion code for rkgl_chain.c ***************************************/
+
+
 /* #define DEBUG_PRINT */
 #ifdef DEBUG_PRINT
 #define debug_printf(...) printf(__VA_ARGS__)
@@ -63,6 +119,14 @@ zListClass( cdInfoCellList, cdInfoCell, cdInfoCellDat );
 cdInfoCellList g_cdlist; /* the result list of collided chain & link IDs by rkCDColChk**() */
 bool g_is_collision; /* simple summary result whether collision occured or not */
 
+typedef enum{
+  GHOST_MODE_OFF=-1,
+  GHOST_MODE_READY,
+  GHOST_MODE_ON
+} ghostMode_t;
+ghostMode_t g_ghost_mode;
+int g_ghost_display_id;
+
 /* viewing parameters */
 rkglCamera g_cam;
 rkglLight g_light;
@@ -124,6 +188,13 @@ void draw_fh_parts(void)
   }
 }
 
+void draw_ghost(void)
+{
+  if( g_ghost_mode == GHOST_MODE_ON ){
+    glCallList( g_ghost_display_id );
+  }
+}
+
 void draw_chain(void)
 {
   int i;
@@ -144,27 +215,34 @@ void draw_alternate_link(rkglChain *gc, int chain_id, int id, zOpticalInfo *oi_a
   debug_printf( "_list_backup = %d\n", gc->info[id]._list_backup );
 }
 
-bool draw_pindrag_link(int chain_id, int link_id, bool is_alt)
+bool create_pindrag_link_color(int chain_id, int link_id, int pin, bool is_alt, bool is_selected, zOpticalInfo* oi_alt)
 {
-  zOpticalInfo oi_alt;
   /* re-drawing the selected link once after proccessing with rkglChainLinkReset() */
-  int pin = is_alt ? grs[chain_id].info2[link_id].pin : -1;
   if( is_alt ) grs[chain_id].glChain.attr.disptype = RKGL_FACE;
   if( is_alt && pin == PIN_LOCK_6D ){
     /* Red & semi-transparent*/
-    zOpticalInfoCreate( &oi_alt, 1.0, 0.3, 0.3, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.3, NULL );
-    draw_alternate_link( &grs[chain_id].glChain, chain_id, link_id, &oi_alt, &grs[chain_id].glChain.attr, &g_light );
+    zOpticalInfoCreate( oi_alt, 1.0, 0.3, 0.3, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.3, NULL );
   } else if( is_alt && pin == PIN_LOCK_POS3D ){
     /* Yellow & semi-transparent*/
-    zOpticalInfoCreate( &oi_alt, 1.0, 8.0, 0.3, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.3, NULL );
-    draw_alternate_link( &grs[chain_id].glChain, chain_id, link_id, &oi_alt, &grs[chain_id].glChain.attr, &g_light );
-  } else if( is_alt && grs[chain_id].info2[link_id].is_selected ){
+    zOpticalInfoCreate( oi_alt, 1.0, 8.0, 0.3, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.3, NULL );
+  } else if( is_alt && is_selected ){
     /* Blue & semi-transparent */
-    zOpticalInfoCreate( &oi_alt, 0.5, 0.7, 1.0, 0.5, 0.5, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.3, NULL );
-    draw_alternate_link( &grs[chain_id].glChain, chain_id, link_id, &oi_alt, &grs[chain_id].glChain.attr, &g_light );
+    zOpticalInfoCreate( oi_alt, 0.5, 0.7, 1.0, 0.5, 0.5, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.3, NULL );
   } else {
     return false;
   }
+
+  return true;
+}
+
+bool draw_pindrag_link(int chain_id, int link_id, bool is_alt)
+{
+  zOpticalInfo oi_alt;
+
+  int pin = is_alt ? grs[chain_id].info2[link_id].pin : -1;
+  if( !create_pindrag_link_color(chain_id, link_id, pin, is_alt, grs[chain_id].info2[link_id].is_selected, &oi_alt) )
+    return false;
+  draw_alternate_link( &grs[chain_id].glChain, chain_id, link_id, &oi_alt, &grs[chain_id].glChain.attr, &g_light );
 
   return true;
 }
@@ -212,6 +290,7 @@ void draw_scene(void)
   /* 1st, drawing FrameHandle */
   draw_fh_parts();
   /* 2nd, drawing each glChain, and its link frame */
+  draw_ghost();
   draw_all_chain_link();
 }
 
@@ -285,6 +364,65 @@ void switch_pin_link(int new_chain_id, int new_link_id)
   /* reset for only pin link drawing */
   reset_link_drawing( new_chain_id, new_link_id );
   debug_printf("pin_link       : chain_id = %d, link_id = %d, pin status = %d\n", new_chain_id, new_link_id, grs[new_chain_id].info2[new_link_id].pin );
+}
+
+int create_original_chain_phantom(int chain_id, rkChain* chain)
+{
+  int pin, link_id, display_id;
+  const double alpha = 0.3;
+  zOpticalInfo **oi_alt;
+  if( !( oi_alt = zAlloc( zOpticalInfo*, rkChainLinkNum(chain) ) ) ){
+    ZALLOCERROR();
+    ZRUNERROR( "Failed to zAlloc( zOpticalInfo, rkChainLinkNum(&g_chain) )." );
+    return -1;
+  }
+  for( link_id=0; link_id<rkChainLinkNum( chain ); link_id++ ){
+    oi_alt[link_id] = zAlloc( zOpticalInfo, 1 );
+    pin = grs[chain_id].info2[link_id].pin;
+    /* pin color */
+    if( !create_pindrag_link_color(chain_id, link_id, pin, true, false, oi_alt[link_id]) ){
+      /* other is gray */
+      zOpticalInfoCreate( oi_alt[link_id], 0.8, 0.8, 0.8,  0.6, 0.6, 0.6,  0.0, 0.0, 0.0,  0.0, 0.0, alpha, NULL );
+      /* other is Transparency */
+      /* oi_alt[link_id] = NULL; */
+    }
+  }
+  display_id = rkglChainCreateGhostDisplay( chain, alpha, &oi_alt[0], &g_light);
+  for( link_id=0; link_id < rkChainLinkNum( chain ); link_id++ )
+    if( oi_alt[link_id] ) zOpticalInfoDestroy( oi_alt[link_id] );
+
+  return display_id;
+}
+
+void delete_original_chain_phantom(int* display_id)
+{
+  if( *display_id >= 0 )
+    glDeleteLists( *display_id, 1 );
+  *display_id = -1;
+}
+
+void switch_ghost_mode(bool is_active)
+{
+  if( !is_active ){
+    g_ghost_mode = GHOST_MODE_OFF;
+    delete_original_chain_phantom( &g_ghost_display_id );
+    return;
+  }
+  switch( g_ghost_mode ){
+  case GHOST_MODE_OFF:
+    printf(" >>> GHOST_MODE_OFF->READY \n");
+    g_ghost_mode = GHOST_MODE_READY;
+    delete_original_chain_phantom( &g_ghost_display_id );
+    break;
+  case GHOST_MODE_READY:
+    printf(" >>> GHOST_MODE_READY->ON \n");
+    g_ghost_mode = GHOST_MODE_ON;
+    printf("g_selected.chain_id = %d\n", g_selected.chain_id );
+    g_ghost_display_id = create_original_chain_phantom( g_selected.chain_id, &grs[g_selected.chain_id].chain );
+    printf("g_ghost_display_id = %d\n", g_ghost_display_id );
+    break;
+  default: ;
+  }
 }
 
 void register_one_link_for_IK(int chain_id, int link_id)
@@ -544,6 +682,7 @@ void motion(GLFWwindow* window, double x, double y)
              !rkglFrameHandleIsUnselected( &g_fh ) ){
     /* moving mode */
     rkglFrameHandleMove( &g_fh, &g_cam, rkgl_mouse_x, rkgl_mouse_y );
+    switch_ghost_mode( g_ghost_mode != GHOST_MODE_OFF );
     /* IK */
     zVec init_joints = NULL;
     update_alljoint_by_IK_with_frame( g_selected.chain_id, g_selected.link_id, init_joints, &g_fh.frame );
@@ -648,13 +787,14 @@ void keyboard(GLFWwindow* window, unsigned int key)
   case 'O': rkglCALockonPTR( &g_cam, 0, 0,-5 ); break;
   case '8': g_scale += 0.0001; rkglOrthoScaleH( &g_cam, g_scale, g_znear, g_zfar ); break;
   case '*': g_scale -= 0.0001; rkglOrthoScaleH( &g_cam, g_scale, g_znear, g_zfar ); break;
-  case 'g': move_link( zDeg2Rad(5) ); break;
+  case 'g': switch_ghost_mode( g_ghost_mode == GHOST_MODE_OFF ); /* OFF <-> READY */ break;
   case 'h': move_link(-zDeg2Rad(5) ); break;
   case 'q': case 'Q': case '\033':
     for( i=0; i < g_chainNUM; i++ ){
       rkglChainUnload_for_rkglChainBlock( &grs[i] );
       rkChainDestroy( &grs[i].chain );
       rkCDDestroy( &g_cd );
+      delete_original_chain_phantom( &g_ghost_display_id );
     }
 
     exit( EXIT_SUCCESS );
@@ -755,6 +895,8 @@ bool init(void)
   rkglFrameHandleCreate( &g_fh, g_chainNUM + NAME_FRAMEHANDLE_OFFSET, g_LENGTH, g_MAGNITUDE );
   /* initialize the location of frame handle object */
   zFrame3DFromAA( &g_fh.frame, 0.0, 0.0, 0.0,  0.0, 0.0, 1.0);
+  /* reset ghost mode */
+  switch_ghost_mode(false);
 
   return true;
 }
