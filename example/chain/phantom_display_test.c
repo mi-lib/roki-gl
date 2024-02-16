@@ -52,7 +52,7 @@ int rkglChainDrawOpticalAlt(rkglChain *gc, double alpha, zOpticalInfo *oi_alt[],
   return result;
 }
 
-int rkglChainCreatePantomDisplay(rkChain* chain, double alpha, zOpticalInfo **oi_alt, rkglLight* light)
+int rkglChainCreatePhantomDisplay(rkChain* chain, double alpha, zOpticalInfo **oi_alt, rkglLight* light)
 {
   int i, display_id;
   rkglChain display_gr;
@@ -118,7 +118,7 @@ int createDisplayList(rkChain* chain, double alpha){
   }
 
   /* main process */
-  display_id = rkglChainCreatePantomDisplay( chain, alpha, &oi_alt[0], &g_light);
+  display_id = rkglChainCreatePhantomDisplay( chain, alpha, &oi_alt[0], &g_light);
 
   for( i=0; i < rkChainLinkNum( chain ); i++ )
     if( oi_alt[i] ) zOpticalInfoDestroy( oi_alt[i] );
