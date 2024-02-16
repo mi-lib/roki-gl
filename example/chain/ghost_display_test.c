@@ -59,7 +59,7 @@ int rkglChainCreateGhostDisplay(rkChain* chain, double alpha, zOpticalInfo **oi_
   rkglChainAttr attr;
 
   rkglChainAttrInit( &attr );
-  if( !rkglChainLoad( &display_gr, chain, &attr, &g_light ) ){
+  if( !rkglChainLoad( &display_gr, chain, &attr, light ) ){
     ZRUNWARN( "Failed rkglChainLoad(&display_gr)" );
     return -1;
   }
