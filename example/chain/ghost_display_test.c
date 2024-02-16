@@ -7,7 +7,7 @@ rkChain g_chain;
 rkglChain gr;
 int *g_display_id_list;
 
-#define GHOST_NUM 15
+#define PHANTOM_NUM 15
 #define PAINT_LINK_ID 3
 #define MOVE_LINK01_ID 1
 #define MOVE_LINK02_ID 3
@@ -52,7 +52,7 @@ int rkglChainDrawOpticalAlt(rkglChain *gc, double alpha, zOpticalInfo *oi_alt[],
   return result;
 }
 
-int rkglChainCreateGhostDisplay(rkChain* chain, double alpha, zOpticalInfo **oi_alt, rkglLight* light)
+int rkglChainCreatePantomDisplay(rkChain* chain, double alpha, zOpticalInfo **oi_alt, rkglLight* light)
 {
   int i, display_id;
   rkglChain display_gr;
@@ -80,7 +80,7 @@ int rkglChainCreateGhostDisplay(rkChain* chain, double alpha, zOpticalInfo **oi_
 void draw_scene(void)
 {
   int i;
-  for( i=0; i < GHOST_NUM; i++ ){
+  for( i=0; i < PHANTOM_NUM; i++ ){
     glCallList( g_display_id_list[i] );
   }
 }
@@ -118,7 +118,7 @@ int createDisplayList(rkChain* chain, double alpha){
   }
 
   /* main process */
-  display_id = rkglChainCreateGhostDisplay( chain, alpha, &oi_alt[0], &g_light);
+  display_id = rkglChainCreatePantomDisplay( chain, alpha, &oi_alt[0], &g_light);
 
   for( i=0; i < rkChainLinkNum( chain ); i++ )
     if( oi_alt[i] ) zOpticalInfoDestroy( oi_alt[i] );
@@ -126,14 +126,14 @@ int createDisplayList(rkChain* chain, double alpha){
   return display_id;
 }
 
-int createGhosts(rkChain* chain, int* display_id_list)
+int createPhantoms(rkChain* chain, int* display_id_list)
 {
   int i;
   double alpha;
-  for( i=0; i < GHOST_NUM; i++ ){
-    alpha = (double)(i+1)/(double)(GHOST_NUM);
+  for( i=0; i < PHANTOM_NUM; i++ ){
+    alpha = (double)(i+1)/(double)(PHANTOM_NUM);
 
-    /* generate ghost pose */
+    /* generate phantom pose */
     double dis1, dis2, dis3;
     double dis1min, dis1max, dis2min, dis2max, dis3min, dis3max;
     rkLinkJointGetMin( rkChainLink( chain, MOVE_LINK01_ID ), &dis1min );
@@ -145,9 +145,9 @@ int createGhosts(rkChain* chain, int* display_id_list)
     rkChainLinkJointGetDis( chain, MOVE_LINK01_ID, &dis1 );
     rkChainLinkJointGetDis( chain, MOVE_LINK02_ID, &dis2 );
     rkChainLinkJointGetDis( chain, MOVE_LINK03_ID, &dis3 );
-    dis1 = dis1min + (dis1max - dis1min)*(double)(i)/(double)(GHOST_NUM);
-    dis2 = dis2min + (dis2max - dis2min)*(double)(i)/(double)(GHOST_NUM);
-    dis3 = dis3min + (dis3max - dis3min)*(double)(i)/(double)(GHOST_NUM);
+    dis1 = dis1min + (dis1max - dis1min)*(double)(i)/(double)(PHANTOM_NUM);
+    dis2 = dis2min + (dis2max - dis2min)*(double)(i)/(double)(PHANTOM_NUM);
+    dis3 = dis3min + (dis3max - dis3min)*(double)(i)/(double)(PHANTOM_NUM);
     rkChainLinkJointSetDis( chain, MOVE_LINK01_ID, &dis1 );
     rkChainLinkJointSetDis( chain, MOVE_LINK02_ID, &dis2 );
     rkChainLinkJointSetDis( chain, MOVE_LINK03_ID, &dis3 );
@@ -194,15 +194,15 @@ bool init(void)
   rkChainReadZTK( &g_chain, "../model/puma.ztk" );
   rkglChainLoad( &gr, &g_chain, &attr, &g_light );
 
-  if( !( g_display_id_list = zAlloc( int, GHOST_NUM ) ) ){
+  if( !( g_display_id_list = zAlloc( int, PHANTOM_NUM ) ) ){
     ZALLOCERROR();
-    ZRUNERROR( "Failed to zAlloc( int, GHOST_NUM )." );
+    ZRUNERROR( "Failed to zAlloc( int, PHANTOM_NUM )." );
     return false;
   }
 
-  if( createGhosts( &g_chain, g_display_id_list ) < 0 ){
+  if( createPhantoms( &g_chain, g_display_id_list ) < 0 ){
     ZALLOCERROR();
-    ZRUNERROR( "Failed to createGhost( &g_chain )." );
+    ZRUNERROR( "Failed to createPhantoms( &g_chain )." );
     return false;
   }
 
