@@ -431,10 +431,15 @@ bool is_collision_detected()
 
 
 /* inverse kinematics */
-void update_alljoint_by_IK_with_frame(int drag_chain_id, int drag_link_id, zVec ref_joint, zFrame3D *ref_frame)
+void update_alljoint_by_IK_with_frame(int drag_chain_id, int drag_link_id, zVec init_joints, zFrame3D *ref_frame)
 {
   if( drag_link_id < 0 ) return;
-  zVec dis = zVecClone( ref_joint ); /* joints zVec pointer */
+
+  if( init_joints != NULL ) {
+    rkChainSetJointDisAll( &grs[drag_chain_id].chain, init_joints );
+    rkChainUpdateFK( &grs[drag_chain_id].chain );
+  }
+
   /* prepare IK */
   rkChainDeactivateIK( &grs[drag_chain_id].chain );
   rkChainBindIK( &grs[drag_chain_id].chain );
@@ -449,7 +454,6 @@ void update_alljoint_by_IK_with_frame(int drag_chain_id, int drag_link_id, zVec 
     /* set position reference */
     rkIKCellSetRefVec( grs[drag_chain_id].info2[drag_link_id].cell[1], &(ref_frame->pos) );
   }
-  rkChainFK( &grs[drag_chain_id].chain, dis ); /* copy state to mentatin result consistency */
   /* IK */
   /* printf("pre IK Joint[deg]  = "); zVecPrint(zVecMulDRC(zVecClone(dis),180.0/zPI)); */
   int iter = 100;
@@ -457,6 +461,7 @@ void update_alljoint_by_IK_with_frame(int drag_chain_id, int drag_link_id, zVec 
   /* backup in case the result of rkChainIK() is NaN */
   rkChain clone_chain;
   rkChainClone( &grs[drag_chain_id].chain, &clone_chain );
+  zVec dis = zVecAlloc( rkChainJointSize( &grs[drag_chain_id].chain ) ); /* IK output */
   rkChainIK( &grs[drag_chain_id].chain, dis, ztol, iter );
   if( zVecIsNan(dis) ){
     printf("the result of rkChainIK() is NaN\n");
@@ -540,11 +545,9 @@ void motion(GLFWwindow* window, double x, double y)
     /* moving mode */
     rkglFrameHandleMove( &g_fh, &g_cam, rkgl_mouse_x, rkgl_mouse_y );
     /* IK */
-    zVec ref_joint;
-    ref_joint = zVecAlloc( rkChainJointSize( &grs[g_selected.chain_id].chain ) );
-    rkChainGetJointDisAll( &grs[g_selected.chain_id].chain, ref_joint );
-    update_alljoint_by_IK_with_frame( g_selected.chain_id, g_selected.link_id, ref_joint, &g_fh.frame );
-    zVecFree( ref_joint );
+    zVec init_joints = NULL;
+    update_alljoint_by_IK_with_frame( g_selected.chain_id, g_selected.link_id, init_joints, &g_fh.frame );
+    zVecFree( init_joints );
     /* Collision Detection */
     g_is_collision = is_collision_detected();
   } else{
