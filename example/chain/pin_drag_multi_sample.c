@@ -35,7 +35,7 @@ int rkglChainDrawOpticalAlt(rkglChain *gc, double alpha, zOpticalInfo *oi_alt[],
   return result;
 }
 
-int rkglChainCreateGhostDisplay(rkChain* chain, double alpha, zOpticalInfo **oi_alt, rkglLight* light)
+int rkglChainCreatePhantomDisplay(rkChain* chain, double alpha, zOpticalInfo **oi_alt, rkglLight* light)
 {
   int i, display_id;
   rkglChain display_gr;
@@ -125,7 +125,7 @@ typedef enum{
   GHOST_MODE_ON
 } ghostMode_t;
 ghostMode_t g_ghost_mode;
-int g_ghost_display_id;
+int g_phantom_display_id;
 
 /* viewing parameters */
 rkglCamera g_cam;
@@ -188,10 +188,10 @@ void draw_fh_parts(void)
   }
 }
 
-void draw_ghost(void)
+void draw_original_chain_phantom(void)
 {
   if( g_ghost_mode == GHOST_MODE_ON ){
-    glCallList( g_ghost_display_id );
+    glCallList( g_phantom_display_id );
   }
 }
 
@@ -290,8 +290,9 @@ void draw_scene(void)
   /* 1st, drawing FrameHandle */
   draw_fh_parts();
   /* 2nd, drawing each glChain, and its link frame */
-  draw_ghost();
   draw_all_chain_link();
+  /* 3rd, drawing phantom in ghost mode */
+  draw_original_chain_phantom();
 }
 
 void display(GLFWwindow* window)
@@ -382,12 +383,12 @@ int create_original_chain_phantom(int chain_id, rkChain* chain)
     /* pin color */
     if( !create_pindrag_link_color(chain_id, link_id, pin, true, false, oi_alt[link_id]) ){
       /* other is gray */
-      zOpticalInfoCreate( oi_alt[link_id], 0.8, 0.8, 0.8,  0.6, 0.6, 0.6,  0.0, 0.0, 0.0,  0.0, 0.0, alpha, NULL );
+      /* zOpticalInfoCreate( oi_alt[link_id], 0.8, 0.8, 0.8,  0.6, 0.6, 0.6,  0.0, 0.0, 0.0,  0.0, 0.0, alpha, NULL ); */
       /* other is Transparency */
-      /* oi_alt[link_id] = NULL; */
+      oi_alt[link_id] = NULL;
     }
   }
-  display_id = rkglChainCreateGhostDisplay( chain, alpha, &oi_alt[0], &g_light);
+  display_id = rkglChainCreatePhantomDisplay( chain, alpha, &oi_alt[0], &g_light);
   for( link_id=0; link_id < rkChainLinkNum( chain ); link_id++ )
     if( oi_alt[link_id] ) zOpticalInfoDestroy( oi_alt[link_id] );
 
@@ -405,21 +406,21 @@ void switch_ghost_mode(bool is_active)
 {
   if( !is_active ){
     g_ghost_mode = GHOST_MODE_OFF;
-    delete_original_chain_phantom( &g_ghost_display_id );
+    delete_original_chain_phantom( &g_phantom_display_id );
     return;
   }
   switch( g_ghost_mode ){
   case GHOST_MODE_OFF:
     printf(" >>> GHOST_MODE_OFF->READY \n");
     g_ghost_mode = GHOST_MODE_READY;
-    delete_original_chain_phantom( &g_ghost_display_id );
+    delete_original_chain_phantom( &g_phantom_display_id );
     break;
   case GHOST_MODE_READY:
     printf(" >>> GHOST_MODE_READY->ON \n");
     g_ghost_mode = GHOST_MODE_ON;
     printf("g_selected.chain_id = %d\n", g_selected.chain_id );
-    g_ghost_display_id = create_original_chain_phantom( g_selected.chain_id, &grs[g_selected.chain_id].chain );
-    printf("g_ghost_display_id = %d\n", g_ghost_display_id );
+    g_phantom_display_id = create_original_chain_phantom( g_selected.chain_id, &grs[g_selected.chain_id].chain );
+    printf("g_phantom_display_id = %d\n", g_phantom_display_id );
     break;
   default: ;
   }
@@ -794,7 +795,7 @@ void keyboard(GLFWwindow* window, unsigned int key)
       rkglChainUnload_for_rkglChainBlock( &grs[i] );
       rkChainDestroy( &grs[i].chain );
       rkCDDestroy( &g_cd );
-      delete_original_chain_phantom( &g_ghost_display_id );
+      delete_original_chain_phantom( &g_phantom_display_id );
     }
 
     exit( EXIT_SUCCESS );
