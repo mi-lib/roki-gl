@@ -132,7 +132,6 @@ typedef enum{
 typedef struct{
   ghostMode_t mode;
   int chain_id;
-  zFrame3D phantom_root;
   zVec phantom_q;
   pinInfo *phantom_pinfo;
   int phantom_display_id;
@@ -526,14 +525,11 @@ bool is_collision_detected()
 
 
 /* inverse kinematics */
-void update_alljoint_by_IK_with_frame(int drag_chain_id, int drag_link_id, zVec init_joints, zFrame3D *init_root, zFrame3D *ref_frame)
+void update_alljoint_by_IK_with_frame(int drag_chain_id, int drag_link_id, zVec init_joints, zFrame3D *ref_frame)
 {
   if( init_joints != NULL ) {
     rkChainSetJointDisAll( &grs[drag_chain_id].chain, init_joints );
     rkChainUpdateFK( &grs[drag_chain_id].chain );
-  }
-  if( init_root != NULL ){
-    zFrame3DCopy( init_root, rkChainOrgFrame( &grs[drag_chain_id].chain ) );
   }
   /* prepare IK */
   rkChainDeactivateIK( &grs[drag_chain_id].chain );
@@ -568,7 +564,7 @@ void update_alljoint_by_IK_with_frame(int drag_chain_id, int drag_link_id, zVec 
   if( ref_frame != NULL ){
     unregister_drag_weight_link_for_IK( drag_chain_id, drag_link_id );
     if( rkChainIK( &grs[drag_chain_id].chain, dis, ztol, iter ) < 0 )
-      printf("Exceed iteration of rkChainIK()!\n");
+      printf("Exceed iteration of rkChainIK() 02!\n");
     if( zVecIsNan(dis) ){
       printf("the result of rkChainIK() is NaN\n");
       rkChainCopyState( &clone_chain, &grs[drag_chain_id].chain );
@@ -619,7 +615,7 @@ int create_original_chain_phantom(int chain_id, ghostInfo* backup_ghost_info)
 
   display_id = rkglChainCreatePhantomDisplay( chain, alpha, &oi_alt[0], &g_light);
 
-  /* store the backup of chain_id, q, root frame */
+  /* store the backup of chain_id, q */
   backup_ghost_info->chain_id = chain_id;
   if( backup_ghost_info->phantom_q != NULL ) zVecFree( backup_ghost_info->phantom_q );
   if( !( backup_ghost_info->phantom_q = zVecAlloc( rkChainJointSize(chain) ) ) ){
@@ -627,7 +623,6 @@ int create_original_chain_phantom(int chain_id, ghostInfo* backup_ghost_info)
     ZRUNERROR( "Failed to zVecAlloc( rkChainLinkNum(&grs[%d].chain) ).", chain_id );
   }
   rkChainGetJointDisAll( chain, backup_ghost_info->phantom_q );
-  zFrame3DCopy( rkChainOrgFrame(chain), &backup_ghost_info->phantom_root );
 
   /* clean up */
   for( link_id=0; link_id < rkChainLinkNum( chain ); link_id++ )
@@ -683,9 +678,8 @@ void restore_original_chain_phantom(ghostInfo* backup_ghost_info)
   int chain_id =  backup_ghost_info->chain_id;
   rkChain* chain = &grs[chain_id].chain;
 
-  /* restore q, root frame */
+  /* restore q  */
   rkChainSetJointDisAll( chain, backup_ghost_info->phantom_q );
-  zFrame3DCopy( &backup_ghost_info->phantom_root, rkChainOrgFrame(chain) );
   rkChainUpdateFK( chain );
 
   /* register IK cell as backup q & pinInfo */
@@ -702,20 +696,18 @@ void restore_original_chain_phantom(ghostInfo* backup_ghost_info)
 void update_alljoint_by_IK_with_ghost()
 {
   zVec ghost_q;
-  zFrame3D ghost_root;
   rkChain* chain = &grs[g_ghost_info.chain_id].chain;
   if( !( ghost_q = zVecAlloc( rkChainJointSize(chain) ) ) ){
     ZALLOCERROR();
     ZRUNERROR( "Failed to zVecAlloc( rkChainLinkNum(&grs[%d].chain) ).", g_ghost_info.chain_id );
   }
   rkChainGetJointDisAll( chain, ghost_q );
-  zFrame3DCopy( rkChainOrgFrame(chain), &ghost_root );
 
-  /* restore and register phantom pininfo */
+  /* restore and register phantom pininfo for IK */
   restore_original_chain_phantom( &g_ghost_info );
-  /* update_alljoint_by_IK_with_frame( g_ghost_info.chain_id, -1, ghost_q, &ghost_root, NULL ); */
-  update_alljoint_by_IK_with_frame( g_ghost_info.chain_id, -1, ghost_q, NULL, NULL );
-  /* update_alljoint_by_IK_with_frame( g_ghost_info.chain_id, -1, g_ghost_info.phantom_q, &g_ghost_info.phantom_root, NULL ); */
+  /* IK */
+  update_alljoint_by_IK_with_frame( g_ghost_info.chain_id, -1, ghost_q, NULL );
+  /* update_alljoint_by_IK_with_frame( g_ghost_info.chain_id, -1, g_ghost_info.phantom_q, NULL ); */
   unregister_link_for_IK( g_ghost_info.chain_id, -1 );
 }
 
@@ -782,7 +774,7 @@ void motion(GLFWwindow* window, double x, double y)
     rkglFrameHandleMove( &g_fh, &g_cam, rkgl_mouse_x, rkgl_mouse_y );
     switch_ghost_mode( g_ghost_info.mode != GHOST_MODE_OFF );
     /* IK */
-    update_alljoint_by_IK_with_frame( g_selected.chain_id, g_selected.link_id, NULL, NULL, &g_fh.frame );
+    update_alljoint_by_IK_with_frame( g_selected.chain_id, g_selected.link_id, NULL, &g_fh.frame );
     /* Collision Detection */
     g_is_collision = is_collision_detected();
   } else{
@@ -888,8 +880,9 @@ void keyboard(GLFWwindow* window, unsigned int key)
       update_alljoint_by_IK_with_ghost();
       switch_ghost_mode( false );
     } else{
-      switch_ghost_mode( g_ghost_info.mode == GHOST_MODE_OFF ); /* OFF <-> READY */ break;
+      switch_ghost_mode( g_ghost_info.mode == GHOST_MODE_OFF ); /* OFF <-> READY */
     }
+    break;
   case 'h': move_link(-zDeg2Rad(5) ); break;
   case 'q': case 'Q': case '\033':
     for( i=0; i < g_chainNUM; i++ ){
