@@ -261,20 +261,17 @@ bool draw_pindrag_link(int chain_id, int link_id, bool is_alt)
 void draw_collision_link(void)
 {
   zOpticalInfo oi_alt;
-  if( g_is_collision ){
-    debug_printf("\n\n is_collision == true ================================= \n");
-    /* Red */
-    zOpticalInfoCreateSimple( &oi_alt, 1.0, 0.0, 0.0, NULL );
-    cdInfoCell *cdcell;
-    zListForEachRew( &g_cdlist, cdcell ){
-      if( grs[cdcell->data.chain_id].glChain.info[cdcell->data.link_id]._list_backup==-1 ){
-        grs[cdcell->data.chain_id].glChain.attr.disptype = RKGL_FACE;
-        draw_alternate_link( &grs[cdcell->data.chain_id].glChain, cdcell->data.chain_id, cdcell->data.link_id, &oi_alt, &grs[cdcell->data.chain_id].glChain.attr, &g_light );
-      }
+  debug_printf("\n\n is_collision == true ================================= \n");
+  /* Red */
+  zOpticalInfoCreateSimple( &oi_alt, 1.0, 0.0, 0.0, NULL );
+  cdInfoCell *cdcell;
+  zListForEachRew( &g_cdlist, cdcell ){
+    if( grs[cdcell->data.chain_id].glChain.info[cdcell->data.link_id]._list_backup==-1 ){
+      grs[cdcell->data.chain_id].glChain.attr.disptype = RKGL_FACE;
+      draw_alternate_link( &grs[cdcell->data.chain_id].glChain, cdcell->data.chain_id, cdcell->data.link_id, &oi_alt, &grs[cdcell->data.chain_id].glChain.attr, &g_light );
     }
-    debug_printf("end of is_collision == true ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ \n\n");
   }
-  g_is_collision = false;
+  debug_printf("end of is_collision == true ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ \n\n");
 }
 
 void draw_all_chain_link(void)
@@ -554,8 +551,7 @@ void update_alljoint_by_IK_with_frame(int drag_chain_id, int drag_link_id, zVec 
   rkChain clone_chain;
   rkChainClone( &grs[drag_chain_id].chain, &clone_chain );
   zVec dis = zVecAlloc( rkChainJointSize( &grs[drag_chain_id].chain ) ); /* IK output */
-  if( rkChainIK( &grs[drag_chain_id].chain, dis, ztol, iter ) < 0 )
-    printf("Exceed iteration of rkChainIK()!\n");
+  rkChainIK( &grs[drag_chain_id].chain, dis, ztol, iter );
   if( zVecIsNan(dis) ){
     printf("the result of rkChainIK() is NaN\n");
     rkChainCopyState( &clone_chain, &grs[drag_chain_id].chain );
@@ -563,8 +559,7 @@ void update_alljoint_by_IK_with_frame(int drag_chain_id, int drag_link_id, zVec 
   /* IK again with only pin link */
   if( ref_frame != NULL ){
     unregister_drag_weight_link_for_IK( drag_chain_id, drag_link_id );
-    if( rkChainIK( &grs[drag_chain_id].chain, dis, ztol, iter ) < 0 )
-      printf("Exceed iteration of rkChainIK() 02!\n");
+    rkChainIK( &grs[drag_chain_id].chain, dis, ztol, iter );
     if( zVecIsNan(dis) ){
       printf("the result of rkChainIK() is NaN\n");
       rkChainCopyState( &clone_chain, &grs[drag_chain_id].chain );
@@ -644,7 +639,6 @@ void delete_original_chain_phantom(ghostInfo* backup_ghost_info)
   if( backup_ghost_info->phantom_pinfo != NULL ){
     zFree( backup_ghost_info->phantom_pinfo );
     backup_ghost_info->phantom_pinfo = NULL;
-    printf("======delete ghost pinInfo===========\n");
   }
 }
 
@@ -688,7 +682,7 @@ void restore_original_chain_phantom(ghostInfo* backup_ghost_info)
     reset_link_drawing( chain_id, link_id );
     if( grs[chain_id].info2[link_id].pin != PIN_LOCK_OFF ){
       register_one_link_for_IK( chain_id, link_id );
-      printf("restore & register grs[%d].info2[%d].pin = %d\n", chain_id, link_id, grs[chain_id].info2[link_id].pin);
+      debug_printf("restore & register grs[%d].info2[%d].pin = %d\n", chain_id, link_id, grs[chain_id].info2[link_id].pin);
     }
   }
 }
