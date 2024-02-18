@@ -527,13 +527,13 @@ bool is_collision_detected()
 /* inverse kinematics */
 void update_alljoint_by_IK_with_frame(int drag_chain_id, int drag_link_id, zVec init_joints, zFrame3D *ref_frame)
 {
+  /* prepare IK */
+  rkChainDeactivateIK( &grs[drag_chain_id].chain );
+  rkChainBindIK( &grs[drag_chain_id].chain );
   if( init_joints != NULL ) {
     rkChainSetJointDisAll( &grs[drag_chain_id].chain, init_joints );
     rkChainUpdateFK( &grs[drag_chain_id].chain );
   }
-  /* prepare IK */
-  rkChainDeactivateIK( &grs[drag_chain_id].chain );
-  rkChainBindIK( &grs[drag_chain_id].chain );
   if( ref_frame != NULL ) {
     if( drag_link_id < 0 ) return;
     /* set rotation reference */
@@ -682,7 +682,7 @@ void restore_original_chain_phantom(ghostInfo* backup_ghost_info)
   rkChainSetJointDisAll( chain, backup_ghost_info->phantom_q );
   rkChainUpdateFK( chain );
 
-  /* register IK cell as backup q & pinInfo */
+  /* register IK cell with backup q & pinInfo */
   for( link_id=0; link_id < rkChainLinkNum( chain ); ++link_id ){
     grs[chain_id].info2[link_id].pin = backup_ghost_info->phantom_pinfo[link_id].pin;
     reset_link_drawing( chain_id, link_id );
