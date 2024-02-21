@@ -384,14 +384,11 @@ void register_one_link_for_IK(int chain_id, int link_id)
   switch( grs[chain_id].info2[link_id].pin ){
   case PIN_LOCK_6D:
     rkIKCellSetWeight( grs[chain_id].info2[link_id].cell[0], IK_PIN_WEIGHT, IK_PIN_WEIGHT, IK_PIN_WEIGHT );
-    rkIKCellSetRefAtt( grs[chain_id].info2[link_id].cell[0], rkChainLinkWldAtt(&grs[chain_id].chain, link_id) );
     rkIKCellSetWeight( grs[chain_id].info2[link_id].cell[1], IK_PIN_WEIGHT, IK_PIN_WEIGHT, IK_PIN_WEIGHT );
-    rkIKCellSetRefVec( grs[chain_id].info2[link_id].cell[1], rkChainLinkWldPos(&grs[chain_id].chain, link_id) );
     break;
   case PIN_LOCK_POS3D:
     rkIKCellSetWeight( grs[chain_id].info2[link_id].cell[0], IK_DRAG_WEIGHT, IK_DRAG_WEIGHT, IK_DRAG_WEIGHT );
     rkIKCellSetWeight( grs[chain_id].info2[link_id].cell[1], IK_PIN_WEIGHT, IK_PIN_WEIGHT, IK_PIN_WEIGHT );
-    rkIKCellSetRefVec( grs[chain_id].info2[link_id].cell[1], rkChainLinkWldPos(&grs[chain_id].chain, link_id) );
     break;
   case PIN_LOCK_OFF:
     rkIKCellSetWeight( grs[chain_id].info2[link_id].cell[0], IK_DRAG_WEIGHT, IK_DRAG_WEIGHT, IK_DRAG_WEIGHT );
