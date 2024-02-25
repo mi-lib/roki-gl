@@ -1,5 +1,60 @@
 #include <roki_gl/roki_glfw.h>
 
+/* This is suggstion code for rkgl_chain.c **************************************/
+void rkglChainLinkDrawOpticalAlt(rkglChain *gc, int id, double alpha, zOpticalInfo *oi_alt, rkglLight *light)
+{
+  zShapeListCell *sp;
+  rkLink *link;
+  double org_alpha;
+  zOpticalInfo *oi;
+  zShape3D *s;
+  link = rkChainLink(gc->chain,id);
+  if( !gc->info[id].visible || rkLinkShapeIsEmpty( link ) ) return;
+  glPushMatrix();
+  rkglXform( rkLinkWldFrame(link) );
+  zListForEach( rkLinkShapeList(link), sp ){
+    s = zShapeListCellShape(sp);
+    oi = zShape3DOptic(s);
+    org_alpha = oi->alpha;
+    oi->alpha = alpha;
+    rkglShape( s, oi_alt, RKGL_FACE, light );
+    oi->alpha = org_alpha;
+  }
+  glPopMatrix();
+}
+
+int rkglChainDrawOpticalAlt(rkglChain *gc, double alpha, zOpticalInfo *oi_alt[], rkglLight *light)
+{
+  int i, result;
+
+  result = rkglBeginList();
+  for( i=0; i<rkChainLinkNum(gc->chain); i++ )
+    rkglChainLinkDrawOpticalAlt( gc, i, alpha, oi_alt[i], light );
+  glEndList();
+  return result;
+}
+
+int rkglChainCreatePhantomDisplay(rkChain* chain, double alpha, zOpticalInfo **oi_alt, rkglLight* light)
+{
+  int i, display_id;
+  rkglChain display_gr;
+  rkglChainAttr attr;
+
+  rkglChainAttrInit( &attr );
+  if( !rkglChainLoad( &display_gr, chain, &attr, light ) ){
+    ZRUNWARN( "Failed rkglChainLoad(&display_gr)" );
+    return -1;
+  }
+  display_id = rkglChainDrawOpticalAlt( &display_gr, alpha, &oi_alt[0], light);
+  for( i=0; i < rkChainLinkNum( chain ); i++ ){
+    if( oi_alt[i] ) zOpticalInfoDestroy( oi_alt[i] );
+  }
+  rkglChainUnload( &display_gr );
+
+  return display_id;
+}
+/* end of suggstion code for rkgl_chain.c ***************************************/
+
 GLFWwindow* g_window;
 
 /* rkglLinkInfo2.pin information */
@@ -11,14 +66,23 @@ typedef enum{
 
 typedef struct{
   pinStatus pin;
-  double weight[2]; /* weight of pos, att */
+  double w[2]; /* weight of pos & att */
+  double dw[2];
+  double d2w[2];
 } pinInfo;
+
+typedef struct{
+  double s;
+  double ds;
+  double d2s;
+} keyFeedRate;
 
 typedef struct{
   zFrame3D root;
   zVec q;
   pinInfo *pinfo;
   int display_id;
+  keyFeedRate feedrate;
 } keyFrameInfo;
 zArrayClass( keyFrameInfoArray, keyFrameInfo );
 
@@ -53,6 +117,15 @@ int test_pin[TEST_KEYFRAME_NUM][TEST_LINK_SIZE] =
 /* the main targets of this sample code */
 rkChain g_chain;
 rkglChain gr;
+typedef struct{
+} rkglChainBlock;
+
+/* path */
+zPexIP* g_qref_path; /* size = joint num x keyframe num-1 */
+zPexIP* g_weight_path[2]; /* size = link num x pos & att x keyframe num-1 */
+zNURBS3D g_nurbs; /* size = specific pin num(=1 test) x specific segment num of keyframe-1 */
+int g_selected_cp = -1;
+rkglSelectionBuffer g_sb;
 
 /* keyframe_alpha */
 double g_keyframe_alpha = 0.3;
@@ -67,59 +140,17 @@ static const GLdouble g_zfar  = 100.0;
 static double g_scale = 0.001;
 
 
-zNURBS3D g_nurbs;
-int g_selected_cp = -1;
-rkglSelectionBuffer g_sb;
-
 #define NAME_NURBS 100
 #define INTERMEDIATE_CP_NUM 2
 #define SIZE_CP 10.0
 
-
-void rkglChainLinkDrawOpticalAlt(rkglChain *gc, int id, double alpha, zOpticalInfo *oi_alt, rkglLight *light)
-{
-  zShapeListCell *sp;
-  rkLink *link;
-  double org_alpha;
-  zOpticalInfo *oi;
-  zShape3D *s;
-  link = rkChainLink(gc->chain,id);
-  if( !gc->info[id].visible || rkLinkShapeIsEmpty( link ) ) return;
-  glPushMatrix();
-  rkglXform( rkLinkWldFrame(link) );
-  zListForEach( rkLinkShapeList(link), sp ){
-    s = zShapeListCellShape(sp);
-    oi = zShape3DOptic(s);
-    org_alpha = oi->alpha;
-    oi->alpha = alpha;
-    rkglShape( s, oi_alt, RKGL_FACE, light );
-    oi->alpha = org_alpha;
-  }
-  glPopMatrix();
-}
-int rkglChainDrawOpticalAlt(rkglChain *gc, double alpha, zOpticalInfo *oi_alt[], rkglLight *light)
-{
-  int i, result;
-
-  result = rkglBeginList();
-  for( i=0; i<rkChainLinkNum(gc->chain); i++ )
-    rkglChainLinkDrawOpticalAlt( gc, i, alpha, oi_alt[i], light );
-  glEndList();
-  return result;
-}
-
 int createPinInfoDisplayList(rkChain* chain, pinInfo pinfo[], double alpha, rkglLight* light)
 {
   int i, display_id;
-  rkglChain display_gr;
   zOpticalInfo **oi_alt;
   rkglChainAttr attr;
 
   rkglChainAttrInit( &attr );
-  if( !rkglChainLoad( &display_gr, chain, &attr, &g_light ) ){
-    ZRUNWARN( "Failed rkglChainLoad(&display_gr)" );
-    return -1;
-  }
   if( !( oi_alt = zAlloc( zOpticalInfo*, rkChainLinkNum(chain) ) ) ){
     ZALLOCERROR();
     ZRUNERROR( "Failed to zAlloc( zOpticalInfo, rkChainLinkNum(&g_chain) )." );
@@ -141,16 +172,13 @@ int createPinInfoDisplayList(rkChain* chain, pinInfo pinfo[], double alpha, rkgl
     }
   } /* end of pin link color changed */
 
-  display_id = rkglChainDrawOpticalAlt( &display_gr, alpha, &oi_alt[0], light);
+  display_id = rkglChainCreatePhantomDisplay( chain, alpha, &oi_alt[0], light);
 
-  for( i=0; i < rkChainLinkNum( chain ); i++ ){
+  for( i=0; i < rkChainLinkNum( chain ); i++ )
     if( oi_alt[i] ) zOpticalInfoDestroy( oi_alt[i] );
-  }
-  rkglChainUnload( &display_gr );
 
   return display_id;
 }
-
 
 /* define as user application */
 bool rkglChainLoadKeyframeInfo(rkChain *chain)
@@ -163,47 +191,52 @@ bool rkglChainLoadKeyframeInfo(rkChain *chain)
   zArrayAlloc( &g_keyframe, keyFrameInfo, TEST_KEYFRAME_NUM );
   rkglChainAttrInit( &attr );
   for( i=0; i < zArraySize( &g_keyframe ); i++ ){
-    if( !( g_keyframe.buf[i].pinfo = zAlloc( pinInfo, rkChainLinkNum(chain) ) ) ){
+    keyFrameInfo* kf = zArrayElemNC( &g_keyframe, i );
+    if( !( kf->pinfo = zAlloc( pinInfo, rkChainLinkNum(chain) ) ) ){
       ZALLOCERROR();
       ZRUNERROR( "Failed to zAlloc( pinInfo, rkChainLinkNum(chain) )." );
       return false;
     }
     for( j=0; j < rkChainLinkNum(chain); j++ ){
-      g_keyframe.buf[i].pinfo[j].pin = test_pin[i][j];
-      switch( g_keyframe.buf[i].pinfo[j].pin ){
+      kf->pinfo[j].pin = test_pin[i][j];
+      switch( kf->pinfo[j].pin ){
       case PIN_LOCK_6D:
-        g_keyframe.buf[i].pinfo[j].weight[0] = IK_PIN_WEIGHT;
-        g_keyframe.buf[i].pinfo[j].weight[1] = IK_PIN_WEIGHT;
+        kf->pinfo[j].w[0] = IK_PIN_WEIGHT; /* init weight pos */
+        kf->pinfo[j].w[1] = IK_PIN_WEIGHT; /* goal weight pos */
         break;
       case PIN_LOCK_POS3D:
-        g_keyframe.buf[i].pinfo[j].weight[0]  = IK_NO_WEIGHT;
-        g_keyframe.buf[i].pinfo[j].weight[1]  = IK_PIN_WEIGHT;
+        kf->pinfo[j].w[0] = IK_NO_WEIGHT;  /* init weight pos */
+        kf->pinfo[j].w[1] = IK_PIN_WEIGHT; /* goal weight pos */
         break;
       case PIN_LOCK_OFF:
-        g_keyframe.buf[i].pinfo[j].weight[0]  = IK_NO_WEIGHT;
-        g_keyframe.buf[i].pinfo[j].weight[1]  = IK_NO_WEIGHT;
+        kf->pinfo[j].w[0] = IK_NO_WEIGHT; /* init weight pos */
+        kf->pinfo[j].w[1] = IK_NO_WEIGHT; /* goal weight pos */
         break;
       default: ;
       }
+      kf->pinfo[j].dw[0]  = 0.0; /* default init weight vel */
+      kf->pinfo[j].d2w[0] = 0.0; /* default init weight acc */
+      kf->pinfo[j].dw[1]  = 0.0; /* default goal weight vel */
+      kf->pinfo[j].d2w[1] = 0.0; /* default goal weight acc */
     }
     for( j=0; j < rkChainJointSize(chain); j++ ){
       printf( "test_q[%d][%d] = %f\n", i, j, test_q[i][j] );
     }
     printf( "\n" );
-    if( !( g_keyframe.buf[i].q = zVecCloneArray( test_q[i], rkChainJointSize(chain) ) ) ){
+    if( !( kf->q = zVecCloneArray( test_q[i], rkChainJointSize(chain) ) ) ){
       ZRUNERROR( "Failed to zVecCloneArray( test_q[%d], rkChainJointSize(chain) ).", i );
       return false;
     };
-    zFrame3DFromAA( &g_keyframe.buf[i].root,
+    zFrame3DFromAA( &kf->root,
                     test_root_frame[i][0], test_root_frame[i][1],
                     test_root_frame[i][2], test_root_frame[i][3],
                     test_root_frame[i][4], test_root_frame[i][5] );
 
-    /* rkChainSetRootFrame( chain, &g_keyframe.buf[i].root ); */
-    zFrame3DCopy( &g_keyframe.buf[i].root, rkChainOrgFrame(chain) );
-    rkChainFK( chain, g_keyframe.buf[i].q );
-    g_keyframe.buf[i].display_id = createPinInfoDisplayList( chain, g_keyframe.buf[i].pinfo, g_keyframe_alpha, &g_light );
-    if( g_keyframe.buf[i].display_id < 0 ){
+    /* rkChainSetRootFrame( chain, &kf->root ); */
+    zFrame3DCopy( &kf->root, rkChainOrgFrame(chain) );
+    rkChainFK( chain, kf->q );
+    kf->display_id = createPinInfoDisplayList( chain, kf->pinfo, g_keyframe_alpha, &g_light );
+    if( kf->display_id < 0 ){
       return false;
     }
   } /* end of for( zArraySize( &g_keyframe ) ) */
@@ -211,12 +244,14 @@ bool rkglChainLoadKeyframeInfo(rkChain *chain)
   return true;
 }
 
+
 void rkglChainUnloadKeyframeInfo()
 {
   int i;
   for( i=0; i < zArraySize( &g_keyframe ); i++ ){
-    zVecFree( g_keyframe.buf[i].q );
-    zFree( g_keyframe.buf[i].pinfo );
+    keyFrameInfo* kf = zArrayElemNC( &g_keyframe, i );
+    zVecFree( kf->q );
+    zFree( kf->pinfo );
   }
   zArrayFree( &g_keyframe );
 }
@@ -240,6 +275,236 @@ int find_cp(rkglSelectionBuffer *sb, zNURBS3D* nurbs)
 }
 
 
+double accumulate_normalized_joint_norm(rkChain* chain, double s, zVec q1, zVec q2)
+{
+  int link_id, j, jid;
+  double min[6], max[6], jsize, range, ret_s;
+  zVec nq1, nq2;
+
+  nq1 = zVecAlloc( zVecSize(q1) );
+  nq2 = zVecAlloc( zVecSize(q2) );
+  jid = 0.0;
+  for( link_id=0; link_id < rkChainLinkNum(chain); link_id++ ){
+    jsize = rkChainLinkJointSize(chain, link_id);
+    if( jsize < 1.0 ) continue;
+    rkLinkJointGetMin( rkChainLink( chain, link_id ), min );
+    rkLinkJointGetMax( rkChainLink( chain, link_id ), max );
+    for( j=0; j<jsize; j++ ){
+      /* printf( "q[%02d] min : max = %f : %f\n", jid, min[j], max[j] ); */
+      range = fabs( max[j] - min[j] );
+      if( range > DBL_MIN ){
+        zVecElemNC(nq1, jid) = ( zVecElemNC(q1, jid) - min[j] ) / range;
+        zVecElemNC(nq2, jid) = ( zVecElemNC(q2, jid) - min[j] ) / range;
+      } else{
+        zVecElemNC(nq1, jid) = 0.0;
+        zVecElemNC(nq2, jid) = 0.0;
+      }
+      jid++;
+    }
+  }
+  ret_s = s + zVecSqrDist( nq1, nq2 );
+  /* printf("q1 = "); zVecPrint(q1); */
+  /* printf("q2 = "); zVecPrint(q2); */
+  /* printf("nq1 = "); zVecPrint(nq1); */
+  /* printf("nq2 = "); zVecPrint(nq2); */
+  printf("ret_s = %f\n\n", ret_s);
+  zVecFree( nq1 );
+  zVecFree( nq2 );
+
+  return ret_s;
+}
+
+void calc_p2p_feedrate(rkChain *chain, keyFrameInfo* kf1, keyFrameInfo* kf2)
+{
+  kf2->feedrate.s = accumulate_normalized_joint_norm( chain, kf1->feedrate.s, kf1->q, kf2->q );
+}
+
+void calc_feedrate(rkChain *chain, keyFrameInfoArray* keyframe)
+{
+  int i, size;
+
+  size = zArraySize( keyframe );
+  zArrayElemNC(keyframe, 0)->feedrate.s = 0.0;
+  for( i=0; i < size-1; i++ ){
+    keyFrameInfo* kf1 = zArrayElemNC(keyframe, i);
+    keyFrameInfo* kf2 = zArrayElemNC(keyframe, i+1);
+    calc_p2p_feedrate( chain, kf1, kf2 );
+  }
+}
+
+bool init_weight_path(rkChain *chain, zPexIP** weight_path, int wsize)
+{
+  int i;
+
+  for( i=0; i<wsize; i++ ){
+    if( weight_path[i] != NULL )
+      zFree(weight_path[i]);
+    if( !( weight_path[i] = zAlloc( zPexIP, rkChainLinkNum(chain) ) ) ){
+      ZALLOCERROR();
+      ZRUNERROR( "Failed to zAlloc( zPexIP, rkChainLinkNum(chain) )." );
+      return false;
+    }
+  }
+
+  return true;
+}
+
+bool init_qref_path(rkChain *chain, zPexIP** qref_path)
+{
+  if( *qref_path != NULL )
+    zFree(*qref_path);
+  if( !( *qref_path = zAlloc( zPexIP, rkChainJointSize(chain) ) ) ){
+    ZALLOCERROR();
+    ZRUNERROR( "Failed to zAlloc( zPexIP, rkChainJointSize(chain) )." );
+    return false;
+  }
+
+  return true;
+}
+
+void interpolate_p2p_weight_path(rkChain* chain, zPexIP** weight_path, int wsize, keyFrameInfo* kf1, keyFrameInfo* kf2)
+{
+  int link_id, i;
+  double term = kf2->feedrate.s - kf1->feedrate.s;
+  for( link_id=0; link_id < rkChainLinkNum(chain); link_id++ ){
+    for( i=0; i < wsize; i++ ){
+      zPexIPCreateBoundary( &weight_path[i][link_id],
+                            term,
+                            kf1->pinfo[link_id].w[i], 0.0, 0.0, /* x1, v1, a1 */
+                            kf2->pinfo[link_id].w[i], 0.0, 0.0, /* x2, v2, a2 */
+                            NULL );
+    } /* end of for loop i of weight pos & att num times */
+  } /* end of for loop link_id of link num times */
+}
+
+void interpolate_p2p_qref_path(rkChain* chain, zPexIP* qref_path, keyFrameInfo* kf1, keyFrameInfo* kf2)
+{
+  int jid;
+  double term = kf2->feedrate.s - kf1->feedrate.s;
+  for( jid=0; jid < rkChainJointSize(chain); jid++ ){
+    zPexIPCreateBoundary( &qref_path[jid],
+                          term,
+                          zVecElemNC(kf1->q, jid), 0.0, 0.0, /* x1, v1, a1 */
+                          zVecElemNC(kf2->q, jid), 0.0, 0.0, /* x2, v2, a2 */
+                          NULL );
+  } /* end of for loop link_id of link num times */
+}
+
+/* 2 points, start keyframe index, rkChain*, zNURBS3D*, start keyFrameInfo end keyFrameInfo */
+void create_p2p_nurbs_cp(int kf1idx, rkChain *chain, zNURBS3D* nurbs, keyFrameInfo* kf1, keyFrameInfo* kf2)
+{
+  int j;
+
+  /* start */
+  zFrame3DCopy( &kf1->root, rkChainOrgFrame(chain) );
+  rkChainFK( chain, kf1->q );
+  zVec3D start;
+  zVec3DCopy( rkChainLinkWldPos(chain, 6), &start ); /* 6 is test */
+  zVec3DCopy( &start, zNURBS3D1CP(nurbs, kf1idx) );
+  /* end */
+  zFrame3DCopy( &kf2->root, rkChainOrgFrame(chain) );
+  rkChainFK( chain, kf2->q );
+  zVec3D end;
+  zVec3DCopy( rkChainLinkWldPos(chain, 6), &end );
+  zVec3DCopy( &end, zNURBS3D1CP(nurbs, kf1idx + INTERMEDIATE_CP_NUM + 1 ) );
+  /* itermediate points */
+  for( j=kf1idx+1; j<zNURBS3D1CPNum(nurbs)-INTERMEDIATE_CP_NUM; j++ ){
+    zVec3DCreate( zNURBS3D1CP(nurbs, j),
+                  zRandF(start.c.x - 1.0, start.c.x + 1.0),
+                  zRandF(start.c.x - 1.0, start.c.x + 1.0),
+                  zRandF(start.c.x - 1.0, start.c.x + 1.0) );
+    zVec3DCreate( zNURBS3D1CP(nurbs, j + INTERMEDIATE_CP_NUM - 1),
+                  zRandF(end.c.x - 1.0, end.c.x + 1.0),
+                  zRandF(end.c.x - 1.0, end.c.x + 1.0),
+                  zRandF(end.c.x - 1.0, end.c.x + 1.0) );
+  }
+}
+
+void print_interpolated_weight_path(rkChain* chain, keyFrameInfoArray* keyframe, zPexIP** weight_path, int wsize)
+{
+  double s;
+  double s_max_resolution = 10.0;
+  int size, link_id, i, j;
+  size = zArraySize( keyframe );
+  keyFrameInfo* end_kf = zArrayElemNC(keyframe, size-1);
+  printf( "end_kf->feedrate.s = %f\n", end_kf->feedrate.s);
+  for( link_id=0; link_id< rkChainLinkNum( chain ); link_id++ ){
+    for( i=0; i<wsize; i++){
+      for( j=0; j<=(int)(s_max_resolution); j++ ){
+        s = (double)(j) * end_kf->feedrate.s / s_max_resolution;
+        printf( "weight[%d][%d](s=%.10f) = %.10f\n", i, link_id, s, zPexIPVal( &weight_path[i][link_id], s ) );
+      }
+      printf("\n");
+    }
+  }
+}
+
+
+void print_interpolated_qref_path(rkChain *chain, keyFrameInfoArray* keyframe, zPexIP* qref_path)
+{
+  double s;
+  double s_max_resolution = 10.0;
+  int size, jid, i;
+  size = zArraySize( keyframe );
+  keyFrameInfo* end_kf = zArrayElemNC(keyframe, size-1);
+  /* printf( "end_kf->feedrate.s = %f\n", end_kf->feedrate.s); */
+  for( jid=0; jid< rkChainJointSize( chain ); jid++ ){
+    for( i=0; i<=(int)(s_max_resolution); i++ ){
+      s = (double)(i) * end_kf->feedrate.s / s_max_resolution;
+      printf( "q[%d](s=%.10f) = %.10f\n", jid, s, zPexIPVal( &qref_path[jid], s ) );
+    }
+    printf("\n");
+  }
+}
+
+bool interpolate_path(rkChain* chain, keyFrameInfoArray* keyframe, zPexIP** weight_path, int wsize, zPexIP* qref_path, zNURBS3D* nurbs)
+{
+  int i, size;
+  zOpticalInfo oi;
+
+  size = zArraySize( keyframe );
+  if( size < 2 ) {
+    ZRUNERROR( "too small keyframe size = %d (must be >= 2)", size );
+    return false;
+  }
+
+  /* the number of intermediate control points */
+  zNURBS3D1Alloc( nurbs, size + INTERMEDIATE_CP_NUM, 3 );
+  zNURBS3D1SetSliceNum( nurbs, 50 );
+
+  for( i=0; i < size-1; i++ ){
+    keyFrameInfo* kf1 = zArrayElemNC(keyframe, i);
+    keyFrameInfo* kf2 = zArrayElemNC(keyframe, i+1);
+    interpolate_p2p_weight_path( chain, weight_path, wsize, kf1, kf2 );
+    interpolate_p2p_qref_path( chain, qref_path, kf1, kf2 );
+    create_p2p_nurbs_cp( i, chain, nurbs, kf1, kf2 );
+  } /* end of for loop i of keyframe num times */
+
+  zOpticalInfoCreateSimple( &oi, zRandF(0.0,1.0), zRandF(0.0,1.0), zRandF(0.0,1.0), NULL );
+
+  print_interpolated_qref_path( chain, keyframe, qref_path );
+  print_interpolated_weight_path( chain, keyframe, weight_path, wsize);
+
+  return true;
+}
+
+void release_path()
+{
+  int i;
+
+  for( i=0; i<2; i++ ){
+    if( g_weight_path[i] != NULL )
+      zFree(g_weight_path[i]);
+  }
+  if( g_qref_path != NULL )
+    zFree(g_qref_path);
+  if( g_nurbs.knot != NULL )
+    zNURBS3DDestroy( &g_nurbs );
+}
+
+
+
+
 /******************************************************************************************/
 
 void draw_nurbs(void)
@@ -257,12 +522,11 @@ void draw_nurbs(void)
   glPopMatrix();
 }
 
-
 void draw_scene(void)
 {
   int i;
   for( i=0; i < zArraySize( &g_keyframe ); i++ ){
-    glCallList( g_keyframe.buf[i].display_id );
+    glCallList( zArrayElemNC(&g_keyframe, i)->display_id );
   }
   draw_nurbs();
 }
@@ -339,6 +603,7 @@ void keyboard(GLFWwindow* window, unsigned int key)
     rkglChainUnload( &gr );
     rkglChainUnloadKeyframeInfo();
     rkChainDestroy( &g_chain );
+    release_path();
 
     exit( EXIT_SUCCESS );
   default: ;
@@ -392,50 +657,6 @@ rkChain *extend_rkChainReadZTK(rkChain *chain, char *pathname)
   return chain;
 }
 
-bool init_curve(rkChain *chain)
-{
-  int i, size;
-  zOpticalInfo oi;
-
-  size = zArraySize( &g_keyframe );
-  if( size < 2 ) {
-    ZRUNERROR( "too smapl keyframe size = %d (must be >= 2)", size );
-    return false;
-  }
-  /* the number of intermediate control points */
-  zNURBS3D1Alloc( &g_nurbs, size + INTERMEDIATE_CP_NUM, 3 );
-  zNURBS3D1SetSliceNum( &g_nurbs, 50 );
-
-  for( i=0; i < size-1; i++ ){
-    /* start */
-    zFrame3DCopy( &g_keyframe.buf[i].root, rkChainOrgFrame(chain) );
-    rkChainFK( chain, g_keyframe.buf[i].q );
-    zVec3D start;
-    zVec3DCopy( rkChainLinkWldPos(chain, 6), &start ); /* 6 is test */
-    zVec3DCopy( &start, zNURBS3D1CP(&g_nurbs,i) );
-    /* end */
-    zFrame3DCopy( &g_keyframe.buf[i+1].root, rkChainOrgFrame(chain) );
-    rkChainFK( chain, g_keyframe.buf[i+1].q );
-    zVec3D end;
-    zVec3DCopy( rkChainLinkWldPos(chain, 6), &end );
-    zVec3DCopy( &end, zNURBS3D1CP(&g_nurbs, i + INTERMEDIATE_CP_NUM + 1 ) );
-    /* itermediate points */
-    /* for( j=i+1; j<zNURBS3D1CPNum(&g_nurbs)-INTERMEDIATE_CP_NUM; j++ ){ */
-      zVec3DCreate( zNURBS3D1CP(&g_nurbs,i+1),
-                    zRandF(start.c.x - 1.0, start.c.x + 1.0),
-                    zRandF(start.c.x - 1.0, start.c.x + 1.0),
-                    zRandF(start.c.x - 1.0, start.c.x + 1.0) );
-      zVec3DCreate( zNURBS3D1CP(&g_nurbs, i + INTERMEDIATE_CP_NUM),
-                    zRandF(end.c.x - 1.0, end.c.x + 1.0),
-                    zRandF(end.c.x - 1.0, end.c.x + 1.0),
-                    zRandF(end.c.x - 1.0, end.c.x + 1.0) );
-    /* } */
-  }
-  zOpticalInfoCreateSimple( &oi, zRandF(0.0,1.0), zRandF(0.0,1.0), zRandF(0.0,1.0), NULL );
-
-  return true;
-}
-
 bool init(void)
 {
   rkglSetDefaultCallbackParam( &g_cam, 1.0, 1.0, 20.0, 1.0, 5.0 );
@@ -470,8 +691,13 @@ bool init(void)
   rkChainCreateIK( &g_chain );
   rkChainRegIKJointAll( &g_chain, IK_JOINT_WEIGHT );
 
-  /* NURBS */
-  init_curve( &g_chain );
+  /* interpolate path of weight & qref_& specific pin(NURBS) */
+  int wsize = 2; /* pos & att */
+  calc_feedrate( &g_chain, &g_keyframe );
+  init_weight_path( &g_chain, g_weight_path, wsize );
+  init_qref_path( &g_chain, &g_qref_path );
+  interpolate_path( &g_chain, &g_keyframe, g_weight_path, wsize, g_qref_path, &g_nurbs );
+
   g_sb.hits = 0;
   return true;
 }
