@@ -127,6 +127,8 @@ zNURBS3D g_nurbs; /* size = specific pin num(=1 test) x specific segment num of 
 int g_selected_cp = -1;
 rkglSelectionBuffer g_sb;
 
+#define SLICE_NUM 50
+
 /* keyframe_alpha */
 double g_keyframe_alpha = 0.3;
 
@@ -332,7 +334,21 @@ void calc_feedrate(rkChain *chain, keyFrameInfoArray* keyframe)
   }
 }
 
-bool init_weight_path(rkChain *chain, zPexIP** weight_path, int wsize)
+bool init_qref_path(rkChain *chain, zPexIP** qref_path)
+{
+  if( *qref_path != NULL )
+    zFree(*qref_path);
+  if( !( *qref_path = zAlloc( zPexIP, rkChainJointSize(chain) ) ) ){
+    ZALLOCERROR();
+    ZRUNERROR( "Failed to zAlloc( zPexIP, rkChainJointSize(chain) )." );
+    return false;
+  }
+
+  return true;
+}
+
+
+bool init_ik_weight_path(rkChain *chain, zPexIP** weight_path, int wsize)
 {
   int i;
 
@@ -349,17 +365,17 @@ bool init_weight_path(rkChain *chain, zPexIP** weight_path, int wsize)
   return true;
 }
 
-bool init_qref_path(rkChain *chain, zPexIP** qref_path)
+void interpolate_p2p_qref_path(rkChain* chain, zPexIP* qref_path, keyFrameInfo* kf1, keyFrameInfo* kf2)
 {
-  if( *qref_path != NULL )
-    zFree(*qref_path);
-  if( !( *qref_path = zAlloc( zPexIP, rkChainJointSize(chain) ) ) ){
-    ZALLOCERROR();
-    ZRUNERROR( "Failed to zAlloc( zPexIP, rkChainJointSize(chain) )." );
-    return false;
-  }
-
-  return true;
+  int jid;
+  double term = kf2->feedrate.s - kf1->feedrate.s;
+  for( jid=0; jid < rkChainJointSize(chain); jid++ ){
+    zPexIPCreateBoundary( &qref_path[jid],
+                          term,
+                          zVecElemNC(kf1->q, jid), 0.0, 0.0, /* x1, v1, a1 */
+                          zVecElemNC(kf2->q, jid), 0.0, 0.0, /* x2, v2, a2 */
+                          NULL );
+  } /* end of for loop link_id of link num times */
 }
 
 void interpolate_p2p_weight_path(rkChain* chain, zPexIP** weight_path, int wsize, keyFrameInfo* kf1, keyFrameInfo* kf2)
@@ -377,21 +393,8 @@ void interpolate_p2p_weight_path(rkChain* chain, zPexIP** weight_path, int wsize
   } /* end of for loop link_id of link num times */
 }
 
-void interpolate_p2p_qref_path(rkChain* chain, zPexIP* qref_path, keyFrameInfo* kf1, keyFrameInfo* kf2)
-{
-  int jid;
-  double term = kf2->feedrate.s - kf1->feedrate.s;
-  for( jid=0; jid < rkChainJointSize(chain); jid++ ){
-    zPexIPCreateBoundary( &qref_path[jid],
-                          term,
-                          zVecElemNC(kf1->q, jid), 0.0, 0.0, /* x1, v1, a1 */
-                          zVecElemNC(kf2->q, jid), 0.0, 0.0, /* x2, v2, a2 */
-                          NULL );
-  } /* end of for loop link_id of link num times */
-}
-
 /* 2 points, start keyframe index, rkChain*, zNURBS3D*, start keyFrameInfo end keyFrameInfo */
-void create_p2p_nurbs_cp(int kf1idx, rkChain *chain, zNURBS3D* nurbs, keyFrameInfo* kf1, keyFrameInfo* kf2)
+void interpolate_p2p_nurbs_cp(int kf1idx, rkChain *chain, zNURBS3D* nurbs, keyFrameInfo* kf1, keyFrameInfo* kf2)
 {
   int j;
 
@@ -420,44 +423,73 @@ void create_p2p_nurbs_cp(int kf1idx, rkChain *chain, zNURBS3D* nurbs, keyFrameIn
   }
 }
 
-void print_interpolated_weight_path(rkChain* chain, keyFrameInfoArray* keyframe, zPexIP** weight_path, int wsize)
+void print_header_label_feedrate(FILE *fp, double end_s)
 {
-  double s;
-  double s_max_resolution = 10.0;
-  int size, link_id, i, j;
+  fprintf( fp, "#No. s(0.0-%f) ", end_s );
+}
+
+void print_header_label_of_qref_path(FILE *fp, int joint_size)
+{
+  int jid;
+
+  for( jid=0; jid < joint_size; jid++ )
+    fprintf( fp, "q[%d] ", jid );
+}
+
+void print_header_label_of_ik_weight_path(FILE *fp, int link_num, int wsize)
+{
+  int link_id, i;
+
+  for( link_id=0; link_id < link_num; link_id++ )
+    for( i=0; i<wsize; i++)
+      fprintf( fp, "weight[%d][%d] ", i, link_id);
+}
+
+void print_interpolated_qref_path(FILE *fp, double s, zPexIP* qref_path, int joint_size)
+{
+  int jid;
+
+  for( jid=0; jid < joint_size; jid++ )
+    fprintf( fp, "%.10f ", zPexIPVal( &qref_path[jid], s ) );
+}
+
+void print_interpolated_ik_weight_path(FILE *fp, double s, zPexIP** weight_path, int link_num, int wsize)
+{
+  int link_id, i;
+
+  for( link_id=0; link_id < link_num; link_id++ )
+    for( i=0; i<wsize; i++)
+      fprintf( fp, "%.10f ", zPexIPVal( &weight_path[i][link_id], s ) );
+}
+
+void print_interpolated_path(FILE *fp, rkChain* chain, keyFrameInfoArray* keyframe, zPexIP* qref_path, zPexIP** weight_path, int wsize, int s_slice_num)
+{
+  int size, joint_size, link_num, sid;
+  keyFrameInfo* end_kf;
+  double s, end_s;
+
   size = zArraySize( keyframe );
-  keyFrameInfo* end_kf = zArrayElemNC(keyframe, size-1);
-  printf( "end_kf->feedrate.s = %f\n", end_kf->feedrate.s);
-  for( link_id=0; link_id< rkChainLinkNum( chain ); link_id++ ){
-    for( i=0; i<wsize; i++){
-      for( j=0; j<=(int)(s_max_resolution); j++ ){
-        s = (double)(j) * end_kf->feedrate.s / s_max_resolution;
-        printf( "weight[%d][%d](s=%.10f) = %.10f\n", i, link_id, s, zPexIPVal( &weight_path[i][link_id], s ) );
-      }
-      printf("\n");
-    }
+  end_kf = zArrayElemNC(keyframe, size-1);
+  end_s = end_kf->feedrate.s;
+  joint_size = rkChainJointSize( chain );
+  link_num = rkChainLinkNum( chain );
+
+  print_header_label_feedrate( fp, end_s );
+  print_header_label_of_qref_path( fp, joint_size );
+  print_header_label_of_ik_weight_path( fp, link_num, wsize );
+  fprintf( fp, "\n" );
+
+  for( sid=0; sid<=(int)(s_slice_num); sid++ ){
+    s = (double)(sid) * end_s / s_slice_num;
+    fprintf( fp, "%d %.10f ", sid, s );
+    print_interpolated_qref_path( fp, s, qref_path, joint_size );
+    print_interpolated_ik_weight_path( fp, s, weight_path, link_num, wsize );
+    fprintf( fp, "\n" );
   }
 }
 
 
-void print_interpolated_qref_path(rkChain *chain, keyFrameInfoArray* keyframe, zPexIP* qref_path)
-{
-  double s;
-  double s_max_resolution = 10.0;
-  int size, jid, i;
-  size = zArraySize( keyframe );
-  keyFrameInfo* end_kf = zArrayElemNC(keyframe, size-1);
-  /* printf( "end_kf->feedrate.s = %f\n", end_kf->feedrate.s); */
-  for( jid=0; jid< rkChainJointSize( chain ); jid++ ){
-    for( i=0; i<=(int)(s_max_resolution); i++ ){
-      s = (double)(i) * end_kf->feedrate.s / s_max_resolution;
-      printf( "q[%d](s=%.10f) = %.10f\n", jid, s, zPexIPVal( &qref_path[jid], s ) );
-    }
-    printf("\n");
-  }
-}
-
-bool interpolate_path(rkChain* chain, keyFrameInfoArray* keyframe, zPexIP** weight_path, int wsize, zPexIP* qref_path, zNURBS3D* nurbs)
+bool interpolate_path(rkChain* chain, keyFrameInfoArray* keyframe, zPexIP* qref_path, zPexIP** weight_path, int wsize, zNURBS3D* nurbs)
 {
   int i, size;
   zOpticalInfo oi;
@@ -470,20 +502,23 @@ bool interpolate_path(rkChain* chain, keyFrameInfoArray* keyframe, zPexIP** weig
 
   /* the number of intermediate control points */
   zNURBS3D1Alloc( nurbs, size + INTERMEDIATE_CP_NUM, 3 );
-  zNURBS3D1SetSliceNum( nurbs, 50 );
+  zNURBS3D1SetSliceNum( nurbs, SLICE_NUM );
 
   for( i=0; i < size-1; i++ ){
     keyFrameInfo* kf1 = zArrayElemNC(keyframe, i);
     keyFrameInfo* kf2 = zArrayElemNC(keyframe, i+1);
-    interpolate_p2p_weight_path( chain, weight_path, wsize, kf1, kf2 );
     interpolate_p2p_qref_path( chain, qref_path, kf1, kf2 );
-    create_p2p_nurbs_cp( i, chain, nurbs, kf1, kf2 );
+    interpolate_p2p_weight_path( chain, weight_path, wsize, kf1, kf2 );
+    interpolate_p2p_nurbs_cp( i, chain, nurbs, kf1, kf2 );
   } /* end of for loop i of keyframe num times */
 
   zOpticalInfoCreateSimple( &oi, zRandF(0.0,1.0), zRandF(0.0,1.0), zRandF(0.0,1.0), NULL );
 
-  print_interpolated_qref_path( chain, keyframe, qref_path );
-  print_interpolated_weight_path( chain, keyframe, weight_path, wsize);
+  FILE *fp;
+  /* fp = stdout; */
+  fp = fopen( "motion_path_view.dat", "w" );
+  print_interpolated_path( fp, chain, keyframe, qref_path, weight_path, wsize, SLICE_NUM);
+  fclose( fp );
 
   return true;
 }
@@ -694,9 +729,9 @@ bool init(void)
   /* interpolate path of weight & qref_& specific pin(NURBS) */
   int wsize = 2; /* pos & att */
   calc_feedrate( &g_chain, &g_keyframe );
-  init_weight_path( &g_chain, g_weight_path, wsize );
   init_qref_path( &g_chain, &g_qref_path );
-  interpolate_path( &g_chain, &g_keyframe, g_weight_path, wsize, g_qref_path, &g_nurbs );
+  init_ik_weight_path( &g_chain, g_weight_path, wsize );
+  interpolate_path( &g_chain, &g_keyframe, g_qref_path, g_weight_path, wsize, &g_nurbs );
 
   g_sb.hits = 0;
   return true;
