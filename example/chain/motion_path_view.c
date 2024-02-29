@@ -86,23 +86,23 @@ typedef struct{
 } keyFrameInfo;
 zArrayClass( keyFrameInfoArray, keyFrameInfo );
 
-keyFrameInfoArray g_keyframe;
+keyFrameInfoArray g_keyframe_array;
 
 /* Test Dataset ********************************************************************/
-#define TEST_KEYFRAME_NUM 2
+#define TEST_KEYFRAME_SIZE 2
 #define TEST_JOINT_SIZE 6
 #define TEST_LINK_SIZE 7
 #define TEST_FRAME_DOF_SIZE 6
 /* x, y, z, aax, aay, aaz */
-double test_root_frame[TEST_KEYFRAME_NUM][TEST_FRAME_DOF_SIZE] =
+double test_root_frame[TEST_KEYFRAME_SIZE][TEST_FRAME_DOF_SIZE] =
   { { 0.0, 0.0, 0.0,  0.0, 0.0, 0.0 },
     { 0.0, 0.5, 0.0,  0.0, 0.0, 0.0 } };
 /* q0 ... q5 */
-double test_q[TEST_KEYFRAME_NUM][TEST_JOINT_SIZE] =
+double test_q[TEST_KEYFRAME_SIZE][TEST_JOINT_SIZE] =
   { { 0.0, 0.0, 0.0,  0.0, 0.0, 0.0 },
     { zDeg2Rad(45.0), zDeg2Rad(-60.0), zDeg2Rad(-5.0), 0.0, zDeg2Rad(90.0), 0.0 } };
 /* pin */
-int test_pin[TEST_KEYFRAME_NUM][TEST_LINK_SIZE] =
+int test_pin[TEST_KEYFRAME_SIZE][TEST_LINK_SIZE] =
   { { PIN_LOCK_POS3D, PIN_LOCK_POS3D, PIN_LOCK_OFF,
       PIN_LOCK_POS3D, PIN_LOCK_POS3D, PIN_LOCK_POS3D, PIN_LOCK_POS3D },
     { PIN_LOCK_OFF, PIN_LOCK_OFF, PIN_LOCK_6D,
@@ -120,9 +120,24 @@ rkglChain gr;
 typedef struct{
 } rkglChainBlock;
 
-/* path */
-zPexIP* g_qref_path; /* size = joint num x keyframe num-1 */
-zPexIP* g_weight_path[2]; /* size = link num x pos & att x keyframe num-1 */
+/* p2p path */
+typedef struct{
+  zPexIP weight_path[2]; /* size = pos & att */
+  bool is_pin_path;
+  rkIKCell *cell[2];
+  int cell_size; /* size of weight & cell = 2 (pos & att) */
+} pathIKInfo;
+
+zArrayClass( zPexIPArray, zPexIP );
+typedef struct{
+  pathIKInfo* ik_info; /* size = link size */
+  int link_size;
+  zPexIPArray qref_path; /* size = joint size */
+  int joint_size;
+} p2pPathInfo;
+zArrayClass( p2pPathArray, p2pPathInfo );
+p2pPathArray g_p2p_array;
+
 zNURBS3D g_nurbs; /* size = specific pin num(=1 test) x specific segment num of keyframe-1 */
 int g_selected_cp = -1;
 rkglSelectionBuffer g_sb;
@@ -185,15 +200,20 @@ int createPinInfoDisplayList(rkChain* chain, pinInfo pinfo[], double alpha, rkgl
 /* define as user application */
 bool rkglChainLoadKeyframeInfo(rkChain *chain)
 {
-  int i, j;
+  int keyframe_size, i, j;
   rkglChainAttr attr;
 
   printf("size of link = %d\n", rkChainLinkNum(chain) );
   printf("size of joint = %d\n", rkChainJointSize(chain) );
-  zArrayAlloc( &g_keyframe, keyFrameInfo, TEST_KEYFRAME_NUM );
+
+  if( zArraySize( &g_keyframe_array ) > 0 )
+    zArrayFree( &g_keyframe_array );
+  zArrayAlloc( &g_keyframe_array, keyFrameInfo, TEST_KEYFRAME_SIZE );
+  keyframe_size = zArraySize( &g_keyframe_array ); /* = TEST_KEYFRAME_SIZE */
+
   rkglChainAttrInit( &attr );
-  for( i=0; i < zArraySize( &g_keyframe ); i++ ){
-    keyFrameInfo* kf = zArrayElemNC( &g_keyframe, i );
+  for( i=0; i < keyframe_size; i++ ){
+    keyFrameInfo* kf = zArrayElemNC( &g_keyframe_array, i );
     if( !( kf->pinfo = zAlloc( pinInfo, rkChainLinkNum(chain) ) ) ){
       ZALLOCERROR();
       ZRUNERROR( "Failed to zAlloc( pinInfo, rkChainLinkNum(chain) )." );
@@ -241,7 +261,7 @@ bool rkglChainLoadKeyframeInfo(rkChain *chain)
     if( kf->display_id < 0 ){
       return false;
     }
-  } /* end of for( zArraySize( &g_keyframe ) ) */
+  } /* end of for( zArraySize( &g_keyframe_array ) ) */
 
   return true;
 }
@@ -250,12 +270,12 @@ bool rkglChainLoadKeyframeInfo(rkChain *chain)
 void rkglChainUnloadKeyframeInfo()
 {
   int i;
-  for( i=0; i < zArraySize( &g_keyframe ); i++ ){
-    keyFrameInfo* kf = zArrayElemNC( &g_keyframe, i );
+  for( i=0; i < zArraySize( &g_keyframe_array ); i++ ){
+    keyFrameInfo* kf = zArrayElemNC( &g_keyframe_array, i );
     zVecFree( kf->q );
     zFree( kf->pinfo );
   }
-  zArrayFree( &g_keyframe );
+  zArrayFree( &g_keyframe_array );
 }
 
 
@@ -321,56 +341,64 @@ void calc_p2p_feedrate(rkChain *chain, keyFrameInfo* kf1, keyFrameInfo* kf2)
   kf2->feedrate.s = accumulate_normalized_joint_norm( chain, kf1->feedrate.s, kf1->q, kf2->q );
 }
 
-void calc_feedrate(rkChain *chain, keyFrameInfoArray* keyframe)
+void calc_feedrate(rkChain *chain, keyFrameInfoArray* keyframe_array)
 {
   int i, size;
 
-  size = zArraySize( keyframe );
-  zArrayElemNC(keyframe, 0)->feedrate.s = 0.0;
+  size = zArraySize( keyframe_array );
+  zArrayElemNC(keyframe_array, 0)->feedrate.s = 0.0;
   for( i=0; i < size-1; i++ ){
-    keyFrameInfo* kf1 = zArrayElemNC(keyframe, i);
-    keyFrameInfo* kf2 = zArrayElemNC(keyframe, i+1);
+    keyFrameInfo* kf1 = zArrayElemNC(keyframe_array, i);
+    keyFrameInfo* kf2 = zArrayElemNC(keyframe_array, i+1);
     calc_p2p_feedrate( chain, kf1, kf2 );
   }
 }
 
-bool init_qref_path(rkChain *chain, zPexIP** qref_path)
+void init_qref_path(rkChain *chain, zPexIPArray* qref_path, int joint_size)
 {
-  if( *qref_path != NULL )
-    zFree(*qref_path);
-  if( !( *qref_path = zAlloc( zPexIP, rkChainJointSize(chain) ) ) ){
+  if( zArraySize( qref_path ) > 0 )
+    zArrayFree( qref_path );
+  zArrayAlloc( qref_path, zPexIP, joint_size );
+}
+
+bool init_path_ik_info(rkChain *chain, pathIKInfo** path_ik_info, int link_size)
+{
+  if( *path_ik_info != NULL )
+    zFree( *path_ik_info );
+  if( !( *path_ik_info = zAlloc( pathIKInfo, link_size ) ) ){
     ZALLOCERROR();
-    ZRUNERROR( "Failed to zAlloc( zPexIP, rkChainJointSize(chain) )." );
+    ZRUNERROR( "Failed to zAlloc( pathIKInfo, rkChainLinkNum(chain) )." );
     return false;
   }
+  (*path_ik_info)->cell_size = 2;
 
   return true;
 }
 
-
-bool init_ik_weight_path(rkChain *chain, zPexIP** weight_path, int wsize)
+bool init_p2p_array(rkChain *chain, p2pPathArray *p2p_array, int array_size)
 {
   int i;
 
-  for( i=0; i<wsize; i++ ){
-    if( weight_path[i] != NULL )
-      zFree(weight_path[i]);
-    if( !( weight_path[i] = zAlloc( zPexIP, rkChainLinkNum(chain) ) ) ){
-      ZALLOCERROR();
-      ZRUNERROR( "Failed to zAlloc( zPexIP, rkChainLinkNum(chain) )." );
-      return false;
-    }
+  if( zArraySize( &g_p2p_array ) > 0 )
+    zArrayFree( &g_p2p_array );
+  zArrayAlloc( &g_p2p_array, p2pPathInfo, array_size );
+  for( i=0; i < array_size; i++ ){
+    p2pPathInfo* p2p_buf = zArrayElemNC( p2p_array, i );
+    p2p_buf->joint_size = rkChainJointSize(chain);
+    p2p_buf->link_size = rkChainLinkNum(chain);
+    init_qref_path( chain, &p2p_buf->qref_path, p2p_buf->joint_size );
+    if( !init_path_ik_info( chain, &p2p_buf->ik_info, p2p_buf->link_size ) ) return false;
   }
-
   return true;
 }
 
-void interpolate_p2p_qref_path(rkChain* chain, zPexIP* qref_path, keyFrameInfo* kf1, keyFrameInfo* kf2)
+
+void interpolate_p2p_qref_path(rkChain* chain, zPexIPArray* qref_path, keyFrameInfo* kf1, keyFrameInfo* kf2)
 {
   int jid;
   double term = kf2->feedrate.s - kf1->feedrate.s;
-  for( jid=0; jid < rkChainJointSize(chain); jid++ ){
-    zPexIPCreateBoundary( &qref_path[jid],
+  for( jid=0; jid < zArraySize( qref_path ); jid++ ){
+    zPexIPCreateBoundary( &qref_path->buf[jid],
                           term,
                           zVecElemNC(kf1->q, jid), 0.0, 0.0, /* x1, v1, a1 */
                           zVecElemNC(kf2->q, jid), 0.0, 0.0, /* x2, v2, a2 */
@@ -378,13 +406,13 @@ void interpolate_p2p_qref_path(rkChain* chain, zPexIP* qref_path, keyFrameInfo* 
   } /* end of for loop link_id of link num times */
 }
 
-void interpolate_p2p_weight_path(rkChain* chain, zPexIP** weight_path, int wsize, keyFrameInfo* kf1, keyFrameInfo* kf2)
+void interpolate_p2p_ik_weight_path(rkChain* chain, pathIKInfo* path_ik_info, keyFrameInfo* kf1, keyFrameInfo* kf2)
 {
   int link_id, i;
   double term = kf2->feedrate.s - kf1->feedrate.s;
   for( link_id=0; link_id < rkChainLinkNum(chain); link_id++ ){
-    for( i=0; i < wsize; i++ ){
-      zPexIPCreateBoundary( &weight_path[i][link_id],
+    for( i=0; i < path_ik_info[link_id].cell_size; i++ ){
+      zPexIPCreateBoundary( &path_ik_info[link_id].weight_path[i],
                             term,
                             kf1->pinfo[link_id].w[i], 0.0, 0.0, /* x1, v1, a1 */
                             kf2->pinfo[link_id].w[i], 0.0, 0.0, /* x2, v2, a2 */
@@ -423,6 +451,7 @@ void interpolate_p2p_nurbs_cp(int kf1idx, rkChain *chain, zNURBS3D* nurbs, keyFr
   }
 }
 
+
 void print_header_label_feedrate(FILE *fp, double end_s)
 {
   fprintf( fp, "#No. s(0.0-%f) ", end_s );
@@ -436,67 +465,72 @@ void print_header_label_of_qref_path(FILE *fp, int joint_size)
     fprintf( fp, "q[%d] ", jid );
 }
 
-void print_header_label_of_ik_weight_path(FILE *fp, int link_num, int wsize)
+void print_header_label_of_ik_weight_path(FILE *fp, int link_size, int cell_size)
 {
   int link_id, i;
 
-  for( link_id=0; link_id < link_num; link_id++ )
-    for( i=0; i<wsize; i++)
+  for( link_id=0; link_id < link_size; link_id++ )
+    for( i=0; i<cell_size; i++)
       fprintf( fp, "weight[%d][%d] ", i, link_id);
 }
 
-void print_interpolated_qref_path(FILE *fp, double s, zPexIP* qref_path, int joint_size)
+void print_interpolated_qref_path(FILE *fp, double s, zPexIPArray* qref_path)
 {
   int jid;
 
-  for( jid=0; jid < joint_size; jid++ )
-    fprintf( fp, "%.10f ", zPexIPVal( &qref_path[jid], s ) );
+  for( jid=0; jid < zArraySize( qref_path ); jid++ )
+    fprintf( fp, "%.10f ", zPexIPVal( &qref_path->buf[jid], s ) );
 }
 
-void print_interpolated_ik_weight_path(FILE *fp, double s, zPexIP** weight_path, int link_num, int wsize)
+void print_interpolated_ik_weight_path(FILE *fp, double s, pathIKInfo *path_ik_info, int link_size)
 {
   int link_id, i;
 
-  for( link_id=0; link_id < link_num; link_id++ )
-    for( i=0; i<wsize; i++)
-      fprintf( fp, "%.10f ", zPexIPVal( &weight_path[i][link_id], s ) );
+  for( link_id=0; link_id < link_size; link_id++ )
+    for( i=0; i<path_ik_info[link_id].cell_size; i++)
+      fprintf( fp, "%.10f ", zPexIPVal( &path_ik_info[link_id].weight_path[i], s ) );
 }
 
-void print_interpolated_path(FILE *fp, rkChain* chain, keyFrameInfoArray* keyframe, zPexIP* qref_path, zPexIP** weight_path, int wsize, int s_slice_num)
+void print_interpolated_path(FILE *fp, rkChain* chain, keyFrameInfoArray* keyframe_array, p2pPathArray *p2p_array, int s_slice_num)
 {
-  int size, joint_size, link_num, sid;
+  int i, keyframe_size, joint_size, link_size, cell_size, path_size, sid;
   keyFrameInfo* end_kf;
   double s, end_s;
 
-  size = zArraySize( keyframe );
-  end_kf = zArrayElemNC(keyframe, size-1);
+  keyframe_size = zArraySize( keyframe_array );
+  end_kf = zArrayElemNC(keyframe_array, keyframe_size-1);
   end_s = end_kf->feedrate.s;
-  joint_size = rkChainJointSize( chain );
-  link_num = rkChainLinkNum( chain );
+  joint_size = zArraySize( &p2p_array->buf[0].qref_path );
+  link_size = p2p_array->buf[0].link_size;
+  cell_size = p2p_array->buf[0].ik_info[0].cell_size;
+  path_size = zArraySize( p2p_array );
 
   print_header_label_feedrate( fp, end_s );
   print_header_label_of_qref_path( fp, joint_size );
-  print_header_label_of_ik_weight_path( fp, link_num, wsize );
+  print_header_label_of_ik_weight_path( fp, link_size, cell_size );
   fprintf( fp, "\n" );
 
-  for( sid=0; sid<=(int)(s_slice_num); sid++ ){
-    s = (double)(sid) * end_s / s_slice_num;
-    fprintf( fp, "%d %.10f ", sid, s );
-    print_interpolated_qref_path( fp, s, qref_path, joint_size );
-    print_interpolated_ik_weight_path( fp, s, weight_path, link_num, wsize );
-    fprintf( fp, "\n" );
+  for( i=0; i < path_size; i++){
+    for( sid=0; sid<=(int)(s_slice_num); sid++ ){
+      s = (double)(sid) * end_s / s_slice_num;
+      fprintf( fp, "%d %.10f ", sid, s );
+      p2pPathInfo* p2p_buf = &p2p_array->buf[i];
+      print_interpolated_qref_path( fp, s, &p2p_buf->qref_path );
+      print_interpolated_ik_weight_path( fp, s, p2p_buf->ik_info, link_size );
+      fprintf( fp, "\n" );
+    }
   }
 }
 
 
-bool interpolate_path(rkChain* chain, keyFrameInfoArray* keyframe, zPexIP* qref_path, zPexIP** weight_path, int wsize, zNURBS3D* nurbs)
+bool interpolate_path(rkChain* chain, keyFrameInfoArray* keyframe_array, p2pPathArray* p2p_array, zNURBS3D* nurbs)
 {
   int i, size;
   zOpticalInfo oi;
 
-  size = zArraySize( keyframe );
+  size = zArraySize( keyframe_array );
   if( size < 2 ) {
-    ZRUNERROR( "too small keyframe size = %d (must be >= 2)", size );
+    ZRUNERROR( "too small keyframe_array size = %d (must be >= 2)", size );
     return false;
   }
 
@@ -505,39 +539,55 @@ bool interpolate_path(rkChain* chain, keyFrameInfoArray* keyframe, zPexIP* qref_
   zNURBS3D1SetSliceNum( nurbs, SLICE_NUM );
 
   for( i=0; i < size-1; i++ ){
-    keyFrameInfo* kf1 = zArrayElemNC(keyframe, i);
-    keyFrameInfo* kf2 = zArrayElemNC(keyframe, i+1);
-    interpolate_p2p_qref_path( chain, qref_path, kf1, kf2 );
-    interpolate_p2p_weight_path( chain, weight_path, wsize, kf1, kf2 );
+    keyFrameInfo* kf1 = zArrayElemNC(keyframe_array, i);
+    keyFrameInfo* kf2 = zArrayElemNC(keyframe_array, i+1);
+    p2pPathInfo* p2p_buf = &p2p_array->buf[i];
+    interpolate_p2p_qref_path( chain, &p2p_buf->qref_path, kf1, kf2 );
+    interpolate_p2p_ik_weight_path( chain, p2p_buf->ik_info, kf1, kf2 );
     interpolate_p2p_nurbs_cp( i, chain, nurbs, kf1, kf2 );
   } /* end of for loop i of keyframe num times */
 
   zOpticalInfoCreateSimple( &oi, zRandF(0.0,1.0), zRandF(0.0,1.0), zRandF(0.0,1.0), NULL );
-
-  FILE *fp;
-  /* fp = stdout; */
-  fp = fopen( "motion_path_view.dat", "w" );
-  print_interpolated_path( fp, chain, keyframe, qref_path, weight_path, wsize, SLICE_NUM);
-  fclose( fp );
 
   return true;
 }
 
 void release_path()
 {
-  int i;
+  int i, link_id, j, jid;
 
-  for( i=0; i<2; i++ ){
-    if( g_weight_path[i] != NULL )
-      zFree(g_weight_path[i]);
+  for( i=0; i < zArraySize(&g_p2p_array); i++ ){
+    p2pPathInfo* p2p_buf = zArrayElemNC( &g_p2p_array, i );
+    /* release weight_path[2] */
+    for( link_id=0; link_id < p2p_buf->link_size; link_id++ ){
+      pathIKInfo* ik_info = &p2p_buf->ik_info[link_id];
+      for( j=0; j < ik_info->cell_size; j++ )
+        zPexIPFree( &ik_info->weight_path[j] );
+    }
+    /* release qref_path[] */
+    for( jid=0; jid < p2p_buf->joint_size; jid++ )
+      zPexIPFree( &p2p_buf->qref_path.buf[jid] );
+    if( zArraySize( &p2p_buf->qref_path ) > 0 )
+      zArrayFree( &p2p_buf->qref_path );
   }
-  if( g_qref_path != NULL )
-    zFree(g_qref_path);
+  if( zArraySize( &g_p2p_array ) > 0 )
+    zArrayFree( &g_p2p_array );
   if( g_nurbs.knot != NULL )
     zNURBS3DDestroy( &g_nurbs );
+
 }
 
+void run_test(void)
+{
+  /* interpolate path of weight & qref_& specific pin(NURBS) */
+  interpolate_path( &g_chain, &g_keyframe_array, &g_p2p_array, &g_nurbs );
 
+  FILE *fp;
+  /* fp = stdout; */
+  fp = fopen( "motion_path_view.dat", "w" );
+  print_interpolated_path( fp, &g_chain, &g_keyframe_array, &g_p2p_array, SLICE_NUM);
+  fclose( fp );
+}
 
 
 /******************************************************************************************/
@@ -560,8 +610,8 @@ void draw_nurbs(void)
 void draw_scene(void)
 {
   int i;
-  for( i=0; i < zArraySize( &g_keyframe ); i++ ){
-    glCallList( zArrayElemNC(&g_keyframe, i)->display_id );
+  for( i=0; i < zArraySize( &g_keyframe_array ); i++ ){
+    glCallList( zArrayElemNC(&g_keyframe_array, i)->display_id );
   }
   draw_nurbs();
 }
@@ -726,12 +776,9 @@ bool init(void)
   rkChainCreateIK( &g_chain );
   rkChainRegIKJointAll( &g_chain, IK_JOINT_WEIGHT );
 
-  /* interpolate path of weight & qref_& specific pin(NURBS) */
-  int wsize = 2; /* pos & att */
-  calc_feedrate( &g_chain, &g_keyframe );
-  init_qref_path( &g_chain, &g_qref_path );
-  init_ik_weight_path( &g_chain, g_weight_path, wsize );
-  interpolate_path( &g_chain, &g_keyframe, g_qref_path, g_weight_path, wsize, &g_nurbs );
+  calc_feedrate( &g_chain, &g_keyframe_array );
+  if( !init_p2p_array( &g_chain, &g_p2p_array, zArraySize( &g_keyframe_array ) - 1 ) )
+    return false;
 
   g_sb.hits = 0;
   return true;
@@ -764,6 +811,8 @@ int main(int argc, char *argv[])
     glfwTerminate();
     return 1;
   }
+  run_test();
+
   resize( g_window, width, height );
   glfwSwapInterval(1);
 
