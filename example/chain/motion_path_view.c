@@ -64,6 +64,7 @@ typedef enum{
   PIN_LOCK_POS3D
 } pinStatus;
 
+/* This value corresponds to the index (cell_id) of rkIKCell array */
 typedef enum{
   IK_CELL_TYPE_WLD_POS = 0,
   IK_CELL_TYPE_WLD_ATT = 1
@@ -105,6 +106,7 @@ keyFrameInfoArray g_keyframe_array;
 #define TEST_JOINT_SIZE 6
 #define TEST_LINK_SIZE 7
 #define TEST_FRAME_DOF_SIZE 6
+#define TEST_PATH_LINK_SIZE 1
 /* x, y, z, aax, aay, aaz */
 double test_root_frame[TEST_KEYFRAME_SIZE][TEST_FRAME_DOF_SIZE] =
   { { 0.0, 0.0, 0.0,  0.0, 0.0, 0.0 },
@@ -127,6 +129,18 @@ int test_pin[TEST_KEYFRAME_SIZE][TEST_LINK_SIZE] =
       PIN_LOCK_OFF, PIN_LOCK_OFF, PIN_LOCK_OFF, PIN_LOCK_POS3D },
     { PIN_LOCK_OFF, PIN_LOCK_OFF, PIN_LOCK_OFF,
       PIN_LOCK_OFF, PIN_LOCK_OFF, PIN_LOCK_OFF, PIN_LOCK_POS3D }};
+typedef struct{
+  int path_id;
+  int path_link_id;
+  ikCellType cell_type;
+  /* path_type ..etc. */
+} refPathInfo;
+refPathInfo test_nurbs_path[TEST_KEYFRAME_SIZE-1][TEST_PATH_LINK_SIZE] =
+  {
+    {
+     { 0, 6, IK_CELL_TYPE_WLD_POS }
+    } /* TEST_PATH_LINK_SIZE */
+  }; /* TEST_KEYFRAME_SIZE-1 (= PATH_SIZE) */
 int test_nurbs_path_link_id = 6;
 /* End of Test Dataset *************************************************************/
 
@@ -260,28 +274,28 @@ bool rkglChainLoadKeyframeInfo(rkChain *chain)
       kf->pinfo[link_id].cell_size = IK_CONSTRAINED_CELL_SIZE;
       switch( kf->pinfo[link_id].pin ){
       case PIN_LOCK_6D:
-        kf->pinfo[link_id].c[0].w = IK_PIN_WEIGHT; /* init weight pos */
+        kf->pinfo[link_id].c[0].w = IK_PIN_WEIGHT; /* goal weight pos */
         kf->pinfo[link_id].c[0].is_constrained = true;
-        kf->pinfo[link_id].c[0].type = IK_CELL_TYPE_WLD_ATT;
-        kf->pinfo[link_id].c[1].w = IK_PIN_WEIGHT; /* goal weight pos */
+        kf->pinfo[link_id].c[0].type = IK_CELL_TYPE_WLD_POS;
+        kf->pinfo[link_id].c[1].w = IK_PIN_WEIGHT; /* init weight pos */
         kf->pinfo[link_id].c[1].is_constrained = true;
-        kf->pinfo[link_id].c[1].type = IK_CELL_TYPE_WLD_POS;
+        kf->pinfo[link_id].c[1].type = IK_CELL_TYPE_WLD_ATT;
         break;
       case PIN_LOCK_POS3D:
-        kf->pinfo[link_id].c[0].w = IK_NO_WEIGHT;  /* init weight pos */
-        kf->pinfo[link_id].c[0].is_constrained = false;
-        kf->pinfo[link_id].c[0].type = IK_CELL_TYPE_WLD_ATT;
-        kf->pinfo[link_id].c[1].w = IK_PIN_WEIGHT; /* goal weight pos */
-        kf->pinfo[link_id].c[1].is_constrained = true;
-        kf->pinfo[link_id].c[1].type = IK_CELL_TYPE_WLD_POS;
+        kf->pinfo[link_id].c[0].w = IK_PIN_WEIGHT; /* goal weight pos */
+        kf->pinfo[link_id].c[0].is_constrained = true;
+        kf->pinfo[link_id].c[0].type = IK_CELL_TYPE_WLD_POS;
+        kf->pinfo[link_id].c[1].w = IK_NO_WEIGHT;  /* init weight pos */
+        kf->pinfo[link_id].c[1].is_constrained = false;
+        kf->pinfo[link_id].c[1].type = IK_CELL_TYPE_WLD_ATT;
         break;
       case PIN_LOCK_OFF:
-        kf->pinfo[link_id].c[0].w = IK_NO_WEIGHT; /* init weight pos */
+        kf->pinfo[link_id].c[0].w = IK_NO_WEIGHT; /* goal weight pos */
         kf->pinfo[link_id].c[0].is_constrained = false;
-        kf->pinfo[link_id].c[0].type = IK_CELL_TYPE_WLD_ATT;
-        kf->pinfo[link_id].c[1].w = IK_NO_WEIGHT; /* goal weight pos */
+        kf->pinfo[link_id].c[0].type = IK_CELL_TYPE_WLD_POS;
+        kf->pinfo[link_id].c[1].w = IK_NO_WEIGHT; /* init weight pos */
         kf->pinfo[link_id].c[1].is_constrained = false;
-        kf->pinfo[link_id].c[1].type = IK_CELL_TYPE_WLD_POS;
+        kf->pinfo[link_id].c[1].type = IK_CELL_TYPE_WLD_ATT;
         break;
       default: ;
       }
@@ -500,13 +514,13 @@ void interpolate_p2p_nurbs_cp(int kf1idx, rkChain *chain, zNURBS3D* nurbs, keyFr
   zFrame3DCopy( &kf1->root, rkChainOrgFrame(chain) );
   rkChainFK( chain, kf1->q );
   zVec3D start;
-  zVec3DCopy( rkChainLinkWldPos(chain, test_nurbs_path_link_id), &start ); /* test_* is defined as global variable */
+  zVec3DCopy( rkChainLinkWldPos(chain, test_nurbs_path[kf1idx][0].path_link_id), &start ); /* test_* is defined as global variable */
   zVec3DCopy( &start, zNURBS3D1CP(nurbs, kf1idx) );
   /* end */
   zFrame3DCopy( &kf2->root, rkChainOrgFrame(chain) );
   rkChainFK( chain, kf2->q );
   zVec3D end;
-  zVec3DCopy( rkChainLinkWldPos(chain, test_nurbs_path_link_id), &end );
+  zVec3DCopy( rkChainLinkWldPos(chain, test_nurbs_path[kf1idx][0].path_link_id), &end );
   zVec3DCopy( &end, zNURBS3D1CP(nurbs, kf1idx + INTERMEDIATE_CP_NUM + 1 ) );
   /* intermediate points */
   zVec3D diff3D;
@@ -735,6 +749,13 @@ void set_one_link_reference_of_3D_translate_position_for_IK(int path_id, int lin
   rkIKCellSetRefVec( g_p2p_array.buf[path_id].all_link_ik_info_array.buf[link_id].c[cid].cell, ref_pos );
 }
 
+void set_one_link_reference_of_3D_attitude_position_for_IK(int path_id, int link_id, int cid, zMat3D* ref_att)
+{
+  zVec3D zyx;
+  zMat3DToZYX( ref_att, &zyx );
+  rkIKCellSetRefVec( g_p2p_array.buf[path_id].all_link_ik_info_array.buf[link_id].c[cid].cell, &zyx );
+}
+
 /* inverse kinematics */
 void update_alljoint_by_IK(rkChain* chain, zVec init_joints)
 {
@@ -798,7 +819,7 @@ bool pop_pose(double s, rkChain* chain, p2pPathArray *p2p_array)
     return false;
   }
   zVec qref = pop_qref( s, &p2p_array->buf[path_id].qref_path );
-  /* no path */
+  /* no path free joint */
   {
     rkChainSetJointDisAll( chain, qref );
     rkChainUpdateFK( chain );
@@ -808,11 +829,29 @@ bool pop_pose(double s, rkChain* chain, p2pPathArray *p2p_array)
   rkChainDeactivateIK( chain );
   rkChainBindIK( chain );
 
+  /* set reference */
   zVec3D ref_pos;
   pop_nurbs_point( (s / p2p_array->buf[path_id].goal_feedrate.s), &g_nurbs, &ref_pos );
 
-  int test_reference_cell_id = 1; /* it means one 3D position reference constrain */
-  set_one_link_reference_of_3D_translate_position_for_IK( path_id, test_nurbs_path_link_id, test_reference_cell_id, &ref_pos );
+  int idx;
+  int test_ref_link_id;
+  int test_ref_cell_id; /* the id of one 3D position/attitue reference constrain. */
+  for( idx=0; idx < TEST_PATH_LINK_SIZE; idx++ ){
+    test_ref_link_id = test_nurbs_path[path_id][idx].path_link_id;
+    switch (test_nurbs_path[path_id][idx].cell_type){
+    case IK_CELL_TYPE_WLD_POS:
+      test_ref_cell_id = 0;
+      set_one_link_reference_of_3D_translate_position_for_IK( path_id, test_ref_link_id, test_ref_cell_id, &ref_pos );
+      break;
+    case IK_CELL_TYPE_WLD_ATT:
+      test_ref_cell_id = 1;
+      /* TODO : attitude */
+      /* set_one_link_reference_of_3D_attitude_position_for_IK( path_id, test_ref_link_id, test_ref_cell_id, &ref_att ); */
+      break;
+    default : break;
+    }
+  }
+  /* IK */
   update_alljoint_by_IK( chain, qref );
   zVecFree( qref );
 
