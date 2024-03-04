@@ -200,6 +200,9 @@ typedef struct{
 } rkglChainBlock;
 
 int g_selected_cp = -1;
+int g_selected_path_id = -1;
+int g_selected_link_id = -1;
+int g_selected_cid = -1;
 rkglSelectionBuffer g_sb;
 
 #define SLICE_NUM 50
@@ -373,7 +376,7 @@ void rkglChainUnloadKeyframeInfo()
 
 /* interpolate path -------------------------------------------------------------- */
 
-int find_cp(rkglSelectionBuffer *sb, zNURBS3D* nurbs)
+int find_cp(rkglSelectionBuffer *sb)
 {
   int i;
 
@@ -385,17 +388,25 @@ int find_cp(rkglSelectionBuffer *sb, zNURBS3D* nurbs)
 
   rkglSelectionRewind( sb );
   g_selected_cp = -1;
+  g_selected_path_id = -1;
+  g_selected_link_id = -1;
+  g_selected_cid = -1;
   for( path_id=0; path_id < path_size; path_id++ ){
     for( link_id=0; link_id < all_link_size; link_id++ ){
       for( cid=0; cid < cell_size; cid++ ){
         pathIKCellInfo* cell_info = &g_p2p_array.buf[path_id].all_link_path_info.buf[link_id].c[cid];
-        for( i=0; i<sb->hits; i++ ){
-          if( rkglSelectionName(sb,0) == (NAME_NURBS + 100*NAME_NURBS*path_id + link_id) &&
-              rkglSelectionName(sb,1) >= 0 && rkglSelectionName(sb,1) < zNURBS3D1CPNum(&cell_info->path.nurbs) ){
-            g_selected_cp = rkglSelectionName(sb,1);
-            break;
+        if( cell_info->cell_type == IK_CELL_TYPE_WLD_POS && cell_info->is_path ){
+          for( i=0; i<sb->hits; i++ ){
+            if( rkglSelectionName(sb,0) == (NAME_NURBS + 100*NAME_NURBS*path_id + link_id) &&
+                rkglSelectionName(sb,1) >= 0 && rkglSelectionName(sb,1) < zNURBS3D1CPNum(&cell_info->path.nurbs) ){
+              g_selected_cp = rkglSelectionName(sb,1);
+              g_selected_path_id = path_id;
+              g_selected_link_id = link_id;
+              g_selected_cid = cid;
+              break;
+            }
+            rkglSelectionNext( sb );
           }
-          rkglSelectionNext( sb );
         }
       }
     }
@@ -675,9 +686,10 @@ void print_interpolated_ik_weight_path(FILE *fp, double s, zPexIP *weight_path)
 void print_interpolated_nurbs_path_3d_position(FILE *fp, double s, zNURBS3D *nurbs, bool is_path)
 {
   zVec3D v;
-  zNURBS3D1Vec( nurbs, s, &v );
-  if( is_path )
+  if( is_path ){
+    zNURBS3D1Vec( nurbs, s, &v );
     fprintf( fp, "%.10f %.10f %.10f ", v.c.x, v.c.y, v.c.z );
+  }
   else
     fprintf( fp, "0.0 0.0 0.0 " ); /* fprintf( fp, "NaN NaN NaN " ); */
 }
@@ -1036,9 +1048,10 @@ void motion(GLFWwindow* window, double x, double y)
     rkglMouseDragFuncGLFW( window, x, y );
     return;
   }
-  if( g_selected_cp >= 0 && g_selected_cp < zNURBS3D1CPNum(&g_nurbs) ){
+  zNURBS3D* nurbs = &g_p2p_array.buf[g_selected_path_id].all_link_path_info.buf[g_selected_link_id].c[g_selected_cid].path.nurbs;
+  if( g_selected_cp >= 0 && g_selected_cp < zNURBS3D1CPNum(nurbs) ){
     rkglUnproject( &g_cam, x, y, rkglSelectionZnearDepth(&g_sb), &p );
-    zVec3DCopy( &p, zNURBS3D1CP(&g_nurbs,g_selected_cp) );
+    zVec3DCopy( &p, zNURBS3D1CP(nurbs, g_selected_cp) );
   }
   rkglMouseStoreXY( floor(x), floor(y) );
 }
@@ -1048,7 +1061,7 @@ void mouse(GLFWwindow* window, int button, int state, int mods)
   if( button == GLFW_MOUSE_BUTTON_LEFT ){
     if( state == GLFW_PRESS ){
       rkglSelect( &g_sb, &g_cam, draw_nurbs, rkgl_mouse_x, rkgl_mouse_y, SIZE_CP, SIZE_CP );
-      if( find_cp( &g_sb, &g_nurbs ) >= 0 )
+      if( find_cp( &g_sb ) >= 0 )
         eprintf( "Selected control point [%d]\n", g_selected_cp );
     } else if( state == GLFW_RELEASE ){
       g_sb.hits = 0;
