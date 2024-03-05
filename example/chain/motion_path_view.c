@@ -190,14 +190,12 @@ typedef struct{
 zArrayClass( p2pPathArray, p2pPathInfo );
 p2pPathArray g_p2p_array;
 
-zNURBS3D g_nurbs; /* size = specific pin num(=1 test) x specific segment num of keyframe-1 */
-
 /* the main targets of this sample code */
 rkChain g_chain;
 rkglChain gr;
-typedef struct{
-  p2pPathArray p2p_array;
-} rkglChainBlock;
+/* typedef struct{ */
+/*   p2pPathArray p2p_array; */
+/* } rkglChainBlock; */
 
 int g_selected_cp = -1;
 int g_selected_path_id = -1;
