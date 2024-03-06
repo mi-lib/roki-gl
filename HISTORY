@@ -1,3 +1,4 @@
+2024. 3. 4. Modified rk_pen to use renamed rkLinkJointDOF and rkChainLinkJointDOF. [app]
 2024. 1.16. Added rkglChainLinkDrawSeethru, and modified rkglChainDrawSeethru. [rkgl_chain]
 2024. 1.16. Renamed list_alt of rkglLinkInfo to _list_backup. [rkgl_chain]
 2024. 1.16. Added rkglChainLinkFindSelected (thanks to Daishi Kaneta). [rkgl_chain]
