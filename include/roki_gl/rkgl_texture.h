@@ -9,7 +9,6 @@
 
 #include <roki_gl/rkgl_misc.h>
 #include <zeo/zeo_render_texture.h>
-#include <zx11/zximage.h>
 
 __BEGIN_DECLS
 

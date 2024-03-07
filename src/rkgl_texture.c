@@ -30,6 +30,7 @@ GLuint rkglTextureInit(zTexture *texture, ubyte *buf)
 }
 
 /* read an image file and make a texture data. */
+/*
 bool rkglTextureReadFile(zTexture *texture, char *filename)
 {
   zxImage img;
@@ -61,6 +62,7 @@ bool rkglTextureReadFile(zTexture *texture, char *filename)
   if( !already_connected ) zxExit();
   return ret;
 }
+*/
 
 /* units for multitexture */
 
@@ -205,6 +207,7 @@ static ubyte *_rkglTextureBumpVec(ubyte *p, double x, double y, double z)
 }
 
 /* generate a normal map from a bump texture */
+/*
 static bool _rkglTextureBumpNormalMap(zTexture *bump, char *filename)
 {
   uint i, j, k;
@@ -240,6 +243,7 @@ static bool _rkglTextureBumpNormalMap(zTexture *bump, char *filename)
   free( buf );
   return ret;
 }
+*/
 
 /* generate a light map from a bump texture */
 static bool _rkglTextureBumpLightMap(zTexture *bump)
@@ -311,9 +315,11 @@ bool rkglTextureBumpReadFile(zTexture *bump, char *filename)
 /* bump map using GLSL */
 
 /* create a bump map */
+/*
 bool rkglTextureBumpReadFileGLSL(zTexture *bump, char *filename)
 {
   return _rkglTextureBumpNormalMap( bump, filename );
 }
+*/
 
 #endif /* __ROKI_GL_USE_GLEW */
