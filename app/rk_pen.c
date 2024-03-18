@@ -467,7 +467,7 @@ void rk_penInit(void)
     }
     if( attr.disptype == RKGL_STICK || attr.disptype == RKGL_ELLIPS )
       attr.disptype = RKGL_FACE;
-    env = rkglMShapeEntry( &envshape, attr.disptype, &light );
+    env = rkglEntryMShape( &envshape, attr.disptype, &light );
     zMShape3DDestroy( &envshape );
     if( env < 0 ) exit( 1 );
   }

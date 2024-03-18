@@ -440,7 +440,7 @@ void rkAnimDraw(void)
   zListForEach( &anim_cell_list, cell ){
     rkglChainDraw( &cell->data.gc );
     if( opt[OPT_DRAW_COM].flag )
-      rkglChainCOMDraw( &cell->data.gc, 0.03 );
+      rkglChainDrawCOM( &cell->data.gc );
   }
   if( env ) glCallList( env );
 }
@@ -492,7 +492,7 @@ void rkAnimLoadEnv(void)
     rkChainDestroy( &chain_env );
   } else
   if( rkAnimMShapeReadZTK( &ms_env, opt[OPT_ENVFILE].arg ) ){
-    env = rkglMShapeEntry( &ms_env, attr.disptype, &light );
+    env = rkglEntryMShape( &ms_env, attr.disptype, &light );
     zMShape3DDestroy( &ms_env );
   } else{
     ZOPENERROR( opt[OPT_ENVFILE].arg );
