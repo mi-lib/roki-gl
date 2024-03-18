@@ -5,15 +5,15 @@ rkglLight light;
 
 #define NUM_CHAIN 5
 rkChain chain[NUM_CHAIN];
-rkglChain gr[NUM_CHAIN];
+rkglChain gc[NUM_CHAIN];
 
 void draw_scene(void)
 {
   int i;
 
   for( i=0; i<NUM_CHAIN; i++ ){
-    rkglChainSetName( &gr[i], i );
-    rkglChainDraw( &gr[i] );
+    rkglChainSetName( &gc[i], i );
+    rkglChainDraw( &gc[i] );
   }
 }
 
@@ -32,7 +32,7 @@ static int selected_link = -1;
 void reset_link(void)
 {
   if( selected_chain < 0 || selected_link < 0 ) return;
-  rkglChainLinkReset( &gr[selected_chain], selected_link );
+  rkglChainResetLinkOptic( &gc[selected_chain], selected_link );
   selected_chain = -1;
   selected_link = -1;
 }
@@ -44,15 +44,15 @@ void select_link(rkglSelectionBuffer *sb)
 
   reset_link();
   for( i=0; i<NUM_CHAIN; i++ ){
-    if( ( selected_link = rkglChainLinkFindSelected( &gr[i], sb ) ) >= 0 ){
+    if( ( selected_link = rkglChainLinkFindSelected( &gc[i], sb ) ) >= 0 ){
       selected_chain = i;
       break;
     }
   }
   if( selected_chain < 0 ) return;
   zOpticalInfoCreateSimple( &oi_alt, 1.0, 0.0, 0.0, NULL );
-  gr[selected_chain].attr.disptype = RKGL_FACE;
-  rkglChainLinkAlt( &gr[selected_chain], selected_link, &oi_alt, &gr[selected_chain].attr, &light );
+  gc[selected_chain].attr.disptype = RKGL_FACE;
+  rkglChainAlternateLinkOptic( &gc[selected_chain], selected_link, &oi_alt, &light );
 }
 
 void move_link(double angle)
@@ -109,7 +109,7 @@ void keyboard(unsigned char key, int x, int y)
   case 'h': move_link(-zDeg2Rad(5) ); break;
   case 'q': case 'Q': case '\033':
     for( i=0; i<NUM_CHAIN; i++ ){
-      rkglChainUnload( &gr[i] );
+      rkglChainUnload( &gc[i] );
       rkChainDestroy( &chain[i] );
     }
     exit( EXIT_SUCCESS );
@@ -119,7 +119,6 @@ void keyboard(unsigned char key, int x, int y)
 
 void init(void)
 {
-  rkglChainAttr attr;
   int i;
 
   rkglBGSet( &cam, 0.5, 0.5, 0.5 );
@@ -129,10 +128,9 @@ void init(void)
   rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
   rkglLightMove( &light, 1, 3, 6 );
 
-  rkglChainAttrInit( &attr );
   for( i=0; i<NUM_CHAIN; i++ ){
     rkChainReadZTK( &chain[i], "../model/puma.ztk" );
-    rkglChainLoad( &gr[i], &chain[i], &attr, &light );
+    rkglChainLoad( &gc[i], &chain[i], NULL, &light );
     zVec3DCreate( rkChainLinkOrgPos(&chain[i],0), 0, 0.3*i-0.9, 0 );
     rkChainUpdateFK( &chain[i] );
   }

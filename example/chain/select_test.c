@@ -4,14 +4,14 @@ rkglCamera cam;
 rkglLight light;
 
 rkChain chain;
-rkglChain gr;
+rkglChain gc;
 
 #define NAME_CHAIN 0
 
 void draw_scene(void)
 {
-  rkglChainSetName( &gr, NAME_CHAIN );
-  rkglChainDraw( &gr );
+  rkglChainSetName( &gc, NAME_CHAIN );
+  rkglChainDraw( &gc );
 }
 
 void display(void)
@@ -28,7 +28,7 @@ static int selected_link = -1;
 void reset_link(void)
 {
   if( selected_link >= 0 ){
-    rkglChainLinkReset( &gr, selected_link );
+    rkglChainResetLinkOptic( &gc, selected_link );
     selected_link = -1;
   }
 }
@@ -38,10 +38,10 @@ void select_link(rkglSelectionBuffer *sb)
   zOpticalInfo oi_alt;
 
   reset_link();
-  if( ( selected_link = rkglChainLinkFindSelected( &gr, sb ) ) < 0 ) return;
+  if( ( selected_link = rkglChainLinkFindSelected( &gc, sb ) ) < 0 ) return;
   zOpticalInfoCreateSimple( &oi_alt, 1.0, 0.0, 0.0, NULL );
-  gr.attr.disptype = RKGL_FACE;
-  rkglChainLinkAlt( &gr, selected_link, &oi_alt, &gr.attr, &light );
+  gc.attr.disptype = RKGL_FACE;
+  rkglChainAlternateLinkOptic( &gc, selected_link, &oi_alt, &light );
 }
 
 void move_link(double angle)
@@ -95,7 +95,7 @@ void keyboard(unsigned char key, int x, int y)
   case 'g': move_link( zDeg2Rad(5) ); break;
   case 'h': move_link(-zDeg2Rad(5) ); break;
   case 'q': case 'Q': case '\033':
-    rkglChainUnload( &gr );
+    rkglChainUnload( &gc );
     rkChainDestroy( &chain );
     exit( EXIT_SUCCESS );
   default: ;
@@ -104,8 +104,6 @@ void keyboard(unsigned char key, int x, int y)
 
 void init(void)
 {
-  rkglChainAttr attr;
-
   rkglBGSet( &cam, 0.5, 0.5, 0.5 );
   rkglCASet( &cam, 1, 1, 1, 45, -30, 0 );
 
@@ -113,9 +111,8 @@ void init(void)
   rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
   rkglLightMove( &light, 1, 3, 6 );
 
-  rkglChainAttrInit( &attr );
   rkChainReadZTK( &chain, "../model/puma.ztk" );
-  rkglChainLoad( &gr, &chain, &attr, &light );
+  rkglChainLoad( &gc, &chain, NULL, &light );
 }
 
 int main(int argc, char *argv[])

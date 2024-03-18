@@ -208,7 +208,7 @@ void rk_seqInit(void)
       rk_seqUsage();
       exit( 1 );
     }
-    env = rkglMShapeEntry( &envshape, attr.disptype, &light );
+    env = rkglEntryMShape( &envshape, attr.disptype, &light );
     zMShape3DDestroy( &envshape );
     if( env < 0 ) exit( 1 );
   }
