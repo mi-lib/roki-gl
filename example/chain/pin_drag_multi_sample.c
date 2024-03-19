@@ -1,62 +1,6 @@
 #include <roki/rk_cd.h>
 #include <roki_gl/roki_glfw.h>
 
-/* This is suggstion code for rkgl_chain.c **************************************/
-void rkglChainLinkDrawOpticalAlt(rkglChain *gc, int id, double alpha, zOpticalInfo *oi_alt, rkglLight *light)
-{
-  zShapeListCell *sp;
-  rkLink *link;
-  double org_alpha;
-  zOpticalInfo *oi;
-  zShape3D *s;
-  link = rkChainLink(gc->chain,id);
-  if( !gc->info[id].visible || rkLinkShapeIsEmpty( link ) ) return;
-  glPushMatrix();
-  rkglXform( rkLinkWldFrame(link) );
-  zListForEach( rkLinkShapeList(link), sp ){
-    s = zShapeListCellShape(sp);
-    oi = zShape3DOptic(s);
-    org_alpha = oi->alpha;
-    oi->alpha = alpha;
-    rkglShape( s, oi_alt, RKGL_FACE, light );
-    oi->alpha = org_alpha;
-  }
-  glPopMatrix();
-}
-
-int rkglChainDrawOpticalAlt(rkglChain *gc, double alpha, zOpticalInfo *oi_alt[], rkglLight *light)
-{
-  int i, result;
-
-  result = rkglBeginList();
-  for( i=0; i<rkChainLinkNum(gc->chain); i++ )
-    rkglChainLinkDrawOpticalAlt( gc, i, alpha, oi_alt[i], light );
-  glEndList();
-  return result;
-}
-
-int rkglChainCreatePhantomDisplay(rkChain* chain, double alpha, zOpticalInfo **oi_alt, rkglLight* light)
-{
-  int i, display_id;
-  rkglChain display_gr;
-  rkglChainAttr attr;
-
-  rkglChainAttrInit( &attr );
-  if( !rkglChainLoad( &display_gr, chain, &attr, light ) ){
-    ZRUNWARN( "Failed rkglChainLoad(&display_gr)" );
-    return -1;
-  }
-  display_id = rkglChainDrawOpticalAlt( &display_gr, alpha, &oi_alt[0], light);
-  for( i=0; i < rkChainLinkNum( chain ); i++ ){
-    if( oi_alt[i] ) zOpticalInfoDestroy( oi_alt[i] );
-  }
-  rkglChainUnload( &display_gr );
-
-  return display_id;
-}
-/* end of suggstion code for rkgl_chain.c ***************************************/
-
-
 /* #define DEBUG_PRINT */
 #ifdef DEBUG_PRINT
 #define debug_printf(...) printf(__VA_ARGS__)
@@ -183,11 +127,11 @@ void rkglChainUnload_for_rkglChainBlock(rkglChainBlock *gcb)
 
 void reset_link_drawing(int new_chain_id, int new_link_id)
 {
-  debug_printf( "reset link     : rkglChain[%d].info[%d] : list = %d, ", new_chain_id, new_link_id, grs[new_chain_id].glChain.info[new_link_id].list );
-  debug_printf( "_list_backup = %d, ---> ", grs[new_chain_id].glChain.info[new_link_id]._list_backup );
-  rkglChainLinkReset( &grs[new_chain_id].glChain, new_link_id );
-  debug_printf( "list = %d, ", grs[new_chain_id].glChain.info[new_link_id].list );
-  debug_printf( "_list_backup = %d\n", grs[new_chain_id].glChain.info[new_link_id]._list_backup );
+  debug_printf( "reset link     : rkglChain[%d].linkinfo[%d] : list = %d, ", new_chain_id, new_link_id, grs[new_chain_id].glChain.linkinfo[new_link_id].list );
+  debug_printf( "_list_backup = %d, ---> ", grs[new_chain_id].glChain.linkinfo[new_link_id]._list_backup );
+  rkglChainResetLinkOptic( &grs[new_chain_id].glChain, new_link_id );
+  debug_printf( "list = %d, ", grs[new_chain_id].glChain.linkinfo[new_link_id].list );
+  debug_printf( "_list_backup = %d\n", grs[new_chain_id].glChain.linkinfo[new_link_id]._list_backup );
 }
 
 /* draw FrameHandle parts shape */
@@ -217,18 +161,18 @@ void draw_chain(void)
 }
 
 void draw_alternate_link(rkglChain *gc, int chain_id, int id, zOpticalInfo *oi_alt, rkglChainAttr *attr, rkglLight *light){
-  debug_printf( "alternate link : rkglChain[%d].info[%d] : list = %d, ", chain_id, id, gc->info[id].list );
-  debug_printf( "_list_backup = %d, ---> ", gc->info[id]._list_backup );
+  debug_printf( "alternate link : rkglChain[%d].linkinfo[%d] : list = %d, ", chain_id, id, gc->info[id].list );
+  debug_printf( "_list_backup = %d, ---> ", gc->linkinfo[id]._list_backup );
   /* TODO : reuse selected link list value */
   /* (the current implementation generates new list value by glNewList() ) */
-  rkglChainLinkAlt( gc, id, oi_alt, attr, light );
-  debug_printf( "list = %d, ", gc->info[id].list );
-  debug_printf( "_list_backup = %d\n", gc->info[id]._list_backup );
+  rkglChainAlternateLinkOptic( gc, id, oi_alt, light );
+  debug_printf( "list = %d, ", gc->linkinfo[id].list );
+  debug_printf( "_list_backup = %d\n", gc->linkinfo[id]._list_backup );
 }
 
 bool create_pindrag_link_color(int chain_id, int link_id, int pin, bool is_alt, bool is_selected, zOpticalInfo* oi_alt)
 {
-  /* re-drawing the selected link once after proccessing with rkglChainLinkReset() */
+  /* re-drawing the selected link once after proccessing with rkglChainResetLinkOptic() */
   if( is_alt ) grs[chain_id].glChain.attr.disptype = RKGL_FACE;
   if( is_alt && pin == PIN_LOCK_6D ){
     /* Red & semi-transparent*/
@@ -266,7 +210,7 @@ void draw_collision_link(void)
   zOpticalInfoCreateSimple( &oi_alt, 1.0, 0.0, 0.0, NULL );
   cdInfoCell *cdcell;
   zListForEachRew( &g_cdlist, cdcell ){
-    if( grs[cdcell->data.chain_id].glChain.info[cdcell->data.link_id]._list_backup==-1 ){
+    if( grs[cdcell->data.chain_id].glChain.linkinfo[cdcell->data.link_id]._list_backup==-1 ){
       grs[cdcell->data.chain_id].glChain.attr.disptype = RKGL_FACE;
       draw_alternate_link( &grs[cdcell->data.chain_id].glChain, cdcell->data.chain_id, cdcell->data.link_id, &oi_alt, &grs[cdcell->data.chain_id].glChain.attr, &g_light );
     }
@@ -277,17 +221,14 @@ void draw_collision_link(void)
 void draw_all_chain_link(void)
 {
   int chain_id, link_id;
-  bool is_pindrag;
 
   draw_collision_link();
   for( chain_id=0; chain_id < g_chainNUM; chain_id++ ){
+    rkglChainDraw( &grs[chain_id].glChain );
     for( link_id=0; link_id < rkChainLinkNum(grs[chain_id].glChain.chain); link_id++ ){
-      is_pindrag = false;
-      if( grs[chain_id].glChain.info[link_id]._list_backup == -1 &&
+      if( grs[chain_id].glChain.linkinfo[link_id]._list_backup == -1 &&
           !grs[chain_id].info2[link_id].is_collision )
-        is_pindrag = draw_pindrag_link( chain_id, link_id, true );
-      if( !is_pindrag )
-        rkglChainLinkDraw( &grs[chain_id].glChain, link_id );
+        draw_pindrag_link( chain_id, link_id, true );
     }
   }
 }
@@ -310,7 +251,11 @@ void display(GLFWwindow* window)
   rkglClear();
 
   draw_scene();
-  glfwSwapBuffers( window );
+}
+
+void clear_display(void)
+{
+  rkglClear();
 }
 
 
@@ -601,11 +546,13 @@ int create_original_chain_phantom(int chain_id, ghostInfo* backup_ghost_info)
       /* other is Transparency */
       oi_alt[link_id] = NULL;
     }
+    rkglChainAlternateLinkOptic( &grs[chain_id].glChain, link_id, oi_alt[link_id], &g_light );
     /* store the backup of pinInfo */
     backup_ghost_info->phantom_pinfo[link_id].pin = grs[chain_id].info2[link_id].pin;
   }
-
-  display_id = rkglChainCreatePhantomDisplay( chain, alpha, &oi_alt[0], &g_light);
+  display_id = rkglBeginList();
+  rkglChainPhantomize( &grs[chain_id].glChain, alpha, &g_light );
+  glEndList();
 
   /* store the backup of chain_id, q */
   backup_ghost_info->chain_id = chain_id;
@@ -935,11 +882,15 @@ rkChain *extend_rkChainReadZTK(rkChain *chain, char *pathname)
   return chain;
 }
 
+void setDefaultCallbackParam(void){
+  rkglSetDefaultCallbackParam( &g_cam, 1.0, g_znear, g_zfar, 1.0, 5.0 );
+}
+
 bool init(void)
 {
   int i;
 
-  rkglSetDefaultCallbackParam( &g_cam, 1.0, g_znear, g_zfar, 1.0, 5.0 );
+  setDefaultCallbackParam();
 
   rkglBGSet( &g_cam, 0.5, 0.5, 0.5 );
   rkglCASet( &g_cam, 0, 0, 0, 45, -30, 0 );
@@ -1022,6 +973,7 @@ int main(int argc, char *argv[])
   while ( glfwWindowShouldClose( g_window ) == GL_FALSE ){
     display(g_window);
     glfwPollEvents();
+    glfwSwapBuffers( g_window );
   }
   glfwDestroyWindow( g_window );
   glfwTerminate();
