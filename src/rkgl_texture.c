@@ -289,6 +289,7 @@ static bool _rkglTextureBumpLightMap(zTexture *bump)
 }
 
 /* create a bump map */
+/*
 bool rkglTextureBumpReadFile(zTexture *bump, char *filename)
 {
   glActiveTexture( GL_TEXTURE0 );
@@ -310,6 +311,7 @@ bool rkglTextureBumpReadFile(zTexture *bump, char *filename)
   rkglTextureUnbind();
   return true;
 }
+*/
 
 #ifdef __ROKI_GL_USE_GLEW
 /* bump map using GLSL */
