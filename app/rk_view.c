@@ -156,7 +156,7 @@ void rk_viewReadModel(void)
   }
   if( opt[OPT_AUTO].flag )
     if( !zMShape3DBBall( &ms, &bball ) ) exit( 1 );
-  model = rkglMShapeEntry( &ms,
+  model = rkglEntryMShape( &ms,
     opt[OPT_WIREFRAME].flag ? RKGL_WIREFRAME : RKGL_FACE, &light );
   zMShape3DDestroy( &ms );
   if( model < 0 ) exit( 1 );
