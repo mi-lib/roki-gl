@@ -237,7 +237,7 @@ bool rkglChainLoadKeyframeInfo(rkChain *chain)
       return false;
     }
     for( link_id=0; link_id < rkChainLinkNum(chain); link_id++ ){
-      kf->pinfo[link_id].pin = test_pin[path_id][link_id];
+      kf->pinfo[link_id].pin = (pinStatus)(test_pin[path_id][link_id]);
       kf->pinfo[link_id].cell_size = IK_CONSTRAINED_CELL_SIZE;
       switch( kf->pinfo[link_id].pin ){
       case PIN_LOCK_6D:
@@ -563,7 +563,7 @@ bool interpolate_path(rkChain* chain, keyFrameInfoArray* keyframe_array, p2pPath
     for( idx=0; idx < TEST_PATH_LINK_SIZE; idx++ ){
       test_ref_link_id = test_ref_path[path_id][idx].path_link_id;
       test_ref_cell_type = test_ref_path[path_id][idx].cell_type;
-      test_ref_cid = get_constrained_index_from_ikCellType( test_ref_cell_type );
+      test_ref_cid = get_constrained_index_from_ikCellType( (ikCellType)(test_ref_cell_type) );
       p2p_buf->all_link_path_info.buf[test_ref_link_id].c[test_ref_cid].is_path = true;
       zNURBS3D* nurbs;
       switch ( test_ref_cell_type ){
