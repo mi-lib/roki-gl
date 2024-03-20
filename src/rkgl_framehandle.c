@@ -109,8 +109,7 @@ bool rkglFrameHandleIsInRotation(rkglFrameHandle *handle)
 int rkglFrameHandleAnchor(rkglFrameHandle *handle, rkglSelectionBuffer *sb, rkglCamera *cam, int x, int y)
 {
   rkglFrameHandleUnselect( handle );
-  if( rkglSelectionName(sb,0) == handle->name &&
-      rkglSelectionName(sb,1) >= 0 && rkglSelectionName(sb,1) < 6 ){
+  if( rkglSelectionName(sb,0) == handle->name && rkglSelectionName(sb,1) < 6 ){
     handle->selected_id = rkglSelectionName(sb,1);
     handle->_depth = rkglSelectionZnearDepth(sb);
     rkglUnproject( cam, x, y, handle->_depth, &handle->_anchor );

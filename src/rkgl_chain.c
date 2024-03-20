@@ -248,6 +248,6 @@ int rkglChainLinkFindSelected(rkglChain *gc, rkglSelectionBuffer *sb)
 {
   return ( rkglSelectionName(sb,0) == gc->name &&
            rkglSelectionName(sb,1) >= 0 &&
-           rkglSelectionName(sb,1) < rkChainLinkNum(gc->chain) ) ?
+           rkglSelectionName(sb,1) < (uint)rkChainLinkNum(gc->chain) ) ?
     rkglSelectionName(sb,1) : -1;
 }

@@ -1,3 +1,8 @@
+2024. 3.21. Modified rkglFrameHandleAnchor not to evaluate the minimum bound of rkglSelectionName. [rkgl_framehandle]
+2024. 3.21. Modified type of name member of rkglFrameHandle from int to uint. [rkgl_framehandle]
+2024. 3.21. Debugged _rkglReadBufferImage. [roki_glx]
+2024. 3.21. Debugged rkglChainLinkFindSelected. [rkgl_chain]
+2024. 3.21. Debugged rkglSelectionPrintName. [rkgl_select]
 2024. 3.18. Added rkglChainPhantomize and _rkglChainPhantomizeLink. [rkgl_chain]
 2024. 3.18. Abolished rkglChainDrawSeethru and _rkglChainDrawLinkSeethru. [rkgl_chain]
 2024. 3.18. Renamed info of rkglChain to linkinfo. [rkgl_chain]

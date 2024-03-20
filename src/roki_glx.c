@@ -167,12 +167,12 @@ void rkglMouseDragFuncGLX(rkglCamera *cam)
 static void _rkglReadBufferImage(zxImage *img, GLuint type, int bpp, int os1, int os2)
 {
   GLint view[4];
-  int i, j, k;
+  uint i, j, k;
   zxPixelManip pm;
   ubyte *buf;
 
   glGetIntegerv( GL_VIEWPORT, view );
-  buf = malloc( sizeof(ubyte) * view[2] * view[3] * bpp );
+  buf = (ubyte *)malloc( sizeof(ubyte) * view[2] * view[3] * bpp );
   rkglReadBuffer( type, view[0], view[1], view[2], view[3], buf );
   zxImageAllocDefault( img, view[2], view[3] );
   zxPixelManipSetDefault( &pm );
