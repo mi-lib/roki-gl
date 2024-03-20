@@ -120,7 +120,7 @@ void rk_penShowJointDis(void)
   for( i=0; i<rkChainLinkNum(&chain); i++ ){
     printf( "[link:%d:%s] \t", i, rkChainLinkName(&chain,i) );
     rkChainLinkJointGetDis( &chain, i, dis );
-    for( j=0; j<rkChainLinkJointSize(&chain,i); j++ )
+    for( j=0; j<rkChainLinkJointDOF(&chain,i); j++ )
       printf( "%.6g ", dis[j] );
     printf( "\n" );
   }
@@ -190,8 +190,8 @@ void rk_penSetJointDis(void)
   rkLinkJointGetMax( l, max );
   rk_penRad2DegJointDis( l, min );
   rk_penRad2DegJointDis( l, max );
-  for( i=0; i<rkLinkJointSize(l); i++ ){
-    printf( "enter value %d/%d [%.10g-%.10g]> ", i, rkLinkJointSize(l), min[i], max[i] );
+  for( i=0; i<rkLinkJointDOF(l); i++ ){
+    printf( "enter value %d/%d [%.10g-%.10g]> ", i, rkLinkJointDOF(l), min[i], max[i] );
     zFDouble( stdin, &dis[i] );
   }
   rk_penDeg2RadJointDis( l, dis );
@@ -224,7 +224,7 @@ void rk_penSetLinkPos(void)
 
   rkChainCreateIK( &chain );
   for( lp=l; lp!=rkChainRoot(&chain); lp=rkLinkParent(lp) )
-    if( rkLinkJointSize(lp) > 0 ){
+    if( rkLinkJointDOF(lp) > 0 ){
       printf( "register joint [%s].\n", zName(lp) );
       rkChainRegIKJointID( &chain, lp - rkChainRoot(&chain), 0.001 );
     }
@@ -260,7 +260,7 @@ void rk_penSetLinkFrame(void)
 
   rkChainCreateIK( &chain );
   for( lp=l; lp!=rkChainRoot(&chain); lp=rkLinkParent(lp) )
-    if( rkLinkJointSize(lp) > 0 ){
+    if( rkLinkJointDOF(lp) > 0 ){
       printf( "register joint [%s].\n", zName(lp) );
       rkChainRegIKJointID( &chain, lp - rkChainRoot(&chain), 0.001 );
     }
@@ -467,7 +467,7 @@ void rk_penInit(void)
     }
     if( attr.disptype == RKGL_STICK || attr.disptype == RKGL_ELLIPS )
       attr.disptype = RKGL_FACE;
-    env = rkglMShapeEntry( &envshape, attr.disptype, &light );
+    env = rkglEntryMShape( &envshape, attr.disptype, &light );
     zMShape3DDestroy( &envshape );
     if( env < 0 ) exit( 1 );
   }

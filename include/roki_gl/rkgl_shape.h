@@ -71,10 +71,10 @@ __ROKI_GL_EXPORT void rkglPHBump(zPH3D *ph, zTexture *bump, rkglLight *light);
 /* shape and multishape */
 
 __ROKI_GL_EXPORT void rkglShape(zShape3D *s, zOpticalInfo *oi_alt, ubyte disptype, rkglLight *light);
-__ROKI_GL_EXPORT int rkglShapeEntry(zShape3D *s, zOpticalInfo *oi_alt, ubyte disptype, rkglLight *light);
+__ROKI_GL_EXPORT int rkglEntryShape(zShape3D *s, zOpticalInfo *oi_alt, ubyte disptype, rkglLight *light);
 
 __ROKI_GL_EXPORT void rkglMShape(zMShape3D *s, ubyte disptype, rkglLight *light);
-__ROKI_GL_EXPORT int rkglMShapeEntry(zMShape3D *s, ubyte disptype, rkglLight *light);
+__ROKI_GL_EXPORT int rkglEntryMShape(zMShape3D *s, ubyte disptype, rkglLight *light);
 
 /* point cloud */
 

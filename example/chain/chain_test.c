@@ -1,7 +1,7 @@
 #include <roki_gl/roki_glut.h>
 
 rkChain chain;
-rkglChain gr;
+rkglChain gc;
 
 rkglCamera cam;
 rkglLight light;
@@ -15,7 +15,7 @@ void display(void)
 
   glPushMatrix();
   rkglClear();
-  rkglChainDraw( &gr );
+  rkglChainDraw( &gc );
   if( clone_id >= 0 ) glCallList( clone_id );
   glPopMatrix();
   glutSwapBuffers();
@@ -27,11 +27,11 @@ void resize(int w, int h)
   rkglFrustumScaleH( &cam, 1.0/1000, 0.5, 10 );
 }
 
-#define toggle_disptype( gr, type ) do{\
-  if( (gr)->attr.disptype & (type) )\
-    (gr)->attr.disptype &= ~(type);\
+#define toggle_disptype( gc, type ) do{\
+  if( (gc)->attr.disptype & (type) )\
+    (gc)->attr.disptype &= ~(type);\
   else\
-    (gr)->attr.disptype |= (type);\
+    (gc)->attr.disptype |= (type);\
 } while(0)
 
 void keyboard(unsigned char key, int x, int y)
@@ -56,7 +56,9 @@ void keyboard(unsigned char key, int x, int y)
       eprintf( ">>> clone!\n" );
       rkChainLinkOrgPos(&chain,0)->e[zY] += 0.5;
       rkChainUpdateFK( &chain );
-      clone_id = rkglChainDrawSeethru( &gr, 0.5, &light );
+      clone_id = rkglBeginList();
+      rkglChainPhantomize( &gc, 0.5, &light );
+      glEndList();
       rkChainLinkOrgPos(&chain,0)->e[zY] -= 0.5;
       rkChainUpdateFK( &chain );
     }
@@ -72,45 +74,45 @@ void keyboard(unsigned char key, int x, int y)
     rkChainUpdateFK( &chain );
     break;
   case 'r':
-    toggle_disptype( &gr, RKGL_FACE );
-    rkglChainLinkAlt( &gr, 3, &oi_alt, &gr.attr, &light );
+    toggle_disptype( &gc, RKGL_FACE );
+    rkglChainAlternateLinkOptic( &gc, 3, &oi_alt, &light );
     break;
   case 'R':
-    rkglChainLinkReset( &gr, 3 );
+    rkglChainResetLinkOptic( &gc, 3 );
     break;
   case 'b':
-    toggle_disptype( &gr, RKGL_BB );
-    rkglChainUnload( &gr );
-    rkglChainLoad( &gr, &chain, &gr.attr, &light );
+    toggle_disptype( &gc, RKGL_BB );
+    rkglChainUnload( &gc );
+    rkglChainLoad( &gc, &chain, &gc.attr, &light );
     break;
   case 's':
-    toggle_disptype( &gr, RKGL_STICK );
-    rkglChainUnload( &gr );
-    rkglChainLoad( &gr, &chain, &gr.attr, &light );
+    toggle_disptype( &gc, RKGL_STICK );
+    rkglChainUnload( &gc );
+    rkglChainLoad( &gc, &chain, &gc.attr, &light );
     break;
   case 'w':
-    toggle_disptype( &gr, RKGL_WIREFRAME );
-    rkglChainUnload( &gr );
-    rkglChainLoad( &gr, &chain, &gr.attr, &light );
+    toggle_disptype( &gc, RKGL_WIREFRAME );
+    rkglChainUnload( &gc );
+    rkglChainLoad( &gc, &chain, &gc.attr, &light );
     break;
   case 'f':
-    toggle_disptype( &gr, RKGL_FACE );
-    rkglChainUnload( &gr );
-    rkglChainLoad( &gr, &chain, &gr.attr, &light );
+    toggle_disptype( &gc, RKGL_FACE );
+    rkglChainUnload( &gc );
+    rkglChainLoad( &gc, &chain, &gc.attr, &light );
     break;
   case 'm':
-    toggle_disptype( &gr, RKGL_FRAME );
-    rkglChainUnload( &gr );
-    rkglChainLoad( &gr, &chain, &gr.attr, &light );
+    toggle_disptype( &gc, RKGL_FRAME );
+    rkglChainUnload( &gc );
+    rkglChainLoad( &gc, &chain, &gc.attr, &light );
     break;
   case 'q': case 'Q': case '\033':
-    rkglChainUnload( &gr );
+    rkglChainUnload( &gc );
     rkChainDestroy( &chain );
     exit( EXIT_SUCCESS );
   default:
     id = key - '0';
-    if( id >=0 && id < rkChainLinkNum(&chain) && gr.info[id].list >= 0 ){
-      gr.info[id].visible = 1 - gr.info[id].visible;
+    if( id >=0 && id < rkChainLinkNum(&chain) && gc.linkinfo[id].list >= 0 ){
+      gc.linkinfo[id].visible = 1 - gc.linkinfo[id].visible;
       glutPostRedisplay();
     }
   }
@@ -129,7 +131,7 @@ void init(void)
 
   rkglChainAttrInit( &attr );
   rkChainReadZTK( &chain, "../model/puma" );
-  rkglChainLoad( &gr, &chain, &attr, &light );
+  rkglChainLoad( &gc, &chain, &attr, &light );
 }
 
 int main(int argc, char *argv[])
