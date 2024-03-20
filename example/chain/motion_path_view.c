@@ -1,60 +1,5 @@
 #include <roki_gl/roki_glfw.h>
 
-/* This is suggstion code for rkgl_chain.c **************************************/
-void rkglChainLinkDrawOpticalAlt(rkglChain *gc, int id, double alpha, zOpticalInfo *oi_alt, rkglLight *light)
-{
-  zShapeListCell *sp;
-  rkLink *link;
-  double org_alpha;
-  zOpticalInfo *oi;
-  zShape3D *s;
-  link = rkChainLink(gc->chain,id);
-  if( !gc->info[id].visible || rkLinkShapeIsEmpty( link ) ) return;
-  glPushMatrix();
-  rkglXform( rkLinkWldFrame(link) );
-  zListForEach( rkLinkShapeList(link), sp ){
-    s = zShapeListCellShape(sp);
-    oi = zShape3DOptic(s);
-    org_alpha = oi->alpha;
-    oi->alpha = alpha;
-    rkglShape( s, oi_alt, RKGL_FACE, light );
-    oi->alpha = org_alpha;
-  }
-  glPopMatrix();
-}
-
-int rkglChainDrawOpticalAlt(rkglChain *gc, double alpha, zOpticalInfo *oi_alt[], rkglLight *light)
-{
-  int i, result;
-
-  result = rkglBeginList();
-  for( i=0; i<rkChainLinkNum(gc->chain); i++ )
-    rkglChainLinkDrawOpticalAlt( gc, i, alpha, oi_alt[i], light );
-  glEndList();
-  return result;
-}
-
-int rkglChainCreatePhantomDisplay(rkChain* chain, double alpha, zOpticalInfo **oi_alt, rkglLight* light)
-{
-  int i, display_id;
-  rkglChain display_gr;
-  rkglChainAttr attr;
-
-  rkglChainAttrInit( &attr );
-  if( !rkglChainLoad( &display_gr, chain, &attr, light ) ){
-    ZRUNWARN( "Failed rkglChainLoad(&display_gr)" );
-    return -1;
-  }
-  display_id = rkglChainDrawOpticalAlt( &display_gr, alpha, &oi_alt[0], light);
-  for( i=0; i < rkChainLinkNum( chain ); i++ ){
-    if( oi_alt[i] ) zOpticalInfoDestroy( oi_alt[i] );
-  }
-  rkglChainUnload( &display_gr );
-
-  return display_id;
-}
-/* end of suggstion code for rkgl_chain.c ***************************************/
-
 GLFWwindow* g_window;
 
 /* rkglLinkInfo2.pin information */
@@ -217,6 +162,10 @@ static const GLdouble g_znear = -1000.0;
 static const GLdouble g_zfar  = 100.0;
 static double g_scale = 0.001;
 
+GLuint *g_tex_id; /* color buffer texture id */
+GLuint g_fb_id; /* frame buffer object id */
+GLuint g_rb_id; /* render buffer texture id */
+
 
 #define NAME_NURBS 100
 #define P2P_KEYFRAME_NUM 2
@@ -249,9 +198,12 @@ int createPinInfoDisplayList(rkChain* chain, pinInfo pinfo[], double alpha, rkgl
       /* Default */
       oi_alt[i] = NULL;
     }
+    rkglChainAlternateLinkOptic( &gr, i, oi_alt[i], light );
   } /* end of pin link color changed */
 
-  display_id = rkglChainCreatePhantomDisplay( chain, alpha, &oi_alt[0], light);
+  display_id = rkglBeginList();
+  rkglChainPhantomize( &gr, alpha, light );
+  glEndList();
 
   for( i=0; i < rkChainLinkNum( chain ); i++ )
     if( oi_alt[i] ) zOpticalInfoDestroy( oi_alt[i] );
@@ -422,7 +374,7 @@ double accumulate_normalized_joint_norm(rkChain* chain, double s, zVec q1, zVec 
   nq2 = zVecAlloc( zVecSize(q2) );
   jid = 0.0;
   for( link_id=0; link_id < rkChainLinkNum(chain); link_id++ ){
-    jsize = rkChainLinkJointSize(chain, link_id);
+    jsize = rkChainLinkJointDOF(chain, link_id);
     if( jsize < 1.0 ) continue;
     rkLinkJointGetMin( rkChainLink( chain, link_id ), min );
     rkLinkJointGetMax( rkChainLink( chain, link_id ), max );
@@ -953,6 +905,11 @@ void release_path()
     zArrayFree( &g_p2p_array );
 }
 
+void change_pose(double s)
+{
+  pop_pose( s, &g_chain, &g_p2p_array );
+}
+
 void run_test(void)
 {
   set_constrained_mode_for_each_p2p_path( &g_keyframe_array, &g_p2p_array );
@@ -1035,7 +992,18 @@ void display(GLFWwindow* window)
   rkglClear();
 
   draw_scene();
-  glfwSwapBuffers( window );
+}
+
+void display_to_frame_buffer(GLFWwindow* window)
+{
+  glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, g_fb_id );
+  display( window );
+  glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, 0 );
+}
+
+void clear_display(void)
+{
+  rkglClear();
 }
 
 void motion(GLFWwindow* window, double x, double y)
@@ -1085,6 +1053,16 @@ void resize(GLFWwindow* window, int w, int h)
   rkglVPCreate( &g_cam, 0, 0, w, h );
   rkglOrthoScaleH( &g_cam, g_scale, g_znear, g_zfar );
 }
+
+void updata_texture_and_frame_buffer(int w, int h)
+{
+  if( g_tex_id == NULL )
+    return;
+  *g_tex_id = rkglTextureAssign( w, h, NULL );
+  g_rb_id = rkglFramebufferAttachRenderbuffer( w, h );
+  g_fb_id = rkglFramebufferAttachTexture( *g_tex_id );
+}
+
 
 void keyboard(GLFWwindow* window, unsigned int key)
 {
@@ -1153,6 +1131,15 @@ rkChain *extend_rkChainReadZTK(rkChain *chain, char *pathname)
   chain = rkChainReadZTK( chain, filename );
   return_dir( cwd );
   return chain;
+}
+
+void setDefaultCallbackParam(void){
+  rkglSetDefaultCallbackParam( &g_cam, 1.0, g_znear, g_zfar, 1.0, 5.0 );
+}
+
+void set_texture_id(GLuint* tex_id)
+{
+  g_tex_id = tex_id;
 }
 
 bool init(void)
@@ -1232,6 +1219,7 @@ int main(int argc, char *argv[])
   while ( glfwWindowShouldClose( g_window ) == GL_FALSE ){
     display(g_window);
     glfwPollEvents();
+    glfwSwapBuffers( g_window );
   }
   glfwDestroyWindow( g_window );
   glfwTerminate();
