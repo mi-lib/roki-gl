@@ -704,30 +704,33 @@ void print_status(void)
 
 /* data handling ----------------------------------------------------------------- */
 
-bool create_empty_pindragIFData(pindragIFData** main_ptr)
+bool create_empty_pindragIFData(void** src)
 {
+  pindragIFData** main_ptr = (pindragIFData**)( src );
   if( !( *main_ptr = zAlloc( pindragIFData, 1 ) ) ){
     ZALLOCERROR();
     return false;
   }
   (*main_ptr)->modelfiles = NULL;
+
   return true;
 }
 
-void set_pindragIFData(pindragIFData* src)
+void set_pindragIFData(void* src)
 {
-  g_main = src;
+  g_main = (pindragIFData*)( src );
 }
 
-pindragIFData* get_pindragIFData()
+void* get_pindragIFData()
 {
-  return g_main;
+  return (void *)( g_main );
 }
 
-void destroy_pindragIFData(pindragIFData* main_ptr)
+void destroy_pindragIFData(void* src)
 {
   int i;
 
+  pindragIFData* main_ptr = (pindragIFData*)( src );
   for( i=0; i < main_ptr->chainNUM; i++ ){
     rkglChainUnload_for_rkglChainBlock( &main_ptr->gcs[i] );
     rkChainDestroy( &main_ptr->gcs[i].chain );
@@ -924,6 +927,17 @@ rkChain *extend_rkChainReadZTK(rkChain *chain, char *pathname)
   return chain;
 }
 
+void set_modelfiles( char* modelfiles[], int size )
+{
+  int i;
+
+  g_main->chainNUM = size;
+  g_main->modelfiles = zAlloc( char*, g_main->chainNUM );
+  for( i=0; i < g_main->chainNUM; i++ ) {
+    g_main->modelfiles[i] = modelfiles[i];
+  }
+}
+
 void setDefaultCallbackParam(void)
 {
   rkglSetDefaultCallbackParam( &g_main->cam, 1.0, g_znear, g_zfar, 1.0, 5.0 );
@@ -970,6 +984,7 @@ bool init(void)
   register_chain_for_CD( g_main->gcs );
 
   /* select */
+  g_main->selected.chain_id = 0;
   g_main->selected.link_id = -1;
   /* frame handle (NAME_FRAMEHANDLE = g_main->chainNUM + NAME_FRAMEHANDLE_OFFSET) */
   rkglFrameHandleCreate( &g_main->fh, g_main->chainNUM + NAME_FRAMEHANDLE_OFFSET, g_LENGTH, g_MAGNITUDE );
@@ -984,19 +999,13 @@ bool init(void)
 
 int main(int argc, char *argv[])
 {
-  int i;
-
   /* First of All, create pindragIFData g_mains */
-  pindragIFData* test_main_ptr = NULL;
+  void* test_main_ptr = NULL;
   create_empty_pindragIFData( &test_main_ptr );
   set_pindragIFData( test_main_ptr );
 
   if( argc > 1 ){
-    g_main->chainNUM = argc - 1;
-    g_main->modelfiles = zAlloc( char*, g_main->chainNUM );
-    for( i=0; i < g_main->chainNUM; i++ ) {
-      g_main->modelfiles[i] = argv[i+1];
-    }
+    set_modelfiles( &argv[1], argc - 1 );
   }
   if( rkglInitGLFW( &argc, argv ) < 0 ){
     return 1;
