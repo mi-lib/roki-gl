@@ -23,11 +23,14 @@ typedef struct{
   pinStatus pin;
 } pinInfo;
 
+#define IK_CONSTRAINED_CELL_SIZE 2
+
 typedef struct{
   bool is_selected;
   bool is_collision;
   pinStatus pin;
-  rkIKCell *cell[2];
+  rkIKCell *cell[IK_CONSTRAINED_CELL_SIZE];
+  int cell_size;
 } rkglLinkInfo2;
 
 /* the weight of pink link for IK */
@@ -90,6 +93,73 @@ typedef struct{
 
 pindragIFData *g_main;
 
+void copy_pindragIFData(void* _src, void* _dest)
+{
+  int chain_id, link_id, cell_id;
+
+  pindragIFData* src = (pindragIFData*)(_src);
+  pindragIFData* dest = (pindragIFData*)(_dest);
+  for( chain_id=0; chain_id<src->chainNUM; chain_id++){
+    /* copy char** modelfiles */
+    dest->modelfiles[chain_id] = zStrClone( src->modelfiles[chain_id] );
+    /* copy rkglChainBlock *gcs */
+    /* copy rkChain */
+    rkChain* src_chain = &src->gcs[chain_id].chain;
+    rkChain* dest_chain = &dest->gcs[chain_id].chain;
+    rkChainCopyState( src_chain, dest_chain );
+    for( link_id=0; link_id < rkChainLinkNum(src_chain); link_id++ ){
+      rkglLinkInfo *src_linkinfo = &src->gcs[chain_id].glChain.linkinfo[link_id];
+      rkglLinkInfo *dest_linkinfo = &dest->gcs[chain_id].glChain.linkinfo[link_id];
+      rkglLinkInfo2 *src_info2 = &src->gcs[chain_id].info2[link_id];
+      rkglLinkInfo2 *dest_info2 = &dest->gcs[chain_id].info2[link_id];
+      /* copy rkglLinkInfo */
+      dest_linkinfo->visible      = src_linkinfo->visible;
+      dest_linkinfo->list         = src_linkinfo->list;
+      dest_linkinfo->_list_backup = src_linkinfo->_list_backup;
+      if( src_linkinfo->_optic_alt != NULL ){
+        if( dest_linkinfo->_optic_alt == NULL ){
+          dest_linkinfo->_optic_alt = zAlloc( zOpticalInfo, 1 );
+          zOpticalInfoInit( dest_linkinfo->_optic_alt );
+        }
+        zOpticalInfoCopy( src_linkinfo->_optic_alt, dest_linkinfo->_optic_alt );
+      }
+      /* copy rkglLinkInfo2 */
+      dest_info2->is_selected  = src_info2->is_selected;
+      dest_info2->is_collision = src_info2->is_collision;
+      dest_info2->pin          = src_info2->pin;
+      dest_info2->cell_size    = src_info2->cell_size;
+      /* copy rkIKCell */
+      for( cell_id=0; cell_id < src_info2->cell_size; cell_id++){
+        rkIKCellCopy( src_info2->cell[cell_id], dest_info2->cell[cell_id] );
+      }
+    } /* end of for link_id = 0 -> rkChainLinkNum(src_chain) */
+    /* copy GLuint name */
+    dest->gcs[chain_id].glChain.name = src->gcs[chain_id].glChain.name;
+    /* not copy rkChain pointer chain* to be left unchanged */
+    /* copy rkglChainAttr attr */
+    rkglChainAttrCopy(&src->gcs[chain_id].glChain.attr, &dest->gcs[chain_id].glChain.attr);
+  }
+  /* copy selectInfo selected */
+  dest->selected.chain_id = src->selected.chain_id;
+  dest->selected.link_id   = src->selected.link_id;
+  zVec3DCopy( &src->selected.ap, &dest->selected.ap );
+  /* copy rkglFrameHandle fh */
+  memcpy( dest->fh.part, src->fh.part, 6);
+  zFrame3DCopy( &src->fh.frame, &dest->fh.frame );
+  dest->fh.name = src->fh.name;
+  dest->fh.selected_id = src->fh.selected_id;
+  zVec3DCopy( &src->fh._anchor, &dest->fh._anchor);
+  dest->fh._depth = src->fh._depth;
+  /* not copy chainNum, it must be guaranteed to be the same at init() */
+  /* not copy rkCD cd, because it is depends on the result of chain state */
+  /* not copy cdInfoCellList cdlist, the reason is the same as rkCD cd */
+  /* not copy bool is_sum_collision, the reason is the same as rkCD cd */
+  /* not copy ghostInfo ghost_info, keep destination as initial state(GHOST_MODE_OFF) */
+  /* copy rkglCamera cam */
+  rkglCameraCopy( &src->cam, &dest->cam );
+  /* not copy rkglLight light, it must be guaranteed to be the same at init() */
+  /* not copy rkglShadow shadow, the reason is the same above light */
+}
 
 static const GLdouble g_znear = -1000.0;
 static const GLdouble g_zfar  = 100.0;
@@ -119,6 +189,7 @@ bool rkglChainLoad_for_rkglChainBlock(rkglChainBlock *gcb, rkglLight *light )
   for( i=0; i < rkChainLinkNum(&gcb->chain); i++ ){
     gcb->info2[i].is_selected = false;
     gcb->info2[i].pin = PIN_LOCK_OFF;
+    gcb->info2[i].cell_size = IK_CONSTRAINED_CELL_SIZE;
   }
   return true;
 }
@@ -658,6 +729,42 @@ void update_alljoint_by_IK_with_ghost()
   unregister_link_for_IK( g_main->ghost_info.chain_id, -1 );
 }
 
+const int jointSize_of_chain(const int chain_id)
+{
+  return rkChainJointSize( &g_main->gcs[chain_id].chain );
+}
+
+zVec clone_q_state_zVec(const int chain_id)
+{
+  zVec dis; /* joints zVec pointer */
+  dis = zVecAlloc( jointSize_of_chain( chain_id ) );
+  rkChainGetJointDisAll( &g_main->gcs[chain_id].chain, dis );
+  return dis;
+}
+
+double* clone_q_state_array(const int chain_id)
+{
+  zVec dis = clone_q_state_zVec( chain_id );
+  return zArrayBuf(dis);
+}
+
+const int linkNum_of_chain(const int chain_id)
+{
+  return rkChainLinkNum( &g_main->gcs[chain_id].chain );
+}
+
+int* clone_pin_state_array(const int chain_id)
+{
+  int link_id;
+  int* pin_id;
+
+  pin_id = zAlloc( int, linkNum_of_chain( chain_id ) );
+  for( link_id=0; link_id < rkChainLinkNum( &g_main->gcs[chain_id].chain ); link_id++ ){
+    pin_id[link_id] = g_main->gcs[chain_id].info2[link_id].pin;
+  }
+  return pin_id;
+}
+
 
 void print_status(void)
 {
@@ -667,9 +774,7 @@ void print_status(void)
     printf("=== chain[%d] %s ========================================\n",
            chain_id, zName(&g_main->gcs[chain_id].chain));
     printf("- Joint ( Size ( Joints [m,rad] ) ) ------------------------\n");
-    zVec dis; /* joints zVec pointer */
-    dis = zVecAlloc( rkChainJointSize( &g_main->gcs[chain_id].chain ) );
-    rkChainGetJointDisAll( &g_main->gcs[chain_id].chain, dis );
+    zVec dis = clone_q_state_zVec( chain_id ); /* joints zVec pointer */
     printf("  "); zVecPrint(dis); printf("\n");
     zVecFree( dis );
     /* printf("- Pin Link ---------------------------------------\n"); */
@@ -952,10 +1057,12 @@ bool init(void)
   rkglBGSet( &g_main->cam, 0.5, 0.5, 0.5 );
   rkglCASet( &g_main->cam, 0, 0, 0, 45, -30, 0 );
 
-  glEnable(GL_LIGHTING);
-  rkglLightCreate( &g_main->light, 0.5, 0.5, 0.5, 0.6, 0.6, 0.6, 0.2, 0.2, 0.2 );
-  rkglLightMove( &g_main->light, 3, 5, 9 );
-  rkglLightSetAttenuationConst( &g_main->light, 1.0 );
+  if( rkglLightNum() == 0 ){
+    glEnable(GL_LIGHTING);
+    rkglLightCreate( &g_main->light, 0.5, 0.5, 0.5, 0.6, 0.6, 0.6, 0.2, 0.2, 0.2 );
+    rkglLightMove( &g_main->light, 3, 5, 9 );
+    rkglLightSetAttenuationConst( &g_main->light, 1.0 );
+  }
 
   if( g_main->modelfiles == NULL ){
     g_main->chainNUM = 1;
