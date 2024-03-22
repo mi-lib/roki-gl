@@ -114,8 +114,8 @@ void copy_pindragIFData(void* _src, void* _dest)
       rkglLinkInfo2 *dest_info2 = &dest->gcs[chain_id].info2[link_id];
       /* copy rkglLinkInfo */
       dest_linkinfo->visible      = src_linkinfo->visible;
-      dest_linkinfo->list         = src_linkinfo->list;
-      dest_linkinfo->_list_backup = src_linkinfo->_list_backup;
+      /* not copy display _list (GLint), because it must be unique for each keyframe */
+      /* not copy display _list_backup (GLint), the reason is the same as _list */
       if( src_linkinfo->_optic_alt != NULL ){
         if( dest_linkinfo->_optic_alt == NULL ){
           dest_linkinfo->_optic_alt = zAlloc( zOpticalInfo, 1 );
