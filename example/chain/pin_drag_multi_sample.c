@@ -130,7 +130,12 @@ void copy_pindragIFData(void* _src, void* _dest)
       dest_info2->cell_size    = src_info2->cell_size;
       /* copy rkIKCell */
       for( cell_id=0; cell_id < src_info2->cell_size; cell_id++){
-        rkIKCellCopy( src_info2->cell[cell_id], dest_info2->cell[cell_id] );
+        if( src_info2->cell[cell_id] != NULL ){
+          if( dest_info2->cell[cell_id] == NULL ){
+            dest_info2->cell[cell_id] = zAlloc( rkIKCell, 1 );
+          }
+          rkIKCellCopy( src_info2->cell[cell_id], dest_info2->cell[cell_id] );
+        }
       }
     } /* end of for link_id = 0 -> rkChainLinkNum(src_chain) */
     /* copy GLuint name */
@@ -138,7 +143,7 @@ void copy_pindragIFData(void* _src, void* _dest)
     /* not copy rkChain pointer chain* to be left unchanged */
     /* copy rkglChainAttr attr */
     rkglChainAttrCopy(&src->gcs[chain_id].glChain.attr, &dest->gcs[chain_id].glChain.attr);
-  }
+  } /* end of for chain_id = 0 -> chainNUM */
   /* copy selectInfo selected */
   dest->selected.chain_id = src->selected.chain_id;
   dest->selected.link_id   = src->selected.link_id;
@@ -189,6 +194,8 @@ bool rkglChainLoad_for_rkglChainBlock(rkglChainBlock *gcb, rkglLight *light )
   for( i=0; i < rkChainLinkNum(&gcb->chain); i++ ){
     gcb->info2[i].is_selected = false;
     gcb->info2[i].pin = PIN_LOCK_OFF;
+    gcb->info2[i].cell[0] = NULL;
+    gcb->info2[i].cell[1] = NULL;
     gcb->info2[i].cell_size = IK_CONSTRAINED_CELL_SIZE;
   }
   return true;
