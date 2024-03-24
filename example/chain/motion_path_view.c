@@ -361,7 +361,7 @@ bool clone_and_set_ref_path_link_info(int path_size, int path_link_size, int** i
     g_ref_path_link_info[path_id] = zAlloc( refPathLinkInfo, path_link_size );
     for( idx=0; idx < path_link_size; idx++ ){
       g_ref_path_link_info[path_id][idx].path_link_id = input_path_link_id[path_id][idx];
-      g_ref_path_link_info[path_id][idx].cell_type = input_cell_type[path_id][idx];
+      g_ref_path_link_info[path_id][idx].cell_type = (ikCellType)(input_cell_type[path_id][idx]);
     }
   }
   return true;
