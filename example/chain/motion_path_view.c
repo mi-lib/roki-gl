@@ -1,5 +1,211 @@
 #include <roki_gl/roki_glfw.h>
 
+/* rkIK registration utility ---------------------------------------------------------- */
+ZDEF_STRUCT( __ROKI_CLASS_EXPORT, rkIKRegSelectClass ){
+  void* (*init                )(void**);
+  void (*set_link_id          )(void*,int);
+  void (*set_ap               )(void*,double,double,double);
+  void (*set_weight           )(void*,double,double,double);
+  void (*set_sub_link_frame_id)(void*,int);
+  void (*reset                )(void*);
+  void* (*call_api            )(void*,void*);
+};
+
+/* declaration */
+void* rkIKRegSelect_init                (void **instance);
+void rkIKRegSelect_set_link_id          (void *instance, int link_id);
+void rkIKRegSelect_set_ap               (void *instance, double v1, double v2, double v3);
+void rkIKRegSelect_set_weight           (void *instance, double w1, double w2, double w3);
+void rkIKRegSelect_set_sub_link_frame_id(void *instance, int sub_link_id);
+void rkIKRegSelect_reset                (void *instance);
+void* rkIKRegSelect_call_api            (void *instance, void *chain);
+
+static rkIKRegSelectClass rkIKRegSelectClassImpl = {
+  rkIKRegSelect_init,
+  rkIKRegSelect_set_link_id,
+  rkIKRegSelect_set_ap,
+  rkIKRegSelect_set_weight,
+  rkIKRegSelect_set_sub_link_frame_id,
+  rkIKRegSelect_reset,
+  rkIKRegSelect_call_api
+};
+
+typedef enum{
+  RK_IK_TARGET_NONE,
+  RK_IK_TARGET_COM,    /* Center Of Mass */
+  RK_IK_TARGET_LINK,   /* the origin of link frame */
+  RK_IK_TARGET_LINK_AP /* the attented point of link */
+} rkIKTargetType;
+
+typedef enum{
+  RK_IK_TARGET_QUANTITY_NONE,
+  RK_IK_TARGET_QUANTITY_POS,  /* position */
+  RK_IK_TARGET_QUANTITY_ATT,  /* attitude */
+  RK_IK_TARGET_QUANTITY_AM,   /* angular momentum */
+} rkIKTargetQuantityType;
+
+typedef enum{
+  RK_IK_REF_FRAME_NONE,
+  RK_IK_REF_FRAME_WLD,      /* on world frame */
+  RK_IK_REF_FRAME_SUB_LINK, /* on sub link frame */
+} rkIKReferenceFrameType;
+
+typedef enum{
+  RK_IK_PRIORITY_NONE,
+  RK_IK_PRIORITY_FORCE, /* weight is forced to be max */
+  RK_IK_PRIORITY_WEIGHT
+} rkIKPriorityType;
+
+ZDEF_STRUCT( __ROKI_CLASS_EXPORT, rkIKRegSelectable ){
+  rkIKTargetType _target;
+  rkIKTargetQuantityType _quantity;
+  rkIKReferenceFrameType _ref_frame;
+  rkIKPriorityType _priority;
+};
+
+ZDEF_STRUCT( __ROKI_CLASS_EXPORT, rkIKRegister ){
+  /* arguments for call api */
+  rkIKRegSelectable _sel;
+  rkIKAttr _attr;
+};
+
+/**/
+
+void* rkIKRegSelect_init(void** instance)
+{
+  rkIKRegister* reg = (rkIKRegister*)(*instance);
+  reg = zAlloc( rkIKRegister, 1 );
+  *instance = (void*)(reg);
+  return reg;
+}
+
+/**/
+
+void rkIKRegSelect_set_link_id(void* instance, int link_id){
+  rkIKRegister* reg = (rkIKRegister*)(instance);
+  rkIKAttr* attr = &reg->_attr;
+  attr->id = link_id;
+}
+
+void rkIKRegSelect_set_ap(void* instance, double v1, double v2, double v3){
+  rkIKRegister* reg = (rkIKRegister*)(instance);
+  rkIKAttr* attr = &reg->_attr;
+  rkIKAttrSetAP( attr, v1, v2, v3 );
+}
+
+void rkIKRegSelect_set_weight(void* instance, double w1, double w2, double w3){
+  rkIKRegister* reg = (rkIKRegister*)(instance);
+  rkIKAttr* attr = &reg->_attr;
+  rkIKAttrSetWeight( attr, w1, w2, w3 );
+}
+
+void rkIKRegSelect_set_sub_link_frame_id(void* instance, int sub_link_id){
+  rkIKRegister* reg = (rkIKRegister*)(instance);
+  rkIKAttr* attr = &reg->_attr;
+  attr->id_sub = sub_link_id;
+}
+
+/**/
+
+void rkIKRegSelect_reset(void *instance){
+  rkIKRegister* reg = (rkIKRegister*)(instance);
+  rkIKRegSelectable defalut_sel = {RK_IK_TARGET_NONE, RK_IK_TARGET_QUANTITY_NONE, RK_IK_REF_FRAME_NONE, RK_IK_PRIORITY_NONE};
+  zCopy( rkIKRegSelectable, &defalut_sel, &reg->_sel );
+  rkIKAttr blank_attr;
+  zCopy( rkIKAttr, &blank_attr, &reg->_attr );
+}
+
+/**/
+
+ZDEF_STRUCT( __ROKI_CLASS_EXPORT, _rkIKLookup ){
+  rkIKCell *(*reg_ik_cell)(rkChain*,rkIKAttr*,int);
+};
+
+static _rkIKLookup api_world_pos = { rkChainRegIKCellWldPos };
+static _rkIKLookup api_world_att = { rkChainRegIKCellWldAtt };
+static _rkIKLookup api_l2l_pos   = { rkChainRegIKCellL2LPos };
+static _rkIKLookup api_l2l_att   = { rkChainRegIKCellL2LAtt };
+static _rkIKLookup api_com       = { rkChainRegIKCellCOM    };
+static _rkIKLookup api_am        = { rkChainRegIKCellAM     };
+static _rkIKLookup api_amcom     = { rkChainRegIKCellAMCOM  };
+
+_rkIKLookup* api_factory(void* instance){
+  rkIKRegister* reg = (rkIKRegister*)(instance);
+  rkIKRegSelectable* sel = &reg->_sel;
+  _rkIKLookup *lookup = NULL;
+  if( sel->_target == RK_IK_TARGET_LINK &&
+      sel->_quantity == RK_IK_TARGET_QUANTITY_POS &&
+      sel->_ref_frame == RK_IK_REF_FRAME_WLD ){
+    lookup = &api_world_pos;
+  } else
+  if( sel->_target == RK_IK_TARGET_LINK &&
+      sel->_quantity == RK_IK_TARGET_QUANTITY_ATT &&
+      sel->_ref_frame == RK_IK_REF_FRAME_WLD ) {
+    lookup = &api_world_att;
+  } else
+  if( sel->_target == RK_IK_TARGET_LINK &&
+      sel->_quantity == RK_IK_TARGET_QUANTITY_POS &&
+      sel->_ref_frame == RK_IK_REF_FRAME_SUB_LINK ) {
+    lookup = &api_l2l_pos;
+  } else
+  if( sel->_target == RK_IK_TARGET_LINK &&
+      sel->_quantity == RK_IK_TARGET_QUANTITY_ATT &&
+      sel->_ref_frame == RK_IK_REF_FRAME_SUB_LINK ) {
+    lookup = &api_l2l_att;
+  } else
+  if( sel->_target == RK_IK_TARGET_COM &&
+      sel->_quantity == RK_IK_TARGET_QUANTITY_POS &&
+      sel->_ref_frame == RK_IK_REF_FRAME_WLD ) {
+    lookup = &api_com;
+  } else
+  if( sel->_target == RK_IK_TARGET_LINK &&
+      sel->_quantity == RK_IK_TARGET_QUANTITY_AM &&
+      sel->_ref_frame == RK_IK_REF_FRAME_WLD ) {
+    lookup = &api_am;
+  } else
+  if( sel->_target == RK_IK_TARGET_COM &&
+      sel->_quantity == RK_IK_TARGET_QUANTITY_AM &&
+      sel->_ref_frame == RK_IK_REF_FRAME_WLD ) {
+    lookup = &api_amcom;
+  } else {
+    return NULL;
+  }
+
+  return lookup;
+}
+
+int mask_factory(void* instance){
+  rkIKRegister* reg = (rkIKRegister*)(instance);
+  rkIKRegSelectable* sel = &reg->_sel;
+  int mask = RK_IK_ATTR_NONE;
+  if( sel->_target == RK_IK_TARGET_LINK_AP )
+    mask |= RK_IK_ATTR_AP;
+  if( sel->_priority == RK_IK_PRIORITY_WEIGHT )
+    mask |= RK_IK_ATTR_WEIGHT;
+  if( sel->_priority == RK_IK_PRIORITY_FORCE )
+    mask |= RK_IK_ATTR_FORCE;
+  if( sel->_target == RK_IK_TARGET_LINK )
+    mask |= RK_IK_ATTR_ID;
+  if( sel->_ref_frame == RK_IK_REF_FRAME_SUB_LINK )
+    mask |= RK_IK_ATTR_ID_SUB;
+
+  return mask;
+}
+
+void* rkIKRegSelect_call_api(void* instance, void* chain){
+  _rkIKLookup *lookup = api_factory( instance );
+  if( lookup == NULL )
+    return NULL;
+  int mask = mask_factory( instance );
+  rkIKRegister* reg = (rkIKRegister*)(instance);
+  rkIKCell *cell = lookup->reg_ik_cell( chain, &reg->_attr, mask );
+  if( cell == NULL )
+    ZRUNERROR( RK_ERR_IK_UNKNOWN, "Invalid rkIKAttr Setting Pattern" );
+
+  return (void*)(cell);
+}
+/* end of rkIK registration utility --------------------------------------------------- */
+
 GLFWwindow* g_window;
 
 /* rkglLinkInfo2.pin information */
@@ -10,14 +216,6 @@ typedef enum{
 } pinStatus;
 
 /* This value corresponds to the index (cell_id) of rkIKCell array */
-typedef enum{
-  IK_CELL_TYPE_WLD_POS = 0,
-  IK_CELL_TYPE_WLD_ATT = 1
-} ikCellType;
-
-int get_constrained_index_from_ikCellType(ikCellType type){
-  return (int)(type);
-}
 
 typedef struct{
   bool is_constrained;
@@ -48,14 +246,23 @@ typedef struct{
 } keyFrameInfo;
 zArrayClass( keyFrameInfoArray, keyFrameInfo );
 
+/* keyframe */
 keyFrameInfoArray g_keyframe_array;
+
+/* the weight of joint & pin & path link for IK */
+#define IK_CONSTRAINED_CELL_SIZE 2
+#define IK_JOINT_WEIGHT 0.01
+#define IK_PIN_WEIGHT 1.0
+#define IK_PATH_WEIGHT 1.0
+#define IK_NO_WEIGHT 0.0
 
 /* Test Dataset ********************************************************************/
 #define TEST_KEYFRAME_SIZE 2
+#define TEST_IK_NUM_P01 1
 #define TEST_JOINT_SIZE 6
 #define TEST_LINK_SIZE 7
 #define TEST_FRAME_DOF_SIZE 6
-#define TEST_PATH_LINK_SIZE 1
+#define TEST_PATH_TARGET_SIZE 1
 
 /* x, y, z, aax, aay, aaz */
 double test_root_frame[TEST_KEYFRAME_SIZE][TEST_FRAME_DOF_SIZE] =
@@ -79,59 +286,68 @@ int test_pin[TEST_KEYFRAME_SIZE][TEST_LINK_SIZE] =
       PIN_LOCK_OFF, PIN_LOCK_OFF, PIN_LOCK_OFF, PIN_LOCK_POS3D },
     { PIN_LOCK_OFF, PIN_LOCK_OFF, PIN_LOCK_OFF,
       PIN_LOCK_OFF, PIN_LOCK_OFF, PIN_LOCK_OFF, PIN_LOCK_POS3D }};
+
 typedef struct{
-  int path_link_id;
-  ikCellType cell_type;
-  /* path_type ..etc. */
-} refPathLinkInfo;
-refPathLinkInfo test_ref_path_link_info[TEST_KEYFRAME_SIZE-1][TEST_PATH_LINK_SIZE] =
+  int ik_num;
+  rkIKRegister* ik_reg;
+} refPathInfo;
+
+/* _target, _quantity, _ref_frame, _priority */
+const rkIKRegSelectable TEST_IK_REG_SELCTABLE_P01_IK01 =
+  {RK_IK_TARGET_LINK, RK_IK_TARGET_QUANTITY_POS, RK_IK_REF_FRAME_WLD, RK_IK_PRIORITY_WEIGHT};
+const int    IK_ATTR_ID_SUB_NONE = 0;
+const zVec3D IK_ATTR_AP_NONE = { {0, 0, 0} };
+const byte   IK_ATTR_MODE_NONE = 0x0;
+const zVec3D IK_ATTR_WEIGHT = { {0, 0, 0} };
+/* id, id_sub, ap, mode, w */
+const rkIKAttr TEST_IK_ATTR_P01_IK01 =
+  { 6, IK_ATTR_ID_SUB_NONE, IK_ATTR_AP_NONE, IK_ATTR_MODE_NONE, IK_ATTR_WEIGHT };
+/* { rkIKAttrSelectable, rkIKAttr } */
+const rkIKRegister TEST_IK_REG_P01_IK01 =
+    { TEST_IK_REG_SELCTABLE_P01_IK01, TEST_IK_ATTR_P01_IK01 };
+rkIKRegister TEST_IK_REG_P01[TEST_IK_NUM_P01] =
+  { TEST_IK_REG_P01_IK01 }; /* TEST_IK_NUM_01 */
+const refPathInfo test_ref_path_info[TEST_KEYFRAME_SIZE-1] =
   {
-    {
-     /* { path_link_id, cell_type } */
-     { 6, IK_CELL_TYPE_WLD_POS }
-    } /* TEST_PATH_LINK_SIZE */
+    /* { ik_reg, num } */
+    { TEST_IK_NUM_P01, TEST_IK_REG_P01 }
   }; /* TEST_KEYFRAME_SIZE-1 (= PATH_SIZE) */
 /* End of Test Dataset *************************************************************/
 
-refPathLinkInfo** g_ref_path_link_info; /* path size x path link size */
-
-/* the weight of pink link for IK */
-#define IK_CONSTRAINED_CELL_SIZE 2
-#define IK_PIN_WEIGHT 1.0
-#define IK_JOINT_WEIGHT 0.01
-#define IK_NO_WEIGHT 0.0
-
-/* position/attitude path form */
-typedef struct{
-  zNURBS3D nurbs;
-  /* Circle Path, Other Form (for pos/att)...etc. */
-} pathForm;
+refPathInfo* g_ref_path_info; /* path size */
 
 /* path constrained cell info for IK */
 typedef struct{
   bool is_constrained;
   ikCellType cell_type;
-  zPexIP weight_path;
-  bool is_path;
-  pathForm path;
+  zPexIPArray weight_path;
   rkIKCell *cell;
-} pathIKCellInfo;
+} pinPathIKInfo;
 
 /* p2p path */
 typedef struct{
-  pathIKCellInfo c[2]; /* size = pos & att */
+  pinPathIKInfo c[2]; /* size = pos & att */
   int cell_size; /* size of weight & cell = 2 (pos & att) */
-} linkPathInfo;
+} linkPinPathIKInfo;
 
-zArrayClass( allLinkPathInfo, linkPathInfo );
+zArrayClass( allLinkPinPathIKInfo, linkPinPathIKInfo );
 
 zArrayClass( zPexIPArray, zPexIP );
+
+/* position/attitude path form */
+typedef struct{
+  rkIKCell *cell;
+  zNURBS3D nurbs;
+  /* Circle Path, Other Form (for pos/att)...etc. */
+} pathForm;
 
 typedef struct{
   feedRate start_feedrate;
   feedRate goal_feedrate;
-  allLinkPathInfo all_link_path_info; /* size = all link size of a chain */
+  allLinkPinPathIKInfo all_link_pin_path_ik_info; /* size = all link size of a chain */
   int all_link_size;
+  refPathInfo ref_path_info; /* size = path size in the one keyframe */
+  pathForm *path_form; /* size = path size in the one keyframe */
   zPexIPArray qref_path; /* size = joint size */
   int joint_size;
 } p2pPathInfo;
@@ -142,13 +358,10 @@ p2pPathArray g_p2p_array; /* size = keyframe size */
 /* the main targets of this sample code */
 rkChain g_chain;
 rkglChain gr;
-/* typedef struct{ */
-/*   p2pPathArray p2p_array; */
-/* } rkglChainBlock; */
 
 int g_selected_cp = -1;
 int g_selected_path_id = -1;
-int g_selected_link_id = -1;
+int g_selected_ik_id = -1;
 int g_selected_cid = -1;
 rkglSelectionBuffer g_sb;
 
@@ -337,33 +550,24 @@ bool clone_and_set_keyframelist(const int input_keyframe_size, double** input_q,
 
 /* path_info setting --------------------------------------------------------------- */
 
-void free_ref_path_link_info(int path_size, refPathLinkInfo*** ref_path_link_info)
+void free_ref_path_info(int path_size, refPathInfo* ref_path_info)
 {
-  int path_id;
-
-  for( path_id=0; path_id < path_size; path_id++ ){
-    zFree( (*ref_path_link_info)[path_id] ); /* free refPathLinkInfo** */
-    (*ref_path_link_info)[path_id] = NULL;
-  }
-  zFree( *ref_path_link_info ); /* free refPathLinkInfo* */
-  *ref_path_link_info = NULL;
+  zFree( ref_path_info->ik_reg );
+  ref_path_info->ik_reg = NULL;
 }
 
-bool clone_and_set_ref_path_link_info(int path_size, int path_link_size, int** input_path_link_id, int** input_cell_type)
+bool clone_and_set_ref_path_info(refPathInfo* src_ref_path_info, refPathInfo* dest_ref_path_info)
 {
   int path_id, idx;
 
-  if( g_ref_path_link_info != NULL ){
-    free_ref_path_link_info( path_size, &g_ref_path_link_info );
-  }
-  g_ref_path_link_info = zAlloc( refPathLinkInfo*, path_size );
-  for( path_id=0; path_id < path_size; path_id++ ){
-    g_ref_path_link_info[path_id] = zAlloc( refPathLinkInfo, path_link_size );
-    for( idx=0; idx < path_link_size; idx++ ){
-      g_ref_path_link_info[path_id][idx].path_link_id = input_path_link_id[path_id][idx];
-      g_ref_path_link_info[path_id][idx].cell_type = (ikCellType)(input_cell_type[path_id][idx]);
+    if( dest_ref_path_info->ik_reg != NULL ){
+      free_ref_path_info( &dest_ref_path_info );
     }
-  }
+    dest_ref_path_info->ik_num = src_ref_path_info->ik_num;
+    dest_ref_path_info->ik_reg = zAlloc( rkIKRegister, src_ref_path_info->ik_num );
+    zCopy( rkIKRegister, src_ref_path_info->ik_reg, dest_ref_path_info->ik_reg );
+
+
   return true;
 }
 
@@ -375,37 +579,36 @@ bool clone_and_set_ref_path_link_info(int path_size, int path_link_size, int** i
 int find_cp(rkglSelectionBuffer *sb)
 {
   int i;
-
-  int path_size, path_id, all_link_size, link_id, cell_size, cid;
+  int path_size, path_id, ik_num, all_link_size, link_id, cell_size, cid;
 
   path_size = zArraySize( &g_p2p_array );
   all_link_size = g_p2p_array.buf[0].all_link_size;
-  cell_size = g_p2p_array.buf[0].all_link_path_info.buf[0].cell_size;
 
   rkglSelectionRewind( sb );
   g_selected_cp = -1;
   g_selected_path_id = -1;
-  g_selected_link_id = -1;
+  g_selected_ik_id = -1;
   g_selected_cid = -1;
+
   for( path_id=0; path_id < path_size; path_id++ ){
-    for( link_id=0; link_id < all_link_size; link_id++ ){
-      for( cid=0; cid < cell_size; cid++ ){
-        pathIKCellInfo* cell_info = &g_p2p_array.buf[path_id].all_link_path_info.buf[link_id].c[cid];
-        if( cell_info->cell_type == IK_CELL_TYPE_WLD_POS && cell_info->is_path ){
-          for( i=0; i<sb->hits; i++ ){
-            if( rkglSelectionName(sb,0) == (NAME_NURBS + 100*NAME_NURBS*path_id + link_id) &&
-                rkglSelectionName(sb,1) >= 0 && rkglSelectionName(sb,1) < zNURBS3D1CPNum(&cell_info->path.nurbs) ){
-              g_selected_cp = rkglSelectionName(sb,1);
-              g_selected_path_id = path_id;
-              g_selected_link_id = link_id;
-              g_selected_cid = cid;
-              break;
-            }
-            rkglSelectionNext( sb );
+    ik_num = g_p2p_array.buf[path_id].ref_path_info.ik_num;
+    for( ik_id=0; ik_id < ik_num; ik_id++ ){
+      rkIKRegister* ik_reg = &g_p2p_array.buf[path_id].ref_path_info.ik_reg[ik_id];
+      if( ik_reg->_sel._target == RK_IK_TARGET_LINK ){
+        for( i=0; i<sb->hits; i++ ){
+          if( rkglSelectionName(sb,0) == (NAME_NURBS + 100*NAME_NURBS*path_id + ik_id) &&
+              rkglSelectionName(sb,1) >= 0 && rkglSelectionName(sb,1) < zNURBS3D1CPNum(&cell_info->path.nurbs) ){
+            g_selected_cp = rkglSelectionName(sb,1);
+            g_selected_path_id = path_id;
+            g_selected_ik_id = ik_id;
+            g_selected_cid = cid;
+            break;
           }
+          rkglSelectionNext( sb );
         }
       }
     }
+
   }
   return g_selected_cp;
 }
@@ -474,45 +677,45 @@ void init_qref_path(zPexIPArray* qref_path, int joint_size)
   zArrayAlloc( qref_path, zPexIP, joint_size );
 }
 
-void init_one_link_path_info(linkPathInfo* link_path_info, int link_id, int ik_constrained_cell_size){
+void init_one_link_pin_path_ik_info(linkPinPathIKInfo* link_pin_path_ik_info, int link_id, int ik_constrained_cell_size){
   int cid; /* cid : constrained cell id for IK */
 
   /* set cell size */
-  link_path_info->cell_size = ik_constrained_cell_size;
-  for( cid=0; cid < link_path_info->cell_size; cid++ ){
+  link_pin_path_ik_info->cell_size = ik_constrained_cell_size;
+  for( cid=0; cid < link_pin_path_ik_info->cell_size; cid++ ){
     link_path_info->c[cid].is_constrained = false;
     link_path_info->c[cid].is_path = false;
   }
 }
 
-bool init_all_link_path_info(allLinkPathInfo* all_link_path_info, int all_link_size, int ik_constrained_cell_size)
+bool init_all_link_pin_path_ik_info(allLinkPinPathIKInfo* all_link_pin_path_ik_info, int all_link_size, int ik_constrained_cell_size)
 {
   int link_id;
 
-  if( zArraySize( all_link_path_info ) > 0 )
-    zArrayFree( all_link_path_info );
-  zArrayAlloc( all_link_path_info, linkPathInfo, all_link_size );
+  if( zArraySize( all_link_pin_path_ik_info ) > 0 )
+    zArrayFree( all_link_pin_path_ik_info );
+  zArrayAlloc( all_link_pin_path_ik_info, linkPinPathIKInfo, all_link_size );
 
   for( link_id=0; link_id < all_link_size; link_id++){
-    init_one_link_path_info( &all_link_path_info->buf[link_id], link_id, ik_constrained_cell_size );
+    init_one_link_pin_path_ik_info( &all_link_pin_path_ik_info->buf[link_id], link_id, ik_constrained_cell_size );
   }
 
   return true;
 }
 
-bool init_p2p_array(rkChain *chain, p2pPathArray *p2p_array, int array_size, int ik_constrained_cell_size)
+bool init_p2p_array(rkChain *chain, p2pPathArray *p2p_array, int path_array_size, int ik_constrained_cell_size)
 {
   int path_id;
 
   if( zArraySize( &g_p2p_array ) > 0 )
     zArrayFree( &g_p2p_array );
-  zArrayAlloc( &g_p2p_array, p2pPathInfo, array_size );
-  for( path_id=0; path_id < array_size; path_id++ ){
+  zArrayAlloc( &g_p2p_array, p2pPathInfo, path_array_size );
+  for( path_id=0; path_id < path_array_size; path_id++ ){
     p2pPathInfo* p2p_buf = zArrayElemNC( p2p_array, path_id );
     p2p_buf->joint_size = rkChainJointSize(chain);
     p2p_buf->all_link_size = rkChainLinkNum(chain);
     init_qref_path( &p2p_buf->qref_path, p2p_buf->joint_size );
-    if( !init_all_link_path_info( &p2p_buf->all_link_path_info, p2p_buf->all_link_size, ik_constrained_cell_size ) ) return false;
+    if( !init_all_link_pin_path_ik_info( &p2p_buf->all_link_pin_path_ik_info, p2p_buf->all_link_size, ik_constrained_cell_size ) ) return false;
   }
 
   return true;
@@ -531,13 +734,13 @@ void interpolate_p2p_qref_path(rkChain* chain, zPexIPArray* qref_path, keyFrameI
   } /* end of for loop link_id of link num times */
 }
 
-void interpolate_p2p_ik_weight_path(rkChain* chain, allLinkPathInfo* all_link_path_info, keyFrameInfo* kf1, keyFrameInfo* kf2)
+void interpolate_p2p_ik_weight_path(rkChain* chain, allLinkPinPathIKInfo* all_link_pin_path_ik_info, keyFrameInfo* kf1, keyFrameInfo* kf2)
 {
   int link_id, cid; /* cid : constrained cell id for IK */
   double term = kf2->feedrate.s - kf1->feedrate.s;
   for( link_id=0; link_id < rkChainLinkNum(chain); link_id++ ){
-    for( cid=0; cid < all_link_path_info->buf[link_id].cell_size; cid++ ){
-      zPexIPCreateBoundary( &all_link_path_info->buf[link_id].c[cid].weight_path,
+    for( cid=0; cid < all_link_pin_path_ik_info->buf[link_id].cell_size; cid++ ){
+      zPexIPCreateBoundary( &all_link_pin_path_ik_info->buf[link_id].c[cid].weight_path,
                             term,
                             kf1->pinfo[link_id].c[cid].w, 0.0, 0.0, /* x1, v1, a1 */
                             kf2->pinfo[link_id].c[cid].w, 0.0, 0.0, /* x2, v2, a2 */
@@ -604,17 +807,18 @@ bool interpolate_path(rkChain* chain, keyFrameInfoArray* keyframe_array, p2pPath
     p2p_buf->goal_feedrate.ds = kf2->feedrate.ds;
     p2p_buf->goal_feedrate.d2s = kf2->feedrate.d2s;
     interpolate_p2p_qref_path( chain, &p2p_buf->qref_path, kf1, kf2 );
-    interpolate_p2p_ik_weight_path( chain, &p2p_buf->all_link_path_info, kf1, kf2 );
+    interpolate_p2p_ik_weight_path( chain, &p2p_buf->all_link_pin_path_ik_info, kf1, kf2 );
     /* path */
+    p2p_buf->ref_path_info->ik_num;
     for( idx=0; idx < TEST_PATH_LINK_SIZE; idx++ ){
-      test_ref_link_id = g_ref_path_link_info[path_id][idx].path_link_id;
-      test_ref_cell_type = g_ref_path_link_info[path_id][idx].cell_type;
+      test_ref_link_id = [idx].path_link_id;
+      test_ref_cell_type = g_ref_path_info[path_id][idx].cell_type;
       test_ref_cid = get_constrained_index_from_ikCellType( (ikCellType)(test_ref_cell_type) );
-      p2p_buf->all_link_path_info.buf[test_ref_link_id].c[test_ref_cid].is_path = true;
+      p2p_buf->all_link_pin_path_ik_info.buf[test_ref_link_id].c[test_ref_cid].is_path = true;
       zNURBS3D* nurbs;
       switch ( test_ref_cell_type ){
       case IK_CELL_TYPE_WLD_POS:
-        nurbs = &p2p_buf->all_link_path_info.buf[test_ref_link_id].c[test_ref_cid].path.nurbs;
+        nurbs = &p2p_buf->all_link_pin_path_ik_info.buf[test_ref_link_id].c[test_ref_cid].path.nurbs;
         /* the number of intermediate control points */
         zNURBS3D1Alloc( nurbs, P2P_KEYFRAME_NUM + INTERMEDIATE_CP_NUM, 3 );
         zNURBS3D1SetSliceNum( nurbs, SLICE_NUM );
@@ -697,7 +901,7 @@ void print_interpolated_path(FILE *fp, rkChain* chain, p2pPathArray *p2p_array, 
 
   joint_size = zArraySize( &p2p_array->buf[0].qref_path );
   all_link_size = p2p_array->buf[0].all_link_size;
-  cell_size = p2p_array->buf[0].all_link_path_info.buf[0].cell_size;
+  cell_size = p2p_array->buf[0].all_link_pin_path_ik_info.buf[0].cell_size;
   path_size = zArraySize( p2p_array );
 
   end_s = p2p_array->buf[path_size-1].goal_feedrate.s;
@@ -716,7 +920,7 @@ void print_interpolated_path(FILE *fp, rkChain* chain, p2pPathArray *p2p_array, 
       print_interpolated_qref_path( fp, s, &p2p_buf->qref_path );
       for( link_id=0; link_id < all_link_size; link_id++ ){
         for( cid=0; cid < cell_size; cid++){
-          pathIKCellInfo* cell_info = &p2p_buf->all_link_path_info.buf[link_id].c[cid];
+          pinPathIKInfo* cell_info = &p2p_buf->all_link_pin_path_ik_info.buf[link_id].c[cid];
           print_interpolated_ik_weight_path( fp, s, &cell_info->weight_path );
           print_interpolated_nurbs_path_3d_position( fp, (s / end_s), &cell_info->path.nurbs, cell_info->is_path );
         }
@@ -743,13 +947,14 @@ bool set_constrained_mode_for_each_p2p_path(keyFrameInfoArray* keyframe_array, p
     p2pPathInfo* p2p_buf = &p2p_array->buf[path_id];
     keyFrameInfo* kf1 = &keyframe_array->buf[path_id];
     keyFrameInfo* kf2 = &keyframe_array->buf[path_id + 1];
-    for( link_id=0; link_id < zArraySize( &p2p_buf->all_link_path_info ); link_id++ ){
-      linkPathInfo* link_path_info = &p2p_buf->all_link_path_info.buf[link_id];
-      for( cid=0; cid < link_path_info->cell_size; cid++ ){
-        link_path_info->c[cid].is_constrained = ( (kf1->pinfo[link_id].c[cid].is_constrained )
-                                                ||
-                                                (kf2->pinfo[link_id].c[cid].is_constrained ) );
-        link_path_info->c[cid].cell_type = kf1->pinfo[link_id].c[cid].cell_type;
+    for( link_id=0; link_id < zArraySize( &p2p_buf->all_link_pin_path_ik_info ); link_id++ ){
+      linkPinPathIKInfo* link_pin_path_ik_info = &p2p_buf->all_link_pin_path_ik_info.buf[link_id];
+      for( cid=0; cid < link_pin_path_ik_info->cell_size; cid++ ){
+        link_pin_path_ik_info->c[cid].cell_type = kf1->pinfo[link_id].c[cid].cell_type;
+        link_pin_path_ik_info->c[cid].is_constrained =
+          ( (kf1->pinfo[link_id].c[cid].is_constrained )
+            ||
+            (kf2->pinfo[link_id].c[cid].is_constrained ) );
       }
     }
   }
@@ -763,35 +968,35 @@ void register_cell_in_one_link_for_IK(double s, rkChain* chain, int path_id, int
   double weight;
   rkIKAttr attr;
   attr.id = link_id;
-  linkPathInfo* link_path_info = &g_p2p_array.buf[path_id].all_link_path_info.buf[link_id];
+  linkPinPathIKInfo* link_pin_path_ik_info = &g_p2p_array.buf[path_id].all_link_pin_path_ik_info.buf[link_id];
 
-  for( cid=0; cid < link_path_info->cell_size; cid++ ){
-    if( link_path_info->c[cid].is_constrained ){
-      if( link_path_info->c[cid].cell_type == IK_CELL_TYPE_WLD_ATT )
-        link_path_info->c[cid].cell = rkChainRegIKCellWldAtt( chain, &attr, RK_IK_ATTR_ID );
-      else if( link_path_info->c[cid].cell_type == IK_CELL_TYPE_WLD_POS )
-        link_path_info->c[cid].cell = rkChainRegIKCellWldPos( chain, &attr, RK_IK_ATTR_ID | RK_IK_ATTR_AP );
-      weight = zPexIPVal( &link_path_info->c[cid].weight_path, s );
-      rkIKCellSetWeight( link_path_info->c[cid].cell, weight, weight, weight );
-      /* zVec3DCopy( &g_selected.ap, rkIKCellAP(link_path_info->cell[1]) ); */
+  for( cid=0; cid < link_pin_path_ik_info->cell_size; cid++ ){
+    if( link_pin_path_ik_info->c[cid].is_constrained ){
+      if( link_pin_path_ik_info->c[cid].cell_type == IK_CELL_TYPE_WLD_ATT )
+        link_pin_path_ik_info->c[cid].cell = rkChainRegIKCellWldAtt( chain, &attr, RK_IK_ATTR_ID );
+      if( link_pin_path_ik_info->c[cid].cell_type == IK_CELL_TYPE_WLD_POS )
+        link_pin_path_ik_info->c[cid].cell = rkChainRegIKCellWldPos( chain, &attr, RK_IK_ATTR_ID | RK_IK_ATTR_AP );
     }
+    weight = zPexIPVal( &link_pin_path_ik_info->c[cid].weight_path, s );
+    rkIKCellSetWeight( link_pin_path_ik_info->c[cid].cell, weight, weight, weight );
+    /* zVec3DCopy( &g_selected.ap, rkIKCellAP(link_pin_path_ik_info->cell[1]) ); */
   }
 }
 
 void unregister_cell_in_one_link_for_IK(rkChain* chain, int path_id, int link_id)
 {
   int cid;/* cid : constrained cell id for IK */
-  linkPathInfo* link_path_info = &g_p2p_array.buf[path_id].all_link_path_info.buf[link_id];
-  for( cid=0; cid < link_path_info->cell_size; cid++ )
-    if( link_path_info->c[cid].is_constrained )
-      rkChainUnregIKCell( chain, link_path_info->c[cid].cell );
+  linkPinPathIKInfo* link_pin_path_ik_info = &g_p2p_array.buf[path_id].all_link_pin_path_ik_info.buf[link_id];
+  for( cid=0; cid < link_pin_path_ik_info->cell_size; cid++ )
+    if( link_pin_path_ik_info->c[cid].is_constrained )
+      rkChainUnregIKCell( chain, link_pin_path_ik_info->c[cid].cell );
 }
 
 void register_all_constrained_links_for_IK(double s, rkChain* chain, int path_id)
 {
-  int link_id;
+ne  int link_id;
   p2pPathInfo* p2p_buf = &g_p2p_array.buf[path_id];
-  for( link_id=0; link_id < zArraySize( &p2p_buf->all_link_path_info ); ++link_id ){
+  for( link_id=0; link_id < zArraySize( &p2p_buf->all_link_pin_path_ik_info ); ++link_id ){
     register_cell_in_one_link_for_IK( s, chain, path_id, link_id);
   }
 }
@@ -800,21 +1005,21 @@ void unregister_all_constrained_links_for_IK(rkChain* chain, int path_id)
 {
   int link_id;
   p2pPathInfo* p2p_buf = &g_p2p_array.buf[path_id];
-  for( link_id=0; link_id < zArraySize( &p2p_buf->all_link_path_info ); ++link_id ){
+  for( link_id=0; link_id < zArraySize( &p2p_buf->all_link_pin_path_ik_info ); ++link_id ){
     unregister_cell_in_one_link_for_IK( chain, path_id, link_id );
   }
 }
 
-void set_one_link_reference_of_3D_translate_position_for_IK(int path_id, int link_id, int cid, zVec3D* ref_pos)
+void set_one_link_reference_of_3D_translate_position_for_IK(int path_id, int ik_id, int cid, zVec3D* ref_pos)
 {
-  rkIKCellSetRefVec( g_p2p_array.buf[path_id].all_link_path_info.buf[link_id].c[cid].cell, ref_pos );
+  rkIKCellSetRefVec( g_p2p_array.buf[path_id].all_link_pin_path_ik_info.buf[link_id].c[cid].cell, ref_pos );
 }
 
 void set_one_link_reference_of_3D_attitude_position_for_IK(int path_id, int link_id, int cid, zMat3D* ref_att)
 {
   zVec3D zyx;
   zMat3DToZYX( ref_att, &zyx );
-  rkIKCellSetRefVec( g_p2p_array.buf[path_id].all_link_path_info.buf[link_id].c[cid].cell, &zyx );
+  rkIKCellSetRefVec( g_p2p_array.buf[path_id].all_link_pin_path_ik_info.buf[link_id].c[cid].cell, &zyx );
 }
 
 /* inverse kinematics */
@@ -868,6 +1073,7 @@ bool pop_pose(double s, rkChain* chain, p2pPathArray *p2p_array)
   path_id=0;
   bool is_find = false;
   p2pPathInfo* p2p_buf;
+
   while( path_id < zArraySize( p2p_array ) ){
     p2p_buf = &p2p_array->buf[path_id];
     if( p2p_buf->start_feedrate.s <= s && s < p2p_buf->goal_feedrate.s ){
@@ -894,18 +1100,14 @@ bool pop_pose(double s, rkChain* chain, p2pPathArray *p2p_array)
   /* set reference */
   zVec3D ref_pos;
 
-  int idx;
-  int test_ref_link_id;
-  ikCellType test_ref_cell_type;
+  int ik_id;
+  int test_ik_id;
   int test_ref_cid; /* the id of one 3D position/attitue reference constrain. */
-  for( idx=0; idx < TEST_PATH_LINK_SIZE; idx++ ){
-    test_ref_link_id = g_ref_path_link_info[path_id][idx].path_link_id;
-    test_ref_cell_type = g_ref_path_link_info[path_id][idx].cell_type;
-    test_ref_cid = get_constrained_index_from_ikCellType( test_ref_cell_type );
-    switch (test_ref_cell_type){
+  for( ik_id=0; ik_id < p2p_buf->ref_path_info.ik_num; ik_id++ ){
+    switch (p2p->ref_path_info.ik_reg){
     case IK_CELL_TYPE_WLD_POS:
       pop_nurbs_point( (s / p2p_buf->goal_feedrate.s),
-                       &p2p_buf->all_link_path_info.buf[test_ref_link_id].c[test_ref_cid].path.nurbs,
+                       &p2p_buf->path_form[].nurbs,
                        &ref_pos );
       set_one_link_reference_of_3D_translate_position_for_IK( path_id, test_ref_link_id, test_ref_cid, &ref_pos );
       break;
@@ -934,11 +1136,11 @@ void release_path()
     p2pPathInfo* p2p_buf = zArrayElemNC( &g_p2p_array, i );
     /* release weight_path[2] */
     for( link_id=0; link_id < p2p_buf->all_link_size; link_id++ ){
-      linkPathInfo* link_path_info = &p2p_buf->all_link_path_info.buf[link_id];
-      for( cid=0; cid < link_path_info->cell_size; cid++ ){
-        zPexIPFree( &link_path_info->c[cid].weight_path );
-        if( link_path_info->c[cid].path.nurbs.knot != NULL )
-          zNURBS3DDestroy( &link_path_info->c[cid].path.nurbs );
+      linkPinPathIKInfo* link_pin_path_ik_info = &p2p_buf->all_link_pin_path_ik_info.buf[link_id];
+      for( cid=0; cid < link_pin_path_ik_info->cell_size; cid++ ){
+        zPexIPFree( &link_pin_path_ik_info->c[cid].weight_path );
+        if( link_pin_path_ik_info->c[cid].path.nurbs.knot != NULL )
+          zNURBS3DDestroy( &link_pin_path_ik_info->c[cid].path.nurbs );
       }
     }
     /* release qref_path[] */
@@ -951,8 +1153,8 @@ void release_path()
     zArrayFree( &g_p2p_array );
   const int keyframe_size = zArraySize( &g_keyframe_array );
   if( keyframe_size > 0 ){
-    if( g_ref_path_link_info != NULL ){
-      free_ref_path_link_info( keyframe_size - 1, &g_ref_path_link_info );
+    if( g_ref_path_info != NULL ){
+      free_ref_path_link_info( keyframe_size - 1, &g_ref_path_info );
     }
     rkglChainUnloadKeyframeInfo();
   }
@@ -963,6 +1165,9 @@ void change_pose(double s)
   pop_pose( s, &g_chain, &g_p2p_array );
 }
 
+/* 1, clone_and_set_keyframelist() */
+/* 2. clone_and_set_ref_path_info() */
+/* 3. run_test() */
 double run_test(void)
 {
   calc_feedrate( &g_chain, &g_keyframe_array );
@@ -1015,11 +1220,11 @@ void draw_nurbs(void)
 
   path_size = zArraySize( &g_p2p_array );
   all_link_size = g_p2p_array.buf[0].all_link_size;
-  cell_size = g_p2p_array.buf[0].all_link_path_info.buf[0].cell_size;
+  cell_size = g_p2p_array.buf[0].all_link_pin_path_ik_info.buf[0].cell_size;
   for( path_id=0; path_id < path_size; path_id++ ){
     for( link_id=0; link_id < all_link_size; link_id++ ){
       for( cid=0; cid < cell_size; cid++ ){
-        pathIKCellInfo* cell_info = &g_p2p_array.buf[path_id].all_link_path_info.buf[link_id].c[cid];
+        pinPathIKInfo* cell_info = &g_p2p_array.buf[path_id].all_link_pin_path_ik_info.buf[link_id].c[cid];
         if( cell_info->cell_type == IK_CELL_TYPE_WLD_POS && cell_info->is_path ){
           glPushMatrix();
           zRGBSet( &rgb, 1.0, 1.0, 1.0 );
@@ -1075,7 +1280,7 @@ void motion(GLFWwindow* window, double x, double y)
     rkglMouseDragFuncGLFW( window, x, y );
     return;
   }
-  zNURBS3D* nurbs = &g_p2p_array.buf[g_selected_path_id].all_link_path_info.buf[g_selected_link_id].c[g_selected_cid].path.nurbs;
+  zNURBS3D* nurbs = &g_p2p_array.buf[g_selected_path_id].all_link_pin_path_ik_info.buf[g_selected_ik_id].c[g_selected_cid].path.nurbs;
   if( g_selected_cp >= 0 && g_selected_cp < zNURBS3D1CPNum(nurbs) ){
     rkglUnproject( &g_cam, x, y, rkglSelectionZnearDepth(&g_sb), &p );
     zVec3DCopy( &p, zNURBS3D1CP(nurbs, g_selected_cp) );
@@ -1300,33 +1505,8 @@ int main(int argc, char *argv[])
   /**/
 
   /**/
-  int path_link_idx;
-  int** ref_path_link_id_2array = NULL;
-  int** ref_cell_type_2array = NULL;
-  const int path_size = TEST_KEYFRAME_SIZE - 1;
-  const int path_link_size = TEST_PATH_LINK_SIZE;
-  ref_path_link_id_2array = zAlloc( int*, path_size );
-  ref_cell_type_2array = zAlloc( int*, path_size );
-  for( path_id=0; path_id < path_size; path_id++ ){
-    ref_path_link_id_2array[path_id] = zAlloc( int, path_link_size );
-    ref_cell_type_2array[path_id] = zAlloc( int, path_link_size );
-    for( path_link_idx=0; path_link_idx < path_link_size; path_link_idx++ ){
-      ref_path_link_id_2array[path_id][path_link_idx] = test_ref_path_link_info[path_id][path_link_idx].path_link_id;
-      ref_cell_type_2array[path_id][path_link_idx] = test_ref_path_link_info[path_id][path_link_idx].cell_type;
-    }
-  }
-  /**/
-  clone_and_set_ref_path_link_info( path_size, path_link_size, ref_path_link_id_2array, ref_cell_type_2array);
-  /* free used */
-  if( g_ref_path_link_info != NULL ){
-    for( path_id=0; path_id < path_size; path_id++ ){
-      zFree( ref_path_link_id_2array[path_id] );
-      zFree( ref_cell_type_2array[path_id] );
-    }
-    zFree( ref_path_link_id_2array );
-    zFree( ref_cell_type_2array );
-    ref_path_link_id_2array = NULL;
-    ref_cell_type_2array = NULL;
+  for( path_id=0; path_id < TEST_KEYFRAME_SIZE; path_id++ ){
+    clone_and_set_ref_path_info( path_size, test_ref_path_info[path_id], &g_p2p_array[path_id].ref_path_info );
   }
   /**/
 
