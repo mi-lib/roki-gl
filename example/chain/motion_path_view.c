@@ -621,7 +621,7 @@ void interpolate_p2p_nurbs_cp(int kf1idx, rkChain *chain, zNURBS3D* nurbs, zVec3
 bool interpolate_path(rkChain* chain, keyFrameInfoArray* keyframe_array, p2pPathArray* p2p_array)
 {
   int path_id, keyframe_size, ik_id, ref_link_id;
-  zVec3D start_pos, end_pos, ref_ap;
+  zVec3D start_pos, end_pos;
   zOpticalInfo oi;
 
   keyframe_size = zArraySize( keyframe_array );
@@ -666,17 +666,13 @@ bool interpolate_path(rkChain* chain, keyFrameInfoArray* keyframe_array, p2pPath
         zFrame3DCopy( &kf1->root, rkChainOrgFrame(chain) );
         rkChainFK( chain, kf1->q );
         zVec3DCopy( rkChainLinkWldPos(chain, ref_link_id), &start_pos );
+        /* @TODO */
+        /* Transform AP pose reference with Link -> World */
+        /* Get AP start & end pose ( position & orientation ) */
         /* end */
         zFrame3DCopy( &kf2->root, rkChainOrgFrame(chain) );
         rkChainFK( chain, kf2->q );
         zVec3DCopy( rkChainLinkWldPos(chain, ref_link_id), &end_pos );
-      } else
-      if( g_ik_reg_cls->link_ap( ik_reg ) ){
-        ref_link_id = g_ik_reg_cls->get_link_id( ik_reg );
-        g_ik_reg_cls->get_ap( ik_reg, &ref_ap.c.x, &ref_ap.c.y, &ref_ap.c.z );
-        /* @TODO */
-        /* Transform AP pose reference with Link -> World */
-        /* Get AP start & end pose ( position & orientation ) */
       }
       zNURBS3D* nurbs;
       if( g_ik_reg_cls->pos( ik_reg ) ){
@@ -883,6 +879,16 @@ void set_one_link_reference_of_3D_attitude_position_for_IK(int path_id, int ik_i
   rkIKCellSetRefVec( g_p2p_array.buf[path_id].ref_path_array.buf[ik_id].cell, &zyx );
 }
 
+void unregister_ref_path_in_one_path_for_IK(rkChain* chain, int path_id)
+{
+  int ik_id;
+
+  for( ik_id=0; ik_id < g_p2p_array.buf[path_id].ik_num; ik_id++ ){
+    refPath* ref_path  = &g_p2p_array.buf[path_id].ref_path_array.buf[ik_id];
+    g_ik_reg_cls->unreg( &chain, ref_path->cell );
+  }
+}
+
 /* inverse kinematics */
 void update_alljoint_by_IK(rkChain* chain, zVec init_joints)
 {
@@ -956,7 +962,7 @@ bool pop_pose(double s, rkChain* chain, p2pPathArray *p2p_array)
   if( g_popped_path_id != -1 && g_popped_path_id != path_id ){
     /* for previous popped path */
     unregister_all_constrained_links_for_IK(chain, g_popped_path_id);
-    /* @TODO unregister ref_path_array[ik_num]->ik_reg */
+    unregister_ref_path_in_one_path_for_IK(chain, g_popped_path_id);
     g_popped_path_id = path_id; /* keep for next calling pop_pose*/
   }
   register_all_constrained_links_for_IK( s, chain, path_id );
@@ -970,7 +976,7 @@ bool pop_pose(double s, rkChain* chain, p2pPathArray *p2p_array)
   int ik_id;
   for( ik_id=0; ik_id < p2p_buf->ik_num; ik_id++ ){
     refPath* ref_path  = &p2p_buf->ref_path_array.buf[ik_id];
-     ref_path->cell = g_ik_reg_cls->call_api( &ref_path->ik_reg, chain );
+     ref_path->cell = g_ik_reg_cls->reg( &ref_path->ik_reg, chain );
     if( g_ik_reg_cls->pos( &ref_path->ik_reg ) ){
       pop_nurbs_point( (s / p2p_buf->goal_feedrate.s),
                        &p2p_buf->ref_path_array.buf[ik_id].nurbs,
