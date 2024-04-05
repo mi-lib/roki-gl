@@ -98,16 +98,17 @@ const rkIKRegister TEST_IK_REG__PATH01_IK01 =
     { TEST_IK_REG_SELECTABLE__PATH01_IK01, TEST_IK_ATTR__PATH01_IK01 };
 rkIKRegister TEST_IK_REG_ARRAY__PATH01[TEST_IK_NUM__PATH01] =
   { TEST_IK_REG__PATH01_IK01 }; /* size is TEST_IK_NUM_01 */
+rkIKRegister* TEST_IK_REG_ARRAY__PATH01_PTR = TEST_IK_REG_ARRAY__PATH01;
 
 /* Type (A) */
 typedef struct{
   int ik_num;
-  rkIKRegister* ik_reg_array; /* array pointer, ik_num = cell_size */
+  void** ik_reg_array; /* array pointer, ik_num = cell_size */
 } refPathInput;
 refPathInput test_ref_path_input_array[TEST_KEYFRAME_SIZE-1] =
   {
     /* { ik_reg, num } */
-    { TEST_IK_NUM__PATH01, TEST_IK_REG_ARRAY__PATH01 }
+    { TEST_IK_NUM__PATH01, (void**)(&TEST_IK_REG_ARRAY__PATH01_PTR) }
   }; /* TEST_KEYFRAME_SIZE-1 (= PATH_SIZE) */
 
 /* Type (B) */
@@ -141,7 +142,7 @@ zArrayClass( allLinkPinPathIKInfo, linkPinPathIKInfo );
 
 /* position/attitude path form */
 typedef struct{
-  rkIKRegister ik_reg;
+  void* ik_reg;
   rkIKCell *cell;
   zNURBS3D nurbs;
   /* Circle Path, Other Form (for pos/att)...etc. */
@@ -437,6 +438,7 @@ void free_ref_path_array(refPathArray* ref_path_array)
 
   if( ( ik_num = zArraySize( ref_path_array ) ) > 0 ){
     for( ik_id=0; ik_id < ik_num; ik_id++ ){
+      g_ik_reg_cls->free( &ref_path_array->buf[ik_id].ik_reg );
       if( ref_path_array->buf[ik_id].nurbs.knot != NULL )
         zNURBS3DDestroy( &ref_path_array->buf[ik_id].nurbs );
     }
@@ -536,7 +538,8 @@ bool clone_and_set_ref_path_from_refPathinput(const int path_size, refPathInput*
     free_ref_path_array( ref_path_array );
     zArrayAlloc( ref_path_array, refPath, src->ik_num );
     for( ik_id=0; ik_id < src->ik_num; ik_id++ ){
-      zCopy( rkIKRegister, &src->ik_reg_array[ik_id], &ref_path_array->buf[ik_id].ik_reg );
+      g_ik_reg_cls->init( &ref_path_array->buf[ik_id].ik_reg );
+      g_ik_reg_cls->copy( src->ik_reg_array[ik_id], ref_path_array->buf[ik_id].ik_reg );
     }
   }
 
@@ -544,7 +547,7 @@ bool clone_and_set_ref_path_from_refPathinput(const int path_size, refPathInput*
 }
 
 /* Type (B) */
-bool clone_and_set_ref_path(const int path_size, int* src_ik_num_array, rkIKRegister** src_ik_reg_2array)
+bool clone_and_set_ref_path(const int path_size, int* src_ik_num_array, void*** src_ik_reg_2array)
 {
   int path_id, ik_id;
 
@@ -557,7 +560,8 @@ bool clone_and_set_ref_path(const int path_size, int* src_ik_num_array, rkIKRegi
     free_ref_path_array( ref_path_array );
     zArrayAlloc( ref_path_array, refPath, src_ik_num_array[path_id] );
     for( ik_id=0; ik_id < p2p_buf->ik_num; ik_id++ ){
-      zCopy( rkIKRegister, &src_ik_reg_2array[path_id][ik_id], &ref_path_array->buf[ik_id].ik_reg );
+      g_ik_reg_cls->init( &ref_path_array->buf[ik_id].ik_reg );
+      g_ik_reg_cls->copy( src_ik_reg_2array[path_id][ik_id], ref_path_array->buf[ik_id].ik_reg );
     }
   }
 
@@ -690,7 +694,7 @@ bool interpolate_path()
 
     /* path */
     for( ik_id=0; ik_id < p2p_buf->ik_num; ik_id++ ){
-      rkIKRegister* ik_reg = &p2p_buf->ref_path_array.buf[ik_id].ik_reg;
+      void* ik_reg = p2p_buf->ref_path_array.buf[ik_id].ik_reg;
       if( g_ik_reg_cls->com( ik_reg ) ){
         /* start */
         zFrame3DCopy( &kf1->root, rkChainOrgFrame(chain) );
@@ -850,7 +854,7 @@ void register_cell_in_one_link_for_IK(double s, rkChain* chain, int path_id, int
   rkIKAttr attr;
 
   for( ik_id=0; ik_id < g_p2p_array.buf[path_id].ik_num; ik_id++ ){
-    rkIKRegister* ik_reg  = &g_p2p_array.buf[path_id].ref_path_array.buf[ik_id].ik_reg;
+    void* ik_reg  = g_p2p_array.buf[path_id].ref_path_array.buf[ik_id].ik_reg;
     if( g_ik_reg_cls->link( ik_reg ) &&
         link_id == g_ik_reg_cls->get_link_id( ik_reg ) ){
       return; /* duprecated with ref_path, not register the link. */
@@ -875,7 +879,7 @@ void unregister_cell_in_one_link_for_IK(rkChain* chain, int path_id, int link_id
   int cell_id, ik_id;
 
   for( ik_id=0; ik_id < g_p2p_array.buf[path_id].ik_num; ik_id++ ){
-    rkIKRegister* ik_reg  = &g_p2p_array.buf[path_id].ref_path_array.buf[ik_id].ik_reg;
+    void* ik_reg  = g_p2p_array.buf[path_id].ref_path_array.buf[ik_id].ik_reg;
     if( g_ik_reg_cls->link( ik_reg ) &&
         link_id == g_ik_reg_cls->get_link_id( ik_reg ) ){
       return; /* duprecated with ref_path, not registered, so not unregister the link. */
@@ -924,7 +928,7 @@ void register_ref_path_in_one_path_for_IK(rkChain* chain, int path_id)
   /* register target for IK */
   for( ik_id=0; ik_id < g_p2p_array.buf[path_id].ik_num; ik_id++ ){
     refPath* ref_path  = &g_p2p_array.buf[path_id].ref_path_array.buf[ik_id];
-    ref_path->cell = g_ik_reg_cls->reg( &ref_path->ik_reg, chain );
+    ref_path->cell = g_ik_reg_cls->reg( ref_path->ik_reg, chain );
   }
 }
 
@@ -1021,8 +1025,8 @@ bool pop_pose(double s, rkChain* chain, p2pPathArray *p2p_array)
   zVec3D ref_pos;
   for( ik_id=0; ik_id < p2p_buf->ik_num; ik_id++ ){
     ref_path = &p2p_buf->ref_path_array.buf[ik_id];
-    ref_path->cell = g_ik_reg_cls->reg( &ref_path->ik_reg, chain );
-    if( g_ik_reg_cls->pos( &ref_path->ik_reg ) ){
+    ref_path->cell = (rkIKCell*)( g_ik_reg_cls->reg( ref_path->ik_reg, chain ) );
+    if( g_ik_reg_cls->pos( ref_path->ik_reg ) ){
       pop_nurbs_point( (s / p2p_buf->goal_feedrate.s),
                        &ref_path->nurbs,
                        &ref_pos );
@@ -1048,7 +1052,7 @@ bool pop_pose(double s, rkChain* chain, p2pPathArray *p2p_array)
 /* ---------------------------------------------------------------------------------- */
 
 /* 1. clone_and_set_keyframelist() */
-/* 2. clone_and_set_ref_path_input() */
+/* 2. clone_and_set_ref_pathXX() */
 /* 3. interpolate_path() */
 /* repeat 1..3 everytime re-planning */
 double run_test(void)
@@ -1092,7 +1096,7 @@ int find_cp(rkglSelectionBuffer *sb)
     ik_num = p2p_buf->ik_num;
     for( ik_id=0; ik_id < ik_num; ik_id++ ){
       zNURBS3D* nurbs = &p2p_buf->ref_path_array.buf[ik_id].nurbs;
-      rkIKRegister* ik_reg = &p2p_buf->ref_path_array.buf[ik_id].ik_reg;
+      void* ik_reg = p2p_buf->ref_path_array.buf[ik_id].ik_reg;
       if( g_ik_reg_cls->pos( ik_reg ) ){
         for( i=0; i<sb->hits; i++ ){
           if( rkglSelectionName(sb,0) == (NAME_NURBS + 100*NAME_NURBS*path_id + ik_id) &&
@@ -1132,7 +1136,7 @@ void draw_nurbs(void)
     ik_num = g_p2p_array.buf[path_id].ik_num;
     for( ik_id=0; ik_id < ik_num; ik_id++ ){
       refPath* ref_path = &g_p2p_array.buf[path_id].ref_path_array.buf[ik_id];
-      if( g_ik_reg_cls->pos( &ref_path->ik_reg ) ){
+      if( g_ik_reg_cls->pos( ref_path->ik_reg ) ){
         glPushMatrix();
         zRGBSet( &rgb, 1.0, 1.0, 1.0 );
         glLoadName( NAME_NURBS + 100*NAME_NURBS*path_id + ik_id );
@@ -1404,14 +1408,15 @@ int main(int argc, char *argv[])
   }
   int* ik_num_ptr;
   ik_num_ptr = zAlloc( int, TEST_KEYFRAME_SIZE-1 );
-  rkIKRegister** ik_reg_ptr;
-  ik_reg_ptr = zAlloc( rkIKRegister*, TEST_KEYFRAME_SIZE-1 );
+  void*** ik_reg_ptr;
+  ik_reg_ptr = zAlloc( void**, TEST_KEYFRAME_SIZE-1 );
   int path_id, ik_id;
   for( path_id=0; path_id < TEST_KEYFRAME_SIZE-1; path_id++ ){
     ik_num_ptr[path_id] = test_ref_path_input_array[path_id].ik_num;
-    ik_reg_ptr[path_id] = zAlloc( rkIKRegister, ik_num_ptr[path_id] );
+    ik_reg_ptr[path_id] = zAlloc( void*, ik_num_ptr[path_id] );
     for( ik_id=0; ik_id < ik_num_ptr[path_id]; ik_id++ ){
-      zCopy( rkIKRegister, &test_ref_path_input_array[path_id].ik_reg_array[ik_id], &ik_reg_ptr[path_id][ik_id] );
+      g_ik_reg_cls->init( &ik_reg_ptr[path_id][ik_id] );
+      g_ik_reg_cls->copy( (void*)( test_ref_path_input_array[path_id].ik_reg_array[ik_id] ), ik_reg_ptr[path_id][ik_id] );
     }
   }
 
