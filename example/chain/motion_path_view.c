@@ -142,7 +142,7 @@ zArrayClass( allLinkPinPathIKInfo, linkPinPathIKInfo );
 
 /* position/attitude path form */
 typedef struct{
-  void* ik_reg; // just pointer (not array)
+  void* ik_reg; /* just pointer (not array) */
   rkIKCell *cell;
   zNURBS3D nurbs;
   /* Circle Path, Other Form (for pos/att)...etc. */
@@ -928,7 +928,7 @@ void register_ref_path_in_one_path_for_IK(rkChain* chain, int path_id)
   /* register target for IK */
   for( ik_id=0; ik_id < g_p2p_array.buf[path_id].ik_num; ik_id++ ){
     refPath* ref_path  = &g_p2p_array.buf[path_id].ref_path_array.buf[ik_id];
-    ref_path->cell = g_ik_reg_cls->reg( ref_path->ik_reg, chain );
+    ref_path->cell = (rkIKCell*)( g_ik_reg_cls->reg( ref_path->ik_reg, chain ) );
   }
 }
 
