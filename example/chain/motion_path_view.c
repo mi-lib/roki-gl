@@ -142,7 +142,7 @@ zArrayClass( allLinkPinPathIKInfo, linkPinPathIKInfo );
 
 /* position/attitude path form */
 typedef struct{
-  void* ik_reg;
+  void* ik_reg; // just pointer (not array)
   rkIKCell *cell;
   zNURBS3D nurbs;
   /* Circle Path, Other Form (for pos/att)...etc. */
