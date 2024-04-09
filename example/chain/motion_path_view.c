@@ -1001,7 +1001,7 @@ bool pop_pose(const double s, rkChain* chain, p2pPathArray *p2p_array)
   path_id=0;
   while( path_id < zArraySize( p2p_array ) ){
     p2p_buf = &p2p_array->buf[path_id];
-    if( p2p_buf->start_feedrate.s <= s && s < p2p_buf->goal_feedrate.s ){
+    if( p2p_buf->start_feedrate.s <= s && s <= p2p_buf->goal_feedrate.s ){
       is_find = true;
       break;
     }
