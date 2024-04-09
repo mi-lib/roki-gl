@@ -943,7 +943,7 @@ void unregister_ref_path_in_one_path_for_IK(rkChain* chain, const int path_id)
 }
 
 /* inverse kinematics */
-void update_alljoint_by_IK(rkChain* chain, zVec init_joints)
+void update_alljoint_by_IK(rkChain* chain, zVec init_joints, bool is_free_joints_with_no_IK)
 {
   /* prepare IK */
   /* rkChainDeactivateIK( chain ); */
@@ -951,6 +951,8 @@ void update_alljoint_by_IK(rkChain* chain, zVec init_joints)
   if( init_joints != NULL ) {
     rkChainSetJointDisAll( chain, init_joints );
     rkChainUpdateFK( chain );
+    if( is_free_joints_with_no_IK )
+      return;
   }
   /* IK */
   printf("pre IK Joint[deg]  = "); zVecPrint(zVecMulDRC(zVecClone(init_joints),180.0/zPI));
@@ -1038,7 +1040,8 @@ bool pop_pose(const double s, rkChain* chain, p2pPathArray *p2p_array)
     }
   }
   /* IK */
-  update_alljoint_by_IK( chain, qref );
+  bool is_free_joints_with_no_IK = ( p2p_buf->ik_num==0 ); /* no path = no IK target */
+  update_alljoint_by_IK( chain, qref, is_free_joints_with_no_IK );
   zVecFree( qref );
 
   /* for next pop_pose() */
