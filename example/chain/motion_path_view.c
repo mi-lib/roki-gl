@@ -60,7 +60,7 @@ zArrayClass( keyFrameInfoArray, keyFrameInfo );
 
 /* Test Dataset ********************************************************************/
 
-#define TEST_KEYFRAME_SIZE 2
+#define TEST_KEYFRAME_SIZE 3
 #define TEST_IK_NUM__PATH01 1
 #define TEST_JOINT_SIZE 6
 #define TEST_LINK_SIZE 7
@@ -69,6 +69,7 @@ zArrayClass( keyFrameInfoArray, keyFrameInfo );
 /* x, y, z, aax, aay, aaz */
 const double test_root_frame[TEST_KEYFRAME_SIZE][TEST_FRAME_DOF_SIZE] =
   { { 0.0, 0.0, 0.0,  0.0, 0.0, 0.0 },
+    { 0.0, 0.0, 0.0,  0.0, 0.0, 0.0 },
     { 0.0, 0.0, 0.0,  0.0, 0.0, 0.0 } };
 const double tmp_root_frame[TEST_FRAME_DOF_SIZE] =
   { 0.0, 0.0, 0.0,  0.0, 0.0, 0.0 };
@@ -76,10 +77,13 @@ const double tmp_s = 0.05;
 /* q0 ... q5 */
 const double test_q[TEST_KEYFRAME_SIZE][TEST_JOINT_SIZE] =
   { { 0.0, 0.0, 0.0,  0.0, 0.0, 0.0 },
+    { zDeg2Rad(-30.0), zDeg2Rad(-30.0), zDeg2Rad(30.0), 0.0, zDeg2Rad(30.0), 0.0 },
     { zDeg2Rad(45.0), zDeg2Rad(-60.0), zDeg2Rad(-5.0), 0.0, zDeg2Rad(90.0), 0.0 } };
 /* pin */
 const int test_pin[TEST_KEYFRAME_SIZE][TEST_LINK_SIZE] =
   { { PIN_LOCK_OFF, PIN_LOCK_OFF, PIN_LOCK_OFF,
+      PIN_LOCK_OFF, PIN_LOCK_OFF, PIN_LOCK_OFF, PIN_LOCK_POS3D },
+    { PIN_LOCK_OFF, PIN_LOCK_OFF, PIN_LOCK_OFF,
       PIN_LOCK_OFF, PIN_LOCK_OFF, PIN_LOCK_OFF, PIN_LOCK_POS3D },
     { PIN_LOCK_OFF, PIN_LOCK_OFF, PIN_LOCK_OFF,
       PIN_LOCK_OFF, PIN_LOCK_OFF, PIN_LOCK_OFF, PIN_LOCK_POS3D }};
@@ -107,7 +111,8 @@ typedef struct{
 } refPathInput;
 refPathInput test_ref_path_input_array[TEST_KEYFRAME_SIZE-1] =
   {
-    /* { ik_reg, num } */
+    /* { num, ik_reg_array } */
+    { TEST_IK_NUM__PATH01, (void**)(&TEST_IK_REG_ARRAY__PATH01_PTR) },
     { TEST_IK_NUM__PATH01, (void**)(&TEST_IK_REG_ARRAY__PATH01_PTR) }
   }; /* TEST_KEYFRAME_SIZE-1 (= PATH_SIZE) */
 
@@ -115,6 +120,9 @@ refPathInput test_ref_path_input_array[TEST_KEYFRAME_SIZE-1] =
 int test_ik_num_array[TEST_KEYFRAME_SIZE-1] = {1};
 rkIKRegister test_ik_reg_2array[TEST_KEYFRAME_SIZE-1][BUFSIZ] =
   {
+    {
+      { TEST_IK_REG_SELECTABLE__PATH01_IK01, TEST_IK_ATTR__PATH01_IK01 }
+    }, /* TEST_IK_NUM__PATH01 (BUFSIZ is default) */
     {
       { TEST_IK_REG_SELECTABLE__PATH01_IK01, TEST_IK_ATTR__PATH01_IK01 }
     } /* TEST_IK_NUM__PATH01 (BUFSIZ is default) */
@@ -725,7 +733,8 @@ bool interpolate_path()
         /* the number of intermediate control points */
         zNURBS3D1Alloc( nurbs, P2P_KEYFRAME_NUM + INTERMEDIATE_CP_NUM, 3 );
         zNURBS3D1SetSliceNum( nurbs, SLICE_NUM );
-        interpolate_p2p_nurbs_cp( nurbs, path_id, &start_pos, &end_pos );
+        /* interpolate_p2p_nurbs_cp( nurbs, path_id, &start_pos, &end_pos ); */
+        interpolate_p2p_nurbs_cp( nurbs, 0, &start_pos, &end_pos );
       }
     }
   } /* end of for loop i of keyframe num times */
@@ -1082,44 +1091,6 @@ void change_pose(const double s)
 
 /******************************************************************************************/
 
-/* find which control point of drawn nurbs curve is selected */
-int find_cp(rkglSelectionBuffer *sb)
-{
-  int path_size, path_id, ik_num, ik_id;
-  int i;
-
-  path_size = zArraySize( &g_p2p_array );
-
-  rkglSelectionRewind( sb );
-  g_selected_cp = -1;
-  g_selected_path_id = -1;
-  g_selected_ik_id = -1;
-
-  for( path_id=0; path_id < path_size; path_id++ ){
-    p2pPathInfo* p2p_buf = &g_p2p_array.buf[path_id];
-    ik_num = p2p_buf->ik_num;
-    for( ik_id=0; ik_id < ik_num; ik_id++ ){
-      zNURBS3D* nurbs = &p2p_buf->ref_path_array.buf[ik_id].nurbs;
-      void* ik_reg = p2p_buf->ref_path_array.buf[ik_id].ik_reg;
-      if( g_ik_reg_cls->pos( ik_reg ) ){
-        for( i=0; i<sb->hits; i++ ){
-          if( rkglSelectionName(sb,0) == (NAME_NURBS + 100*NAME_NURBS*path_id + ik_id) &&
-              rkglSelectionName(sb,1) >= 0 &&
-              rkglSelectionName(sb,1) < zNURBS3D1CPNum(nurbs) ){
-            g_selected_cp = rkglSelectionName(sb,1);
-            g_selected_path_id = path_id;
-            g_selected_ik_id = ik_id;
-            break;
-          }
-          rkglSelectionNext( sb );
-        }
-      }
-    }
-
-  }
-  return g_selected_cp;
-}
-
 void draw_chain(void)
 {
   int i;
@@ -1130,27 +1101,35 @@ void draw_chain(void)
   }
 }
 
+int g_draw_path_id;
+int g_draw_ik_id;
+
+void draw_one_nurbs(void)
+{
+  zRGB rgb;
+  refPath* ref_path = &g_p2p_array.buf[g_draw_path_id].ref_path_array.buf[g_draw_ik_id];
+  if( g_ik_reg_cls->pos( ref_path->ik_reg ) ){
+    glPushMatrix();
+    zRGBSet( &rgb, 1.0, 1.0, 1.0 );
+    glLoadName( NAME_NURBS + 100*g_draw_path_id + g_draw_ik_id );
+    glLineWidth( 3 );
+    rkglNURBSCurve( &ref_path->nurbs, &rgb );
+    zRGBSet( &rgb, 0.5, 1.0, 0.5 );
+    glLineWidth( 1 );
+    rkglNURBSCurveCP( &ref_path->nurbs, SIZE_CP, &rgb );
+    glPopMatrix();
+  }
+}
+
 void draw_nurbs(void)
 {
-  int path_size, path_id, ik_id, ik_num;
-  zRGB rgb;
+  int path_size, ik_num;
 
   path_size = zArraySize( &g_p2p_array );
-  for( path_id=0; path_id < path_size; path_id++ ){
-    ik_num = g_p2p_array.buf[path_id].ik_num;
-    for( ik_id=0; ik_id < ik_num; ik_id++ ){
-      refPath* ref_path = &g_p2p_array.buf[path_id].ref_path_array.buf[ik_id];
-      if( g_ik_reg_cls->pos( ref_path->ik_reg ) ){
-        glPushMatrix();
-        zRGBSet( &rgb, 1.0, 1.0, 1.0 );
-        glLoadName( NAME_NURBS + 100*NAME_NURBS*path_id + ik_id );
-        glLineWidth( 3 );
-        rkglNURBSCurve( &ref_path->nurbs, &rgb );
-        zRGBSet( &rgb, 0.5, 1.0, 0.5 );
-        glLineWidth( 1 );
-        rkglNURBSCurveCP( &ref_path->nurbs, SIZE_CP, &rgb );
-        glPopMatrix();
-      }
+  for( g_draw_path_id=0; g_draw_path_id < path_size; g_draw_path_id++ ){
+    ik_num = g_p2p_array.buf[g_draw_path_id].ik_num;
+    for( g_draw_ik_id=0; g_draw_ik_id < ik_num; g_draw_ik_id++ ){
+      draw_one_nurbs();
     }
   }
 }
@@ -1158,11 +1137,46 @@ void draw_nurbs(void)
 void draw_scene(void)
 {
   int i;
+  draw_nurbs();
   draw_chain();
   for( i=0; i < zArraySize( &g_keyframe_array ); i++ ){
     glCallList( zArrayElemNC(&g_keyframe_array, i)->display_id );
   }
-  draw_nurbs();
+}
+
+/* find which control point of drawn nurbs curve is selected */
+int find_cp(rkglSelectionBuffer *sb)
+{
+  /* int path_size, path_id, ik_num, ik_id; */
+  int i;
+
+  /* path_size = zArraySize( &g_p2p_array ); */
+
+  rkglSelectionRewind( sb );
+  g_selected_cp = -1;
+  g_selected_path_id = -1;
+  g_selected_ik_id = -1;
+
+  p2pPathInfo* p2p_buf = &g_p2p_array.buf[g_draw_path_id];
+
+  zNURBS3D* nurbs = &p2p_buf->ref_path_array.buf[g_draw_ik_id].nurbs;
+  void* ik_reg = p2p_buf->ref_path_array.buf[g_draw_ik_id].ik_reg;
+  if( g_ik_reg_cls->pos( ik_reg ) ){
+    for( i=0; i<sb->hits; i++ ){
+      if( rkglSelectionName(sb,0) == (NAME_NURBS + 100*g_draw_path_id + g_draw_ik_id) &&
+          rkglSelectionName(sb,1) >= 0 &&
+          rkglSelectionName(sb,1) < zNURBS3D1CPNum(nurbs) ){
+        g_selected_cp = rkglSelectionName(sb,1);
+        g_selected_path_id = g_draw_path_id;
+        g_selected_ik_id = g_draw_ik_id;
+        break;
+      }
+      rkglSelectionNext( sb );
+    }
+    printf(" sp->hits=%d : i=%d : g_draw_path_id=%d, g_draw_ik_id=%d, rkglSelectionName(sb,0)=%d, Name(sb,1)=%d\n", sb->hits, i, g_draw_path_id, g_draw_ik_id, rkglSelectionName(sb,0), rkglSelectionName(sb,1));
+  }
+
+  return g_selected_cp;
 }
 
 void display(GLFWwindow* window)
@@ -1195,7 +1209,7 @@ void motion(GLFWwindow* window, double x, double y)
     return;
   }
   zNURBS3D* nurbs = &g_p2p_array.buf[g_selected_path_id].ref_path_array.buf[g_selected_ik_id].nurbs;
-  if( g_selected_cp >= 0 && g_selected_cp < zNURBS3D1CPNum(nurbs) ){
+  if( g_selected_cp > 0 && g_selected_cp < zNURBS3D1CPNum(nurbs) -1 ){
     rkglUnproject( &g_cam, x, y, rkglSelectionZnearDepth(&g_sb), &p );
     zVec3DCopy( &p, zNURBS3D1CP(nurbs, g_selected_cp) );
     pop_pose( g_feedrate_s, &g_chain, &g_p2p_array );
@@ -1205,11 +1219,24 @@ void motion(GLFWwindow* window, double x, double y)
 
 void mouse(GLFWwindow* window, int button, int state, int mods)
 {
+  int path_size, ik_num;
+  bool is_selected = false;
+
   if( button == GLFW_MOUSE_BUTTON_LEFT ){
     if( state == GLFW_PRESS ){
-      rkglSelect( &g_sb, &g_cam, draw_nurbs, rkgl_mouse_x, rkgl_mouse_y, SIZE_CP, SIZE_CP );
-      if( find_cp( &g_sb ) >= 0 )
-        eprintf( "Selected control point [%d]\n", g_selected_cp );
+      path_size = zArraySize( &g_p2p_array );
+      for( g_draw_path_id=0; g_draw_path_id < path_size && !is_selected; g_draw_path_id++ ){
+        ik_num = g_p2p_array.buf[g_draw_path_id].ik_num;
+        for( g_draw_ik_id=0; g_draw_ik_id < ik_num && !is_selected; g_draw_ik_id++ ){
+          rkglClear();
+          rkglSelect( &g_sb, &g_cam, draw_one_nurbs, rkgl_mouse_x, rkgl_mouse_y, SIZE_CP, SIZE_CP );
+          if( find_cp( &g_sb ) >= 0 ){
+            eprintf( "Selected control point [%d]\n", g_selected_cp );
+            is_selected = true;
+            break;
+          }
+        }
+      }
     } else if( state == GLFW_RELEASE ){
       g_sb.hits = 0;
     }
@@ -1478,5 +1505,4 @@ int main(int argc, char *argv[])
 
   return 0;
 }
-
 
