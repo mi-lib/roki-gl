@@ -85,6 +85,7 @@ typedef struct{
   cdInfoCellList cdlist; /* the result list of collided chain & link IDs by rkCDColChk**() */
   bool is_sum_collision; /* simple summary result whether collision occured or not */
   ghostInfo ghost_info;
+  int fixed_scene_display_id;
   /* viewing parameters */
   rkglCamera cam;
   rkglLight light;
@@ -160,6 +161,7 @@ void copy_pindragIFData(void* _src, void* _dest)
   /* not copy cdInfoCellList cdlist, the reason is the same as rkCD cd */
   /* not copy bool is_sum_collision, the reason is the same as rkCD cd */
   /* not copy ghostInfo ghost_info, keep destination as initial state(GHOST_MODE_OFF) */
+  /* not copy fixed_scene_display_id, set destination as initial state */
   /* copy rkglCamera cam */
   rkglCameraCopy( &src->cam, &dest->cam );
   /* not copy rkglLight light, it must be guaranteed to be the same at init() */
@@ -342,6 +344,71 @@ void display(GLFWwindow* window)
 void clear_display(void)
 {
   rkglClear();
+}
+
+const int keep_fixed_scene_displayList(const double alpha)
+{
+  int chain_id, link_id, display_id;
+  zOpticalInfo **oi_alt;
+  rkChain* chain;
+  rkglChain* glChain;
+
+  if( g_main->fixed_scene_display_id > 0 ){
+    printf("glDeleteLists( %d, 1 )\n", g_main->fixed_scene_display_id);
+    glDeleteLists( g_main->fixed_scene_display_id, 1 );
+  }
+
+  for( chain_id=0; chain_id < g_main->chainNUM; chain_id++ ){
+
+    chain = &g_main->gcs[chain_id].chain;
+    glChain = &g_main->gcs[chain_id].glChain;
+
+    if( !( oi_alt = zAlloc( zOpticalInfo*, rkChainLinkNum(chain) ) ) ){
+      ZALLOCERROR();
+      ZRUNERROR( "Failed to zAlloc( zOpticalInfo, rkChainLinkNum(&g_chain) )." );
+      return -1;
+    }
+    /* pin link color changed */
+    for( link_id=0; link_id < rkChainLinkNum( chain ); link_id++ ){
+      rkglLinkInfo2 *info2 = &g_main->gcs[chain_id].info2[link_id];
+      if( info2->pin == PIN_LOCK_6D ){
+        /* Red */
+        oi_alt[link_id] = zAlloc( zOpticalInfo, 1 );
+        zOpticalInfoCreate( oi_alt[link_id], 1.0, 0.3, 0.3, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, alpha, NULL );
+      } else if( info2->pin == PIN_LOCK_POS3D ){
+        /* Yellow */
+        oi_alt[link_id] = zAlloc( zOpticalInfo, 1 );
+        zOpticalInfoCreate( oi_alt[link_id], 1.0, 8.0, 0.3, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, alpha, NULL );
+      } else {
+        /* Default */
+        oi_alt[link_id] = NULL;
+      }
+      rkglChainAlternateLinkOptic( glChain, link_id, oi_alt[link_id], &g_main->light );
+    } /* end of pin link color changed */
+
+    if( chain_id==0 )
+      g_main->fixed_scene_display_id = rkglBeginList();
+    rkglChainPhantomize( glChain, alpha, &g_main->light );
+
+    for( link_id=0; link_id < rkChainLinkNum( chain ); link_id++ )
+      if( oi_alt[link_id] ) zOpticalInfoDestroy( oi_alt[link_id] );
+
+  } /* end of for loop chain_id=0 -> chainNUM */
+  glEndList();
+
+  printf("keep_fixed_scene_displayList(%f)=%d\n", alpha, g_main->fixed_scene_display_id);
+  return g_main->fixed_scene_display_id;
+}
+
+const int get_fixed_scene_display_id(void)
+{
+  return g_main->fixed_scene_display_id;
+}
+
+void display_fixed_scene(const int display_id)
+{
+  // printf("fixed_scene_display:\n glCallList( g_main->fixed_scene_display_id=%d )\n", g_main->fixed_scene_display_id);
+  glCallList( display_id );
 }
 
 /* end of draw part -------------------------------------------------------------- */
@@ -1109,7 +1176,6 @@ bool init(void)
 
   return true;
 }
-
 
 int main(int argc, char *argv[])
 {
