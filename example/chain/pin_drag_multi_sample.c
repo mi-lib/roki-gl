@@ -19,6 +19,9 @@ typedef enum{
   PIN_LOCK_POS3D
 } pinStatus;
 
+/* selected link alpha using create_pindrag_link_color() */
+#define PINDRAG_SELECTED_ALPHA 0.3
+
 typedef struct{
   pinStatus pin;
 } pinInfo;
@@ -258,19 +261,19 @@ void draw_alternate_link(rkglChain *gc, int chain_id, int id, zOpticalInfo *oi_a
   debug_printf( "_list_backup = %d\n", gc->linkinfo[id]._list_backup );
 }
 
-bool create_pindrag_link_color(int chain_id, int link_id, int pin, bool is_alt, bool is_selected, zOpticalInfo* oi_alt)
+bool create_pindrag_link_color(int chain_id, int link_id, int pin, bool is_alt, bool is_selected, double alpha, zOpticalInfo* oi_alt)
 {
   /* re-drawing the selected link once after proccessing with rkglChainResetLinkOptic() */
   if( is_alt ) g_main->gcs[chain_id].glChain.attr.disptype = RKGL_FACE;
   if( is_alt && pin == PIN_LOCK_6D ){
     /* Red & semi-transparent*/
-    zOpticalInfoCreate( oi_alt, 1.0, 0.3, 0.3, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.3, NULL );
+    zOpticalInfoCreate( oi_alt, 1.0, 0.3, 0.3, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, alpha, NULL );
   } else if( is_alt && pin == PIN_LOCK_POS3D ){
     /* Yellow & semi-transparent*/
-    zOpticalInfoCreate( oi_alt, 1.0, 8.0, 0.3, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.3, NULL );
+    zOpticalInfoCreate( oi_alt, 1.0, 8.0, 0.3, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, alpha, NULL );
   } else if( is_alt && is_selected ){
     /* Blue & semi-transparent */
-    zOpticalInfoCreate( oi_alt, 0.5, 0.7, 1.0, 0.5, 0.5, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.3, NULL );
+    zOpticalInfoCreate( oi_alt, 0.5, 0.7, 1.0, 0.5, 0.5, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, alpha, NULL );
   } else {
     return false;
   }
@@ -283,7 +286,7 @@ bool draw_pindrag_link(int chain_id, int link_id, bool is_alt)
   zOpticalInfo oi_alt;
 
   int pin = is_alt ? g_main->gcs[chain_id].info2[link_id].pin : -1;
-  if( !create_pindrag_link_color(chain_id, link_id, pin, is_alt, g_main->gcs[chain_id].info2[link_id].is_selected, &oi_alt) )
+  if( !create_pindrag_link_color(chain_id, link_id, pin, is_alt, g_main->gcs[chain_id].info2[link_id].is_selected, PINDRAG_SELECTED_ALPHA, &oi_alt) )
     return false;
   draw_alternate_link( &g_main->gcs[chain_id].glChain, chain_id, link_id, &oi_alt, &g_main->gcs[chain_id].glChain.attr, &g_main->light );
 
@@ -371,16 +374,9 @@ const int keep_fixed_scene_displayList(const double alpha)
     /* pin link color changed */
     for( link_id=0; link_id < rkChainLinkNum( chain ); link_id++ ){
       rkglLinkInfo2 *info2 = &g_main->gcs[chain_id].info2[link_id];
-      if( info2->pin == PIN_LOCK_6D ){
-        /* Red */
-        oi_alt[link_id] = zAlloc( zOpticalInfo, 1 );
-        zOpticalInfoCreate( oi_alt[link_id], 1.0, 0.3, 0.3, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, alpha, NULL );
-      } else if( info2->pin == PIN_LOCK_POS3D ){
-        /* Yellow */
-        oi_alt[link_id] = zAlloc( zOpticalInfo, 1 );
-        zOpticalInfoCreate( oi_alt[link_id], 1.0, 8.0, 0.3, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, alpha, NULL );
-      } else {
-        /* Default */
+      oi_alt[link_id] = zAlloc( zOpticalInfo, 1 );
+      if( !create_pindrag_link_color( chain_id, link_id, info2->pin, true, info2->is_selected, alpha, oi_alt[link_id] ) ){
+        zOpticalInfoDestroy( oi_alt[link_id] );
         oi_alt[link_id] = NULL;
       }
       rkglChainAlternateLinkOptic( glChain, link_id, oi_alt[link_id], &g_main->light );
@@ -693,10 +689,12 @@ int create_original_chain_phantom(int chain_id, ghostInfo* backup_ghost_info)
     oi_alt[link_id] = zAlloc( zOpticalInfo, 1 );
     pin = g_main->gcs[chain_id].info2[link_id].pin;
     /* pin color */
-    if( !create_pindrag_link_color(chain_id, link_id, pin, true, false, oi_alt[link_id]) ){
+    if( !create_pindrag_link_color(chain_id, link_id, pin, true, false, alpha, oi_alt[link_id]) ){
       /* other is gray */
       /* zOpticalInfoCreate( oi_alt[link_id], 0.8, 0.8, 0.8,  0.6, 0.6, 0.6,  0.0, 0.0, 0.0,  0.0, 0.0, alpha, NULL ); */
       /* other is Transparency */
+      zOpticalInfoDestroy( oi_alt[link_id] );
+      reset_link_drawing( chain_id, link_id );
       oi_alt[link_id] = NULL;
     }
     rkglChainAlternateLinkOptic( &g_main->gcs[chain_id].glChain, link_id, oi_alt[link_id], &g_main->light );
