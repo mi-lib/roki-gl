@@ -348,7 +348,7 @@ void clear_display(void)
 
 const int keep_fixed_scene_displayList(const double alpha)
 {
-  int chain_id, link_id, display_id;
+  int chain_id, link_id;
   zOpticalInfo **oi_alt;
   rkChain* chain;
   rkglChain* glChain;
@@ -407,7 +407,6 @@ const int get_fixed_scene_display_id(void)
 
 void display_fixed_scene(const int display_id)
 {
-  // printf("fixed_scene_display:\n glCallList( g_main->fixed_scene_display_id=%d )\n", g_main->fixed_scene_display_id);
   glCallList( display_id );
 }
 
