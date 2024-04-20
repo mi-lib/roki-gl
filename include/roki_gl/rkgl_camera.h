@@ -133,6 +133,7 @@ __ROKI_GL_EXPORT double rkgl_default_key_delta_trans;
 __ROKI_GL_EXPORT double rkgl_default_key_delta_angle;
 
 __ROKI_GL_EXPORT void rkglSetDefaultCallbackParam(rkglCamera *cam, double width, double near, double far, double dl, double da);
+__ROKI_GL_EXPORT void rkglCopyFromDefaultCamera(rkglCamera *cam_dest);
 
 __END_DECLS
 

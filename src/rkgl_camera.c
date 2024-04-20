@@ -304,3 +304,9 @@ void rkglSetDefaultCallbackParam(rkglCamera *cam, double width, double near, dou
   rkgl_default_key_delta_trans = dl;
   rkgl_default_key_delta_angle = da;
 }
+
+void rkglCopyFromDefaultCamera(rkglCamera *cam_dest)
+{
+  if( rkgl_default_cam )
+    rkglCameraCopy( rkgl_default_cam, cam_dest );
+}
