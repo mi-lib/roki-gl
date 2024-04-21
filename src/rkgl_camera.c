@@ -286,6 +286,22 @@ void rkglCAAngleDown(rkglCamera *cam, double angle){  rkglCALockonRotate( cam, a
 void rkglCARoundLeft(rkglCamera *cam, double angle){  rkglCALockonRotate( cam, angle, 0, 1, 0 ); }
 void rkglCARoundRight(rkglCamera *cam, double angle){ rkglCALockonRotate( cam, angle, 0,-1, 0 ); }
 
+/* camera */
+
+rkglCamera *rkglCameraCopy(rkglCamera *src, rkglCamera *dest)
+{
+  if( !src )
+    if( !( src = rkgl_default_cam ) ){
+      ZRUNERROR( "default camera not assigned" );
+      return NULL;
+    }
+  rkglBGCopy( src, dest );
+  rkglVPCopy( src, dest );
+  rkglVVCopy( src, dest );
+  rkglCACopy( src, dest );
+  return dest;
+}
+
 /* default camera parameters */
 
 rkglCamera *rkgl_default_cam;
@@ -303,10 +319,4 @@ void rkglSetDefaultCallbackParam(rkglCamera *cam, double width, double near, dou
   rkgl_default_vv_far = far;
   rkgl_default_key_delta_trans = dl;
   rkgl_default_key_delta_angle = da;
-}
-
-void rkglCopyFromDefaultCamera(rkglCamera *cam_dest)
-{
-  if( rkgl_default_cam )
-    rkglCameraCopy( rkgl_default_cam, cam_dest );
 }

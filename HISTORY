@@ -1,3 +1,4 @@
+2024. 4.21. Redefined rkglCameraCopy as a function, and added rkglCameraCopyDefault (thanks to Daishi Kaneta). [rkgl_camera]
 2024. 3.26. Modified rk_penResetJointDis to use rkChainNeutralize. [app]
 2024. 3.21. Modified rkglFrameHandleAnchor not to evaluate the minimum bound of rkglSelectionName. [rkgl_framehandle]
 2024. 3.21. Modified type of name member of rkglFrameHandle from int to uint. [rkgl_framehandle]

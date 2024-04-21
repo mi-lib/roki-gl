@@ -1,3 +1,3 @@
 PROJNAME=roki-gl
-VERSION=1.11.6
+VERSION=1.11.7
 DEPENDENCY="zeda=1.8.12;zm=1.8.15;zeo=1.14.11;roki=2.6.6;liw=1.3.0;zx11=1.3.7"
