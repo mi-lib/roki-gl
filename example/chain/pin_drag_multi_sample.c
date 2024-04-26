@@ -8,8 +8,6 @@
 #define debug_printf(...)
 #endif
 
-GLFWwindow* g_window;
-
 /* the definition of select & pin information *****************************************/
 
 /* rkglLinkInfo2.pin information */
@@ -182,6 +180,7 @@ static const double g_MAGNITUDE = g_LENGTH * 0.7;
 /* To avoid duplication between selected_link and selected_parts_id */
 /* NAME_FRAMEHANDLE_OFFSET must be enough large than rkChainLinkNum(gr.chain)  */
 #define NAME_FRAMEHANDLE_OFFSET 100
+#define NAME_FIXED_SCENE 1000
 
 bool rkglChainLoad_for_rkglChainBlock(rkglChainBlock *gcb, rkglLight *light )
 {
@@ -349,6 +348,7 @@ void clear_display(void)
   rkglClear();
 }
 
+
 const int keep_fixed_scene_displayList(const double alpha)
 {
   int chain_id, link_id;
@@ -401,9 +401,35 @@ const int get_fixed_scene_display_id(void)
   return g_main->fixed_scene_display_id;
 }
 
-void display_fixed_scene(const int display_id)
+void set_top_name_for_fixed_scene(void)
 {
+  glLoadName(NAME_FIXED_SCENE);
+}
+
+/* The Input argument display_id is taken into account the case to draw other scene */
+void draw_fixed_scene(const int display_id, const int name_id)
+{
+  glPushName( name_id );
   glCallList( display_id );
+  glPopName();
+}
+
+int find_fixed_scene(void (* draw_all_fixed_scene)(void))
+{
+  if( g_main->selected.chain_id >=0 && g_main->selected.link_id >=0 &&
+      g_main->gcs[g_main->selected.chain_id].info2[g_main->selected.link_id].is_selected ){
+    return -1;
+  }
+
+  int selected_id = -1;
+  rkglSelectionBuffer sb;
+  /* (!) In its original usage, rkglSelectNearest() should be called with mouse() */
+  if( rkglSelectNearest( &sb, &g_main->cam, draw_all_fixed_scene, rkgl_mouse_x, rkgl_mouse_y, 1, 1 ) ){
+    selected_id =
+    ( rkglSelectionName(&sb,0) == NAME_FIXED_SCENE ) ?
+    rkglSelectionName(&sb,1) : -1;
+  }
+  return selected_id;
 }
 
 /* end of draw part -------------------------------------------------------------- */
@@ -1119,11 +1145,14 @@ void setDefaultCallbackParam(void)
   rkglSetDefaultCallbackParam( &g_main->cam, 1.0, g_znear, g_zfar, 1.0, 5.0 );
 }
 
+void copyFromDefaultCamera(void)
+{
+  rkglCameraCopyDefault( &g_main->cam );
+}
+
 bool init(void)
 {
   int i;
-
-  setDefaultCallbackParam();
 
   rkglBGSet( &g_main->cam, 0.5, 0.5, 0.5 );
   rkglCASet( &g_main->cam, 0, 0, 0, 45, -30, 0 );
@@ -1174,6 +1203,9 @@ bool init(void)
   return true;
 }
 
+
+GLFWwindow* g_window;
+
 int main(int argc, char *argv[])
 {
   /* First of All, create pindragIFData g_mains */
@@ -1197,6 +1229,8 @@ int main(int argc, char *argv[])
   glfwSetMouseButtonCallback( g_window, mouse );
   glfwSetScrollCallback( g_window, mouse_wheel );
   glfwSetCharCallback( g_window, keyboard );
+
+  setDefaultCallbackParam();
 
   if( !init() ){
     glfwTerminate();
