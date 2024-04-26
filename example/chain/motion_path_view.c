@@ -1,9 +1,8 @@
 #include <roki_gl/roki_glfw.h>
 #include "rk_ik_attr_register.h"
 
-GLFWwindow* g_window;
 
-rkIKRegSelectClass *g_ik_reg_cls = &rkIKRegSelectClassImpl;
+static rkIKRegSelectClass *g_ik_reg_cls = &rkIKRegSelectClassImpl;
 
 typedef enum{
   PIN_LOCK_OFF=-1,
@@ -57,20 +56,20 @@ zArrayClass( keyFrameInfoArray, keyFrameInfo );
 #define IK_PATH_WEIGHT 1.0
 #define IK_NO_WEIGHT 0.0
 
-
-/* Test Dataset ********************************************************************/
-
 #define TEST_KEYFRAME_SIZE 3
-#define TEST_IK_NUM__PATH01 1
-#define TEST_JOINT_SIZE 6
-#define TEST_LINK_SIZE 7
 #define TEST_FRAME_DOF_SIZE 6
-#define TEST_PATH_TARGET_SIZE 1
 /* x, y, z, aax, aay, aaz */
 const double test_root_frame[TEST_KEYFRAME_SIZE][TEST_FRAME_DOF_SIZE] =
   { { 0.0, 0.0, 0.0,  0.0, 0.0, 0.0 },
     { 0.0, 0.0, 0.0,  0.0, 0.0, 0.0 },
     { 0.0, 0.0, 0.0,  0.0, 0.0, 0.0 } };
+
+/* Test Dataset ********************************************************************/
+
+#define TEST_IK_NUM__PATH01 1
+#define TEST_JOINT_SIZE 6
+#define TEST_LINK_SIZE 7
+#define TEST_PATH_TARGET_SIZE 1
 const double tmp_root_frame[TEST_FRAME_DOF_SIZE] =
   { 0.0, 0.0, 0.0,  0.0, 0.0, 0.0 };
 const double tmp_s = 0.05;
@@ -130,6 +129,7 @@ rkIKRegister test_ik_reg_2array[TEST_KEYFRAME_SIZE-1][BUFSIZ] =
 
 /* End of Test Dataset *************************************************************/
 
+
 zArrayClass( zPexIPArray, zPexIP );
 
 /* path constrained cell info for IK */
@@ -185,7 +185,8 @@ int g_selected_cp = -1;
 int g_selected_path_id = -1;
 int g_popped_path_id = -1;
 int g_selected_ik_id = -1;
-double g_feedrate_s = tmp_s;
+int g_selected_key_id = -1;
+double g_feedrate_s;
 rkglSelectionBuffer g_sb;
 
 #define SLICE_NUM 100
@@ -1106,10 +1107,10 @@ double run_test(void)
 }
 
 /* 4. change_pose() */
-void change_pose(const double s)
+bool change_pose(const double s)
 {
   g_feedrate_s = s;
-  pop_pose( g_feedrate_s, &g_chain, &g_p2p_array );
+  return pop_pose( g_feedrate_s, &g_chain, &g_p2p_array );
 }
 
 /******************************************************************************************/
@@ -1157,14 +1158,23 @@ void draw_nurbs(void)
   }
 }
 
+void draw_keyframes_phantom_chain(void)
+{
+  int key_id;
+
+  glLoadName( gr.name );
+  for( key_id=0; key_id < zArraySize( &g_keyframe_array ); key_id++ ){
+    glPushName( key_id );
+    glCallList( g_keyframe_array.buf[key_id].display_id );
+    glPopName();
+  }
+}
+
 void draw_scene(void)
 {
-  int i;
   draw_nurbs();
   draw_chain();
-  for( i=0; i < zArraySize( &g_keyframe_array ); i++ ){
-    glCallList( zArrayElemNC(&g_keyframe_array, i)->display_id );
-  }
+  draw_keyframes_phantom_chain();
 }
 
 /* find which control point of drawn nurbs curve is selected */
@@ -1200,6 +1210,21 @@ int find_cp(rkglSelectionBuffer *sb)
   }
 
   return g_selected_cp;
+}
+
+int find_keyframes_phantom_chain(rkglSelectionBuffer *sb)
+{
+  g_selected_key_id =
+    ( rkglSelectionName(sb,0) == gr.name &&
+      rkglSelectionName(sb,1) >= 0 &&
+      rkglSelectionName(sb,1) < zArraySize( &g_keyframe_array ) ) ?
+    rkglSelectionName(sb,1) : -1;
+  return g_selected_key_id;
+}
+
+int get_selected_key_id()
+{
+  return g_selected_key_id;
 }
 
 void display(GLFWwindow* window)
@@ -1247,6 +1272,7 @@ void mouse(GLFWwindow* window, int button, int state, int mods)
 
   if( button == GLFW_MOUSE_BUTTON_LEFT ){
     if( state == GLFW_PRESS ){
+      /* cp selection */
       path_size = zArraySize( &g_p2p_array );
       for( g_draw_path_id=0; g_draw_path_id < path_size && !is_selected; g_draw_path_id++ ){
         ik_num = g_p2p_array.buf[g_draw_path_id].ik_num;
@@ -1260,6 +1286,15 @@ void mouse(GLFWwindow* window, int button, int state, int mods)
           }
         }
       }
+      /* keyframe selection */
+      g_selected_key_id = -1;
+      if( !is_selected &&
+          rkglSelectNearest( &g_sb, &g_cam, draw_keyframes_phantom_chain, rkgl_mouse_x, rkgl_mouse_y, 1, 1 ) ){
+        if( find_keyframes_phantom_chain( &g_sb ) >= 0 ){
+          eprintf( "Selected keyframe id [%d]\n", g_selected_key_id );
+        }
+      }
+      /* */
     } else if( state == GLFW_RELEASE ){
       g_sb.hits = 0;
     }
@@ -1377,6 +1412,11 @@ void setDefaultCallbackParam(void){
   rkglSetDefaultCallbackParam( &g_cam, 1.0, g_znear, g_zfar, 1.0, 5.0 );
 }
 
+void copyFromDefaultCamera(void)
+{
+  rkglCameraCopyDefault( &g_cam );
+}
+
 void set_texture_id(GLuint* tex_id)
 {
   g_tex_id = tex_id;
@@ -1384,8 +1424,6 @@ void set_texture_id(GLuint* tex_id)
 
 bool init(void)
 {
-  rkglSetDefaultCallbackParam( &g_cam, 1.0, 1.0, 20.0, 1.0, 5.0 );
-
   rkglBGSet( &g_cam, 0.5, 0.5, 0.5 );
   rkglCASet( &g_cam, 0, 0, 0, 45, -30, 0 );
 
@@ -1419,6 +1457,8 @@ bool init(void)
 }
 
 
+GLFWwindow* g_window;
+
 int main(int argc, char *argv[])
 {
   int width;
@@ -1440,6 +1480,8 @@ int main(int argc, char *argv[])
   glfwSetMouseButtonCallback( g_window, mouse );
   glfwSetScrollCallback( g_window, mouse_wheel );
   glfwSetCharCallback( g_window, keyboard );
+
+  setDefaultCallbackParam();
 
   if( !init() ){
     glfwTerminate();
