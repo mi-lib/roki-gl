@@ -371,8 +371,11 @@ const int keep_fixed_scene_displayList(const double alpha)
       ZRUNERROR( "Failed to zAlloc( zOpticalInfo, rkChainLinkNum(&g_chain) )." );
       return -1;
     }
+    draw_collision_link();
     /* pin link color changed */
     for( link_id=0; link_id < rkChainLinkNum( chain ); link_id++ ){
+      if( g_main->gcs[chain_id].info2[link_id].is_collision )
+        continue;
       rkglLinkInfo2 *info2 = &g_main->gcs[chain_id].info2[link_id];
       oi_alt[link_id] = zAlloc( zOpticalInfo, 1 );
       if( !create_pindrag_link_color( chain_id, link_id, info2->pin, true, info2->is_selected, alpha, oi_alt[link_id] ) ){
