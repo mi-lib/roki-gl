@@ -201,11 +201,7 @@ void rk_penSetJointDis(void)
 
 void rk_penResetJointDis(void)
 {
-  int i;
-
-  for( i=0; i<rkChainLinkNum(&chain); i++ )
-    rkJointNeutral( rkChainLinkJoint( &chain, i ) );
-  rkChainUpdateFK( &chain );
+  rkChainNeutralize( &chain );
 }
 
 void rk_penSetLinkPos(void)
