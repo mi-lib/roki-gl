@@ -93,7 +93,7 @@ GLuint *rkglSelectNearest(rkglSelectionBuffer *sb, rkglCamera *cam, void (* scen
 
 void rkglSelectionPrintName(rkglSelectionBuffer *sb)
 {
-  int i;
+  uint i;
 
   printf( "%d", rkglSelectionName(sb,0) );
   for( i=1; i<rkglSelectionNameSize(sb); i++ ){

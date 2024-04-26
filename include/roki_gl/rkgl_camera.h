@@ -112,12 +112,8 @@ __ROKI_GL_EXPORT void rkglCARoundRight(rkglCamera *cam, double angle);
 
 /* camera */
 
-#define rkglCameraCopy(cs,cd) do{\
-  rkglBGCopy( cs, cd );\
-  rkglVPCopy( cs, cd );\
-  rkglVVCopy( cs, cd );\
-  rkglCACopy( cs, cd );\
-} while(0)
+__ROKI_GL_EXPORT rkglCamera *rkglCameraCopy(rkglCamera *src, rkglCamera *dest);
+#define rkglCameraCopyDefault(dest) rkglCameraCopy( NULL, dest )
 
 /*
 void rkglCameraFRead(FILE *fp, rkglCamera *cam);

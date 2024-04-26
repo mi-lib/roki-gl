@@ -14,7 +14,7 @@ __BEGIN_DECLS
 typedef struct{
   int part[6];
   zFrame3D frame;
-  int name;
+  uint name;
   int selected_id;
 
   zVec3D _anchor;
