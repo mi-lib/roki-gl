@@ -1,5 +1,6 @@
-INCLUDE+=$(shell echo `zx11-config -I` `liw-config -I` `roki-config -I` | tr ' ' '\n' | sort | uniq | xargs)
-LIB+=$(shell echo `zx11-config -L` `liw-config -L` `roki-config -L` | tr ' ' '\n' | sort | uniq | xargs)
+CFLAGS_I=`roki-config -I`
+CFLAGS_L=`roki-config -L`
+CFLAGS_D=`roki-config -D`
 
 ifeq ($(CONFIG_USE_GLEW),y)
 	DEF+=-D__ROKI_GL_USE_GLEW
@@ -7,21 +8,48 @@ ifeq ($(CONFIG_USE_GLEW),y)
 	LINKCPP+=-lGLEW
 endif
 
+ifeq ($(CONFIG_USE_MAGICKWAND),y)
+	CFLAGS_I+=`pkg-config --cflags-only-I MagickWand`
+	CFLAGS_L+=--std=c99 `pkg-config --libs-only-L --cflags-only-other MagickWand`
+	CFLAGS_D+=-D__ROKI_GL_USE_MAGICKWAND
+	LINK+=`pkg-config --libs-only-l MagickWand` 
+	LINKCPP+=`pkg-config --libs-only-l MagickWand` 
+endif
+
 ifeq ($(CONFIG_USE_GLX),y)
+	CFLAGS_I+=`zx11-config -I`
+	CFLAGS_L+=`zx11-config -L`
+	CFLAGS_D+=-D__ROKI_GL_USE_GLX -D__ROKI_GL_USE_ZX11 `zx11-config -D`
 	LINK+=`zx11-config -l`
 	LINKCPP+=`zx11-config -lcpp`
 endif
 
 ifeq ($(CONFIG_USE_GLUT),y)
+	CFLAGS_D+=-D__ROKI_GL_USE_GLUT
 	LINK+=-lglut
 	LINKCPP+=-lglut
 endif
 
 ifeq ($(CONFIG_USE_GLFW),y)
+	CFLAGS_D+=-D__ROKI_GL_USE_GLFW
 	LINK+=-lglfw
 	LINKCPP+=-lglfw
 endif
 
-DEF+=$(shell echo `zx11-config -D` `liw-config -D` `roki-config -D` | tr ' ' '\n' | sort | uniq | xargs)
-LINK+=-lGLU -lGL `liw-config -l` `roki-config -l`
-LINKCPP+=-lGLU -lGL `liw-config -lcpp` `roki-config -lcpp`
+LINK+=-lGLU -lGL
+LINKCPP+=-lGLU -lGL
+
+ifeq ($(CONFIG_USE_LIW),y)
+	CFLAGS_I+=`liw-config -I`
+	CFLAGS_L+=`liw-config -L`
+	CFLAGS_D+=-D__ROKI_GL_USE_LIW `liw-config -D`
+	LINK+=`liw-config -l`
+	LINKCPP+=`liw-config -lcpp`
+endif
+
+LINK+=`roki-config -l`
+LINKCPP+=`roki-config -lcpp`
+
+INCLUDE+=$(shell echo ${CFLAGS_I} | tr ' ' '\n' | sort | uniq | xargs)
+LIB+=$(shell echo ${CFLAGS_L} | tr ' ' '\n' | sort | uniq | xargs)
+DEF+=$(shell echo ${CFLAGS_D} | tr ' ' '\n' | sort | uniq | xargs)

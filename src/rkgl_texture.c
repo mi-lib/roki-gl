@@ -6,6 +6,14 @@
 
 #include <roki_gl/rkgl_texture.h>
 
+#ifdef __ROKI_GL_USE_ZX11
+#include <zx11/zximage.h>
+#endif /* __ROKI_GL_USE_ZX11 */
+
+#ifdef __ROKI_GL_USE_MAGICKWAND
+#include <wand/MagickWand.h>
+#endif /* __ROKI_GL_USE_MAGICKWAND */
+
 /* color texture mapping */
 
 /* assign a 2D texture to GL. */
@@ -26,11 +34,12 @@ GLuint rkglTextureAssign(int width, int height, ubyte *buf)
 /* initialize GL parameters for a 2D texture. */
 GLuint rkglTextureInit(zTexture *texture, ubyte *buf)
 {
-  return ( texture->id = rkglTextureAssign( texture->width, texture->height, buf ) );
+  return ( texture->id = buf ? rkglTextureAssign( texture->width, texture->height, buf ) : 0 );
 }
 
-/* read an image file and make a texture data. */
-bool rkglTextureReadFile(zTexture *texture, char *filename)
+#if defined(__ROKI_GL_USE_ZX11)
+/* read an image file via zxImage and make a texture data. */
+bool rkglTextureReadFileZX11(zTexture *texture, char *filename)
 {
   zxImage img;
   zxPixelManip pm;
@@ -61,6 +70,59 @@ bool rkglTextureReadFile(zTexture *texture, char *filename)
   if( !already_connected ) zxExit();
   return ret;
 }
+bool (* rkglTextureReadFile)(zTexture *, char *) = rkglTextureReadFileZX11;
+#elif defined(__ROKI_GL_USE_MAGICKWAND)
+static void _rkglTextureMagickWandThrowException(MagickWand *wand)
+{
+  char *description;
+  ExceptionType severity;
+
+  description = MagickGetException( wand, &severity );
+  ZRUNWARN( "%s %s %lu %s\n", GetMagickModule(), description );
+  MagickRelinquishMemory( description );
+}
+
+/* read an image file via MagickWand and make a texture data. */
+bool rkglTextureReadFileMagickWand(zTexture *texture, char *filename)
+{
+  MagickWand *wand;
+  ulong width, height;
+  ubyte *buf;
+  bool already_connected, ret = false;
+
+  if( !( already_connected = IsMagickWandInstantiated() ) )
+    MagickWandGenesis();
+  wand = NewMagickWand();
+  if( MagickReadImage( wand, filename ) == MagickFalse ){
+    _rkglTextureMagickWandThrowException( wand );
+    goto TERMINATE;
+  }
+  width = MagickGetImageWidth( wand );
+  height = MagickGetImageHeight( wand );
+  if( !( buf = zAlloc( ubyte, width * height * 4 ) ) ) goto TERMINATE;
+  if( MagickExportImagePixels( wand, 0, 0, width, height, "RGBA", CharPixel, buf ) == MagickTrue ){
+    ret = true;
+    texture->width = width;
+    texture->height = height;
+    rkglTextureInit( texture, buf );
+  } else
+    _rkglTextureMagickWandThrowException( wand );
+  free( buf );
+ TERMINATE:
+  DestroyMagickWand( wand );
+  if( !already_connected )
+    MagickWandTerminus();
+  return ret;
+}
+bool (* rkglTextureReadFile)(zTexture *, char *) = rkglTextureReadFileMagickWand;
+#else
+bool rkglTextureReadFileDummy(zTexture *texture, char *filename)
+{
+  rkglTextureInit( texture, NULL );
+  return true;
+}
+bool (* rkglTextureReadFile)(zTexture *, char *) = rkglTextureReadFileDummy;
+#endif
 
 /* units for multitexture */
 
@@ -205,6 +267,7 @@ static ubyte *_rkglTextureBumpVec(ubyte *p, double x, double y, double z)
 }
 
 /* generate a normal map from a bump texture */
+#if defined(__ROKI_GL_USE_ZX11)
 static bool _rkglTextureBumpNormalMap(zTexture *bump, char *filename)
 {
   uint i, j, k;
@@ -222,11 +285,11 @@ static bool _rkglTextureBumpNormalMap(zTexture *bump, char *filename)
     ret = false;
     goto TERMINATE;
   }
-  zxPixelManipSetDefault( &pm );
   if( zIsTiny( bump->depth ) ){
     ZRUNWARN( "zero-depth bump unrenderable" );
     bump->depth = 1.0;
   }
+  zxPixelManipSetDefault( &pm );
   for( k=0, i=0; i<img.height; i++ ){
     for( j=0; j<img.width; j++, k+=4 ){
       zxImageNormalVec( &img, &pm, bump->depth, j, i, &nx, &ny, &nz );
@@ -240,6 +303,109 @@ static bool _rkglTextureBumpNormalMap(zTexture *bump, char *filename)
   free( buf );
   return ret;
 }
+#elif defined(__ROKI_GL_USE_MAGICKWAND)
+/* tangent of a height map along x-axis */
+static double _rkglTextureNormalDX(ubyte *buf, uint width, uint height, uint j, uint i)
+{
+  i *= width;
+  if( j <= 0 ){
+    return -0.5 * (double)buf[i] + 2 * (double)buf[i+1] / 3 - (double)buf[i+2] / 6;
+  }
+  if( j + 1 >= width ){
+    i += width;
+    return (double)buf[i-3] / 6 - 2 * (double)buf[i-2] / 3 + 0.5 * (double)buf[i-1];
+  }
+  i += j;
+  return (double)( buf[i+1] - buf[i-1] ) / 6;
+}
+
+/* tangent of a height map along y-axis */
+static double _rkglTextureNormalDY(ubyte *buf, uint width, uint height, uint j, uint i)
+{
+  if( i <= 0 ){
+    return -0.5 * (double)buf[j] + 2 * (double)buf[width+j] / 3 - (double)buf[width*2+j] / 6;
+  }
+  if( i + 1 >= height ){
+    i = height-1;
+    return (double)buf[width*(i-2)+j] / 6 - 2 * (double)buf[width*(i-1)+j] / 3 + 0.5 * (double)buf[width*i+j];
+  }
+  return (double)( buf[width*(i+1)+j] - buf[width*(i-1)+j] ) / 6;
+}
+
+#define _rkglTextureValNormalize(x) ( 0.5 * ( (x) + 1.0 ) )
+
+static void _rkglTextureNormalVec(ubyte *buf, uint width, uint height, double depth, uint j, uint i, double *x, double *y, double *z)
+{
+  double dx, dy, l;
+
+  dx = _rkglTextureNormalDX( buf, width, height, j, i );
+  dy = _rkglTextureNormalDY( buf, width, height, j, i );
+  l = sqrt( dx*dx + dy*dy + 1.0/(depth*depth) );
+  *x = _rkglTextureValNormalize( -dx / l );
+  *y = _rkglTextureValNormalize( -dy / l );
+  *z = _rkglTextureValNormalize( 1.0 / l );
+}
+
+static bool _rkglTextureBumpNormalMap(zTexture *bump, char *filename)
+{
+  MagickWand *wand;
+  uint width, height;
+  uint i, j, k;
+  ubyte *bumpbuf = NULL, *normalbuf = NULL;
+  double nx, ny, nz;
+  bool already_connected, ret = false;
+
+  if( !( already_connected = IsMagickWandInstantiated() ) )
+    MagickWandGenesis();
+  wand = NewMagickWand();
+  if( MagickReadImage( wand, filename ) == MagickFalse ){
+    _rkglTextureMagickWandThrowException( wand );
+    goto TERMINATE;
+  }
+  if( ( width = MagickGetImageWidth( wand ) ) < 3 || ( height = MagickGetImageHeight( wand ) ) < 3 ){
+    ZRUNWARN( "(%dx%d) too small image for bump map", width, height );
+    goto TERMINATE;
+  }
+  bumpbuf = zAlloc( ubyte, width * height );
+  normalbuf = zAlloc( ubyte, width * height * 4 );
+  if( !bumpbuf || !normalbuf ){
+    ZALLOCERROR();
+    goto TERMINATE;
+  }
+  if( MagickExportImagePixels( wand, 0, 0, width, height, "R", CharPixel, bumpbuf ) == MagickFalse ){
+    _rkglTextureMagickWandThrowException( wand );
+    goto TERMINATE;
+  }
+  if( zIsTiny( bump->depth ) ){
+    ZRUNWARN( "unrenderable bump with too small depth, forced to be 1.0" );
+    bump->depth = 1.0;
+  }
+  for( k=0, i=0; i<height; i++ ){
+    for( j=0; j<width; j++, k+=4 ){
+      _rkglTextureNormalVec( bumpbuf, width, height, bump->depth, j, i, &nx, &ny, &nz );
+      _rkglTextureBumpVec( normalbuf + k, nx, ny, nz );
+    }
+  }
+  bump->width = width;
+  bump->height = height;
+  ret = true;
+ TERMINATE:
+  zFree( bumpbuf );
+  rkglTextureInit( bump, normalbuf );
+  zFree( normalbuf );
+  DestroyMagickWand( wand );
+  if( !already_connected )
+    MagickWandTerminus();
+  return ret;
+}
+#else
+static bool _rkglTextureBumpNormalMap(zTexture *bump, char *filename)
+{
+  ZRUNWARN( "bump map unavailable" );
+  rkglTextureInit( bump, NULL );
+  return false;
+}
+#endif /* __ROKI_GL_USE_ZX11 || __ROKI_GL_USE_MAGICKWAND */
 
 /* generate a light map from a bump texture */
 static bool _rkglTextureBumpLightMap(zTexture *bump)

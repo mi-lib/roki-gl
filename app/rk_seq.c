@@ -1,5 +1,6 @@
 /* rk_seq - afterimage of a sequence of robot motion */
 
+#if defined(__ROKI_GL_USE_GLX)
 #include <zm/zm_seq.h>
 #include <zx11/zximage.h>
 #include <roki_gl/roki_glx.h>
@@ -302,3 +303,12 @@ int main(int argc, char *argv[])
   rk_seqExit();
   return 0;
 }
+#else
+#include <roki_gl/roki_gl.h>
+
+int main(int argc, char *argv[])
+{
+  ROKI_GL_LIB_MANDATORY( "GLX", argv[0] );
+  return 0;
+}
+#endif /* __ROKI_GL_USE_GLX */
