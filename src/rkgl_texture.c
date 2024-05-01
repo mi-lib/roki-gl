@@ -45,15 +45,15 @@ bool rkglTextureReadFileZX11(zTexture *texture, char *filename)
   zxPixelManip pm;
   uint i, j;
   ubyte *buf, *pt;
-  bool already_connected, ret = false;
+  bool already_connected, retval = false;
 
-  already_connected = !zxInit();
+  already_connected = ( zxInit() == ZXINIT_DUP ? true : false );
   if( !zxImageReadFile( &img, filename ) ) goto TERMINATE;
   if( !( buf = zAlloc( ubyte, img.width*img.height*4 ) ) ){
     ZALLOCERROR();
     goto TERMINATE;
   }
-  ret = true;
+  retval = true;
   zxPixelManipSet( &pm, zxdepth );
   for( pt=buf, i=0; i<img.height; i++ )
     for( j=0; j<img.width; j++, pt+=4 ){
@@ -68,7 +68,7 @@ bool rkglTextureReadFileZX11(zTexture *texture, char *filename)
 
  TERMINATE:
   if( !already_connected ) zxExit();
-  return ret;
+  return retval;
 }
 bool (* rkglTextureReadFile)(zTexture *, char *) = rkglTextureReadFileZX11;
 #elif defined(__ROKI_GL_USE_MAGICKWAND)
@@ -88,7 +88,7 @@ bool rkglTextureReadFileMagickWand(zTexture *texture, char *filename)
   MagickWand *wand;
   ulong width, height;
   ubyte *buf;
-  bool already_connected, ret = false;
+  bool already_connected, retval = false;
 
   if( !( already_connected = IsMagickWandInstantiated() ) )
     MagickWandGenesis();
@@ -101,7 +101,7 @@ bool rkglTextureReadFileMagickWand(zTexture *texture, char *filename)
   height = MagickGetImageHeight( wand );
   if( !( buf = zAlloc( ubyte, width * height * 4 ) ) ) goto TERMINATE;
   if( MagickExportImagePixels( wand, 0, 0, width, height, "RGBA", CharPixel, buf ) == MagickTrue ){
-    ret = true;
+    retval = true;
     texture->width = width;
     texture->height = height;
     rkglTextureInit( texture, buf );
@@ -112,7 +112,7 @@ bool rkglTextureReadFileMagickWand(zTexture *texture, char *filename)
   DestroyMagickWand( wand );
   if( !already_connected )
     MagickWandTerminus();
-  return ret;
+  return retval;
 }
 bool (* rkglTextureReadFile)(zTexture *, char *) = rkglTextureReadFileMagickWand;
 #else
@@ -275,14 +275,13 @@ static bool _rkglTextureBumpNormalMap(zTexture *bump, char *filename)
   zxPixelManip pm;
   ubyte *buf;
   double nx, ny, nz;
-  bool already_connected, ret = true;
+  bool already_connected, retval = false;
 
-  already_connected = !zxInit();
+  already_connected = ( zxInit() == ZXINIT_DUP ? true : false );
   if( zxImageReadFile( &img, filename ) == 0 ||
       img.width < 3 || img.height < 3 ) return false;
   if( !( buf = zAlloc( ubyte, ( bump->width = img.width ) * ( bump->height = img.height ) * 4 ) ) ){
     ZALLOCERROR();
-    ret = false;
     goto TERMINATE;
   }
   if( zIsTiny( bump->depth ) ){
@@ -296,12 +295,13 @@ static bool _rkglTextureBumpNormalMap(zTexture *bump, char *filename)
       _rkglTextureBumpVec( buf + k, nx, ny, nz );
     }
   }
+  retval = true;
  TERMINATE:
   zxImageDestroy( &img );
   if( !already_connected ) zxExit();
   rkglTextureInit( bump, buf );
   free( buf );
-  return ret;
+  return retval;
 }
 #elif defined(__ROKI_GL_USE_MAGICKWAND)
 /* tangent of a height map along x-axis */
@@ -353,7 +353,7 @@ static bool _rkglTextureBumpNormalMap(zTexture *bump, char *filename)
   uint i, j, k;
   ubyte *bumpbuf = NULL, *normalbuf = NULL;
   double nx, ny, nz;
-  bool already_connected, ret = false;
+  bool already_connected, retval = false;
 
   if( !( already_connected = IsMagickWandInstantiated() ) )
     MagickWandGenesis();
@@ -388,7 +388,7 @@ static bool _rkglTextureBumpNormalMap(zTexture *bump, char *filename)
   }
   bump->width = width;
   bump->height = height;
-  ret = true;
+  retval = true;
  TERMINATE:
   zFree( bumpbuf );
   rkglTextureInit( bump, normalbuf );
@@ -396,7 +396,7 @@ static bool _rkglTextureBumpNormalMap(zTexture *bump, char *filename)
   DestroyMagickWand( wand );
   if( !already_connected )
     MagickWandTerminus();
-  return ret;
+  return retval;
 }
 #else
 static bool _rkglTextureBumpNormalMap(zTexture *bump, char *filename)
@@ -413,7 +413,7 @@ static bool _rkglTextureBumpLightMap(zTexture *bump)
   uint i, j, k;
   uint wh, hh;
   ubyte *buf[6];
-  bool ret = true;
+  bool retval = true;
   double x, y, y2;
   double xr, yr, zr;
 
@@ -422,9 +422,9 @@ static bool _rkglTextureBumpLightMap(zTexture *bump)
   for( i=0; i<6; i++ )
     if( !( buf[i] = zAlloc( ubyte, wh * hh * 4 ) ) ){
       ZALLOCERROR();
-      ret = false;
+      retval = false;
     }
-  if( !ret ) goto TERMINATE;
+  if( !retval ) goto TERMINATE;
   for( k=0, i=0; i<hh; i++ ){
     y = 2*(double)i/hh - 1;
     y2 = y*y + 1.0 / ( bump->depth * bump->depth );
@@ -443,11 +443,11 @@ static bool _rkglTextureBumpLightMap(zTexture *bump)
   }
  TERMINATE:
   for( i=0; i<6; i++ ){
-    if( ret )
+    if( retval )
       glTexImage2D( rkgl_cubemap_id[i], 0, GL_RGBA, wh, hh, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf[i] );
     free( buf[i] );
   }
-  return ret;
+  return retval;
 }
 
 /* create a bump map */

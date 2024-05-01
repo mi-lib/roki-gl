@@ -1,3 +1,4 @@
+2024. 5. 1. Debugged rkglTextureReadFileZX11 and _rkglTextureBumpNormalMap by new specification of zxInit. [rkgl_texture]
 2024. 5. 1. Modified makefile for examples to conform to C99 (required for MagickWand). [example]
 2024. 5. 1. Added _rkglTextureNormalDX, _rkglTextureNormalDY, and _rkglTextureNormalVec, and implemented _rkglTextureBumpNormalMap that uses MagickWand. [rkgl_texture]
 2024. 4.30. Redefined rkglTextureReadFile as a pointer to a function. [rkgl_texture]
