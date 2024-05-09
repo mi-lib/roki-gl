@@ -1284,7 +1284,7 @@ int main(int argc, char *argv[])
   glfwSetScrollCallback( g_window, mouse_wheel );
   glfwSetCharCallback( g_window, keyboard );
 
-  if( !create_view_params( (void*)(&g_cam), &g_scale, (void*)(&g_light), (void*)(&g_shadow) ) )
+  if( !create_view_params( (void**)(&g_cam), &g_scale, (void**)(&g_light), (void**)(&g_shadow) ) )
     return 1;
   setDefaultCallbackParam();
   init_camera_pose();
