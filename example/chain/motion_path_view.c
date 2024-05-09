@@ -129,7 +129,6 @@ rkIKRegister test_ik_reg_2array[TEST_KEYFRAME_SIZE-1][BUFSIZ] =
 
 /* End of Test Dataset *************************************************************/
 
-
 zArrayClass( zPexIPArray, zPexIP );
 
 /* path constrained cell info for IK */
@@ -195,13 +194,12 @@ rkglSelectionBuffer g_sb;
 double g_keyframe_alpha = 0.3;
 
 /* viewing parameters */
-rkglCamera g_cam;
-rkglLight g_light;
-rkglShadow g_shadow;
-
 static const GLdouble g_znear = -1000.0;
 static const GLdouble g_zfar  = 100.0;
-static double g_scale = 0.001;
+rkglCamera *g_cam;
+rkglLight *g_light;
+rkglShadow *g_shadow;
+double *g_scale;
 
 GLuint *g_tex_id; /* color buffer texture id */
 GLuint g_fb_id; /* frame buffer object id */
@@ -212,6 +210,7 @@ GLuint g_rb_id; /* render buffer texture id */
 #define INTERMEDIATE_CP_NUM 2
 #define SIZE_CP 10.0
 
+bool g_is_exit = false;
 
 int createPinInfoDisplayList(rkChain* chain, allLinkPinIKInfo *all_link_pin_ik_info, double alpha, rkglLight* light)
 {
@@ -355,7 +354,7 @@ bool clone_and_set_keyframelist(const int input_keyframe_size, double** input_q,
     /* rkChainSetRootFrame( chain, &kf->root ); */
     /* zFrame3DCopy( &kf->root, rkChainOrgFrame(chain) ); */
     rkChainFK( chain, kf->q );
-    kf->display_id = createPinInfoDisplayList( chain, &kf->all_link_pin_ik_info, g_keyframe_alpha, &g_light );
+    kf->display_id = createPinInfoDisplayList( chain, &kf->all_link_pin_ik_info, g_keyframe_alpha, g_light );
     if( kf->display_id < 0 ){
       ZRUNERROR(" Failed createPinInfoDisplayList()" );
       return false;
@@ -830,7 +829,7 @@ void print_interpolated_path(FILE *fp, rkChain* chain, p2pPathArray *p2p_array, 
   for( sid=0; sid < s_slice_num; sid++ ){
     s = (double)(sid) * end_s / (double)(s_slice_num);
     fprintf( fp, "%d %.10f ", sid, s );
-    p2pPathInfo* p2p_buf;
+    p2pPathInfo* p2p_buf = NULL;
     path_id = 0;
     while( path_id < path_size ){
       p2p_buf = &p2p_array->buf[path_id];
@@ -1025,7 +1024,7 @@ bool pop_pose(const double s, rkChain* chain, p2pPathArray *p2p_array)
 {
   int path_id;
   bool is_find = false;
-  p2pPathInfo* p2p_buf;
+  p2pPathInfo* p2p_buf = NULL;
 
   path_id=0;
   const int path_size = zArraySize( p2p_array );
@@ -1229,8 +1228,8 @@ int get_selected_key_id()
 
 void display(GLFWwindow* window)
 {
-  rkglCALoad( &g_cam );
-  rkglLightPut( &g_light );
+  rkglCALoad( g_cam );
+  rkglLightPut( g_light );
   rkglClear();
 
   draw_scene();
@@ -1258,7 +1257,7 @@ void motion(GLFWwindow* window, double x, double y)
   }
   zNURBS3D* nurbs = &g_p2p_array.buf[g_selected_path_id].ref_path_array.buf[g_selected_ik_id].nurbs;
   if( g_selected_cp > 0 && g_selected_cp < zNURBS3D1CPNum(nurbs) -1 ){
-    rkglUnproject( &g_cam, x, y, rkglSelectionZnearDepth(&g_sb), &p );
+    rkglUnproject( g_cam, x, y, rkglSelectionZnearDepth(&g_sb), &p );
     zVec3DCopy( &p, zNURBS3D1CP(nurbs, g_selected_cp) );
     pop_pose( g_feedrate_s, &g_chain, &g_p2p_array );
   }
@@ -1278,7 +1277,7 @@ void mouse(GLFWwindow* window, int button, int state, int mods)
         ik_num = g_p2p_array.buf[g_draw_path_id].ik_num;
         for( g_draw_ik_id=0; g_draw_ik_id < ik_num && !is_selected; g_draw_ik_id++ ){
           rkglClear();
-          rkglSelect( &g_sb, &g_cam, draw_one_nurbs, rkgl_mouse_x, rkgl_mouse_y, SIZE_CP, SIZE_CP );
+          rkglSelect( &g_sb, g_cam, draw_one_nurbs, rkgl_mouse_x, rkgl_mouse_y, SIZE_CP, SIZE_CP );
           if( find_cp( &g_sb ) >= 0 ){
             eprintf( "Selected control point [%d]\n", g_selected_cp );
             is_selected = true;
@@ -1289,7 +1288,7 @@ void mouse(GLFWwindow* window, int button, int state, int mods)
       /* keyframe selection */
       g_selected_key_id = -1;
       if( !is_selected &&
-          rkglSelectNearest( &g_sb, &g_cam, draw_keyframes_phantom_chain, rkgl_mouse_x, rkgl_mouse_y, 1, 1 ) ){
+          rkglSelectNearest( &g_sb, g_cam, draw_keyframes_phantom_chain, rkgl_mouse_x, rkgl_mouse_y, 1, 1 ) ){
         if( find_keyframes_phantom_chain( &g_sb ) >= 0 ){
           eprintf( "Selected keyframe id [%d]\n", g_selected_key_id );
         }
@@ -1308,16 +1307,16 @@ void mouse(GLFWwindow* window, int button, int state, int mods)
 void mouse_wheel(GLFWwindow* window, double xoffset, double yoffset)
 {
   if ( yoffset < 0 ) {
-    g_scale -= 0.0001; rkglOrthoScaleH( &g_cam, g_scale, g_znear, g_zfar );
+    *g_scale -= 0.0001; rkglOrthoScaleH( g_cam, *g_scale, g_znear, g_zfar );
   } else if ( yoffset > 0 ) {
-    g_scale += 0.0001; rkglOrthoScaleH( &g_cam, g_scale, g_znear, g_zfar );
+    *g_scale += 0.0001; rkglOrthoScaleH( g_cam, *g_scale, g_znear, g_zfar );
   }
 }
 
 void resize(GLFWwindow* window, int w, int h)
 {
-  rkglVPCreate( &g_cam, 0, 0, w, h );
-  rkglOrthoScaleH( &g_cam, g_scale, g_znear, g_zfar );
+  rkglVPCreate( g_cam, 0, 0, w, h );
+  rkglOrthoScaleH( g_cam, *g_scale, g_znear, g_zfar );
 }
 
 void updata_texture_and_frame_buffer(int w, int h)
@@ -1335,14 +1334,14 @@ void keyboard(GLFWwindow* window, unsigned int key)
   const double end_s = g_p2p_array.buf[path_size-1].goal_feedrate.s;
   const double ds = end_s / ((double)SLICE_NUM);
   switch( key ){
-  case 'u': rkglCALockonPTR( &g_cam, 5, 0, 0 ); break;
-  case 'U': rkglCALockonPTR( &g_cam,-5, 0, 0 ); break;
-  case 'i': rkglCALockonPTR( &g_cam, 0, 5, 0 ); break;
-  case 'I': rkglCALockonPTR( &g_cam, 0,-5, 0 ); break;
-  case 'o': rkglCALockonPTR( &g_cam, 0, 0, 5 ); break;
-  case 'O': rkglCALockonPTR( &g_cam, 0, 0,-5 ); break;
-  case '8': g_scale += 0.0001; rkglOrthoScaleH( &g_cam, g_scale, g_znear, g_zfar ); break;
-  case '*': g_scale -= 0.0001; rkglOrthoScaleH( &g_cam, g_scale, g_znear, g_zfar ); break;
+  case 'u': rkglCALockonPTR( g_cam, 5, 0, 0 ); break;
+  case 'U': rkglCALockonPTR( g_cam,-5, 0, 0 ); break;
+  case 'i': rkglCALockonPTR( g_cam, 0, 5, 0 ); break;
+  case 'I': rkglCALockonPTR( g_cam, 0,-5, 0 ); break;
+  case 'o': rkglCALockonPTR( g_cam, 0, 0, 5 ); break;
+  case 'O': rkglCALockonPTR( g_cam, 0, 0,-5 ); break;
+  case '8': *g_scale += 0.0001; rkglOrthoScaleH( g_cam, *g_scale, g_znear, g_zfar ); break;
+  case '*': *g_scale -= 0.0001; rkglOrthoScaleH( g_cam, *g_scale, g_znear, g_zfar ); break;
   case 'f': change_pose( g_feedrate_s + ds); break; /* forward */
   case 'b': change_pose( g_feedrate_s - ds); break; /* backward */
   case 'q': case 'Q': case '\033':
@@ -1350,8 +1349,7 @@ void keyboard(GLFWwindow* window, unsigned int key)
     free_keyframe_array();
     rkChainDestroy( &g_chain );
     free_p2p_array();
-
-    exit( EXIT_SUCCESS );
+    g_is_exit = true;
   default: ;
   }
 }
@@ -1408,13 +1406,51 @@ void set_modelfiles(char* modelfile)
   g_modelfile = modelfile;
 }
 
+bool create_view_params(void** cam, double** scale, void** light, void** shadow)
+{
+  if( !( *cam = (void*)( zAlloc( rkglCamera, 1 ) ) ) ){
+    ZALLOCERROR();
+    ZRUNERROR( "Failed to zAlloc( rkglCamera, 1 ) )." );
+    return false;
+  }
+
+  if( !( *scale = zAlloc( double, 1 ) ) ){
+    ZALLOCERROR();
+    ZRUNERROR( "Failed to zAlloc( double, 1) )." );
+    return false;
+  }
+
+  if( !( *light = (void*)( zAlloc( rkglLight, 1 ) ) ) ){
+    ZALLOCERROR();
+    ZRUNERROR( "Failed to zAlloc( rkglLight, 1 )." );
+    return false;
+  }
+
+  if( !( *shadow = (void*)( zAlloc( rkglShadow, 1 ) ) ) ){
+    ZALLOCERROR();
+    ZRUNERROR( "Failed to zAlloc( rkglShadow, 1 )." );
+    return false;
+  }
+  **scale = 0.001;
+
+  return true;
+}
+
+void free_view_params(void* cam, double* scale, void* light, void* shadow)
+{
+  zFree( cam );
+  zFree( light );
+  zFree( shadow );
+  zFree( scale );
+}
+
 void setDefaultCallbackParam(void){
-  rkglSetDefaultCallbackParam( &g_cam, 1.0, g_znear, g_zfar, 1.0, 5.0 );
+  rkglSetDefaultCallbackParam( g_cam, 1.0, g_znear, g_zfar, 1.0, 5.0 );
 }
 
 void copyFromDefaultCamera(void)
 {
-  rkglCameraCopyDefault( &g_cam );
+  rkglCameraCopyDefault( g_cam );
 }
 
 void set_texture_id(GLuint* tex_id)
@@ -1422,18 +1458,24 @@ void set_texture_id(GLuint* tex_id)
   g_tex_id = tex_id;
 }
 
-bool init(void)
+void init_camera_pose(void)
 {
-  rkglBGSet( &g_cam, 0.5, 0.5, 0.5 );
-  rkglCASet( &g_cam, 0, 0, 0, 45, -30, 0 );
+  rkglBGSet( g_cam, 0.5, 0.5, 0.5 );
+  rkglCASet( g_cam, 0, 0, 0, 45, -30, 0 );
+}
 
+void init_light(void)
+{
   if( rkglLightNum() == 0 ){
     glEnable(GL_LIGHTING);
-    rkglLightCreate( &g_light, 0.5, 0.5, 0.5, 0.6, 0.6, 0.6, 0.2, 0.2, 0.2 );
-    rkglLightMove( &g_light, 3, 5, 9 );
-    rkglLightSetAttenuationConst( &g_light, 1.0 );
+    rkglLightCreate( g_light, 0.5, 0.5, 0.5, 0.6, 0.6, 0.6, 0.2, 0.2, 0.2 );
+    rkglLightMove( g_light, 3, 5, 9 );
+    rkglLightSetAttenuationConst( g_light, 1.0 );
   }
+}
 
+bool init(void)
+{
   if( g_modelfile == NULL ){
     g_modelfile = zStrClone( "../model/puma.ztk" );
   }
@@ -1444,7 +1486,7 @@ bool init(void)
   }
   rkglChainAttr attr;
   rkglChainAttrInit( &attr );
-  if( !rkglChainLoad( &gr, &g_chain, &attr, &g_light ) ){
+  if( !rkglChainLoad( &gr, &g_chain, &attr, g_light ) ){
     ZRUNWARN( "Failed rkglChainLoad(&gr)" );
     return false;
   }
@@ -1481,7 +1523,10 @@ int main(int argc, char *argv[])
   glfwSetScrollCallback( g_window, mouse_wheel );
   glfwSetCharCallback( g_window, keyboard );
 
+  create_view_params( (void**)(&g_cam), &g_scale, (void**)(&g_light), (void**)(&g_shadow) );
   setDefaultCallbackParam();
+  init_camera_pose();
+  init_light();
 
   if( !init() ){
     glfwTerminate();
@@ -1550,14 +1595,16 @@ int main(int argc, char *argv[])
   resize( g_window, width, height );
   glfwSwapInterval(1);
 
-  while ( glfwWindowShouldClose( g_window ) == GL_FALSE ){
+  while ( glfwWindowShouldClose( g_window ) == GL_FALSE &&
+          !g_is_exit ){
     display(g_window);
     glfwPollEvents();
     glfwSwapBuffers( g_window );
   }
+
+  free_view_params( g_cam, g_scale, g_light, g_shadow );
   glfwDestroyWindow( g_window );
   glfwTerminate();
-
 
   /* free used double pointer */
   for( key_id=0; key_id < TEST_KEYFRAME_SIZE; key_id++ ){
