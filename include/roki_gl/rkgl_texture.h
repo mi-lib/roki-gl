@@ -9,7 +9,6 @@
 
 #include <roki_gl/rkgl_misc.h>
 #include <zeo/zeo_render_texture.h>
-#include <zx11/zximage.h>
 
 __BEGIN_DECLS
 
@@ -50,8 +49,15 @@ __ROKI_GL_EXPORT GLuint rkglTextureAssign(int width, int height, ubyte *buf);
 __ROKI_GL_EXPORT GLuint rkglTextureInit(zTexture *texture, ubyte *buf);
 
 /*! \brief read an image file and make a texture data. */
-__ROKI_GL_EXPORT bool rkglTextureReadFile(zTexture *texture, char *filename);
+#if defined(__ROKI_GL_USE_ZX11)
+__ROKI_GL_EXPORT bool rkglTextureReadFileZX11(zTexture *texture, char *filename);
+#elif defined(__ROKI_GL_USE_MAGICKWAND)
+__ROKI_GL_EXPORT bool rkglTextureReadFileMagickWand(zTexture *texture, char *filename);
+#else
+__ROKI_GL_EXPORT bool rkglTextureReadFileDummy(zTexture *texture, char *filename);
+#endif /* __ROKI_GL_USE_ZX11 || __ROKI_GL_USE_MAGICKWAND */
 
+__ROKI_GL_EXPORT bool (* rkglTextureReadFile)(zTexture *, char *);
 #define rkglTextureEnable()   zTextureSetReadFunc( rkglTextureReadFile )
 
 #define rkglTextureBind(texture) glBindTexture( GL_TEXTURE_2D, (texture)->id )
@@ -100,7 +106,6 @@ __ROKI_GL_EXPORT void rkglTextureDisableProjection(void);
 
 /*! \brief read an image file and make a bump map. */
 __ROKI_GL_EXPORT bool rkglTextureBumpReadFile(zTexture *bump, char *filename);
-
 #define rkglTextureBumpEnable() zTextureSetBumpReadFunc( rkglTextureBumpReadFile )
 
 #ifdef __ROKI_GL_USE_GLEW

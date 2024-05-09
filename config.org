@@ -2,8 +2,15 @@ PREFIX=${HOME}/usr
 
 # libGL and libGLU required.
 
+# LIW
+# (LIW required.)
+CONFIG_USE_LIW=y
+
+# MagickWand (C API of ImageMagick) support
+CONFIG_USE_MAGICKWAND=y
+
 # GLX
-# (libGLX required.)
+# (ZX11 and libGLX required.)
 CONFIG_USE_GLX=y
 
 # GLUT

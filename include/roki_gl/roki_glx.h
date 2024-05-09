@@ -8,6 +8,7 @@
 #define __RKGL_GLX_H__
 
 #include <zx11/zxinput.h>
+#include <zx11/zximage.h>
 #include <roki_gl/roki_gl.h>
 #include <GL/glx.h>
 
