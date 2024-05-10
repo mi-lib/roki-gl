@@ -1117,6 +1117,14 @@ bool change_pose(const double s)
   return pop_pose( g_feedrate_s, &g_chain, &g_p2p_array );
 }
 
+void release_path(void)
+{
+  rkglChainUnload( &gr );
+  free_keyframe_array();
+  rkChainDestroy( &g_chain );
+  free_p2p_array();
+}
+
 /******************************************************************************************/
 
 void draw_chain(void)
@@ -1226,7 +1234,7 @@ int find_keyframes_phantom_chain(rkglSelectionBuffer *sb)
   return g_selected_key_id;
 }
 
-int get_selected_key_id()
+int get_selected_key_id(void)
 {
   return g_selected_key_id;
 }
@@ -1350,10 +1358,6 @@ void keyboard(GLFWwindow* window, unsigned int key)
   case 'f': change_pose( g_feedrate_s + ds); break; /* forward */
   case 'b': change_pose( g_feedrate_s - ds); break; /* backward */
   case 'q': case 'Q': case '\033':
-    rkglChainUnload( &gr );
-    free_keyframe_array();
-    rkChainDestroy( &g_chain );
-    free_p2p_array();
     g_is_exit = true;
   default: ;
   }
@@ -1607,6 +1611,7 @@ int main(int argc, char *argv[])
     glfwSwapBuffers( g_window );
   }
 
+  release_path();
   free_view_params( g_cam, g_scale, g_light, g_shadow );
   glfwDestroyWindow( g_window );
   glfwTerminate();
