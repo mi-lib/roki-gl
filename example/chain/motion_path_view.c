@@ -212,6 +212,11 @@ GLuint g_rb_id; /* render buffer texture id */
 
 bool g_is_exit = false;
 
+bool is_exit(void)
+{
+  return g_is_exit;
+}
+
 int createPinInfoDisplayList(rkChain* chain, allLinkPinIKInfo *all_link_pin_ik_info, double alpha, rkglLight* light)
 {
   int link_id, display_id;
@@ -1596,7 +1601,7 @@ int main(int argc, char *argv[])
   glfwSwapInterval(1);
 
   while ( glfwWindowShouldClose( g_window ) == GL_FALSE &&
-          !g_is_exit ){
+          !is_exit() ){
     display(g_window);
     glfwPollEvents();
     glfwSwapBuffers( g_window );
