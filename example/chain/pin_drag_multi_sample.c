@@ -1083,7 +1083,6 @@ void keyboard(GLFWwindow* window, unsigned int key)
     break;
   case 'h': move_link(-zDeg2Rad(5) ); break;
   case 'q': case 'Q': case '\033':
-    destroy_pindragIFData( g_main );
     g_is_exit = true;
   default: ;
   }
@@ -1309,6 +1308,7 @@ int main(int argc, char *argv[])
     glfwSwapBuffers( g_window );
   }
 
+  destroy_pindragIFData( g_main );
   free_view_params( g_cam, g_scale, g_light, g_shadow );
 
   glfwDestroyWindow( g_window );
