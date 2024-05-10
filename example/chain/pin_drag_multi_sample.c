@@ -180,6 +180,11 @@ static const double g_MAGNITUDE = g_LENGTH * 0.7;
 
 bool g_is_exit = false;
 
+bool is_exit(void)
+{
+  return g_is_exit;
+}
+
 bool rkglChainLoad_for_rkglChainBlock(rkglChainBlock *gcb, rkglLight *light )
 {
   int i;
@@ -1298,7 +1303,7 @@ int main(int argc, char *argv[])
   glfwSwapInterval(1);
 
   while ( glfwWindowShouldClose( g_window ) == GL_FALSE &&
-          !g_is_exit ){
+          !is_exit() ){
     display(g_window);
     glfwPollEvents();
     glfwSwapBuffers( g_window );
