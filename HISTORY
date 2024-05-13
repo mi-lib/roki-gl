@@ -1,3 +1,5 @@
+2024. 5.13. Modified config.org and config.app to separate ZX11 as an optional library and enable LIW as a library that applications only depend on. [config, app]
+2024. 5.13. Put config.app in app. [app]
 2024. 5. 1. Debugged rkglTextureReadFileZX11 and _rkglTextureBumpNormalMap by new specification of zxInit. [rkgl_texture]
 2024. 5. 1. Modified makefile for examples to conform to C99 (required for MagickWand). [example]
 2024. 5. 1. Added _rkglTextureNormalDX, _rkglTextureNormalDY, and _rkglTextureNormalVec, and implemented _rkglTextureBumpNormalMap that uses MagickWand. [rkgl_texture]
