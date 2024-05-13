@@ -1,3 +1,4 @@
+2024. 5.13. Added STD in config.org, and removed --std flags from src/config.lib tools/config.tools and example/makefile. [config, tools, example]
 2024. 5.13. Modified config.org and config.app to separate ZX11 as an optional library and enable LIW as a library that applications only depend on. [config, app]
 2024. 5.13. Put config.app in app. [app]
 2024. 5. 1. Debugged rkglTextureReadFileZX11 and _rkglTextureBumpNormalMap by new specification of zxInit. [rkgl_texture]

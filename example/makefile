@@ -4,7 +4,7 @@ LINK=`roki-gl-config -l`
 DEF=`roki-gl-config -D`
 
 CC=gcc
-CFLAGS=--std=c99 -Wall -O3 $(LIB) $(INCLUDE) $(DEF) -funroll-loops
+CFLAGS=-Wall -O3 $(LIB) $(INCLUDE) $(DEF) -funroll-loops
 
 %: %.c
 	$(CC) $(CFLAGS) -o $@ $< $(LINK)
