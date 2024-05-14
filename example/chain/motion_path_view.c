@@ -70,15 +70,12 @@ const double test_root_frame[TEST_KEYFRAME_SIZE][TEST_FRAME_DOF_SIZE] =
 #define TEST_JOINT_SIZE 6
 #define TEST_LINK_SIZE 7
 #define TEST_PATH_TARGET_SIZE 1
-const double tmp_root_frame[TEST_FRAME_DOF_SIZE] =
-  { 0.0, 0.0, 0.0,  0.0, 0.0, 0.0 };
-const double tmp_s = 0.05;
-/* q0 ... q5 */
+/*** q0 ... q5 ***/
 const double test_q[TEST_KEYFRAME_SIZE][TEST_JOINT_SIZE] =
   { { 0.0, 0.0, 0.0,  0.0, 0.0, 0.0 },
     { zDeg2Rad(-30.0), zDeg2Rad(-30.0), zDeg2Rad(30.0), 0.0, zDeg2Rad(30.0), 0.0 },
     { zDeg2Rad(45.0), zDeg2Rad(-60.0), zDeg2Rad(-5.0), 0.0, zDeg2Rad(90.0), 0.0 } };
-/* pin */
+/*** pin ***/
 const int test_pin[TEST_KEYFRAME_SIZE][TEST_LINK_SIZE] =
   { { PIN_LOCK_OFF, PIN_LOCK_OFF, PIN_LOCK_OFF,
       PIN_LOCK_OFF, PIN_LOCK_OFF, PIN_LOCK_OFF, PIN_LOCK_POS3D },
@@ -86,46 +83,51 @@ const int test_pin[TEST_KEYFRAME_SIZE][TEST_LINK_SIZE] =
       PIN_LOCK_OFF, PIN_LOCK_OFF, PIN_LOCK_OFF, PIN_LOCK_POS3D },
     { PIN_LOCK_OFF, PIN_LOCK_OFF, PIN_LOCK_OFF,
       PIN_LOCK_OFF, PIN_LOCK_OFF, PIN_LOCK_OFF, PIN_LOCK_POS3D }};
-/* _target, _quantity, _ref_frame, _priority */
+/*** _target, _quantity, _ref_frame, _priority ***/
 const rkIKRegSelectable TEST_IK_REG_SELECTABLE__PATH01_IK01 =
   {RK_IK_TARGET_LINK, RK_IK_TARGET_QUANTITY_POS, RK_IK_REF_FRAME_WLD, RK_IK_PRIORITY_WEIGHT};
 const int    TEST_IK_ATTR_ID_SUB = 0;
 const zVec3D TEST_IK_ATTR_AP     = { {0, 0, 0} };
 const byte   TEST_IK_ATTR_MODE   = 0x0;
 const zVec3D TEST_IK_ATTR_WEIGHT = { {IK_PATH_WEIGHT, IK_PATH_WEIGHT, IK_PATH_WEIGHT} };
-/* id, id_sub, ap, mode, w */
+/*** id, id_sub, ap, mode, w ***/
 const rkIKAttr TEST_IK_ATTR__PATH01_IK01 =
   { 6, TEST_IK_ATTR_ID_SUB, TEST_IK_ATTR_AP, TEST_IK_ATTR_MODE, TEST_IK_ATTR_WEIGHT };
-/* { rkIKAttrSelectable, rkIKAttr } */
+/*** { rkIKAttrSelectable, rkIKAttr } ***/
 const rkIKRegister TEST_IK_REG__PATH01_IK01 =
     { TEST_IK_REG_SELECTABLE__PATH01_IK01, TEST_IK_ATTR__PATH01_IK01 };
 rkIKRegister TEST_IK_REG_ARRAY__PATH01[TEST_IK_NUM__PATH01] =
-  { TEST_IK_REG__PATH01_IK01 }; /* size is TEST_IK_NUM_01 */
+  { TEST_IK_REG__PATH01_IK01 };
 rkIKRegister* TEST_IK_REG_ARRAY__PATH01_PTR = TEST_IK_REG_ARRAY__PATH01;
 
-/* Type (A) */
+/*** Type (A) ***/
+/*** ik_reg_array is pointer of the pointer's array, array size = ik_num = cell_size ***/
 typedef struct{
   int ik_num;
-  void** ik_reg_array; /* array pointer, ik_num = cell_size */
+  void** ik_reg_array;
 } refPathInput;
 refPathInput test_ref_path_input_array[TEST_KEYFRAME_SIZE-1] =
   {
-    /* { num, ik_reg_array } */
+    /*** { num, ik_reg_array } ***/
     { TEST_IK_NUM__PATH01, (void**)(&TEST_IK_REG_ARRAY__PATH01_PTR) },
     { TEST_IK_NUM__PATH01, (void**)(&TEST_IK_REG_ARRAY__PATH01_PTR) }
-  }; /* TEST_KEYFRAME_SIZE-1 (= PATH_SIZE) */
+    /*** TEST_KEYFRAME_SIZE-1 (= PATH_SIZE) ***/
+  };
 
-/* Type (B) */
+/*** Type (B) ***/
 int test_ik_num_array[TEST_KEYFRAME_SIZE-1] = {1};
 rkIKRegister test_ik_reg_2array[TEST_KEYFRAME_SIZE-1][BUFSIZ] =
   {
     {
       { TEST_IK_REG_SELECTABLE__PATH01_IK01, TEST_IK_ATTR__PATH01_IK01 }
-    }, /* TEST_IK_NUM__PATH01 (BUFSIZ is default) */
+      /*** TEST_IK_NUM__PATH01 (BUFSIZ is default) ***/
+    },
     {
       { TEST_IK_REG_SELECTABLE__PATH01_IK01, TEST_IK_ATTR__PATH01_IK01 }
-    } /* TEST_IK_NUM__PATH01 (BUFSIZ is default) */
-  }; /* TEST_KEYFRAME_SIZE-1 (= PATH_SIZE) */
+      /*** TEST_IK_NUM__PATH01 (BUFSIZ is default) ***/
+    }
+    /*** TEST_KEYFRAME_SIZE-1 (= PATH_SIZE) ***/
+  };
 
 /* End of Test Dataset *************************************************************/
 
@@ -172,21 +174,27 @@ zArrayClass( p2pPathArray, p2pPathInfo );
 
 /***********************************************************************************/
 
-/* the main inputs for pathplan */
-keyFrameInfoArray g_keyframe_array; /* size = keyframe size */
-p2pPathArray g_p2p_array; /* size = path size */
+/* the main data of this sample code */
+typedef struct{
+  char *modelfile;
+  /* the main inputs for pathplan */
+  keyFrameInfoArray keyframe_array; /* size = keyframe size */
+  p2pPathArray p2p_array; /* size = path size */
+  /* the main target model */
+  rkChain chain;
+  rkglChain glChain;
+  /* for interation */
+  int selected_cp;
+  int selected_path_id;
+  int selected_ik_id;
+  int selected_key_id;
+  double feedrate_s;
+  rkglSelectionBuffer sb;
+  int draw_path_id;
+  int draw_ik_id;
+} motionPathViewData;
 
-/* the main targets of this sample code */
-rkChain g_chain;
-rkglChain gr;
-
-int g_selected_cp = -1;
-int g_selected_path_id = -1;
-int g_popped_path_id = -1;
-int g_selected_ik_id = -1;
-int g_selected_key_id = -1;
-double g_feedrate_s;
-rkglSelectionBuffer g_sb;
+motionPathViewData *g_main;
 
 #define SLICE_NUM 100
 
@@ -226,7 +234,7 @@ int createPinInfoDisplayList(rkChain* chain, allLinkPinIKInfo *all_link_pin_ik_i
   rkglChainAttrInit( &attr );
   if( !( oi_alt = zAlloc( zOpticalInfo*, rkChainLinkNum(chain) ) ) ){
     ZALLOCERROR();
-    ZRUNERROR( "Failed to zAlloc( zOpticalInfo, rkChainLinkNum(&g_chain) )." );
+    ZRUNERROR( "Failed to zAlloc( zOpticalInfo, rkChainLinkNum(&g_main->chain) )." );
     return -1;
   }
   /* pin link color changed */
@@ -243,11 +251,11 @@ int createPinInfoDisplayList(rkChain* chain, allLinkPinIKInfo *all_link_pin_ik_i
       /* Default */
       oi_alt[link_id] = NULL;
     }
-    rkglChainAlternateLinkOptic( &gr, link_id, oi_alt[link_id], light );
+    rkglChainAlternateLinkOptic( &g_main->glChain, link_id, oi_alt[link_id], light );
   } /* end of pin link color changed */
 
   display_id = rkglBeginList();
-  rkglChainPhantomize( &gr, alpha, light );
+  rkglChainPhantomize( &g_main->glChain, alpha, light );
   glEndList();
 
   for( link_id=0; link_id < rkChainLinkNum( chain ); link_id++ )
@@ -262,13 +270,13 @@ int createPinInfoDisplayList(rkChain* chain, allLinkPinIKInfo *all_link_pin_ik_i
 void free_keyframe_array(void)
 {
   int i;
-  if( zArraySize( &g_keyframe_array ) > 0 ){
-    for( i=0; i < zArraySize( &g_keyframe_array ); i++ ){
-      keyFrameInfo* kf = zArrayElemNC( &g_keyframe_array, i );
+  if( zArraySize( &g_main->keyframe_array ) > 0 ){
+    for( i=0; i < zArraySize( &g_main->keyframe_array ); i++ ){
+      keyFrameInfo* kf = zArrayElemNC( &g_main->keyframe_array, i );
       zVecFree( kf->q );
       zArrayFree( &kf->all_link_pin_ik_info );
     }
-    zArrayFree( &g_keyframe_array );
+    zArrayFree( &g_main->keyframe_array );
   }
 }
 
@@ -277,17 +285,17 @@ bool clone_and_set_keyframelist(const int input_keyframe_size, double** input_q,
   int key_id, link_id, jid, cell_id;
   rkglChainAttr attr;
 
-  rkChain *chain = &g_chain;
+  rkChain *chain = &g_main->chain;
 
   printf("size of link = %d\n", rkChainLinkNum(chain) );
   printf("size of joint = %d\n", rkChainJointSize(chain) );
 
   free_keyframe_array();
-  zArrayAlloc( &g_keyframe_array, keyFrameInfo, input_keyframe_size );
+  zArrayAlloc( &g_main->keyframe_array, keyFrameInfo, input_keyframe_size );
 
   rkglChainAttrInit( &attr );
   for( key_id=0; key_id < input_keyframe_size; key_id++ ){
-    keyFrameInfo* kf = zArrayElemNC( &g_keyframe_array, key_id );
+    keyFrameInfo* kf = zArrayElemNC( &g_main->keyframe_array, key_id );
     zArrayAlloc( &kf->all_link_pin_ik_info, linkPinIKInfo, rkChainLinkNum(chain) );
     if( zArraySize( &kf->all_link_pin_ik_info ) <= 0 ){
       ZALLOCERROR();
@@ -364,7 +372,7 @@ bool clone_and_set_keyframelist(const int input_keyframe_size, double** input_q,
       ZRUNERROR(" Failed createPinInfoDisplayList()" );
       return false;
     }
-  } /* end of for( zArraySize( &g_keyframe_array ) ) */
+  } /* end of for( zArraySize( &g_main->keyframe_array ) ) */
 
   return true;
 }
@@ -472,9 +480,9 @@ void free_p2p_array()
 {
   int path_size, path_id, link_id, cell_id, jid;
 
-  if( (path_size = zArraySize( &g_p2p_array )) > 0 ){
+  if( (path_size = zArraySize( &g_main->p2p_array )) > 0 ){
     for( path_id=0; path_id < path_size; path_id++ ){
-      p2pPathInfo* p2p_buf = zArrayElemNC( &g_p2p_array, path_id );
+      p2pPathInfo* p2p_buf = zArrayElemNC( &g_main->p2p_array, path_id );
       /* release weight_path[2] */
       for( link_id=0; link_id < p2p_buf->all_link_size; link_id++ ){
         linkPinPathIKInfo* link_pin_path_ik_info = &p2p_buf->all_link_pin_path_ik_info.buf[link_id];
@@ -492,7 +500,7 @@ void free_p2p_array()
       refPathArray* ref_path_array = &p2p_buf->ref_path_array;
       free_ref_path_array( ref_path_array );
     } /* end for path_id=0->path_size */
-    zArrayFree( &g_p2p_array );
+    zArrayFree( &g_main->p2p_array );
   } /* end of if path_size > 0*/
 }
 
@@ -550,10 +558,10 @@ bool clone_and_set_ref_path_from_refPathinput(const int path_size, refPathInput*
 {
   int path_id, ik_id;
 
-  if( !init_p2p_array( &g_chain, &g_p2p_array, path_size, IK_PIN_CELL_SIZE ) )
+  if( !init_p2p_array( &g_main->chain, &g_main->p2p_array, path_size, IK_PIN_CELL_SIZE ) )
     return false;
   for( path_id=0; path_id < path_size; path_id++ ){
-    p2pPathInfo* p2p_buf = &g_p2p_array.buf[path_id]; /* for omission */
+    p2pPathInfo* p2p_buf = &g_main->p2p_array.buf[path_id]; /* for omission */
     refPathInput* src = &src_ref_path_input_array[path_id]; /* for omission */
     p2p_buf->ik_num = src->ik_num;
     refPathArray* ref_path_array = &p2p_buf->ref_path_array; /* for omission */
@@ -573,10 +581,10 @@ bool clone_and_set_ref_path(const int path_size, int* src_ik_num_array, void*** 
 {
   int path_id, ik_id;
 
-  if( !init_p2p_array( &g_chain, &g_p2p_array, path_size, IK_PIN_CELL_SIZE ) )
+  if( !init_p2p_array( &g_main->chain, &g_main->p2p_array, path_size, IK_PIN_CELL_SIZE ) )
     return false;
   for( path_id=0; path_id < path_size; path_id++ ){
-    p2pPathInfo* p2p_buf = &g_p2p_array.buf[path_id]; /* for omission */
+    p2pPathInfo* p2p_buf = &g_main->p2p_array.buf[path_id]; /* for omission */
     p2p_buf->ik_num = src_ik_num_array[path_id];
     refPathArray* ref_path_array = &p2p_buf->ref_path_array; /* for omission */
     free_ref_path_array( ref_path_array );
@@ -683,9 +691,9 @@ bool interpolate_path()
   int path_id, keyframe_size, ik_id, ref_link_id;
   zVec3D start_pos, end_pos;
 
-  rkChain* chain = &g_chain;
-  keyFrameInfoArray* keyframe_array = &g_keyframe_array;
-  p2pPathArray* p2p_array = &g_p2p_array;
+  rkChain* chain = &g_main->chain;
+  keyFrameInfoArray* keyframe_array = &g_main->keyframe_array;
+  p2pPathArray* p2p_array = &g_main->p2p_array;
 
   keyframe_size = zArraySize( keyframe_array );
   if( keyframe_size < 2 ) {
@@ -693,9 +701,9 @@ bool interpolate_path()
     return false;
   }
 
-  calc_keyframe_feedrate( &g_chain, &g_keyframe_array );
+  calc_keyframe_feedrate( &g_main->chain, &g_main->keyframe_array );
 
-  set_constrained_mode_for_each_p2p_path( &g_keyframe_array, &g_p2p_array );
+  set_constrained_mode_for_each_p2p_path( &g_main->keyframe_array, &g_main->p2p_array );
 
   for( path_id=0; path_id < keyframe_size - 1; path_id++ ){
     keyFrameInfo* kf1 = zArrayElemNC(keyframe_array, path_id);
@@ -876,7 +884,7 @@ void dump_interpolated_path(const char* filename){
 
   /* fp = stdout; */
   fp = fopen( filename, "w" );
-  print_interpolated_path( fp, &g_chain, &g_p2p_array, SLICE_NUM);
+  print_interpolated_path( fp, &g_main->chain, &g_main->p2p_array, SLICE_NUM);
   fclose( fp );
 }
 
@@ -891,15 +899,15 @@ void register_cell_in_one_pin_link_for_IK(rkChain* chain, const double s,  const
   double weight;
   rkIKAttr attr;
 
-  for( ik_id=0; ik_id < g_p2p_array.buf[path_id].ik_num; ik_id++ ){
-    void* ik_reg  = g_p2p_array.buf[path_id].ref_path_array.buf[ik_id].ik_reg;
+  for( ik_id=0; ik_id < g_main->p2p_array.buf[path_id].ik_num; ik_id++ ){
+    void* ik_reg  = g_main->p2p_array.buf[path_id].ref_path_array.buf[ik_id].ik_reg;
     if( g_ik_reg_cls->link( ik_reg ) &&
         link_id == g_ik_reg_cls->get_link_id( ik_reg ) ){
       return; /* duprecated with ref_path, not register the link. */
     }
   }
   attr.id = link_id;
-  linkPinPathIKInfo* link_pin_path_ik_info = &g_p2p_array.buf[path_id].all_link_pin_path_ik_info.buf[link_id];
+  linkPinPathIKInfo* link_pin_path_ik_info = &g_main->p2p_array.buf[path_id].all_link_pin_path_ik_info.buf[link_id];
   for( cell_id=0; cell_id < link_pin_path_ik_info->cell_size; cell_id++ ){
     if( link_pin_path_ik_info->c[cell_id].is_constrained ){
       if( link_pin_path_ik_info->c[cell_id].cell_type == IK_CELL_TYPE_WLD_ATT )
@@ -916,14 +924,14 @@ void unregister_cell_in_one_pin_link_for_IK(rkChain* chain, const int path_id, c
 {
   int cell_id, ik_id;
 
-  for( ik_id=0; ik_id < g_p2p_array.buf[path_id].ik_num; ik_id++ ){
-    void* ik_reg  = g_p2p_array.buf[path_id].ref_path_array.buf[ik_id].ik_reg;
+  for( ik_id=0; ik_id < g_main->p2p_array.buf[path_id].ik_num; ik_id++ ){
+    void* ik_reg  = g_main->p2p_array.buf[path_id].ref_path_array.buf[ik_id].ik_reg;
     if( g_ik_reg_cls->link( ik_reg ) &&
         link_id == g_ik_reg_cls->get_link_id( ik_reg ) ){
       return; /* duprecated with ref_path, not registered, so not unregister the link. */
     }
   }
-  linkPinPathIKInfo* link_pin_path_ik_info = &g_p2p_array.buf[path_id].all_link_pin_path_ik_info.buf[link_id];
+  linkPinPathIKInfo* link_pin_path_ik_info = &g_main->p2p_array.buf[path_id].all_link_pin_path_ik_info.buf[link_id];
   for( cell_id=0; cell_id < link_pin_path_ik_info->cell_size; cell_id++ )
     if( link_pin_path_ik_info->c[cell_id].is_constrained )
       rkChainUnregIKCell( chain, link_pin_path_ik_info->c[cell_id].cell );
@@ -932,7 +940,7 @@ void unregister_cell_in_one_pin_link_for_IK(rkChain* chain, const int path_id, c
 void register_all_pin_links_for_IK(rkChain* chain, const double s, const int path_id)
 {
   int link_id;
-  p2pPathInfo* p2p_buf = &g_p2p_array.buf[path_id];
+  p2pPathInfo* p2p_buf = &g_main->p2p_array.buf[path_id];
   for( link_id=0; link_id < zArraySize( &p2p_buf->all_link_pin_path_ik_info ); ++link_id ){
     register_cell_in_one_pin_link_for_IK( chain, s, path_id, link_id);
   }
@@ -941,7 +949,7 @@ void register_all_pin_links_for_IK(rkChain* chain, const double s, const int pat
 void unregister_all_pin_links_for_IK(rkChain* chain, const int path_id)
 {
   int link_id;
-  p2pPathInfo* p2p_buf = &g_p2p_array.buf[path_id];
+  p2pPathInfo* p2p_buf = &g_main->p2p_array.buf[path_id];
   for( link_id=0; link_id < zArraySize( &p2p_buf->all_link_pin_path_ik_info ); ++link_id ){
     unregister_cell_in_one_pin_link_for_IK( chain, path_id, link_id );
   }
@@ -949,14 +957,14 @@ void unregister_all_pin_links_for_IK(rkChain* chain, const int path_id)
 
 void set_one_target_reference_of_3D_translate_position_for_IK(const int path_id, const int ik_id, zVec3D* ref_pos)
 {
-  rkIKCellSetRefVec( g_p2p_array.buf[path_id].ref_path_array.buf[ik_id].cell, ref_pos );
+  rkIKCellSetRefVec( g_main->p2p_array.buf[path_id].ref_path_array.buf[ik_id].cell, ref_pos );
 }
 
 void set_one_target_reference_of_3D_attitude_position_for_IK(const int path_id, const int ik_id, zMat3D* ref_att)
 {
   zVec3D zyx;
   zMat3DToZYX( ref_att, &zyx );
-  rkIKCellSetRefVec( g_p2p_array.buf[path_id].ref_path_array.buf[ik_id].cell, &zyx );
+  rkIKCellSetRefVec( g_main->p2p_array.buf[path_id].ref_path_array.buf[ik_id].cell, &zyx );
 }
 
 void register_ref_path_in_one_path_for_IK(rkChain* chain, const int path_id)
@@ -964,8 +972,8 @@ void register_ref_path_in_one_path_for_IK(rkChain* chain, const int path_id)
   int ik_id;
 
   /* register target for IK */
-  for( ik_id=0; ik_id < g_p2p_array.buf[path_id].ik_num; ik_id++ ){
-    refPath* ref_path  = &g_p2p_array.buf[path_id].ref_path_array.buf[ik_id];
+  for( ik_id=0; ik_id < g_main->p2p_array.buf[path_id].ik_num; ik_id++ ){
+    refPath* ref_path  = &g_main->p2p_array.buf[path_id].ref_path_array.buf[ik_id];
     ref_path->cell = (rkIKCell*)( g_ik_reg_cls->reg( ref_path->ik_reg, chain ) );
   }
 }
@@ -974,8 +982,8 @@ void unregister_ref_path_in_one_path_for_IK(rkChain* chain, const int path_id)
 {
   int ik_id;
 
-  for( ik_id=0; ik_id < g_p2p_array.buf[path_id].ik_num; ik_id++ ){
-    refPath* ref_path  = &g_p2p_array.buf[path_id].ref_path_array.buf[ik_id];
+  for( ik_id=0; ik_id < g_main->p2p_array.buf[path_id].ik_num; ik_id++ ){
+    refPath* ref_path  = &g_main->p2p_array.buf[path_id].ref_path_array.buf[ik_id];
     g_ik_reg_cls->unreg( chain, ref_path->cell );
   }
 }
@@ -1050,7 +1058,7 @@ bool pop_pose(const double s, rkChain* chain, p2pPathArray *p2p_array)
     ZRUNERROR("Out of range feedrate s = %f which must be within %f <= s < %f.", s, p2p_array->buf[0].start_feedrate.s, p2p_buf->goal_feedrate.s);
     return false;
   }
-  printf("s = %f / %f \n", s, g_p2p_array.buf[path_size-1].goal_feedrate.s);
+  printf("s = %f / %f \n", s, g_main->p2p_array.buf[path_size-1].goal_feedrate.s);
   const double pexIP_s = s - p2p_buf->start_feedrate.s;
   zVec qref = pop_qref( pexIP_s, &p2p_buf->qref_path );
   /* In IK, no path free joints, but as qref */
@@ -1108,51 +1116,89 @@ double run_test(void)
   const char dump_filename[] = "motion_path_view.dat";
   dump_interpolated_path( dump_filename );
 
-  pop_pose( g_feedrate_s, &g_chain, &g_p2p_array );
+  pop_pose( g_main->feedrate_s, &g_main->chain, &g_main->p2p_array );
 
-  int path_size = zArraySize( &g_p2p_array );
-  double end_s = g_p2p_array.buf[path_size-1].goal_feedrate.s;
+  int path_size = zArraySize( &g_main->p2p_array );
+  double end_s = g_main->p2p_array.buf[path_size-1].goal_feedrate.s;
   return end_s;
 }
 
 /* 4. change_pose() */
 bool change_pose(const double s)
 {
-  g_feedrate_s = s;
-  return pop_pose( g_feedrate_s, &g_chain, &g_p2p_array );
+  g_main->feedrate_s = s;
+  return pop_pose( g_main->feedrate_s, &g_main->chain, &g_main->p2p_array );
 }
 
 void release_path(void)
 {
-  rkglChainUnload( &gr );
+  if( g_main->glChain.chain != NULL ){
+    rkglChainUnload( &g_main->glChain );
+    rkChainDestroy( &g_main->chain );
+  }
   free_keyframe_array();
-  rkChainDestroy( &g_chain );
   free_p2p_array();
 }
 
 /******************************************************************************************/
+
+/* data handling ----------------------------------------------------------------- */
+
+bool create_empty_motionPathViewData(void** src)
+{
+  motionPathViewData** main_ptr = (motionPathViewData**)( src );
+  if( !( *main_ptr = zAlloc( motionPathViewData, 1 ) ) ){
+    ZALLOCERROR();
+    return false;
+  }
+  (*main_ptr)->modelfile = NULL;
+  (*main_ptr)->selected_cp = -1;
+  (*main_ptr)->selected_path_id = -1;
+  (*main_ptr)->selected_ik_id = -1;
+  (*main_ptr)->selected_key_id = -1;
+
+  return true;
+}
+
+void set_motionPathViewData(void* src)
+{
+  g_main = (motionPathViewData*)( src );
+}
+
+void* get_motionPathViewData(void)
+{
+  return (void *)( g_main );
+}
+
+void destroy_motionPathViewData(void* src)
+{
+  motionPathViewData* main_ptr = (motionPathViewData*)( src );
+  release_path();
+  /* zFree( main_ptr->modelfile ); */
+  zFree( main_ptr );
+}
+
+
+/* end of data handling ---------------------------------------------------------- */
 
 void draw_chain(void)
 {
   int i;
 
   for( i=0; i < 1; i++ ){
-    rkglChainSetName( &gr, i ); /* NAME_CHAIN = i */
-    rkglChainDraw( &gr );
+    rkglChainSetName( &g_main->glChain, i ); /* NAME_CHAIN = i */
+    rkglChainDraw( &g_main->glChain );
   }
 }
-
-int g_draw_path_id;
-int g_draw_ik_id;
 
 void draw_one_nurbs(void)
 {
   zRGB rgb;
-  refPath* ref_path = &g_p2p_array.buf[g_draw_path_id].ref_path_array.buf[g_draw_ik_id];
+  refPath* ref_path = &g_main->p2p_array.buf[g_main->draw_path_id].ref_path_array.buf[g_main->draw_ik_id];
   if( g_ik_reg_cls->pos( ref_path->ik_reg ) ){
     glPushMatrix();
     zRGBSet( &rgb, 1.0, 1.0, 1.0 );
-    glLoadName( NAME_NURBS + 100*g_draw_path_id + g_draw_ik_id );
+    glLoadName( NAME_NURBS + 100*g_main->draw_path_id + g_main->draw_ik_id );
     glLineWidth( 3 );
     rkglNURBSCurve( &ref_path->nurbs, &rgb );
     zRGBSet( &rgb, 0.5, 1.0, 0.5 );
@@ -1166,10 +1212,10 @@ void draw_nurbs(void)
 {
   int path_size, ik_num;
 
-  path_size = zArraySize( &g_p2p_array );
-  for( g_draw_path_id=0; g_draw_path_id < path_size; g_draw_path_id++ ){
-    ik_num = g_p2p_array.buf[g_draw_path_id].ik_num;
-    for( g_draw_ik_id=0; g_draw_ik_id < ik_num; g_draw_ik_id++ ){
+  path_size = zArraySize( &g_main->p2p_array );
+  for( g_main->draw_path_id=0; g_main->draw_path_id < path_size; g_main->draw_path_id++ ){
+    ik_num = g_main->p2p_array.buf[g_main->draw_path_id].ik_num;
+    for( g_main->draw_ik_id=0; g_main->draw_ik_id < ik_num; g_main->draw_ik_id++ ){
       draw_one_nurbs();
     }
   }
@@ -1179,10 +1225,10 @@ void draw_keyframes_phantom_chain(void)
 {
   int key_id;
 
-  glLoadName( gr.name );
-  for( key_id=0; key_id < zArraySize( &g_keyframe_array ); key_id++ ){
+  glLoadName( g_main->glChain.name );
+  for( key_id=0; key_id < zArraySize( &g_main->keyframe_array ); key_id++ ){
     glPushName( key_id );
-    glCallList( g_keyframe_array.buf[key_id].display_id );
+    glCallList( g_main->keyframe_array.buf[key_id].display_id );
     glPopName();
   }
 }
@@ -1200,48 +1246,48 @@ int find_cp(rkglSelectionBuffer *sb)
   /* int path_size, path_id, ik_num, ik_id; */
   int i;
 
-  /* path_size = zArraySize( &g_p2p_array ); */
+  /* path_size = zArraySize( &g_main->p2p_array ); */
 
   rkglSelectionRewind( sb );
-  g_selected_cp = -1;
-  g_selected_path_id = -1;
-  g_selected_ik_id = -1;
+  g_main->selected_cp = -1;
+  g_main->selected_path_id = -1;
+  g_main->selected_ik_id = -1;
 
-  p2pPathInfo* p2p_buf = &g_p2p_array.buf[g_draw_path_id];
+  p2pPathInfo* p2p_buf = &g_main->p2p_array.buf[g_main->draw_path_id];
 
-  zNURBS3D* nurbs = &p2p_buf->ref_path_array.buf[g_draw_ik_id].nurbs;
-  void* ik_reg = p2p_buf->ref_path_array.buf[g_draw_ik_id].ik_reg;
+  zNURBS3D* nurbs = &p2p_buf->ref_path_array.buf[g_main->draw_ik_id].nurbs;
+  void* ik_reg = p2p_buf->ref_path_array.buf[g_main->draw_ik_id].ik_reg;
   if( g_ik_reg_cls->pos( ik_reg ) ){
     for( i=0; i<sb->hits; i++ ){
-      if( rkglSelectionName(sb,0) == (NAME_NURBS + 100*g_draw_path_id + g_draw_ik_id) &&
+      if( rkglSelectionName(sb,0) == (NAME_NURBS + 100*g_main->draw_path_id + g_main->draw_ik_id) &&
           rkglSelectionName(sb,1) >= 0 &&
           rkglSelectionName(sb,1) < zNURBS3D1CPNum(nurbs) ){
-        g_selected_cp = rkglSelectionName(sb,1);
-        g_selected_path_id = g_draw_path_id;
-        g_selected_ik_id = g_draw_ik_id;
+        g_main->selected_cp = rkglSelectionName(sb,1);
+        g_main->selected_path_id = g_main->draw_path_id;
+        g_main->selected_ik_id = g_main->draw_ik_id;
         break;
       }
       rkglSelectionNext( sb );
     }
-    printf(" sp->hits=%d : i=%d : g_draw_path_id=%d, g_draw_ik_id=%d, rkglSelectionName(sb,0)=%d, Name(sb,1)=%d\n", sb->hits, i, g_draw_path_id, g_draw_ik_id, rkglSelectionName(sb,0), rkglSelectionName(sb,1));
+    printf(" sp->hits=%d : i=%d : g_main->draw_path_id=%d, g_main->draw_ik_id=%d, rkglSelectionName(sb,0)=%d, Name(sb,1)=%d\n", sb->hits, i, g_main->draw_path_id, g_main->draw_ik_id, rkglSelectionName(sb,0), rkglSelectionName(sb,1));
   }
 
-  return g_selected_cp;
+  return g_main->selected_cp;
 }
 
 int find_keyframes_phantom_chain(rkglSelectionBuffer *sb)
 {
-  g_selected_key_id =
-    ( rkglSelectionName(sb,0) == gr.name &&
+  g_main->selected_key_id =
+    ( rkglSelectionName(sb,0) == g_main->glChain.name &&
       rkglSelectionName(sb,1) >= 0 &&
-      rkglSelectionName(sb,1) < zArraySize( &g_keyframe_array ) ) ?
+      rkglSelectionName(sb,1) < zArraySize( &g_main->keyframe_array ) ) ?
     rkglSelectionName(sb,1) : -1;
-  return g_selected_key_id;
+  return g_main->selected_key_id;
 }
 
 int get_selected_key_id(void)
 {
-  return g_selected_key_id;
+  return g_main->selected_key_id;
 }
 
 void display(GLFWwindow* window)
@@ -1269,15 +1315,15 @@ void motion(GLFWwindow* window, double x, double y)
 {
   zVec3D p;
 
-  if( g_sb.hits == 0 ){
+  if( g_main->sb.hits == 0 ){
     rkglMouseDragFuncGLFW( window, x, y );
     return;
   }
-  zNURBS3D* nurbs = &g_p2p_array.buf[g_selected_path_id].ref_path_array.buf[g_selected_ik_id].nurbs;
-  if( g_selected_cp > 0 && g_selected_cp < zNURBS3D1CPNum(nurbs) -1 ){
-    rkglUnproject( g_cam, x, y, rkglSelectionZnearDepth(&g_sb), &p );
-    zVec3DCopy( &p, zNURBS3D1CP(nurbs, g_selected_cp) );
-    pop_pose( g_feedrate_s, &g_chain, &g_p2p_array );
+  zNURBS3D* nurbs = &g_main->p2p_array.buf[g_main->selected_path_id].ref_path_array.buf[g_main->selected_ik_id].nurbs;
+  if( g_main->selected_cp > 0 && g_main->selected_cp < zNURBS3D1CPNum(nurbs) -1 ){
+    rkglUnproject( g_cam, x, y, rkglSelectionZnearDepth(&g_main->sb), &p );
+    zVec3DCopy( &p, zNURBS3D1CP(nurbs, g_main->selected_cp) );
+    pop_pose( g_main->feedrate_s, &g_main->chain, &g_main->p2p_array );
   }
   rkglMouseStoreXY( floor(x), floor(y) );
 }
@@ -1290,30 +1336,30 @@ void mouse(GLFWwindow* window, int button, int state, int mods)
   if( button == GLFW_MOUSE_BUTTON_LEFT ){
     if( state == GLFW_PRESS ){
       /* cp selection */
-      path_size = zArraySize( &g_p2p_array );
-      for( g_draw_path_id=0; g_draw_path_id < path_size && !is_selected; g_draw_path_id++ ){
-        ik_num = g_p2p_array.buf[g_draw_path_id].ik_num;
-        for( g_draw_ik_id=0; g_draw_ik_id < ik_num && !is_selected; g_draw_ik_id++ ){
+      path_size = zArraySize( &g_main->p2p_array );
+      for( g_main->draw_path_id=0; g_main->draw_path_id < path_size && !is_selected; g_main->draw_path_id++ ){
+        ik_num = g_main->p2p_array.buf[g_main->draw_path_id].ik_num;
+        for( g_main->draw_ik_id=0; g_main->draw_ik_id < ik_num && !is_selected; g_main->draw_ik_id++ ){
           rkglClear();
-          rkglSelect( &g_sb, g_cam, draw_one_nurbs, rkgl_mouse_x, rkgl_mouse_y, SIZE_CP, SIZE_CP );
-          if( find_cp( &g_sb ) >= 0 ){
-            eprintf( "Selected control point [%d]\n", g_selected_cp );
+          rkglSelect( &g_main->sb, g_cam, draw_one_nurbs, rkgl_mouse_x, rkgl_mouse_y, SIZE_CP, SIZE_CP );
+          if( find_cp( &g_main->sb ) >= 0 ){
+            eprintf( "Selected control point [%d]\n", g_main->selected_cp );
             is_selected = true;
             break;
           }
         }
       }
       /* keyframe selection */
-      g_selected_key_id = -1;
+      g_main->selected_key_id = -1;
       if( !is_selected &&
-          rkglSelectNearest( &g_sb, g_cam, draw_keyframes_phantom_chain, rkgl_mouse_x, rkgl_mouse_y, 1, 1 ) ){
-        if( find_keyframes_phantom_chain( &g_sb ) >= 0 ){
-          eprintf( "Selected keyframe id [%d]\n", g_selected_key_id );
+          rkglSelectNearest( &g_main->sb, g_cam, draw_keyframes_phantom_chain, rkgl_mouse_x, rkgl_mouse_y, 1, 1 ) ){
+        if( find_keyframes_phantom_chain( &g_main->sb ) >= 0 ){
+          eprintf( "Selected keyframe id [%d]\n", g_main->selected_key_id );
         }
       }
       /* */
     } else if( state == GLFW_RELEASE ){
-      g_sb.hits = 0;
+      g_main->sb.hits = 0;
     }
   } else if( button == GLFW_MOUSE_BUTTON_RIGHT ){
     if( state == GLFW_PRESS ){
@@ -1348,8 +1394,8 @@ void updata_texture_and_frame_buffer(int w, int h)
 
 void keyboard(GLFWwindow* window, unsigned int key)
 {
-  const int path_size = zArraySize( &g_p2p_array );
-  const double end_s = g_p2p_array.buf[path_size-1].goal_feedrate.s;
+  const int path_size = zArraySize( &g_main->p2p_array );
+  const double end_s = g_main->p2p_array.buf[path_size-1].goal_feedrate.s;
   const double ds = end_s / ((double)SLICE_NUM);
   switch( key ){
   case 'u': rkglCALockonPTR( g_cam, 5, 0, 0 ); break;
@@ -1360,15 +1406,14 @@ void keyboard(GLFWwindow* window, unsigned int key)
   case 'O': rkglCALockonPTR( g_cam, 0, 0,-5 ); break;
   case '8': *g_scale += 0.0001; rkglOrthoScaleH( g_cam, *g_scale, g_znear, g_zfar ); break;
   case '*': *g_scale -= 0.0001; rkglOrthoScaleH( g_cam, *g_scale, g_znear, g_zfar ); break;
-  case 'f': change_pose( g_feedrate_s + ds); break; /* forward */
-  case 'b': change_pose( g_feedrate_s - ds); break; /* backward */
+  case 'f': change_pose( g_main->feedrate_s + ds); break; /* forward */
+  case 'b': change_pose( g_main->feedrate_s - ds); break; /* backward */
   case 'q': case 'Q': case '\033':
     g_is_exit = true;
   default: ;
   }
 }
 
-char *g_modelfile = NULL;
 
 #ifdef __WINDOWS__
 #include <direct.h>
@@ -1415,9 +1460,17 @@ rkChain *extend_rkChainReadZTK(rkChain *chain, char *pathname)
   return chain;
 }
 
-void set_modelfiles(char* modelfile)
+void set_modelfile(char* modelfile)
 {
-  g_modelfile = modelfile;
+  g_main->modelfile = modelfile;
+}
+
+void set_view_params(void* cam, double* scale, void* light, void* shadow)
+{
+  g_cam = (rkglCamera*)( cam );
+  g_light = (rkglLight*)( light );
+  g_shadow = (rkglShadow*)( shadow );
+  g_scale = scale;
 }
 
 bool create_view_params(void** cam, double** scale, void** light, void** shadow)
@@ -1490,25 +1543,25 @@ void init_light(void)
 
 bool init(void)
 {
-  if( g_modelfile == NULL ){
-    g_modelfile = zStrClone( "../model/puma.ztk" );
+  if( g_main->modelfile == NULL ){
+    g_main->modelfile = zStrClone( "../model/puma.ztk" );
   }
-  printf( "modelfile = %s\n", g_modelfile );
-  if( !extend_rkChainReadZTK( &g_chain, g_modelfile ) ){
+  printf( "modelfile = %s\n", g_main->modelfile );
+  if( !extend_rkChainReadZTK( &g_main->chain, g_main->modelfile ) ){
     ZRUNWARN( "Failed extend_rkChainReadZTK()" );
     return false;
   }
   rkglChainAttr attr;
   rkglChainAttrInit( &attr );
-  if( !rkglChainLoad( &gr, &g_chain, &attr, g_light ) ){
-    ZRUNWARN( "Failed rkglChainLoad(&gr)" );
+  if( !rkglChainLoad( &g_main->glChain, &g_main->chain, &attr, g_light ) ){
+    ZRUNWARN( "Failed rkglChainLoad(&g_main->glChain)" );
     return false;
   }
   /* IK */
-  rkChainCreateIK( &g_chain );
-  rkChainRegIKJointAll( &g_chain, IK_JOINT_WEIGHT );
+  rkChainCreateIK( &g_main->chain );
+  rkChainRegIKJointAll( &g_main->chain, IK_JOINT_WEIGHT );
 
-  g_sb.hits = 0;
+  g_main->sb.hits = 0;
   return true;
 }
 
@@ -1517,11 +1570,16 @@ GLFWwindow* g_window;
 
 int main(int argc, char *argv[])
 {
+  /* First of All, create pindragIFData g_main */
+  void* test_main_ptr = NULL;
+  create_empty_motionPathViewData( &test_main_ptr );
+  set_motionPathViewData( test_main_ptr );
+
   int width;
   int height;
 
   if( argc > 1 ){
-    g_modelfile = argv[1];
+    set_modelfile( argv[1] );
   }
   if( rkglInitGLFW( &argc, argv ) < 0 )
     return 1;
@@ -1558,11 +1616,11 @@ int main(int argc, char *argv[])
   int key_id, link_id, jid;
   for( key_id=0; key_id < TEST_KEYFRAME_SIZE; key_id++ ){
     q_ptr[key_id] = zAlloc( double, TEST_JOINT_SIZE );
-    for( jid=0; jid < rkChainJointSize(&g_chain); jid++ ){
+    for( jid=0; jid < rkChainJointSize(&g_main->chain); jid++ ){
       q_ptr[key_id][jid] = test_q[key_id][jid];
     }
     pin_ptr[key_id] = zAlloc( int, TEST_LINK_SIZE );
-    for( link_id=0; link_id < rkChainLinkNum(&g_chain); link_id++ ){
+    for( link_id=0; link_id < rkChainLinkNum(&g_main->chain); link_id++ ){
       pin_ptr[key_id][link_id] = test_pin[key_id][link_id];
     }
   }
@@ -1616,7 +1674,7 @@ int main(int argc, char *argv[])
     glfwSwapBuffers( g_window );
   }
 
-  release_path();
+  destroy_motionPathViewData( test_main_ptr );
   free_view_params( g_cam, g_scale, g_light, g_shadow );
   glfwDestroyWindow( g_window );
   glfwTerminate();
