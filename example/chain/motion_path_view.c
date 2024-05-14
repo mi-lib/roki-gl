@@ -391,14 +391,19 @@ double accumulate_normalized_joint_norm(rkChain* chain, const double s, zVec q1,
     rkLinkJointGetMin( rkChainLink( chain, link_id ), min );
     rkLinkJointGetMax( rkChainLink( chain, link_id ), max );
     for( j=0; j<jsize; j++ ){
-      /* printf( "q[%02d] min : max = %f : %f\n", jid, min[j], max[j] ); */
-      range = fabs( max[j] - min[j] );
-      if( range > DBL_MIN ){
-        zVecElemNC(nq1, jid) = ( zVecElemNC(q1, jid) - min[j] ) / range;
-        zVecElemNC(nq2, jid) = ( zVecElemNC(q2, jid) - min[j] ) / range;
-      } else{
-        zVecElemNC(nq1, jid) = 0.0;
-        zVecElemNC(nq2, jid) = 0.0;
+      printf( "q[%02d] min : max = %f : %f\n", jid, min[j], max[j] );
+      if( isfinite(min[j]) && isfinite(max[j]) ){
+        range = fabs( max[j] - min[j] );
+        if( range > DBL_MIN ){
+          zVecElemNC(nq1, jid) = ( zVecElemNC(q1, jid) - min[j] ) / range;
+          zVecElemNC(nq2, jid) = ( zVecElemNC(q2, jid) - min[j] ) / range;
+        } else{
+          zVecElemNC(nq1, jid) = 0.0;
+          zVecElemNC(nq2, jid) = 0.0;
+        }
+      } else {
+        zVecElemNC(nq1, jid) = zVecElemNC(q1, jid);
+        zVecElemNC(nq2, jid) = zVecElemNC(q2, jid);
       }
       jid++;
     }
