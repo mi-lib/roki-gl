@@ -1233,6 +1233,13 @@ void draw_keyframes_phantom_chain(void)
   }
 }
 
+void ready_scene(void)
+{
+  rkglCALoad( g_cam );
+  rkglLightPut( g_light );
+  rkglClear();
+}
+
 void draw_scene(void)
 {
   draw_nurbs();
@@ -1292,10 +1299,7 @@ int get_selected_key_id(void)
 
 void display(GLFWwindow* window)
 {
-  rkglCALoad( g_cam );
-  rkglLightPut( g_light );
-  rkglClear();
-
+  ready_scene();
   draw_scene();
 }
 
