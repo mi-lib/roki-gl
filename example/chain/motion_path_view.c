@@ -1282,6 +1282,21 @@ int find_cp(rkglSelectionBuffer *sb)
   return g_main->selected_cp;
 }
 
+int get_selected_cp(void)
+{
+  return g_main->selected_cp;
+}
+
+int get_selected_path_id(void)
+{
+  return g_main->selected_path_id;
+}
+
+int get_selected_ik_id(void)
+{
+  return g_main->selected_ik_id;
+}
+
 int find_keyframes_phantom_chain(rkglSelectionBuffer *sb)
 {
   g_main->selected_key_id =
