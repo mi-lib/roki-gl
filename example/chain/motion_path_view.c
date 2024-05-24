@@ -481,6 +481,8 @@ void free_all_link_pin_path_ik_info(allLinkPinPathIKInfo* all_link_pin_path_ik_i
 
 void free_cp_list(void** src_cp_list)
 {
+  if( *src_cp_list == NULL )
+    return;
   zVec3DList* cp_list = (zVec3DList*)( *src_cp_list );
   zVec3DListDestroy( cp_list );
   zFree( *src_cp_list );
@@ -496,6 +498,7 @@ void free_ref_path_array(refPathArray* ref_path_array)
       g_ik_reg_cls->free( &ref_path_array->buf[ik_id].ik_reg );
       if( ref_path_array->buf[ik_id].nurbs.knot != NULL ){
         zNURBS3DDestroy( &ref_path_array->buf[ik_id].nurbs );
+        free_cp_list( (void**)( &ref_path_array->buf[ik_id].cp_list_ptr ) );
       }
     }
     zArrayFree( ref_path_array );
@@ -563,7 +566,8 @@ bool init_p2p_array(rkChain *chain, p2pPathArray *p2p_array, const int path_size
 {
   int path_id;
 
-  free_p2p_array();
+  if( p2p_array->size > 0 )
+    free_p2p_array();
   zArrayAlloc( p2p_array, p2pPathInfo, path_size );
   for( path_id=0; path_id < path_size; path_id++ ){
     p2pPathInfo* p2p_buf = zArrayElemNC( p2p_array, path_id );
@@ -592,10 +596,68 @@ void clone_cp_list(void* src_cp_list, void* dest_cp_list)
   if( src_cp_list == dest_cp_list )
     return;
   zVec3DList* src = (zVec3DList*)( src_cp_list );
+  if( src->size == 0 ){
+    return;
+  }
   zVec3DList* dest = (zVec3DList*)( dest_cp_list );
-  zVec3DAddrListClone( src, dest );
+  zListInit( dest );
+  zVec3DListCell *scp, *cp;
+  zListForEach( src, scp ){
+    if( !( cp = zAlloc( zVec3DAddr, 1 ) ) ){
+      ZALLOCERROR();
+      return;
+    }
+    cp->data = zAlloc( zVec3D, 1 );
+    zVec3DCopy(scp->data, cp->data);
+    zListInsertHead( dest, cp );
+  }
 }
 
+void copy_cp_list(void* src_cp_list, void* dest_cp_list)
+{
+  zVec3DList* src = (zVec3DList*)( src_cp_list );
+  zVec3DList* dest = (zVec3DList*)( dest_cp_list );
+  if( src->size != dest->size ){
+    ZRUNERROR("Invalid size between (zVec3DList*)src_cp_list and dest_cp_list to copy.");
+    return;
+  }
+  zVec3DListCell *scp, *cp;
+  cp = zListTail(dest);
+  zListForEach( src, scp ){
+    zVec3DCopy( scp->data, cp->data );
+    cp = zListCellNext(cp);
+  }
+}
+
+void clone_from_cp_list(int path_id, int ik_id, void* dest_cp_list)
+{
+  refPath* ref_path = &g_main->p2p_array.buf[path_id].ref_path_array.buf[ik_id];
+  zVec3DList* src = ref_path->cp_list_ptr;
+  zVec3DList* dest = (zVec3DList*)( dest_cp_list );
+  if( src == dest )
+    return;
+  if( g_ik_reg_cls->pos( ref_path->ik_reg ) ){
+    clone_cp_list( src, dest );
+  }
+}
+
+void copy_from_selected_cp(void* dest_cp_list)
+{
+  zNURBS3D* nurbs = &g_main->p2p_array.buf[g_main->selected_path_id].ref_path_array.buf[g_main->selected_ik_id].nurbs;
+  if( (g_main->selected_cp <= 0) || (g_main->selected_cp >= zNURBS3D1CPNum(nurbs) -1) ){
+    ZRUNERROR("selected_cp is out of range.");
+    return;
+  }
+  zVec3DList* dest = (zVec3DList*)( dest_cp_list );
+  if( dest->size != zNURBS3D1CPNum(nurbs) - 2 ){
+    ZRUNERROR("Invalid size of (zVec3DList*)dest_cp_list to copy_from_selected_cp.");
+    return;
+  }
+  zVec3D* src_cp = zNURBS3D1CP( nurbs, g_main->selected_cp );
+  zVec3DListCell *dcp;
+  zListItem( dest, g_main->selected_cp - 1, &dcp );
+  zVec3DCopy( src_cp, dcp->data );
+}
 
 /* Type (A) */
 bool clone_and_set_ref_path_from_refPathinput(const int path_size, refPathInput* src_ref_path_input_array)
@@ -617,7 +679,8 @@ bool clone_and_set_ref_path_from_refPathinput(const int path_size, refPathInput*
       g_ik_reg_cls->copy( src->buf[ik_id].ik_reg, ref_path->ik_reg );
       if( g_ik_reg_cls->pos( ref_path->ik_reg ) ){
         zVec3DList* src_cp_list_ptr = (zVec3DList*)( src->buf[ik_id].cp_list_ptr );
-        ref_path->cp_list_ptr = src_cp_list_ptr; /* pointer */
+        init_cp_list( (void**)( &ref_path->cp_list_ptr) );
+        clone_cp_list( src_cp_list_ptr, ref_path->cp_list_ptr );
       }
     }
   }
@@ -644,7 +707,8 @@ bool clone_and_set_ref_path(const int path_size, int* src_ik_num_array, void*** 
       g_ik_reg_cls->copy( src_ik_reg_2array[path_id][ik_id], ref_path->ik_reg );
       if( g_ik_reg_cls->pos( ref_path->ik_reg ) ){
         zVec3DList* src_cp_list_ptr = (zVec3DList*)( src_cp_list_2array[path_id][ik_id] );
-        ref_path->cp_list_ptr = src_cp_list_ptr; /* pointer */
+        init_cp_list( (void**)( &ref_path->cp_list_ptr) );
+        clone_cp_list( src_cp_list_ptr, ref_path->cp_list_ptr );
       }
     }
   }
@@ -813,10 +877,12 @@ bool interpolate_path()
       if( g_ik_reg_cls->pos( ik_reg ) ){
         nurbs_ptr = &p2p_buf->ref_path_array.buf[ik_id].nurbs;
         cp_list_ptr = p2p_buf->ref_path_array.buf[ik_id].cp_list_ptr;
-        /* the number of intermediate control points */
-        zNURBS3D1Alloc( nurbs_ptr, P2P_KEYFRAME_NUM + INTERMEDIATE_CP_NUM, 3 );
-        zNURBS3D1SetSliceNum( nurbs_ptr, SLICE_NUM );
-        interpolate_p2p_nurbs_cp( nurbs_ptr, 0, &start_pos, cp_list_ptr, &end_pos );
+        if( cp_list_ptr != NULL ){
+          /* the number of intermediate control points */
+          zNURBS3D1Alloc( nurbs_ptr, P2P_KEYFRAME_NUM + INTERMEDIATE_CP_NUM, 3 );
+          zNURBS3D1SetSliceNum( nurbs_ptr, SLICE_NUM );
+          interpolate_p2p_nurbs_cp( nurbs_ptr, 0, &start_pos, cp_list_ptr, &end_pos );
+        }
       }
     }
   } /* end of for loop i of keyframe num times */
@@ -1441,13 +1507,7 @@ void mouse(GLFWwindow* window, int button, int state, int mods)
       /* */
     } else if( state == GLFW_RELEASE ){
       if( is_selected ){
-        refPath* ref_path = &g_main->p2p_array.buf[g_main->selected_path_id].ref_path_array.buf[g_main->selected_ik_id];
-        zNURBS3D* nurbs = &ref_path->nurbs;
-        zVec3D* src_cp = zNURBS3D1CP(nurbs, g_main->selected_cp);
-        zVec3DList* cp_list_ptr = ref_path->cp_list_ptr;
-        zVec3DListCell *dest_cp_cell;
-        zListItem( cp_list_ptr, g_main->selected_cp - 1, &dest_cp_cell );
-        zVec3DCopy( src_cp, dest_cp_cell->data );
+        copy_from_selected_cp( g_main->p2p_array.buf[g_main->selected_path_id].ref_path_array.buf[g_main->selected_ik_id].cp_list_ptr );
       }
       g_main->sb.hits = 0;
     }
