@@ -100,31 +100,47 @@ rkIKRegister TEST_IK_REG_ARRAY__PATH01[TEST_IK_NUM__PATH01] =
   { TEST_IK_REG__PATH01_IK01 };
 rkIKRegister* TEST_IK_REG_ARRAY__PATH01_PTR = TEST_IK_REG_ARRAY__PATH01;
 
+zVec3DList TEST_CP_LIST01;
+zVec3DList TEST_CP_LIST02;
+
 /*** Type (A) ***/
-/*** ik_reg_array is pointer of the pointer's array, array size = ik_num = cell_size ***/
+/*** ik_reg is the pointer to rkIKRegister  ***/
+/*** cp_list_ptr is the pointer to zVec3DList ***/
+typedef struct{
+  void* ik_reg;
+  void* cp_list_ptr;
+} refPathInputComponent;
+/*** buf array size = ik_num = cell_size ***/
 typedef struct{
   int ik_num;
-  void** ik_reg_array;
+  refPathInputComponent* buf;
 } refPathInput;
+refPathInputComponent TEST_REF_PATH_INPUT_COMPONENT_ARRAY01[TEST_IK_NUM__PATH01] =
+  {
+    {
+      /*** ik_reg, cp_list_ptr ***/
+      (void*)(&TEST_IK_REG__PATH01_IK01), (void*)(&TEST_CP_LIST01)
+    }
+    /*** TEST_IK_NUM__PATH01 ***/
+  };
+refPathInputComponent TEST_REF_PATH_INPUT_COMPONENT_ARRAY02[TEST_IK_NUM__PATH01] =
+  {
+    {
+      /*** ik_reg, cp_list_ptr ***/
+      (void*)(&TEST_IK_REG__PATH01_IK01), (void*)(&TEST_CP_LIST02)
+    }
+    /*** TEST_IK_NUM__PATH01 ***/
+  };
 refPathInput test_ref_path_input_array[TEST_KEYFRAME_SIZE-1] =
   {
-    /*** { num, ik_reg_array } ***/
-    { TEST_IK_NUM__PATH01, (void**)(&TEST_IK_REG_ARRAY__PATH01_PTR) },
-    { TEST_IK_NUM__PATH01, (void**)(&TEST_IK_REG_ARRAY__PATH01_PTR) }
-    /*** TEST_KEYFRAME_SIZE-1 (= PATH_SIZE) ***/
-  };
-
-/*** Type (B) ***/
-int test_ik_num_array[TEST_KEYFRAME_SIZE-1] = {1};
-rkIKRegister test_ik_reg_2array[TEST_KEYFRAME_SIZE-1][BUFSIZ] =
-  {
     {
-      { TEST_IK_REG_SELECTABLE__PATH01_IK01, TEST_IK_ATTR__PATH01_IK01 }
-      /*** TEST_IK_NUM__PATH01 (BUFSIZ is default) ***/
+      /*** { num, buf } ***/
+      TEST_IK_NUM__PATH01,
+      TEST_REF_PATH_INPUT_COMPONENT_ARRAY01
     },
     {
-      { TEST_IK_REG_SELECTABLE__PATH01_IK01, TEST_IK_ATTR__PATH01_IK01 }
-      /*** TEST_IK_NUM__PATH01 (BUFSIZ is default) ***/
+      TEST_IK_NUM__PATH01,
+      TEST_REF_PATH_INPUT_COMPONENT_ARRAY02
     }
     /*** TEST_KEYFRAME_SIZE-1 (= PATH_SIZE) ***/
   };
@@ -154,6 +170,7 @@ typedef struct{
   void* ik_reg; /* just pointer (not array) */
   rkIKCell *cell;
   zNURBS3D nurbs;
+  zVec3DList *cp_list_ptr;
   /* Circle Path, Other Form (for pos/att)...etc. */
 } refPath;
 
@@ -462,6 +479,14 @@ void free_all_link_pin_path_ik_info(allLinkPinPathIKInfo* all_link_pin_path_ik_i
     zArrayFree( all_link_pin_path_ik_info );
 }
 
+void free_cp_list(void** src_cp_list)
+{
+  zVec3DList* cp_list = (zVec3DList*)( *src_cp_list );
+  zVec3DListDestroy( cp_list );
+  zFree( *src_cp_list );
+  *src_cp_list = NULL;
+}
+
 void free_ref_path_array(refPathArray* ref_path_array)
 {
   int ik_id, ik_num;
@@ -469,14 +494,15 @@ void free_ref_path_array(refPathArray* ref_path_array)
   if( ( ik_num = zArraySize( ref_path_array ) ) > 0 ){
     for( ik_id=0; ik_id < ik_num; ik_id++ ){
       g_ik_reg_cls->free( &ref_path_array->buf[ik_id].ik_reg );
-      if( ref_path_array->buf[ik_id].nurbs.knot != NULL )
+      if( ref_path_array->buf[ik_id].nurbs.knot != NULL ){
         zNURBS3DDestroy( &ref_path_array->buf[ik_id].nurbs );
+      }
     }
     zArrayFree( ref_path_array );
   }
 }
 
-void free_p2p_array()
+void free_p2p_array(void)
 {
   int path_size, path_id, link_id, cell_id, jid;
 
@@ -553,6 +579,24 @@ bool init_p2p_array(rkChain *chain, p2pPathArray *p2p_array, const int path_size
   return true;
 }
 
+bool init_cp_list(void** src_cp_list)
+{
+  zVec3DList** cp_list = (zVec3DList**)( src_cp_list );
+  *cp_list = zAlloc( zVec3DList, 1 );
+  zListInit( *cp_list );
+  return true;
+}
+
+void clone_cp_list(void* src_cp_list, void* dest_cp_list)
+{
+  if( src_cp_list == dest_cp_list )
+    return;
+  zVec3DList* src = (zVec3DList*)( src_cp_list );
+  zVec3DList* dest = (zVec3DList*)( dest_cp_list );
+  zVec3DAddrListClone( src, dest );
+}
+
+
 /* Type (A) */
 bool clone_and_set_ref_path_from_refPathinput(const int path_size, refPathInput* src_ref_path_input_array)
 {
@@ -568,8 +612,13 @@ bool clone_and_set_ref_path_from_refPathinput(const int path_size, refPathInput*
     free_ref_path_array( ref_path_array );
     zArrayAlloc( ref_path_array, refPath, src->ik_num );
     for( ik_id=0; ik_id < src->ik_num; ik_id++ ){
-      g_ik_reg_cls->init( &ref_path_array->buf[ik_id].ik_reg );
-      g_ik_reg_cls->copy( src->ik_reg_array[ik_id], ref_path_array->buf[ik_id].ik_reg );
+      refPath* ref_path = &ref_path_array->buf[ik_id]; /* for omission */
+      g_ik_reg_cls->init( &ref_path->ik_reg );
+      g_ik_reg_cls->copy( src->buf[ik_id].ik_reg, ref_path->ik_reg );
+      if( g_ik_reg_cls->pos( ref_path->ik_reg ) ){
+        zVec3DList* src_cp_list_ptr = (zVec3DList*)( src->buf[ik_id].cp_list_ptr );
+        ref_path->cp_list_ptr = src_cp_list_ptr; /* pointer */
+      }
     }
   }
 
@@ -577,7 +626,7 @@ bool clone_and_set_ref_path_from_refPathinput(const int path_size, refPathInput*
 }
 
 /* Type (B) */
-bool clone_and_set_ref_path(const int path_size, int* src_ik_num_array, void*** src_ik_reg_2array)
+bool clone_and_set_ref_path(const int path_size, int* src_ik_num_array, void*** src_ik_reg_2array, void*** src_cp_list_2array )
 {
   int path_id, ik_id;
 
@@ -590,8 +639,13 @@ bool clone_and_set_ref_path(const int path_size, int* src_ik_num_array, void*** 
     free_ref_path_array( ref_path_array );
     zArrayAlloc( ref_path_array, refPath, src_ik_num_array[path_id] );
     for( ik_id=0; ik_id < p2p_buf->ik_num; ik_id++ ){
-      g_ik_reg_cls->init( &ref_path_array->buf[ik_id].ik_reg );
-      g_ik_reg_cls->copy( src_ik_reg_2array[path_id][ik_id], ref_path_array->buf[ik_id].ik_reg );
+      refPath* ref_path = &ref_path_array->buf[ik_id]; /* for omission */
+      g_ik_reg_cls->init( &ref_path->ik_reg );
+      g_ik_reg_cls->copy( src_ik_reg_2array[path_id][ik_id], ref_path->ik_reg );
+      if( g_ik_reg_cls->pos( ref_path->ik_reg ) ){
+        zVec3DList* src_cp_list_ptr = (zVec3DList*)( src_cp_list_2array[path_id][ik_id] );
+        ref_path->cp_list_ptr = src_cp_list_ptr; /* pointer */
+      }
     }
   }
 
@@ -660,29 +714,34 @@ void interpolate_p2p_ik_weight_path(rkChain* chain, allLinkPinPathIKInfo* all_li
 }
 
 /* 2 points, start keyframe index, zNURBS3D*, start 3D position, end 3D position */
-void interpolate_p2p_nurbs_cp(zNURBS3D* nurbs, const int kf1idx, zVec3D* start, zVec3D* end)
+void interpolate_p2p_nurbs_cp(zNURBS3D* nurbs, const int kf1idx, zVec3D* start, zVec3DList* cp_list, zVec3D* end)
 {
   int j;
-  /* start */
-  zVec3DCopy( start, zNURBS3D1CP(nurbs, kf1idx) );
-  /* end */
-  zVec3DCopy( end, zNURBS3D1CP(nurbs, kf1idx + INTERMEDIATE_CP_NUM + 1 ) );
   /* intermediate points */
-  zVec3D diff3D;
-  zVec3DSub( end, start, &diff3D );
-  zVec3D cp1;
-  zVec3DCat( start, 0.25, &diff3D, &cp1);
-  zVec3D cp2;
-  zVec3DCat( end, -0.25, &diff3D, &cp2);
-  for( j=kf1idx+1; j<zNURBS3D1CPNum(nurbs)-INTERMEDIATE_CP_NUM; j++ ){
-    zVec3DCreate( zNURBS3D1CP(nurbs, j),
-                  cp1.c.x,
-                  cp1.c.y,
-                  cp1.c.z );
-    zVec3DCreate( zNURBS3D1CP(nurbs, j + INTERMEDIATE_CP_NUM - 1),
-                  cp2.c.x,
-                  cp2.c.y,
-                  cp2.c.z );
+  if( cp_list->size < INTERMEDIATE_CP_NUM ){
+    zVec3DListDestroy( cp_list );
+    zListInit( cp_list );
+    zVec3D diff3D;
+    zVec3DSub( end, start, &diff3D );
+    zVec3D cp1;
+    zVec3DCat( start, 0.25, &diff3D, &cp1 );
+    zVec3DListAdd( cp_list, &cp1 );
+    zVec3D cp2;
+    zVec3DCat( end, -0.25, &diff3D, &cp2 );
+    zVec3DListAdd( cp_list, &cp2 );
+  }
+  /* start */
+  zVec3DCopy( start, zNURBS3D1CP( nurbs, kf1idx ) );
+  /* end */
+  zVec3DCopy( end, zNURBS3D1CP( nurbs, kf1idx + cp_list->size + 1 ) );
+  j=0;
+  zVec3DListCell* cp;
+  zListForEach( cp_list, cp ){
+    zVec3DCreate( zNURBS3D1CP(nurbs, j+1),
+                  cp->data->c.x,
+                  cp->data->c.y,
+                  cp->data->c.z );
+    j++;
   }
 }
 
@@ -749,14 +808,15 @@ bool interpolate_path()
         rkChainFK( chain, kf2->q );
         zVec3DCopy( rkChainLinkWldPos(chain, ref_link_id), &end_pos );
       }
-      zNURBS3D* nurbs;
+      zNURBS3D* nurbs_ptr;
+      zVec3DList* cp_list_ptr;
       if( g_ik_reg_cls->pos( ik_reg ) ){
-        nurbs = &p2p_buf->ref_path_array.buf[ik_id].nurbs;
+        nurbs_ptr = &p2p_buf->ref_path_array.buf[ik_id].nurbs;
+        cp_list_ptr = p2p_buf->ref_path_array.buf[ik_id].cp_list_ptr;
         /* the number of intermediate control points */
-        zNURBS3D1Alloc( nurbs, P2P_KEYFRAME_NUM + INTERMEDIATE_CP_NUM, 3 );
-        zNURBS3D1SetSliceNum( nurbs, SLICE_NUM );
-        /* interpolate_p2p_nurbs_cp( nurbs, path_id, &start_pos, &end_pos ); */
-        interpolate_p2p_nurbs_cp( nurbs, 0, &start_pos, &end_pos );
+        zNURBS3D1Alloc( nurbs_ptr, P2P_KEYFRAME_NUM + INTERMEDIATE_CP_NUM, 3 );
+        zNURBS3D1SetSliceNum( nurbs_ptr, SLICE_NUM );
+        interpolate_p2p_nurbs_cp( nurbs_ptr, 0, &start_pos, cp_list_ptr, &end_pos );
       }
     }
   } /* end of for loop i of keyframe num times */
@@ -909,13 +969,14 @@ void register_cell_in_one_pin_link_for_IK(rkChain* chain, const double s,  const
   attr.id = link_id;
   linkPinPathIKInfo* link_pin_path_ik_info = &g_main->p2p_array.buf[path_id].all_link_pin_path_ik_info.buf[link_id];
   for( cell_id=0; cell_id < link_pin_path_ik_info->cell_size; cell_id++ ){
-    if( link_pin_path_ik_info->c[cell_id].is_constrained ){
-      if( link_pin_path_ik_info->c[cell_id].cell_type == IK_CELL_TYPE_WLD_ATT )
-        link_pin_path_ik_info->c[cell_id].cell = rkChainRegIKCellWldAtt( chain, &attr, RK_IK_ATTR_ID );
-      if( link_pin_path_ik_info->c[cell_id].cell_type == IK_CELL_TYPE_WLD_POS )
-        link_pin_path_ik_info->c[cell_id].cell = rkChainRegIKCellWldPos( chain, &attr, RK_IK_ATTR_ID | RK_IK_ATTR_AP );
-      weight = zPexIPVal( &link_pin_path_ik_info->c[cell_id].weight_path, s );
-      rkIKCellSetWeight( link_pin_path_ik_info->c[cell_id].cell, weight, weight, weight );
+    pinPathIKInfo* p = &link_pin_path_ik_info->c[cell_id];
+    if( p->is_constrained ){
+      if( p->cell_type == IK_CELL_TYPE_WLD_ATT )
+        p->cell = rkChainRegIKCellWldAtt( chain, &attr, RK_IK_ATTR_ID );
+      if( p->cell_type == IK_CELL_TYPE_WLD_POS )
+        p->cell = rkChainRegIKCellWldPos( chain, &attr, RK_IK_ATTR_ID | RK_IK_ATTR_AP );
+      weight = zPexIPVal( &p->weight_path, s );
+      rkIKCellSetWeight( p->cell, weight, weight, weight );
     }
   }
 }
@@ -1350,10 +1411,11 @@ void motion(GLFWwindow* window, double x, double y)
 void mouse(GLFWwindow* window, int button, int state, int mods)
 {
   int path_size, ik_num;
-  bool is_selected = false;
+  static bool is_selected = false;
 
   if( button == GLFW_MOUSE_BUTTON_LEFT ){
     if( state == GLFW_PRESS ){
+      is_selected = false;
       /* cp selection */
       path_size = zArraySize( &g_main->p2p_array );
       for( g_main->draw_path_id=0; g_main->draw_path_id < path_size && !is_selected; g_main->draw_path_id++ ){
@@ -1378,6 +1440,15 @@ void mouse(GLFWwindow* window, int button, int state, int mods)
       }
       /* */
     } else if( state == GLFW_RELEASE ){
+      if( is_selected ){
+        refPath* ref_path = &g_main->p2p_array.buf[g_main->selected_path_id].ref_path_array.buf[g_main->selected_ik_id];
+        zNURBS3D* nurbs = &ref_path->nurbs;
+        zVec3D* src_cp = zNURBS3D1CP(nurbs, g_main->selected_cp);
+        zVec3DList* cp_list_ptr = ref_path->cp_list_ptr;
+        zVec3DListCell *dest_cp_cell;
+        zListItem( cp_list_ptr, g_main->selected_cp - 1, &dest_cp_cell );
+        zVec3DCopy( src_cp, dest_cp_cell->data );
+      }
       g_main->sb.hits = 0;
     }
   } else if( button == GLFW_MOUSE_BUTTON_RIGHT ){
@@ -1645,15 +1716,21 @@ int main(int argc, char *argv[])
   }
   int* ik_num_ptr;
   ik_num_ptr = zAlloc( int, TEST_KEYFRAME_SIZE-1 );
-  void*** ik_reg_ptr;
-  ik_reg_ptr = zAlloc( void**, TEST_KEYFRAME_SIZE-1 );
+  void*** ik_reg_ptr_2array;
+  ik_reg_ptr_2array = zAlloc( void**, TEST_KEYFRAME_SIZE-1 );
+  void*** cp_list_ptr_2array;
+  cp_list_ptr_2array = zAlloc( void**, TEST_KEYFRAME_SIZE-1 );
   int path_id, ik_id;
   for( path_id=0; path_id < TEST_KEYFRAME_SIZE-1; path_id++ ){
     ik_num_ptr[path_id] = test_ref_path_input_array[path_id].ik_num;
-    ik_reg_ptr[path_id] = zAlloc( void*, ik_num_ptr[path_id] );
+    ik_reg_ptr_2array[path_id] = zAlloc( void*, ik_num_ptr[path_id] );
+    cp_list_ptr_2array[path_id] = zAlloc( void*, ik_num_ptr[path_id] );
     for( ik_id=0; ik_id < ik_num_ptr[path_id]; ik_id++ ){
-      g_ik_reg_cls->init( &ik_reg_ptr[path_id][ik_id] );
-      g_ik_reg_cls->copy( (void*)( test_ref_path_input_array[path_id].ik_reg_array[ik_id] ), ik_reg_ptr[path_id][ik_id] );
+      g_ik_reg_cls->init( &ik_reg_ptr_2array[path_id][ik_id] );
+      refPathInputComponent* rpic = &test_ref_path_input_array[path_id].buf[ik_id];
+      g_ik_reg_cls->copy( (void*)( rpic->ik_reg ), ik_reg_ptr_2array[path_id][ik_id] );
+      init_cp_list( (void**)( &rpic->cp_list_ptr ) );
+      init_cp_list( &cp_list_ptr_2array[path_id][ik_id] );
     }
   }
 
@@ -1673,7 +1750,7 @@ int main(int argc, char *argv[])
   /* 2nd re-planning test */
   clone_and_set_keyframelist( TEST_KEYFRAME_SIZE, q_ptr, pin_ptr );
   /* Try Type (B) */
-  clone_and_set_ref_path( TEST_KEYFRAME_SIZE-1, ik_num_ptr, ik_reg_ptr );
+  clone_and_set_ref_path( TEST_KEYFRAME_SIZE-1, ik_num_ptr, ik_reg_ptr_2array, cp_list_ptr_2array );
   if( run_test() < 0 ){
     ZRUNWARN( "Failed run_test()" );
     return 1;
@@ -1706,9 +1783,11 @@ int main(int argc, char *argv[])
   zFree(pin_ptr);
   zFree(q_ptr);
   for( path_id=0; path_id < TEST_KEYFRAME_SIZE-1; path_id++ ){
-    zFree(ik_reg_ptr[path_id]);
+    zFree(ik_reg_ptr_2array[path_id]);
+    zFree(cp_list_ptr_2array[path_id]);
   }
-  zFree(ik_reg_ptr);
+  zFree(ik_reg_ptr_2array);
+  zFree(cp_list_ptr_2array);
   zFree(ik_num_ptr);
   /**/
 
