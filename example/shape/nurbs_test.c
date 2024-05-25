@@ -90,7 +90,7 @@ void find_cp(rkglSelectionBuffer *sb)
 
   rkglSelectionRewind( sb );
   selected_cp_row = selected_cp_col = -1;
-  for( i=0; i<sb->hits; i++ ){
+  for( i=0; i<rkglSelectionHits(sb); i++ ){
     if( rkglSelectionName(sb,0) == NAME_NURBS &&
         rkglSelectionName(sb,1) >= 0 && rkglSelectionName(sb,1) < zNURBS3DCPNum(&nurbs,0) &&
         rkglSelectionName(sb,2) >= 0 && rkglSelectionName(sb,2) < zNURBS3DCPNum(&nurbs,1) ){
@@ -126,7 +126,7 @@ void mouse(int button, int state, int x, int y)
     break;
   default: ;
   }
-  if( sb.hits == 0 )
+  if( rkglSelectionNoHits(&sb) )
     rkglMouseFuncGLUT( button, state, x, y );
 }
 
@@ -134,7 +134,7 @@ void motion(int x, int y)
 {
   zVec3D p;
 
-  if( sb.hits == 0 ){
+  if( rkglSelectionNoHits(&sb) ){
     rkglMouseDragFuncGLUT( x, y );
     return;
   }
