@@ -1,5 +1,6 @@
 /* rk_anim - robot animation viewer */
 
+#if defined(__ROKI_GL_USE_GLX) && defined(__ROKI_GL_USE_LIW)
 #include <roki_gl/roki_glx.h>
 #include <zx11/zximage.h>
 #include <liw/liw_paction.h>
@@ -745,3 +746,13 @@ int main(int argc, char *argv[])
   rkAnimExit();
   return 0;
 }
+#else
+#include <roki_gl/roki_gl.h>
+
+int main(int argc, char *argv[])
+{
+  ROKI_GL_LIB_MANDATORY( "GLX", argv[0] );
+  ROKI_GL_LIB_MANDATORY( "LIW", argv[0] );
+  return 0;
+}
+#endif /* __ROKI_GL_USE_GLX && __ROKI_GL_USE_LIW */

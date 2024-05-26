@@ -1,5 +1,6 @@
 /* rk_pen - posture edit navigator of a kinematic chain */
 
+#if defined(__ROKI_GL_USE_GLUT)
 #include <unistd.h>
 #include <pthread.h>
 #include <roki_gl/roki_glut.h>
@@ -582,3 +583,12 @@ int main(int argc, char *argv[])
   glutMainLoop();
   return 0;
 }
+#else
+#include <roki_gl/roki_gl.h>
+
+int main(int argc, char *argv[])
+{
+  ROKI_GL_LIB_MANDATORY( "GLUT", argv[0] );
+  return 0;
+}
+#endif /* __ROKI_GL_USE_GLUT */

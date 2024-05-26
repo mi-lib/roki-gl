@@ -49,6 +49,11 @@ __ROKI_GL_EXPORT void rkglDeleteList(int id);
 __ROKI_GL_EXPORT bool rkglInitGLEW(void);
 #endif /* __ROKI_GL_USE_GLEW */
 
+/* applications */
+#define ROKI_GL_LIB_MANDATORY(lib,app) do{\
+  eprintf( "library %s is mandatory for %s.\n", lib, app );\
+} while(0)
+
 __END_DECLS
 
 #endif /* __RKGL_MISC_H__ */

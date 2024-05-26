@@ -29,7 +29,7 @@ void display(void)
 void resize(int w, int h)
 {
   rkglVPCreate( &cam, 0, 0, w, h );
-  rkglFrustumScaleH( &cam, 1.0/160, 1, 10 );
+  rkglFrustumScaleH( &cam, 1.0/160, 1, 100 );
 }
 
 void keyboard(unsigned char key, int x, int y)
@@ -70,15 +70,17 @@ void init(void)
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
   rkglLightMove( &light, 1, 3, 6 );
+  rkglLightSetAttenuationQuad( &light, 2.0 );
+  rkglFogExp( 0.5, 0.5, 0.5, 0.1 );
 
   /* checkerboard */
   zOpticalInfoCreateSimple( &red, 1.0, 0, 0, NULL );
   zOpticalInfoCreateSimple( &white, 1.0, 1.0, 1.0, NULL );
-  zVec3DCreate( &pc0, -3.5, -5, -1 );
-  zVec3DCreate( &pc1,  3.5, -5, -1 );
-  zVec3DCreate( &pc2, -3.5,  5, -1 );
+  zVec3DCreate( &pc0, -20.0, -50, -1 );
+  zVec3DCreate( &pc1,  10.0, -50, -1 );
+  zVec3DCreate( &pc2, -20.0,  50, -1 );
   checker_id = rkglBeginList();
-  rkglCheckerBoard( &pc0, &pc1, &pc2, 7, 10, &red, &white );
+  rkglCheckerBoard( &pc0, &pc1, &pc2, 30, 50, &red, &white );
   glEndList();
   /* gauge & axes */
   g_id = rkglBeginList();

@@ -1,5 +1,6 @@
 /* rk_view - 3D geometry viewer */
 
+#if defined(__ROKI_GL_USE_GLX)
 #include <unistd.h>
 #include <roki_gl/roki_glx.h>
 #include <zx11/zximage.h>
@@ -317,3 +318,12 @@ int main(int argc, char *argv[])
   rk_viewExit();
   return 0;
 }
+#else
+#include <roki_gl/roki_gl.h>
+
+int main(int argc, char *argv[])
+{
+  ROKI_GL_LIB_MANDATORY( "GLX", argv[0] );
+  return 0;
+}
+#endif /* __ROKI_GL_USE_GLX */
