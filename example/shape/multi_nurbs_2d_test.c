@@ -8,6 +8,7 @@ zOpticalInfo oi;
 #define NURBS_NUM 3
 zNURBS3D nurbs[NURBS_NUM];
 int selected_cp = -1;
+int selected_curve = -1;
 
 rkglSelectionBuffer sb;
 
@@ -27,6 +28,7 @@ void draw_scene(void)
   rkglFrame( ZFRAME3DIDENT, 1.0, 2 );
   zRGBSet( &rgb, 1.0, 1.0, 1.0 );
   for( nid=0; nid<NURBS_NUM; nid++ ){
+    zRGBSet( &rgb, 1.0 * ( ~nid & 1 ) , 1.0 * ( ~nid & 2 ), 1.0 * ( ~nid & 4 ) );
     glLoadName( NAME_NURBS + nid );
     glLineWidth( 3 );
     rkglNURBSCurve( &nurbs[nid], &rgb );
@@ -75,23 +77,28 @@ void keyboard(unsigned char key, int x, int y)
   }
 }
 
-int find_cp(rkglSelectionBuffer *sb)
+bool find_cp(rkglSelectionBuffer *sb)
 {
-  int nid, i;
+  int i, selected_curve_tmp;
+  bool is_selected;
 
   rkglSelectionRewind( sb );
   selected_cp = -1;
-  for( nid=0; nid<NURBS_NUM; nid++ ){
-    for( i=0; i<sb->hits; i++ ){
-      if( rkglSelectionName(sb,0) == NAME_NURBS + nid &&
-          rkglSelectionName(sb,1) >= 0 && rkglSelectionName(sb,1) < zNURBS3D1CPNum(&nurbs[nid]) ){
+  selected_curve = -1;
+  is_selected = false;
+  for( i=0; i<sb->hits; i++ ){
+    selected_curve_tmp = rkglSelectionName(sb,0) - NAME_NURBS;
+    if( selected_curve_tmp >= 0 && selected_curve_tmp < NURBS_NUM ){
+      if( rkglSelectionName(sb,1) >= 0 && rkglSelectionName(sb,1) < zNURBS3D1CPNum(&nurbs[selected_curve_tmp]) ){
+        selected_curve = selected_curve_tmp;
         selected_cp = rkglSelectionName(sb,1);
+        is_selected = true;
         break;
       }
-      rkglSelectionNext( sb );
     }
+    rkglSelectionNext( sb );
   }
-  return selected_cp;
+  return is_selected;
 }
 
 void mouse(int button, int state, int x, int y)
@@ -101,8 +108,8 @@ void mouse(int button, int state, int x, int y)
   case GLUT_LEFT_BUTTON:
     if( state == GLUT_DOWN ){
       rkglSelect( &sb, &cam, draw_scene, x, y, SIZE_CP, SIZE_CP );
-      if( find_cp( &sb ) >= 0 )
-        eprintf( "Selected control point [%d]\n", selected_cp );
+      if( find_cp( &sb ) )
+        eprintf( "Selected NURBS curve [%d] control point [%d]\n", selected_curve, selected_cp );
     }
     break;
   case GLUT_MIDDLE_BUTTON:
@@ -127,7 +134,7 @@ void motion(int x, int y)
   for( nid=0; nid<NURBS_NUM; nid++ ){
     if( selected_cp >= 0 && selected_cp < zNURBS3D1CPNum(&nurbs[nid]) ){
       rkglUnproject( &cam, x, y, rkglSelectionZnearDepth(&sb), &p );
-      zVec3DCopy( &p, zNURBS3D1CP(&nurbs[nid],selected_cp) );
+      zVec3DCopy( &p, zNURBS3D1CP(&nurbs[selected_curve],selected_cp) );
     }
   }
 }
