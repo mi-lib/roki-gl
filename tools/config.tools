@@ -10,7 +10,7 @@ endif
 
 ifeq ($(CONFIG_USE_MAGICKWAND),y)
 	CFLAGS_I+=`pkg-config --cflags-only-I MagickWand`
-	CFLAGS_L+=--std=c99 `pkg-config --libs-only-L --cflags-only-other MagickWand`
+	CFLAGS_L+=`pkg-config --libs-only-L --cflags-only-other MagickWand`
 	CFLAGS_D+=-D__ROKI_GL_USE_MAGICKWAND
 	LINK+=`pkg-config --libs-only-l MagickWand` 
 	LINKCPP+=`pkg-config --libs-only-l MagickWand` 
