@@ -1318,33 +1318,35 @@ void draw_chain(void)
   }
 }
 
-void draw_one_nurbs(void)
+void draw_nurbs_in_one_path(void)
 {
+  int ik_num, ik_id;
   zRGB rgb;
-  refPath* ref_path = &g_main->p2p_array.buf[g_main->draw_path_id].ref_path_array.buf[g_main->draw_ik_id];
-  if( g_ik_reg_cls->pos( ref_path->ik_reg ) ){
-    glPushMatrix();
-    zRGBSet( &rgb, 1.0, 1.0, 1.0 );
-    glLoadName( NAME_NURBS + 100*g_main->draw_path_id + g_main->draw_ik_id );
-    glLineWidth( 3 );
-    rkglNURBSCurve( &ref_path->nurbs, &rgb );
-    zRGBSet( &rgb, 0.5, 1.0, 0.5 );
-    glLineWidth( 1 );
-    rkglNURBSCurveCP( &ref_path->nurbs, SIZE_CP, &rgb );
-    glPopMatrix();
+
+  ik_num = g_main->p2p_array.buf[g_main->draw_path_id].ik_num;
+  glPushMatrix();
+  for( ik_id=0; ik_id < ik_num; ik_id++ ){
+    refPath* ref_path = &g_main->p2p_array.buf[g_main->draw_path_id].ref_path_array.buf[ik_id];
+    if( g_ik_reg_cls->pos( ref_path->ik_reg ) ){
+      zRGBSet( &rgb, 1.0, 1.0, 1.0 );
+      glLoadName( NAME_NURBS + 100*g_main->draw_path_id + ik_id );
+      glLineWidth( 3 );
+      rkglNURBSCurve( &ref_path->nurbs, &rgb );
+      zRGBSet( &rgb, 0.5, 1.0, 0.5 );
+      glLineWidth( 1 );
+      rkglNURBSCurveCP( &ref_path->nurbs, SIZE_CP, &rgb );
+    }
   }
+  glPopMatrix();
 }
 
 void draw_nurbs(void)
 {
-  int path_size, ik_num;
+  int path_size;
 
   path_size = zArraySize( &g_main->p2p_array );
   for( g_main->draw_path_id=0; g_main->draw_path_id < path_size; g_main->draw_path_id++ ){
-    ik_num = g_main->p2p_array.buf[g_main->draw_path_id].ik_num;
-    for( g_main->draw_ik_id=0; g_main->draw_ik_id < ik_num; g_main->draw_ik_id++ ){
-      draw_one_nurbs();
-    }
+    draw_nurbs_in_one_path();
   }
 }
 
@@ -1378,7 +1380,7 @@ void draw_scene(void)
 int find_cp(rkglSelectionBuffer *sb)
 {
   /* int path_size, path_id, ik_num, ik_id; */
-  int i;
+  int i, ik_num, selected_ik_id_tmp, selected_cp_tmp;
 
   /* path_size = zArraySize( &g_main->p2p_array ); */
 
@@ -1388,22 +1390,27 @@ int find_cp(rkglSelectionBuffer *sb)
   g_main->selected_ik_id = -1;
 
   p2pPathInfo* p2p_buf = &g_main->p2p_array.buf[g_main->draw_path_id];
+  ik_num = g_main->p2p_array.buf[g_main->draw_path_id].ik_num;
 
-  zNURBS3D* nurbs = &p2p_buf->ref_path_array.buf[g_main->draw_ik_id].nurbs;
-  void* ik_reg = p2p_buf->ref_path_array.buf[g_main->draw_ik_id].ik_reg;
-  if( g_ik_reg_cls->pos( ik_reg ) ){
-    for( i=0; i<sb->hits; i++ ){
-      if( rkglSelectionName(sb,0) == (NAME_NURBS + 100*g_main->draw_path_id + g_main->draw_ik_id) &&
-          rkglSelectionName(sb,1) >= 0 &&
-          rkglSelectionName(sb,1) < zNURBS3D1CPNum(nurbs) ){
-        g_main->selected_cp = rkglSelectionName(sb,1);
-        g_main->selected_path_id = g_main->draw_path_id;
-        g_main->selected_ik_id = g_main->draw_ik_id;
-        break;
+  for( i=0; i<sb->hits; i++ ){
+    selected_ik_id_tmp = rkglSelectionName(sb,0) - ( NAME_NURBS + 100*g_main->draw_path_id );
+    if( selected_ik_id_tmp >= 0 &&
+        selected_ik_id_tmp < ik_num ){
+      void* ik_reg = p2p_buf->ref_path_array.buf[selected_ik_id_tmp].ik_reg;
+      if( g_ik_reg_cls->pos( ik_reg ) ){
+        zNURBS3D* nurbs = &p2p_buf->ref_path_array.buf[selected_ik_id_tmp].nurbs;
+        selected_cp_tmp = rkglSelectionName(sb,1);
+        if( selected_cp_tmp >= 0 &&
+            selected_cp_tmp < zNURBS3D1CPNum(nurbs) ){
+          g_main->selected_path_id = g_main->draw_path_id;
+          g_main->selected_ik_id = selected_ik_id_tmp;
+          g_main->selected_cp = selected_cp_tmp;
+          break;
+        }
       }
       rkglSelectionNext( sb );
     }
-    printf(" sp->hits=%d : i=%d : g_main->draw_path_id=%d, g_main->draw_ik_id=%d, rkglSelectionName(sb,0)=%d, Name(sb,1)=%d\n", sb->hits, i, g_main->draw_path_id, g_main->draw_ik_id, rkglSelectionName(sb,0), rkglSelectionName(sb,1));
+    eprintf(" sp->hits=%d : i=%d : g_main->draw_path_id=%d, ik_id=%d, rkglSeleionName(sb,0)=%d, Name(sb,1)=%d\n", sb->hits, i, g_main->draw_path_id, selected_ik_id_tmp, rkglSelectionName(sb,0), rkglSelectionName(sb,1));
   }
 
   return g_main->selected_cp;
@@ -1476,7 +1483,7 @@ void motion(GLFWwindow* window, double x, double y)
 
 void mouse(GLFWwindow* window, int button, int state, int mods)
 {
-  int path_size, ik_num;
+  int path_size;
   static bool is_selected = false;
 
   if( button == GLFW_MOUSE_BUTTON_LEFT ){
@@ -1485,15 +1492,12 @@ void mouse(GLFWwindow* window, int button, int state, int mods)
       /* cp selection */
       path_size = zArraySize( &g_main->p2p_array );
       for( g_main->draw_path_id=0; g_main->draw_path_id < path_size && !is_selected; g_main->draw_path_id++ ){
-        ik_num = g_main->p2p_array.buf[g_main->draw_path_id].ik_num;
-        for( g_main->draw_ik_id=0; g_main->draw_ik_id < ik_num && !is_selected; g_main->draw_ik_id++ ){
-          rkglClear();
-          rkglSelect( &g_main->sb, g_cam, draw_one_nurbs, rkgl_mouse_x, rkgl_mouse_y, SIZE_CP, SIZE_CP );
-          if( find_cp( &g_main->sb ) >= 0 ){
-            eprintf( "Selected control point [%d]\n", g_main->selected_cp );
-            is_selected = true;
-            break;
-          }
+        rkglClear();
+        rkglSelect( &g_main->sb, g_cam, draw_nurbs_in_one_path, rkgl_mouse_x, rkgl_mouse_y, SIZE_CP, SIZE_CP );
+        if( find_cp( &g_main->sb ) >= 0 ){
+          eprintf( "Selected control point [%d]\n", g_main->selected_cp );
+          is_selected = true;
+          break;
         }
       }
       /* keyframe selection */
