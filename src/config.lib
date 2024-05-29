@@ -16,7 +16,7 @@ ifeq ($(CONFIG_USE_GLEW),y)
 endif
 
 ifeq ($(CONFIG_USE_GLX),y)
-	CFLAGS += -D__ROKI_GL_USE_GLX -D__ROKI_GL_USE_ZX11
+	CFLAGS += -D__ROKI_GL_USE_GLX -D__ROKI_GL_USE_ZX11 `zx11-config --cflags`
 	OBJ += roki_glx.o
 endif
 
