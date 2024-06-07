@@ -1069,22 +1069,14 @@ void dump_interpolated_path(const char* filename){
 
 /* IK ------------------------------------------------------------------------------- */
 
-bool register_cell_in_one_pin_link_for_IK(rkChain* chain, const double s,  const int path_id, const int link_id)
+void register_cell_in_one_pin_link_for_IK(rkChain* chain, const double s,  const int path_id, const int link_id)
 {
   int ik_id, cell_id;
   double weight;
   rkIKAttr attr;
 
-  for( ik_id=0; ik_id < g_main->p2p_array.buf[path_id].ik_num; ik_id++ ){
-    void* ik_reg  = g_main->p2p_array.buf[path_id].ref_path_array.buf[ik_id].ik_reg;
-    if( g_ik_reg_cls->link( ik_reg ) &&
-        link_id == g_ik_reg_cls->get_link_id( ik_reg ) ){
-      return false; /* duprecated with ref_path, not register the link. */
-    }
-  }
   attr.id = link_id;
   linkPinPathIKInfo* link_pin_path_ik_info = &g_main->p2p_array.buf[path_id].all_link_pin_path_ik_info.buf[link_id];
-  bool is_pin_constrained = false;
   for( cell_id=0; cell_id < link_pin_path_ik_info->cell_size; cell_id++ ){
     pinPathIKInfo* p = &link_pin_path_ik_info->c[cell_id];
     if( p->is_constrained ){
@@ -1095,40 +1087,26 @@ bool register_cell_in_one_pin_link_for_IK(rkChain* chain, const double s,  const
       weight = zPexIPVal( &p->weight_path, s );
       rkIKCellSetWeight( p->cell, weight, weight, weight );
       zVec3DCopy( &p->ap, rkIKCellAP( p->cell ) );
-      is_pin_constrained = true;
     }
   }
-  return is_pin_constrained;
 }
 
 void unregister_cell_in_one_pin_link_for_IK(rkChain* chain, const int path_id, const int link_id)
 {
   int cell_id, ik_id;
 
-  for( ik_id=0; ik_id < g_main->p2p_array.buf[path_id].ik_num; ik_id++ ){
-    void* ik_reg  = g_main->p2p_array.buf[path_id].ref_path_array.buf[ik_id].ik_reg;
-    if( g_ik_reg_cls->link( ik_reg ) &&
-        link_id == g_ik_reg_cls->get_link_id( ik_reg ) ){
-      return; /* duprecated with ref_path, not registered, so not unregister the link. */
-    }
-  }
   linkPinPathIKInfo* link_pin_path_ik_info = &g_main->p2p_array.buf[path_id].all_link_pin_path_ik_info.buf[link_id];
   for( cell_id=0; cell_id < link_pin_path_ik_info->cell_size; cell_id++ )
     if( link_pin_path_ik_info->c[cell_id].is_constrained )
       rkChainUnregIKCell( chain, link_pin_path_ik_info->c[cell_id].cell );
 }
 
-bool register_all_pin_links_for_IK(rkChain* chain, const double s, const int path_id)
+void register_all_pin_links_for_IK(rkChain* chain, const double s, const int path_id)
 {
-  bool is_pin_constrained = false;
   int link_id;
   p2pPathInfo* p2p_buf = &g_main->p2p_array.buf[path_id];
-  for( link_id=0; link_id < zArraySize( &p2p_buf->all_link_pin_path_ik_info ); ++link_id ){
-    if( register_cell_in_one_pin_link_for_IK( chain, s, path_id, link_id) )
-      is_pin_constrained = true;
-  }
-
-  return is_pin_constrained;
+  for( link_id=0; link_id < zArraySize( &p2p_buf->all_link_pin_path_ik_info ); ++link_id )
+    register_cell_in_one_pin_link_for_IK( chain, s, path_id, link_id);
 }
 
 void unregister_all_pin_links_for_IK(rkChain* chain, const int path_id)
@@ -1251,7 +1229,7 @@ bool pop_pose(const double s, rkChain* chain, p2pPathArray *p2p_array)
   rkChainSetJointDisAll( chain, qref );
   rkChainUpdateFK( chain );
   /* register pin link (with weight path) for IK */
-  bool is_pin_constrained = register_all_pin_links_for_IK( chain, pexIP_s, path_id );
+  register_all_pin_links_for_IK( chain, pexIP_s, path_id );
 
   rkChainDeactivateIK( chain );
   rkChainBindIK( chain );
@@ -1276,7 +1254,7 @@ bool pop_pose(const double s, rkChain* chain, p2pPathArray *p2p_array)
     }
   }
   /* IK */
-  bool is_free_joints_with_no_IK = ( !is_pin_constrained && p2p_buf->ik_num==0 ); /* no pin & no path = no IK target */
+  bool is_free_joints_with_no_IK = ( p2p_buf->ik_num==0 ); /* no path = no IK target */
   printf( "is_free_joints_with_no_IK = %d\n", is_free_joints_with_no_IK );
   update_alljoint_by_IK( chain, qref, is_free_joints_with_no_IK );
   zVecFree( qref );
