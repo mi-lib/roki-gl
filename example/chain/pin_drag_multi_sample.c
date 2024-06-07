@@ -946,12 +946,10 @@ int create_original_chain_phantom(int chain_id, ghostInfo* backup_ghost_info)
   for( link_id=0; link_id < rkChainLinkNum( chain ); link_id++ ){
     if( oi_alt[link_id] ) {
       zOpticalInfoDestroy( oi_alt[link_id] );
-      delete oi_alt[link_id];
+      zFree( oi_alt[link_id] );
     }
-    oi_alt[link_id] = NULL;
   }
-  delete oi_alt;
-  oi_alt = NULL;
+  zFree( oi_alt );
 
   return display_id;
 }
