@@ -14,6 +14,7 @@
 typedef enum{
   PIN_LOCK_OFF=-1,
   PIN_LOCK_POS3D,
+  PIN_LOCK_1AP,
   PIN_LOCK_2AP,
   PIN_LOCK_6D
 } pinStatus;
@@ -21,13 +22,18 @@ typedef enum{
 /* selected link alpha using create_pindrag_link_color() */
 #define PINDRAG_SELECTED_ALPHA 0.3
 
+#define AP_MAX_NUM 2
+
 typedef struct{
   pinStatus pin;
-  zVec3D ap[2];
+  zVec3D ap[AP_MAX_NUM];
+  int ap_displaylist[AP_MAX_NUM];
+  rkIKCell *ap_cell[AP_MAX_NUM];
+  int ap_num; /* = AP_MAX_NUM */
   int ap_cnt;
 } pinInfo;
 
-#define IK_CONSTRAINED_CELL_SIZE 2
+#define IK_CONSTRAINED_CELL_SIZE 3
 
 typedef struct{
   bool is_selected;
@@ -97,7 +103,7 @@ pindragIFData *g_main;
 
 void copy_pindragIFData(void* _src, void* _dest)
 {
-  int chain_id, link_id, cell_id;
+  int chain_id, link_id, ap_id, cell_id;
 
   pindragIFData* src = (pindragIFData*)(_src);
   pindragIFData* dest = (pindragIFData*)(_dest);
@@ -129,8 +135,16 @@ void copy_pindragIFData(void* _src, void* _dest)
       dest_info2->is_selected  = src_info2->is_selected;
       dest_info2->is_collision = src_info2->is_collision;
       dest_info2->pinfo.pin    = src_info2->pinfo.pin;
-      zVec3DCopy( &src_info2->pinfo.ap[0], &dest_info2->pinfo.ap[0] );
-      zVec3DCopy( &src_info2->pinfo.ap[1], &dest_info2->pinfo.ap[1] );
+      for( ap_id=0; ap_id < src_info2->pinfo.ap_num; ap_id++ ){
+        zVec3DCopy( &src_info2->pinfo.ap[ap_id], &dest_info2->pinfo.ap[ap_id] );
+        dest_info2->pinfo.ap_displaylist[ap_id] = src_info2->pinfo.ap_displaylist[ap_id];
+        if( src_info2->pinfo.ap_cell[ap_id] != NULL ){
+          if( dest_info2->pinfo.ap_cell[ap_id] == NULL ){
+            dest_info2->pinfo.ap_cell[ap_id] = zAlloc( rkIKCell, 1 );
+          }
+          rkIKCellCopy( src_info2->pinfo.ap_cell[ap_id], dest_info2->pinfo.ap_cell[ap_id] );
+        }
+      }
       dest_info2->pinfo.ap_cnt = src_info2->pinfo.ap_cnt;
       dest_info2->cell_size    = src_info2->cell_size;
       /* copy rkIKCell */
@@ -182,12 +196,11 @@ static const double g_LENGTH = 0.2;
 static const double g_MAGNITUDE = g_LENGTH * 0.7;
 static const double g_AP_SIZE = g_LENGTH * 0.01;
 
-static GLfloat g_yellow[] = { 1.0, 1.0, 0.2, 1.0 };
-
 /* To avoid duplication between selected_link and selected_parts_id */
 /* NAME_FRAMEHANDLE_OFFSET must be enough large than rkChainLinkNum(gr.chain)  */
 #define NAME_FRAMEHANDLE_OFFSET 100
-#define NAME_FIXED_SCENE 1000
+#define NAME_AP 1000
+#define NAME_FIXED_SCENE 10000
 
 bool g_is_exit = false;
 
@@ -198,7 +211,7 @@ bool is_exit(void)
 
 bool rkglChainLoad_for_rkglChainBlock(rkglChainBlock *gcb, rkglLight *light )
 {
-  int i;
+  int chain_id, ap_id, cell_id;
   rkglChainAttr attr;
   rkglChainAttrInit( &attr );
   if( !rkglChainLoad( &gcb->glChain, &gcb->chain, &attr, light ) ){
@@ -209,15 +222,19 @@ bool rkglChainLoad_for_rkglChainBlock(rkglChainBlock *gcb, rkglLight *light )
     ZALLOCERROR();
     return false;
   }
-  for( i=0; i < rkChainLinkNum(&gcb->chain); i++ ){
-    gcb->info2[i].is_selected = false;
-    gcb->info2[i].pinfo.pin = PIN_LOCK_OFF;
-    zVec3DZero( &gcb->info2[i].pinfo.ap[0] );
-    zVec3DZero( &gcb->info2[i].pinfo.ap[1] );
-    gcb->info2[i].pinfo.ap_cnt = 0;
-    gcb->info2[i].cell[0] = NULL;
-    gcb->info2[i].cell[1] = NULL;
-    gcb->info2[i].cell_size = IK_CONSTRAINED_CELL_SIZE;
+  for( chain_id=0; chain_id < rkChainLinkNum(&gcb->chain); chain_id++ ){
+    gcb->info2[chain_id].is_selected = false;
+    gcb->info2[chain_id].pinfo.pin = PIN_LOCK_OFF;
+    gcb->info2[chain_id].pinfo.ap_num = AP_MAX_NUM;
+    for( ap_id=0; ap_id < gcb->info2[chain_id].pinfo.ap_num; ap_id++ ){
+      zVec3DZero( &gcb->info2[chain_id].pinfo.ap[ap_id] );
+      gcb->info2[chain_id].pinfo.ap_cell[ap_id] = NULL;
+    }
+    gcb->info2[chain_id].pinfo.ap_cnt = 0;
+    gcb->info2[chain_id].cell_size = IK_CONSTRAINED_CELL_SIZE;
+    for( cell_id=0; cell_id < gcb->info2[chain_id].cell_size; cell_id++ ){
+      gcb->info2[chain_id].cell[cell_id] = NULL;
+    }
   }
   return true;
 }
@@ -267,25 +284,57 @@ void draw_chain(void)
   }
 }
 
+void create_chain_ap_displaylist(int chain_id)
+{
+  zSphere3D sphere;
+  zVec3D wld_ap_zero;
+  zVec3DZero( &wld_ap_zero );
+  ubyte DISPSWITCH = 1;
+  int link_id, ap_id, display_id;
+
+  for( link_id=0; link_id < rkChainLinkNum(g_main->gcs[chain_id].glChain.chain); link_id++ ){
+    pinInfo* pinfo = &g_main->gcs[chain_id].info2[link_id].pinfo;
+    for( ap_id=0; ap_id < pinfo->ap_num; ap_id++ ){
+
+      zSphere3DCreate( &sphere, &wld_ap_zero, g_AP_SIZE, 0 );
+
+      display_id = rkglBeginList();
+      zRGB color;
+      zRGBSet( &color, 1.0, 1.0, 0.0 ); /* yellow */
+      rkglRGB( &color );
+
+      rkglSphere( &sphere, DISPSWITCH );
+
+      glEndList();
+      /* if(glGetError() != GL_NO_ERROR) */
+      /*   printf("\n\n DISPLAY ERROR !!! \n\n"); */
+      pinfo->ap_displaylist[ap_id] = display_id;
+    }
+  } /* end of for link_id */
+}
+
 void draw_ap(int chain_id, int link_id)
 {
   int ap_id;
   zVec3D wld_ap;
-  zSphere3D sphere;
-  ubyte DISPSWITCH = 1;
   pinInfo* pinfo = &g_main->gcs[chain_id].info2[link_id].pinfo;
+  bool lighting_is_enabled;
+  rkglSaveLighting( &lighting_is_enabled );
   for( ap_id=0; ap_id < pinfo->ap_cnt; ap_id++ ){
-    zXform3D( rkChainLinkWldFrame( &g_main->gcs[chain_id].chain, link_id ), &pinfo->ap[ap_id], &wld_ap );
-    glMaterialfv( GL_FRONT, GL_DIFFUSE, g_yellow );
     glPushMatrix();
-    zSphere3DCreate( &sphere, &wld_ap, g_AP_SIZE, 0 );
-    rkglSphere( &sphere, DISPSWITCH );
+    zXform3D( rkChainLinkWldFrame( &g_main->gcs[chain_id].chain, link_id ), &pinfo->ap[ap_id], &wld_ap );
+    rkglTranslate( &wld_ap );
+    glLoadName( NAME_AP + pinfo->ap_displaylist[ap_id] ); /* ToDo : Rename more better */
+    glPushName( 0 );
+    glCallList( pinfo->ap_displaylist[ap_id] );
+    glPopName();
     glPopMatrix();
   }
+  rkglLoadLighting( lighting_is_enabled );
 }
 
 void draw_alternate_link(rkglChain *gc, int chain_id, int link_id, zOpticalInfo *oi_alt, rkglChainAttr *attr, rkglLight *light){
-  debug_printf( "alternate link : rkglChain[%d].linkinfo[%d] : list = %d, ", chain_id, link_id, gc->info[link_id].list );
+  debug_printf( "alternate link : rkglChain[%d].linkinfo[%d] : list = %d, ", chain_id, link_id, gc->linkinfo[link_id].list );
   debug_printf( "_list_backup = %d, ---> ", gc->linkinfo[link_id]._list_backup );
   /* TODO : reuse selected link list value */
   /* (the current implementation generates new list value by glNewList() ) */
@@ -304,7 +353,7 @@ bool create_pindrag_link_color(int chain_id, int link_id, int pin, bool is_alt, 
   } else if( is_alt && pin == PIN_LOCK_2AP ){
     /* Safe Color(Pink) & semi-transparent*/
     zOpticalInfoCreate( oi_alt, 1.0, 0.2, 0.8, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, alpha, NULL );
-  } else if( is_alt && pin == PIN_LOCK_POS3D ){
+  } else if( is_alt && ( pin == PIN_LOCK_POS3D || pin == PIN_LOCK_1AP ) ){
     /* Yellow & semi-transparent*/
     zOpticalInfoCreate( oi_alt, 1.0, 0.8, 0.3, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, alpha, NULL );
   } else if( is_alt && is_selected ){
@@ -332,7 +381,6 @@ bool draw_pindrag_link(int chain_id, int link_id, bool is_alt)
 void draw_collision_link(void)
 {
   zOpticalInfo oi_alt;
-  debug_printf("\n\n is_collision == true ================================= \n");
   /* Red */
   zOpticalInfoCreateSimple( &oi_alt, 1.0, 0.0, 0.0, NULL );
   cdInfoCell *cdcell;
@@ -342,7 +390,6 @@ void draw_collision_link(void)
       draw_alternate_link( &g_main->gcs[cdcell->data.chain_id].glChain, cdcell->data.chain_id, cdcell->data.link_id, &oi_alt, &g_main->gcs[cdcell->data.chain_id].glChain.attr, g_light );
     }
   }
-  debug_printf("end of is_collision == true ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ \n\n");
 }
 
 void draw_all_chain_link(void)
@@ -424,7 +471,7 @@ const int keep_fixed_scene_displayList(const double alpha)
     return -1;
 
   if( g_main->fixed_scene_display_id > 0 ){
-    printf("glDeleteLists( %d, 1 )\n", g_main->fixed_scene_display_id);
+    debug_printf("glDeleteLists( %d, 1 )\n", g_main->fixed_scene_display_id);
     glDeleteLists( g_main->fixed_scene_display_id, 1 );
   }
 
@@ -463,7 +510,7 @@ const int keep_fixed_scene_displayList(const double alpha)
   } /* end of for loop chain_id=0 -> chainNUM */
   glEndList();
 
-  printf("keep_fixed_scene_displayList(%f)=%d\n", alpha, g_main->fixed_scene_display_id);
+  debug_printf("keep_fixed_scene_displayList(%f)=%d\n", alpha, g_main->fixed_scene_display_id);
   return g_main->fixed_scene_display_id;
 }
 
@@ -568,34 +615,45 @@ bool get_pin_ap(rkglSelectionBuffer *sb, rkglCamera *cam, int x, int y, int chai
   zVec3D selected_wld_ap;
   pinInfo *pinfo = &g_main->gcs[chain_id].info2[link_id].pinfo;
 
-  int ap_id = pinfo->ap_cnt < 2 ? pinfo->ap_cnt : 1;
-  bool is_ap;
-  is_ap = get_ap( sb, cam, x, y, chain_id, link_id, &selected_wld_ap, &pinfo->ap[ap_id] );
-  if( is_ap && pinfo->ap_cnt < 2 )
-    pinfo->ap_cnt++; /* up to 2 */
+  int ap_id = ( pinfo->ap_cnt < 2 ) ? pinfo->ap_cnt : 1;
+  bool is_ap_mode = get_ap( sb, cam, x, y, chain_id, link_id, &selected_wld_ap, &pinfo->ap[ap_id] );
 
-  return is_ap;
+  return is_ap_mode;
 }
 
-void switch_pin_link(int new_chain_id, int new_link_id, bool is_ap)
+void switch_pin_link(int new_chain_id, int new_link_id, bool is_ap_mode)
 {
   pinInfo *pinfo = &g_main->gcs[new_chain_id].info2[new_link_id].pinfo;
   switch( pinfo->pin ){
   case PIN_LOCK_OFF:
-    pinfo->pin = PIN_LOCK_POS3D;
+    if( !is_ap_mode ){
+      pinfo->pin = PIN_LOCK_POS3D;
+      pinfo->ap_cnt = 0;
+    } else{
+      pinfo->pin = PIN_LOCK_1AP;
+      pinfo->ap_cnt = 1;
+    }
     break;
   case PIN_LOCK_POS3D:
-    if( is_ap && pinfo->ap_cnt == 1 )
-      return;
-    else if( is_ap && pinfo->ap_cnt == 2 )
-      pinfo->pin = PIN_LOCK_2AP;
-    else{
+    if( !is_ap_mode ){
       pinfo->pin = PIN_LOCK_6D;
       pinfo->ap_cnt = 0;
+    } else{
+      pinfo->pin = PIN_LOCK_1AP;
+      pinfo->ap_cnt = 1;
+    }
+    break;
+  case PIN_LOCK_1AP:
+    if( !is_ap_mode ){
+      pinfo->pin = PIN_LOCK_6D;
+      pinfo->ap_cnt = 0;
+    } else{
+      pinfo->pin = PIN_LOCK_2AP;
+      pinfo->ap_cnt = 2;
     }
     break;
   case PIN_LOCK_2AP:
-    if( !is_ap ){
+    if( !is_ap_mode ){
       pinfo->pin = PIN_LOCK_6D;
       pinfo->ap_cnt = 0;
     }
@@ -611,57 +669,73 @@ void switch_pin_link(int new_chain_id, int new_link_id, bool is_ap)
   debug_printf("pin_link       : chain_id = %d, link_id = %d, pin status = %d\n", new_chain_id, new_link_id, g_main->gcs[new_chain_id].info2[new_link_id].pinfo.pin );
 }
 
-void register_one_link_for_IK(int chain_id, int link_id)
+void register_att_link(int chain_id, int link_id, double weight)
 {
   rkIKAttr attr;
   attr.id = link_id;
   g_main->gcs[chain_id].info2[link_id].cell[0] = rkChainRegIKCellWldAtt( &g_main->gcs[chain_id].chain, &attr, RK_IK_ATTR_ID );
+  rkIKCellSetWeight( g_main->gcs[chain_id].info2[link_id].cell[0], weight, weight, weight );
+}
+
+void register_pos_link(int chain_id, int link_id, double weight)
+{
+  rkIKAttr attr;
+  attr.id = link_id;
   g_main->gcs[chain_id].info2[link_id].cell[1] = rkChainRegIKCellWldPos( &g_main->gcs[chain_id].chain, &attr, RK_IK_ATTR_ID | RK_IK_ATTR_AP );
+  rkIKCellSetWeight( g_main->gcs[chain_id].info2[link_id].cell[1], weight, weight, weight );
+  zVec3DCopy( &g_main->selected.ap, rkIKCellAP( g_main->gcs[chain_id].info2[link_id].cell[1] ) );
+}
+
+void register_one_link_for_IK(int chain_id, int link_id, bool is_drag_link)
+{
   switch( g_main->gcs[chain_id].info2[link_id].pinfo.pin ){
-  case PIN_LOCK_6D:
-    rkIKCellSetWeight( g_main->gcs[chain_id].info2[link_id].cell[0], IK_PIN_WEIGHT, IK_PIN_WEIGHT, IK_PIN_WEIGHT );
-    rkIKCellSetWeight( g_main->gcs[chain_id].info2[link_id].cell[1], IK_PIN_WEIGHT, IK_PIN_WEIGHT, IK_PIN_WEIGHT );
-    break;
   case PIN_LOCK_POS3D:
-    rkIKCellSetWeight( g_main->gcs[chain_id].info2[link_id].cell[0], IK_DRAG_WEIGHT, IK_DRAG_WEIGHT, IK_DRAG_WEIGHT );
-    rkIKCellSetWeight( g_main->gcs[chain_id].info2[link_id].cell[1], IK_PIN_WEIGHT, IK_PIN_WEIGHT, IK_PIN_WEIGHT );
-    break;
-  case PIN_LOCK_OFF:
-    rkIKCellSetWeight( g_main->gcs[chain_id].info2[link_id].cell[0], IK_DRAG_WEIGHT, IK_DRAG_WEIGHT, IK_DRAG_WEIGHT );
-    rkIKCellSetWeight( g_main->gcs[chain_id].info2[link_id].cell[1], IK_DRAG_WEIGHT, IK_DRAG_WEIGHT, IK_DRAG_WEIGHT );
-    break;
-  default: ;
-  }
-  zVec3DCopy( &g_main->selected.ap, rkIKCellAP(g_main->gcs[chain_id].info2[link_id].cell[1]) );
-}
-
-void unregister_one_link_for_IK(int chain_id, int link_id)
-{
-  rkChainUnregIKCell( &g_main->gcs[chain_id].chain, g_main->gcs[chain_id].info2[link_id].cell[0] );
-  rkChainUnregIKCell( &g_main->gcs[chain_id].chain, g_main->gcs[chain_id].info2[link_id].cell[1] );
-}
-
-void register_drag_weight_link_for_IK(int drag_chain_id, int drag_link_id)
-{
-  int id;
-  register_one_link_for_IK( drag_chain_id, drag_link_id );
-  for( id=0; id < rkChainLinkNum( &g_main->gcs[drag_chain_id].chain ); ++id ){
-    if( id != drag_link_id && g_main->gcs[drag_chain_id].info2[id].pinfo.pin == PIN_LOCK_POS3D ){
-      rkIKAttr attr;
-      attr.id = id;
-      g_main->gcs[drag_chain_id].info2[id].cell[0] = rkChainRegIKCellWldAtt( &g_main->gcs[drag_chain_id].chain, &attr, RK_IK_ATTR_ID );
-      rkIKCellSetWeight( g_main->gcs[drag_chain_id].info2[id].cell[0], IK_DRAG_WEIGHT, IK_DRAG_WEIGHT, IK_DRAG_WEIGHT );
+    if( is_drag_link ){
+      register_att_link( chain_id, link_id, IK_DRAG_WEIGHT );
     }
+    register_pos_link( chain_id, link_id, IK_PIN_WEIGHT );
+    break;
+  case PIN_LOCK_6D:
+    register_att_link( chain_id, link_id, IK_PIN_WEIGHT );
+    register_pos_link( chain_id, link_id, IK_PIN_WEIGHT );
+    break;
+  default:
+    if( is_drag_link ){
+      register_att_link( chain_id, link_id, IK_DRAG_WEIGHT );
+      register_pos_link( chain_id, link_id, IK_DRAG_WEIGHT );
+    }
+    break;
   }
 }
 
-void unregister_drag_weight_link_for_IK(int drag_chain_id, int drag_link_id)
+void unregister_one_link_for_IK(int chain_id, int link_id, bool is_drag_link)
 {
-  int id;
-  unregister_one_link_for_IK( drag_chain_id, drag_link_id );
-  for( id=0; id < rkChainLinkNum( &g_main->gcs[drag_chain_id].chain ); ++id ){
-    if( id != drag_link_id && g_main->gcs[drag_chain_id].info2[id].pinfo.pin == PIN_LOCK_POS3D )
-      rkChainUnregIKCell( &g_main->gcs[drag_chain_id].chain, g_main->gcs[drag_chain_id].info2[id].cell[0] );
+  pinInfo* pinfo = &g_main->gcs[chain_id].info2[link_id].pinfo;
+  if( is_drag_link || pinfo->pin == PIN_LOCK_6D )
+    rkChainUnregIKCell( &g_main->gcs[chain_id].chain, g_main->gcs[chain_id].info2[link_id].cell[0] );
+  if( is_drag_link || pinfo->pin == PIN_LOCK_POS3D || pinfo->pin == PIN_LOCK_6D )
+    rkChainUnregIKCell( &g_main->gcs[chain_id].chain, g_main->gcs[chain_id].info2[link_id].cell[1] );
+}
+
+void register_ap_in_one_link_for_IK(int chain_id, int link_id)
+{
+  int ap_id;
+  pinInfo* pinfo = &g_main->gcs[chain_id].info2[link_id].pinfo;
+  for( ap_id=0; ap_id < pinfo->ap_cnt; ap_id++ ){
+    rkIKAttr ap_attr;
+    ap_attr.id = link_id;
+    pinfo->ap_cell[ap_id] = rkChainRegIKCellWldPos( &g_main->gcs[chain_id].chain, &ap_attr, RK_IK_ATTR_ID | RK_IK_ATTR_AP );
+    rkIKCellSetWeight( pinfo->ap_cell[ap_id], IK_PIN_WEIGHT, IK_PIN_WEIGHT, IK_PIN_WEIGHT );
+    zVec3DCopy( &pinfo->ap[ap_id], rkIKCellAP( pinfo->ap_cell[ap_id] ) );
+  }
+ }
+
+void unregister_ap_in_one_link_for_IK(int chain_id, int link_id)
+{
+  int ap_id;
+  pinInfo* pinfo = &g_main->gcs[chain_id].info2[link_id].pinfo;
+  for( ap_id = 0; ap_id < pinfo->ap_cnt; ap_id++ ){
+    rkChainUnregIKCell( &g_main->gcs[chain_id].chain, pinfo->ap_cell[ap_id] );
   }
 }
 
@@ -669,8 +743,14 @@ void register_link_for_IK(int drag_chain_id, int drag_link_id)
 {
   int id;
   for( id=0; id < rkChainLinkNum( &g_main->gcs[drag_chain_id].chain ); ++id ){
-    if( id == drag_link_id || g_main->gcs[drag_chain_id].info2[id].pinfo.pin != PIN_LOCK_OFF )
-      register_one_link_for_IK( drag_chain_id, id );
+    pinInfo* pinfo = &g_main->gcs[drag_chain_id].info2[id].pinfo;
+    if( id == drag_link_id ||
+        pinfo->pin == PIN_LOCK_POS3D ||
+        pinfo->pin == PIN_LOCK_6D )
+      register_one_link_for_IK( drag_chain_id, id, (id == drag_link_id) );
+    if( pinfo->pin == PIN_LOCK_1AP ||
+        pinfo->pin == PIN_LOCK_2AP )
+      register_ap_in_one_link_for_IK( drag_chain_id, id );
   }
 }
 
@@ -678,8 +758,14 @@ void unregister_link_for_IK(int drag_chain_id, int drag_link_id)
 {
   int id;
   for( id=0; id < rkChainLinkNum( &g_main->gcs[drag_chain_id].chain ); ++id ){
-    if( id == drag_link_id || g_main->gcs[drag_chain_id].info2[id].pinfo.pin != PIN_LOCK_OFF )
-      unregister_one_link_for_IK( drag_chain_id, id );
+    pinInfo* pinfo = &g_main->gcs[drag_chain_id].info2[id].pinfo;
+    if( id == drag_link_id ||
+        pinfo->pin == PIN_LOCK_POS3D ||
+        pinfo->pin == PIN_LOCK_6D )
+      unregister_one_link_for_IK( drag_chain_id, id, (id == drag_link_id) );
+    if( pinfo->pin == PIN_LOCK_1AP ||
+        pinfo->pin == PIN_LOCK_2AP )
+      unregister_ap_in_one_link_for_IK( drag_chain_id, id );
   }
 }
 
@@ -791,13 +877,13 @@ void update_alljoint_by_IK_with_frame(int drag_chain_id, int drag_link_id, zVec 
   }
   /* IK again with only pin link */
   if( ref_frame != NULL ){
-    unregister_drag_weight_link_for_IK( drag_chain_id, drag_link_id );
+    unregister_one_link_for_IK( drag_chain_id, drag_link_id, true );
     rkChainIK( &g_main->gcs[drag_chain_id].chain, dis, ztol, iter );
     if( zVecIsNan(dis) ){
       printf("the result of rkChainIK() is NaN\n");
       rkChainCopyState( &clone_chain, &g_main->gcs[drag_chain_id].chain );
     }
-    register_drag_weight_link_for_IK( drag_chain_id, drag_link_id );
+    register_one_link_for_IK( drag_chain_id, drag_link_id, true );
 
     /* keep FrameHandle position */
     if( rkglFrameHandleIsInRotation( &g_main->fh ) )
@@ -857,8 +943,15 @@ int create_original_chain_phantom(int chain_id, ghostInfo* backup_ghost_info)
   rkChainGetJointDisAll( chain, backup_ghost_info->phantom_q );
 
   /* clean up */
-  for( link_id=0; link_id < rkChainLinkNum( chain ); link_id++ )
-    if( oi_alt[link_id] ) zOpticalInfoDestroy( oi_alt[link_id] );
+  for( link_id=0; link_id < rkChainLinkNum( chain ); link_id++ ){
+    if( oi_alt[link_id] ) {
+      zOpticalInfoDestroy( oi_alt[link_id] );
+      delete oi_alt[link_id];
+    }
+    oi_alt[link_id] = NULL;
+  }
+  delete oi_alt;
+  oi_alt = NULL;
 
   return display_id;
 }
@@ -918,7 +1011,7 @@ void restore_original_chain_phantom(ghostInfo* backup_ghost_info)
     g_main->gcs[chain_id].info2[link_id].pinfo.pin = backup_ghost_info->phantom_pinfo[link_id].pin;
     reset_link_drawing( chain_id, link_id );
     if( g_main->gcs[chain_id].info2[link_id].pinfo.pin != PIN_LOCK_OFF ){
-      register_one_link_for_IK( chain_id, link_id );
+      register_one_link_for_IK( chain_id, link_id, false );
       debug_printf("restore & register g_main->gcs[%d].info2[%d].pin = %d\n", chain_id, link_id, g_main->gcs[chain_id].info2[link_id].pinfo.pin);
     }
   }
@@ -983,13 +1076,13 @@ const int linkNum_of_chain(const int chain_id)
 int* clone_pin_state_array(const int chain_id)
 {
   int link_id;
-  int* pin_id;
+  int* pin_state; /* pinStatus[link_num] */
 
-  pin_id = zAlloc( int, linkNum_of_chain( chain_id ) );
+  pin_state = zAlloc( int, linkNum_of_chain( chain_id ) );
   for( link_id=0; link_id < rkChainLinkNum( &g_main->gcs[chain_id].chain ); link_id++ ){
-    pin_id[link_id] = g_main->gcs[chain_id].info2[link_id].pinfo.pin;
+    pin_state[link_id] = g_main->gcs[chain_id].info2[link_id].pinfo.pin;
   }
-  return pin_id;
+  return pin_state;
 }
 
 bool set_pin_state_array(const int chain_id, int* src_pin, const int link_num)
@@ -1005,18 +1098,44 @@ bool set_pin_state_array(const int chain_id, int* src_pin, const int link_num)
   return true;
 }
 
-void copy_ap_state(double dest_ap[3])
+/* ap[link_num][AP_MAX_NUM=2][Vec3D size=3] */
+double*** clone_ap_state_array(const int chain_id)
 {
-  dest_ap[0] = g_main->selected.ap.c.x;
-  dest_ap[1] = g_main->selected.ap.c.y;
-  dest_ap[2] = g_main->selected.ap.c.z;
+  int link_id, ap_id;
+  double*** ap_state;
+
+  int link_num = linkNum_of_chain( chain_id );
+  ap_state = zAlloc( double**, link_num );
+  for( link_id=0; link_id < link_num; link_id++ ){
+    pinInfo* pinfo = &g_main->gcs[chain_id].info2[link_id].pinfo;
+    ap_state[link_id] = zAlloc( double*, AP_MAX_NUM );
+    for( ap_id=0; ap_id < pinfo->ap_num; ap_id++ ){
+      ap_state[link_id][ap_id] = zAlloc( double, 3 );
+      ap_state[link_id][ap_id][0] = pinfo->ap[ap_id].c.x;
+      ap_state[link_id][ap_id][1] = pinfo->ap[ap_id].c.y;
+      ap_state[link_id][ap_id][2] = pinfo->ap[ap_id].c.z;
+    }
+  }
+  return ap_state;
 }
 
-void set_ap_state(const double src_ap[3])
+/* ap[link_num][AP_MAX_NUM=2][Vec3D size=3] */
+bool set_ap_state(const int chain_id, double*** src_ap, const int link_num)
 {
-  g_main->selected.ap.c.x = src_ap[0];
-  g_main->selected.ap.c.y = src_ap[1];
-  g_main->selected.ap.c.z = src_ap[2];
+  if( link_num != linkNum_of_chain( chain_id ) ){
+    ZRUNERROR( "src_pin array size=%d is not equal to destination of chain link size=%d", link_num, linkNum_of_chain( chain_id ) );
+    return false;
+  }
+  int link_id, ap_id;
+  for( link_id=0; link_id < link_num; link_id++ ){
+    pinInfo* pinfo = &g_main->gcs[chain_id].info2[link_id].pinfo;
+    for( ap_id=0; ap_id < pinfo->ap_num; ap_id++ ){
+      pinfo->ap[ap_id].c.x = src_ap[link_id][ap_id][0];
+      pinfo->ap[ap_id].c.y = src_ap[link_id][ap_id][1];
+      pinfo->ap[ap_id].c.z = src_ap[link_id][ap_id][2];
+    }
+  }
+  return true;
 }
 
 void print_status(void)
@@ -1057,7 +1176,7 @@ void print_status(void)
     printf("att :\n");   zMat3DPrint( rkChainLinkWldAtt( &g_main->gcs[g_main->selected.chain_id].chain, g_main->selected.link_id ) );
     printf("pos : "); zVec3DPrint( rkChainLinkWldPos( &g_main->gcs[g_main->selected.chain_id].chain, g_main->selected.link_id ) );
   }
-  printf("############################################################\n\n\n");
+  printf("############################################################\n\n");
 }
 
 /* data handling ----------------------------------------------------------------- */
@@ -1180,8 +1299,8 @@ void mouse(GLFWwindow* window, int button, int state, int mods)
       if( rkglSelectNearest( &sb, g_cam, draw_chain, rkgl_mouse_x, rkgl_mouse_y, 1, 1 ) &&
           is_selected_chain_link( &sb, &new_chain_id, &new_link_id ) ){
         g_main->gcs[new_chain_id].info2[new_link_id].is_selected = false;
-        bool is_ap = get_pin_ap( &sb, g_cam, rkgl_mouse_x, rkgl_mouse_y, new_chain_id, new_link_id );
-        switch_pin_link( new_chain_id, new_link_id, is_ap );
+        bool is_ap_mode = get_pin_ap( &sb, g_cam, rkgl_mouse_x, rkgl_mouse_y, new_chain_id, new_link_id );
+        switch_pin_link( new_chain_id, new_link_id, is_ap_mode );
         update_selected_chain_link( new_chain_id, new_link_id );
       }
     }
@@ -1374,7 +1493,7 @@ void init_light(void)
 
 bool init(void)
 {
-  int i;
+  int chain_id;
 
   if( g_main->modelfiles == NULL ){
     g_main->chainNUM = 1;
@@ -1382,19 +1501,22 @@ bool init(void)
     g_main->modelfiles[0] = zStrClone( "../model/puma.ztk" );
   }
   g_main->gcs = zAlloc( rkglChainBlock, g_main->chainNUM );
-  for( i=0; i < g_main->chainNUM; i++ ){
-    printf( "modelfile[%d] = %s\n", i, g_main->modelfiles[i] );
-    if( !extend_rkChainReadZTK( &g_main->gcs[i].chain, g_main->modelfiles[i] ) ){
+  for( chain_id=0; chain_id < g_main->chainNUM; chain_id++ ){
+    printf( "modelfile[%d] = %s\n", chain_id, g_main->modelfiles[chain_id] );
+    if( !extend_rkChainReadZTK( &g_main->gcs[chain_id].chain, g_main->modelfiles[chain_id] ) ){
       ZRUNWARN( "Failed extend_rkChainReadZTK()" );
       return false;
     }
-    if( !rkglChainLoad_for_rkglChainBlock( &g_main->gcs[i], g_light ) ){
+    if( !rkglChainLoad_for_rkglChainBlock( &g_main->gcs[chain_id], g_light ) ){
       ZRUNWARN( "Failed rkglChainLoad_for_rkglLinkInfo2()" );
       return false;
     }
+    /* AP */
+    create_chain_ap_displaylist( chain_id );
+
     /* IK */
-    rkChainCreateIK( &g_main->gcs[i].chain );
-    rkChainRegIKJointAll( &g_main->gcs[i].chain, IK_DRAG_WEIGHT );
+    rkChainCreateIK( &g_main->gcs[chain_id].chain );
+    rkChainRegIKJointAll( &g_main->gcs[chain_id].chain, IK_DRAG_WEIGHT );
   } /* end of for i : 0 -> g_main->chainNUM */
 
   /* Collision Detection */
