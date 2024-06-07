@@ -20,13 +20,16 @@ __ROKI_GL_EXPORT double rkglGetDepth(rkglCamera *c, int x, int y);
 
 /* select */
 
-#define RKGL_SELECTION_BUF_SIZE BUFSIZ
+#define RKGL_SELECTION_BUF_SIZE 100
 
 ZDEF_STRUCT( __ROKI_GL_CLASS_EXPORT, rkglSelectionBuffer ){
   GLuint buf[RKGL_SELECTION_BUF_SIZE];
   GLuint *cur;
   int hits;
 };
+
+#define rkglSelectionHits(sb)     (sb)->hits
+#define rkglSelectionNoHits(sb)   ( rkglSelectionHits(sb) <= 0 )
 
 #define rkglSelectionNameSize(sb) (sb)->cur[0]
 #define rkglSelectionZnear(sb)    (sb)->cur[1]

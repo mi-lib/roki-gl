@@ -39,7 +39,7 @@ void manip(rkglSelectionBuffer *sb)
   unsigned int i;
 
   rkglSelectionRewind( sb );
-  for( i=0; i<sb->hits; i++ ){
+  for( i=0; i<rkglSelectionHits(sb); i++ ){
     if( object[rkglSelectionName(sb,0)].updown == 0 ){
       object[rkglSelectionName(sb,0)].y = 1.5;
       object[rkglSelectionName(sb,0)].updown = 1;

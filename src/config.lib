@@ -7,8 +7,6 @@ OBJ=rkgl_misc.o rkgl_camera.o rkgl_input.o\
 	rkgl_envmap.o\
 
 ifeq ($(CONFIG_USE_MAGICKWAND),y)
-	# keyword inline has to be available in MagickWand.
-	STD=c99
 	CFLAGS += -D__ROKI_GL_USE_MAGICKWAND `pkg-config --cflags MagickWand`
 endif
 
@@ -18,7 +16,7 @@ ifeq ($(CONFIG_USE_GLEW),y)
 endif
 
 ifeq ($(CONFIG_USE_GLX),y)
-	CFLAGS += -D__ROKI_GL_USE_GLX -D__ROKI_GL_USE_ZX11
+	CFLAGS += -D__ROKI_GL_USE_GLX -D__ROKI_GL_USE_ZX11 `zx11-config --cflags`
 	OBJ += roki_glx.o
 endif
 

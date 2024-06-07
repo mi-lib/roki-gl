@@ -53,9 +53,9 @@ GLuint *rkglSelectionFindNearest(rkglSelectionBuffer *sb)
   GLuint *ns;
   int i;
 
-  if( sb->hits <= 0 ) return NULL;
+  if( rkglSelectionHits(sb) <= 0 ) return NULL;
   rkglSelectionRewind( sb );
-  for( ns=sb->cur, i=0; i<sb->hits; i++ ){
+  for( ns=sb->cur, i=0; i<rkglSelectionHits(sb); i++ ){
     if( ns[1] > rkglSelectionZnear(sb) )
       ns = sb->cur;
     rkglSelectionNext( sb );
@@ -65,7 +65,7 @@ GLuint *rkglSelectionFindNearest(rkglSelectionBuffer *sb)
 
 int rkglSelect(rkglSelectionBuffer *sb, rkglCamera *cam, void (* scene)(void), int x, int y, int w, int h)
 {
-  sb->cur = sb->buf;
+  rkglSelectionRewind( sb );
   glSelectBuffer( RKGL_SELECTION_BUF_SIZE, sb->buf );
   glRenderMode( GL_SELECT );
   glInitNames();
@@ -105,9 +105,9 @@ void rkglSelectionPrint(rkglSelectionBuffer *sb)
 {
   int i;
 
-  printf( "\n%d hits.\n", sb->hits );
+  printf( "\n%d hits.\n", rkglSelectionHits(sb) );
   rkglSelectionRewind( sb );
-  for( i=0; i<sb->hits; i++ ){
+  for( i=0; i<rkglSelectionHits(sb); i++ ){
     printf( "number of stacks: %d\n", rkglSelectionNameSize(sb) );
     printf( " z near = %g\n", rkglSelectionZnearDepth(sb) );
     printf( " z far  = %g\n", rkglSelectionZfarDepth(sb) );
