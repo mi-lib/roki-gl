@@ -1071,7 +1071,7 @@ void dump_interpolated_path(const char* filename){
 
 void register_cell_in_one_pin_link_for_IK(rkChain* chain, const double s,  const int path_id, const int link_id)
 {
-  int ik_id, cell_id;
+  int cell_id;
   double weight;
   rkIKAttr attr;
 
@@ -1093,7 +1093,7 @@ void register_cell_in_one_pin_link_for_IK(rkChain* chain, const double s,  const
 
 void unregister_cell_in_one_pin_link_for_IK(rkChain* chain, const int path_id, const int link_id)
 {
-  int cell_id, ik_id;
+  int cell_id;
 
   linkPinPathIKInfo* link_pin_path_ik_info = &g_main->p2p_array.buf[path_id].all_link_pin_path_ik_info.buf[link_id];
   for( cell_id=0; cell_id < link_pin_path_ik_info->cell_size; cell_id++ )
@@ -1229,6 +1229,7 @@ bool pop_pose(const double s, rkChain* chain, p2pPathArray *p2p_array)
   rkChainSetJointDisAll( chain, qref );
   rkChainUpdateFK( chain );
   /* register pin link (with weight path) for IK */
+  register_ref_path_in_one_path_for_IK(chain, path_id);
   register_all_pin_links_for_IK( chain, pexIP_s, path_id );
 
   rkChainDeactivateIK( chain );
@@ -1241,7 +1242,6 @@ bool pop_pose(const double s, rkChain* chain, p2pPathArray *p2p_array)
   const double range_s = p2p_buf->goal_feedrate.s - p2p_buf->start_feedrate.s;
   for( ik_id=0; ik_id < p2p_buf->ik_num; ik_id++ ){
     ref_path = &p2p_buf->ref_path_array.buf[ik_id];
-    ref_path->cell = (rkIKCell*)( g_ik_reg_cls->reg( ref_path->ik_reg, chain ) );
     if( g_ik_reg_cls->pos( ref_path->ik_reg ) ){
       pop_nurbs_point( (pexIP_s / range_s),
                        &ref_path->nurbs,
