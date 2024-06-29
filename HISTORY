@@ -1,3 +1,4 @@
+2024. 6.29. Modified rk_pen to conform to the new specifications of rkIK. [app]
 2024. 5.30. Corrected config.lib to refer zx11-config when GLX is enabled. [src]
 2024. 5.30. Modified rk_view such that it can read multiple geometry models. [app]
 2024. 5.30. Modified rk_view to read point cloud (PCD) file. [app]

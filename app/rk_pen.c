@@ -227,9 +227,9 @@ void rk_penSetLinkPos(void)
     }
   attr.id = l - rkChainRoot(&chain);
   printf( "IK of link [%s].\n", rkChainLinkName(&chain,attr.id) );
-  zVec3DZero( &attr.ap );
-  cell = rkChainRegIKCellWldPos( &chain, &attr, RK_IK_ATTR_ID | RK_IK_ATTR_AP );
-  rkChainDeactivateIK( &chain );
+  zVec3DZero( &attr.attention_point );
+  cell = rkChainRegIKCellWldPos( &chain, NULL, &attr, RK_IK_ATTR_ID | RK_IK_ATTR_ATTENTION_POINT );
+  rkChainDisableIK( &chain );
   rkChainBindIK( &chain );
   rkIKCellSetRef( cell, p[0], p[1], p[2] );
 
@@ -263,10 +263,10 @@ void rk_penSetLinkFrame(void)
     }
   attr.id = l - rkChainRoot(&chain);
   printf( "IK of link [%s].\n", rkChainLinkName(&chain,attr.id) );
-  zVec3DZero( &attr.ap );
-  cell_pos = rkChainRegIKCellWldPos( &chain, &attr, RK_IK_ATTR_ID | RK_IK_ATTR_AP );
-  cell_att = rkChainRegIKCellWldAtt( &chain, &attr, RK_IK_ATTR_ID );
-  rkChainDeactivateIK( &chain );
+  zVec3DZero( &attr.attention_point );
+  cell_pos = rkChainRegIKCellWldPos( &chain, NULL, &attr, RK_IK_ATTR_ID | RK_IK_ATTR_ATTENTION_POINT );
+  cell_att = rkChainRegIKCellWldAtt( &chain, NULL, &attr, RK_IK_ATTR_ID );
+  rkChainDisableIK( &chain );
   rkChainBindIK( &chain );
   rkIKCellSetRef( cell_pos, p[0], p[1], p[2] );
   rkIKCellSetRef( cell_att, a[0], a[1], a[2] );
