@@ -590,8 +590,9 @@ void rkAnimExit(void)
 {
   rkAnimCellListDestroy();
   rkglWindowCloseGLX( glwin );
-  rkglExitGLX();
+  rkglWindowDestroyGLX( glwin );
   zxWindowDestroy( &win );
+  rkglExitGLX();
 }
 
 /**********************************************************/
@@ -735,7 +736,6 @@ void rkAnimPlay(void)
       if( !rkAnimIsTerminated() ) rkAnimDrawTimestamp();
     }
   }
-  eprintf( "animation terminated.\n" );
 }
 
 int main(int argc, char *argv[])
