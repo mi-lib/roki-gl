@@ -442,25 +442,25 @@ void rkglEllips(zEllips3D *ellips, ubyte disptype)
 }
 static void _rkglShapeEllips(void *ellips, ubyte disptype){ rkglEllips( (zEllips3D *)ellips, disptype ); }
 
-static int _rkglTubeVertNorm(zCyl3D *tube, zMesh3D *vert, zVec3DArray *norm)
+static int _rkglTubeVertNorm(zCyl3D *tube, zVec3D *axis, zMesh3D *vert, zVec3DArray *norm)
 {
-  zVec3D d, s, aa;
+  zVec3D s, aa;
   double l;
   int i;
 
   zVec3DArrayAlloc( norm, zCyl3DDiv(tube)+1 );
   zMesh3DAlloc( vert, 2, zCyl3DDiv(tube)+1 );
   if( zArraySize( norm ) == 0 || zArray2RowSize( vert ) == 0 ) return -1;
-  zCyl3DAxis( tube, &d );
-  if( zIsTiny( ( l = zVec3DNorm( &d ) ) ) ){
+  zCyl3DAxis( tube, axis );
+  if( zIsTiny( ( l = zVec3DNorm( axis ) ) ) ){
     ZRUNERROR( "cannot draw a zero-height tube" );
     return -1;
   }
-  zVec3DDivDRC( &d, l );
-  zVec3DOrthoNormal( &d, &s );
+  zVec3DDivDRC( axis, l );
+  zVec3DOrthoNormal( axis, &s );
   zVec3DMulDRC( &s, zCyl3DRadius(tube) ); /* one radial vector */
   for( i=0; i<=zCyl3DDiv(tube); i++ ){
-    zVec3DMul( &d, -2*zPI*i/zCyl3DDiv(tube), &aa );
+    zVec3DMul( axis, -2*zPI*i/zCyl3DDiv(tube), &aa );
     zVec3DRot( &s, &aa, zArrayElemNC(norm,i) );
     /* vertices on the top rim */
     zVec3DAdd( zCyl3DCenter(tube,0), zArrayElemNC(norm,i), zArray2ElemNC(vert,0,i) );
@@ -470,20 +470,20 @@ static int _rkglTubeVertNorm(zCyl3D *tube, zMesh3D *vert, zVec3DArray *norm)
   return zArraySize(norm);
 }
 
-static void _rkglTubeFace(zMesh3D *vert, zVec3DArray *norm, int ndiv)
+static void _rkglTubeFace(zCyl3D *tube, zMesh3D *vert, zVec3DArray *norm)
 {
   int i;
 
   /* side faces */
   glShadeModel( GL_SMOOTH );
   glBegin( GL_TRIANGLE_STRIP );
-  for( i=0; i<=ndiv; i++ ){
+  for( i=0; i<=zCyl3DDiv(tube); i++ ){
     rkglNormal( zArrayElemNC(norm,i) );
     rkglVertex( zArray2ElemNC(vert,0,i) );
     rkglVertex( zArray2ElemNC(vert,1,i) );
   }
   /* inner faces */
-  for( i=0; i<=ndiv; i++ ){
+  for( i=0; i<=zCyl3DDiv(tube); i++ ){
     rkglNormalRev( zArrayElemNC(norm,i) );
     rkglVertex( zArray2ElemNC(vert,1,i) );
     rkglVertex( zArray2ElemNC(vert,0,i) );
@@ -491,7 +491,7 @@ static void _rkglTubeFace(zMesh3D *vert, zVec3DArray *norm, int ndiv)
   glEnd();
 }
 
-static void _rkglTubeWireframe(zMesh3D *vert, int ndiv)
+static void _rkglTubeWireframe(zCyl3D *tube, zMesh3D *vert)
 {
   int i;
   bool lighting_is_enabled;
@@ -500,7 +500,7 @@ static void _rkglTubeWireframe(zMesh3D *vert, int ndiv)
   rkglColorWhite();
   /* side faces */
   glBegin( GL_LINES );
-  for( i=0; i<=ndiv; i++ ){
+  for( i=0; i<=zCyl3DDiv(tube); i++ ){
     rkglVertex( zArray2ElemNC(vert,0,i) );
     rkglVertex( zArray2ElemNC(vert,1,i) );
   }
@@ -512,39 +512,39 @@ void rkglTube(zCyl3D *tube, ubyte disptype)
 {
   zMesh3D vert;
   zVec3DArray norm;
+  zVec3D axis;
 
-  if( _rkglTubeVertNorm( tube, &vert, &norm ) > 0 ){
+  if( _rkglTubeVertNorm( tube, &axis, &vert, &norm ) > 0 ){
     if( disptype & RKGL_FACE )
-      _rkglTubeFace( &vert, &norm, zCyl3DDiv(tube) );
+      _rkglTubeFace( tube, &vert, &norm );
     if( disptype & RKGL_WIREFRAME )
-      _rkglTubeWireframe( &vert, zCyl3DDiv(tube) );
+      _rkglTubeWireframe( tube, &vert );
   }
   zArrayFree( &norm );
   zArray2Free( &vert );
 }
 
-static void _rkglCylFace(zMesh3D *vert, zVec3DArray *norm, int ndiv)
+static void _rkglCylFace(zCyl3D *cyl, zVec3D *axis, zMesh3D *vert, zVec3DArray *norm)
 {
   int i;
-  zVec3D d;
 
   /* top faces */
   glShadeModel( GL_FLAT );
-  rkglNormal( &d );
+  rkglNormal( axis );
   glBegin( GL_TRIANGLE_FAN );
-  for( i=ndiv-1; i>=0; i-- )
+  for( i=zCyl3DDiv(cyl)-1; i>=0; i-- )
     rkglVertex( zArray2ElemNC(vert,1,i) );
   glEnd();
   /* bottom faces */
-  rkglNormalRev( &d );
+  rkglNormalRev( axis );
   glBegin( GL_TRIANGLE_FAN );
-  for( i=0; i<ndiv; i++ )
+  for( i=0; i<zCyl3DDiv(cyl); i++ )
     rkglVertex( zArray2ElemNC(vert,0,i) );
   glEnd();
   /* side faces */
   glShadeModel( GL_SMOOTH );
   glBegin( GL_TRIANGLE_STRIP );
-  for( i=0; i<=ndiv; i++ ){
+  for( i=0; i<=zCyl3DDiv(cyl); i++ ){
     rkglNormal( zArrayElemNC(norm,i) );
     rkglVertex( zArray2ElemNC(vert,0,i) );
     rkglVertex( zArray2ElemNC(vert,1,i) );
@@ -552,7 +552,7 @@ static void _rkglCylFace(zMesh3D *vert, zVec3DArray *norm, int ndiv)
   glEnd();
 }
 
-static void _rkglCylWireframe(zMesh3D *vert, int ndiv)
+static void _rkglCylWireframe(zCyl3D *cyl, zMesh3D *vert)
 {
   int i;
   bool lighting_is_enabled;
@@ -561,17 +561,17 @@ static void _rkglCylWireframe(zMesh3D *vert, int ndiv)
   rkglColorWhite();
   /* top faces */
   glBegin( GL_LINE_LOOP );
-  for( i=ndiv-1; i>=0; i-- )
+  for( i=zCyl3DDiv(cyl)-1; i>=0; i-- )
     rkglVertex( zArray2ElemNC(vert,1,i) );
   glEnd();
   /* bottom faces */
   glBegin( GL_LINE_LOOP );
-  for( i=0; i<ndiv; i++ )
+  for( i=0; i<zCyl3DDiv(cyl); i++ )
     rkglVertex( zArray2ElemNC(vert,0,i) );
   glEnd();
   /* side faces */
   glBegin( GL_LINES );
-  for( i=0; i<=ndiv; i++ ){
+  for( i=0; i<=zCyl3DDiv(cyl); i++ ){
     rkglVertex( zArray2ElemNC(vert,0,i) );
     rkglVertex( zArray2ElemNC(vert,1,i) );
   }
@@ -583,12 +583,13 @@ void rkglCyl(zCyl3D *cyl, ubyte disptype)
 {
   zVec3DArray norm;
   zMesh3D vert;
+  zVec3D axis;
 
-  if( _rkglTubeVertNorm( cyl, &vert, &norm ) > 0 ){
+  if( _rkglTubeVertNorm( cyl, &axis, &vert, &norm ) > 0 ){
     if( disptype & RKGL_FACE )
-      _rkglCylFace( &vert, &norm, zCyl3DDiv(cyl) );
+      _rkglCylFace( cyl, &axis, &vert, &norm );
     if( disptype & RKGL_WIREFRAME )
-      _rkglCylWireframe( &vert, zCyl3DDiv(cyl) );
+      _rkglCylWireframe( cyl, &vert );
   }
   zArray2Free( &vert );
   zArrayFree( &norm );
@@ -610,21 +611,20 @@ void rkglCapsule(zCapsule3D *capsule, ubyte disptype)
 }
 static void _rkglShapeCapsule(void *capsule, ubyte disptype){ rkglCapsule( (zCapsule3D *)capsule, disptype ); }
 
-static int _rkglECylVertNorm(zECyl3D *ecyl, zMesh3D *vert, zVec3DArray *norm)
+static int _rkglECylVertNorm(zECyl3D *ecyl, zVec3D *axis, zMesh3D *vert, zVec3DArray *norm)
 {
-  zVec3D d;
   double l, s, c;
   int i;
 
   zVec3DArrayAlloc( norm, zECyl3DDiv(ecyl)+1 );
   zMesh3DAlloc( vert, 2, zECyl3DDiv(ecyl)+1 );
   if( zArraySize(norm) == 0 || zArray2RowSize(vert) == 0 ) return -1;
-  zECyl3DAxis( ecyl, &d );
-  if( zIsTiny( ( l = zVec3DNorm( &d ) ) ) ){
+  zECyl3DAxis( ecyl, axis );
+  if( zIsTiny( ( l = zVec3DNorm( axis ) ) ) ){
     ZRUNERROR( "cannot draw a zero-height elliptic cylinder" );
     return -1;
   }
-  zVec3DDivDRC( &d, l );
+  zVec3DDivDRC( axis, l );
   /* creation of vertices */
   for( i=0; i<=zECyl3DDiv(ecyl); i++ ){
     zSinCos( -zPIx2*i/zECyl3DDiv(ecyl), &s, &c );
@@ -638,28 +638,27 @@ static int _rkglECylVertNorm(zECyl3D *ecyl, zMesh3D *vert, zVec3DArray *norm)
   return zArraySize(norm);
 }
 
-static void _rkglECylFace(zMesh3D *vert, zVec3DArray *norm, int ndiv)
+static void _rkglECylFace(zECyl3D *ecyl, zVec3D *axis, zMesh3D *vert, zVec3DArray *norm)
 {
-  zVec3D d;
   int i;
 
   /* top faces */
   glShadeModel( GL_FLAT );
-  rkglNormal( &d );
+  rkglNormal( axis );
   glBegin( GL_TRIANGLE_FAN );
-  for( i=ndiv-1; i>=0; i-- )
+  for( i=zECyl3DDiv(ecyl)-1; i>=0; i-- )
     rkglVertex( zArray2ElemNC(vert,1,i) );
   glEnd();
   /* bottom faces */
-  rkglNormalRev( &d );
+  rkglNormalRev( axis );
   glBegin( GL_TRIANGLE_FAN );
-  for( i=0; i<ndiv; i++ )
+  for( i=0; i<zECyl3DDiv(ecyl); i++ )
     rkglVertex( zArray2ElemNC(vert,0,i) );
   glEnd();
   /* side faces */
   glShadeModel( GL_SMOOTH );
   glBegin( GL_TRIANGLE_STRIP );
-  for( i=0; i<=ndiv; i++ ){
+  for( i=0; i<=zECyl3DDiv(ecyl); i++ ){
     rkglNormal( zArrayElemNC(norm,i) );
     rkglVertex( zArray2ElemNC(vert,0,i) );
     rkglVertex( zArray2ElemNC(vert,1,i) );
@@ -667,7 +666,7 @@ static void _rkglECylFace(zMesh3D *vert, zVec3DArray *norm, int ndiv)
   glEnd();
 }
 
-static void _rkglECylWireframe(zMesh3D *vert, int ndiv)
+static void _rkglECylWireframe(zECyl3D *ecyl, zMesh3D *vert)
 {
   int i;
   bool lighting_is_enabled;
@@ -676,17 +675,17 @@ static void _rkglECylWireframe(zMesh3D *vert, int ndiv)
   rkglColorWhite();
   /* top faces */
   glBegin( GL_LINE_LOOP );
-  for( i=ndiv-1; i>=0; i-- )
+  for( i=zECyl3DDiv(ecyl)-1; i>=0; i-- )
     rkglVertex( zArray2ElemNC(vert,1,i) );
   glEnd();
   /* bottom faces */
   glBegin( GL_LINE_LOOP );
-  for( i=0; i<ndiv; i++ )
+  for( i=0; i<zECyl3DDiv(ecyl); i++ )
     rkglVertex( zArray2ElemNC(vert,0,i) );
   glEnd();
   /* side faces */
   glBegin( GL_LINES );
-  for( i=0; i<=ndiv; i++ ){
+  for( i=0; i<=zECyl3DDiv(ecyl); i++ ){
     rkglVertex( zArray2ElemNC(vert,0,i) );
     rkglVertex( zArray2ElemNC(vert,1,i) );
   }
@@ -698,12 +697,13 @@ void rkglECyl(zECyl3D *ecyl, ubyte disptype)
 {
   zVec3DArray norm;
   zMesh3D vert;
+  zVec3D axis;
 
-  if( _rkglECylVertNorm( ecyl, &vert, &norm ) > 0 ){
+  if( _rkglECylVertNorm( ecyl, &axis, &vert, &norm ) > 0 ){
     if( disptype & RKGL_FACE )
-      _rkglECylFace( &vert, &norm, zECyl3DDiv(ecyl) );
+      _rkglECylFace( ecyl, &axis, &vert, &norm );
     if( disptype & RKGL_WIREFRAME )
-      _rkglECylWireframe( &vert, zECyl3DDiv(ecyl) );
+      _rkglECylWireframe( ecyl, &vert );
   }
   zArrayFree( &norm );
   zArray2Free( &vert );
@@ -743,7 +743,7 @@ static int _rkglConeVertNorm(zCone3D *cone, zVec3D *axis, zVec3DArray *vert, zVe
   return zArraySize(vert);
 }
 
-static void _rkglConeFace(zCone3D *cone, zVec3DArray *vert, zVec3DArray *norm, zVec3D *axis)
+static void _rkglConeFace(zCone3D *cone, zVec3D *axis, zVec3DArray *vert, zVec3DArray *norm)
 {
   int i;
 
@@ -794,7 +794,7 @@ void rkglCone(zCone3D *cone, ubyte disptype)
 
   if( _rkglConeVertNorm( cone, &axis, &vert, &norm ) > 0 ){
     if( disptype & RKGL_FACE )
-      _rkglConeFace( cone, &vert, &norm, &axis );
+      _rkglConeFace( cone, &axis, &vert, &norm );
     if( disptype & RKGL_WIREFRAME )
       _rkglConeWireframe( cone, &vert );
   }

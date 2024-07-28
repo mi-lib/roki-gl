@@ -1,3 +1,4 @@
+2024. 7.28. Modified _rkglCylFace, _rkglTubeVertNorm,  _rkglTubeFace, _rkglTubeWireframe,  rkglTube,  _rkglCylFace, _rkglCylWireframe, rkglCyl, _rkglECylVertNorm, _rkglECylFace, _rkglECylWireframe, rkglECyl, _rkglConeFace, and rkglCone to uniform APIs. [rkgl_shape]
 2024. 7.19. Debugged rk_anim to safely terminate. [app]
 2024. 7.19. Modified rk_pen to conform to the new specifications of rkIK. [app]
 2024. 6.29. Modified rk_pen to conform to the new specifications of rkIK. [app]
