@@ -1,3 +1,4 @@
+2024. 8. 3. Debugged continual image capturing of rk_anim. [app]
 2024. 8. 2. Modified rk_pen to apply rkChainConnectivityFPrint. [app]
 2024. 7.31. Modified makefile in example to enable batch compilation of all examples in the same directory. [example]
 2024. 7.31. Modified rk_pen in app to reflect new specifications of rkChainRegisterIKCell*. [app]
