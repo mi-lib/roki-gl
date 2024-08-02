@@ -1,3 +1,4 @@
+2024. 8. 2. Modified rk_pen to apply rkChainConnectivityFPrint. [app]
 2024. 7.31. Modified makefile in example to enable batch compilation of all examples in the same directory. [example]
 2024. 7.31. Modified rk_pen in app to reflect new specifications of rkChainRegisterIKCell*. [app]
 2024. 7.28. Modified _rkglCylFace, _rkglTubeVertNorm,  _rkglTubeFace, _rkglTubeWireframe,  rkglTube,  _rkglCylFace, _rkglCylWireframe, rkglCyl, _rkglECylVertNorm, _rkglECylFace, _rkglECylWireframe, rkglECyl, _rkglConeFace, and rkglCone to uniform APIs. [rkgl_shape]

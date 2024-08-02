@@ -107,9 +107,9 @@ void rk_penShowLinkList(void)
     printf( "[%2d] %s\n", i, zName(rkChainLink(&chain,i)) );
 }
 
-void rk_penShowConnect(void)
+void rk_penShowConnectivity(void)
 {
-  rkChainConnectionPrint( &chain );
+  rkChainConnectivityPrint( &chain );
 }
 
 void rk_penShowJointDis(void)
@@ -533,7 +533,7 @@ struct{
   void (* action)(void);
 } menu[] = {
   { "show link list", rk_penShowLinkList },
-  { "show structure", rk_penShowConnect },
+  { "show structure", rk_penShowConnectivity },
   { "show joint displacements", rk_penShowJointDis },
   { "show link frame", rk_penShowLinkFrame },
   { "show link mass property", rk_penShowLinkMass },
