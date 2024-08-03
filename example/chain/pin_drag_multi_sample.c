@@ -130,6 +130,8 @@ void copy_pindragIFData(void* _src, void* _dest)
           zOpticalInfoInit( dest_linkinfo->_optic_alt );
         }
         zOpticalInfoCopy( src_linkinfo->_optic_alt, dest_linkinfo->_optic_alt );
+      } else{
+        dest_linkinfo->_optic_alt = NULL;
       }
       /* copy rkglLinkInfo2 */
       dest_info2->is_selected  = src_info2->is_selected;
@@ -139,10 +141,14 @@ void copy_pindragIFData(void* _src, void* _dest)
         zVec3DCopy( &src_info2->pinfo.ap[ap_id], &dest_info2->pinfo.ap[ap_id] );
         dest_info2->pinfo.ap_displaylist[ap_id] = src_info2->pinfo.ap_displaylist[ap_id];
         if( src_info2->pinfo.ap_cell[ap_id] != NULL ){
-          if( dest_info2->pinfo.ap_cell[ap_id] == NULL ){
-            dest_info2->pinfo.ap_cell[ap_id] = zAlloc( rkIKCell, 1 );
+          if( dest_info2->pinfo.ap_cell[ap_id] != NULL ){
+            rkIKCellDestroy( dest_info2->pinfo.ap_cell[ap_id] );
+            zFree( dest_info2->pinfo.ap_cell[ap_id] );
+            dest_info2->pinfo.ap_cell[ap_id] = NULL;
           }
-          rkIKCellCopy( src_info2->pinfo.ap_cell[ap_id], dest_info2->pinfo.ap_cell[ap_id] );
+          dest_info2->pinfo.ap_cell[ap_id] = rkIKCellClone( src_info2->pinfo.ap_cell[ap_id] );
+        } else {
+          dest_info2->pinfo.ap_cell[ap_id] = NULL;
         }
       }
       dest_info2->pinfo.ap_cnt = src_info2->pinfo.ap_cnt;
@@ -150,10 +156,15 @@ void copy_pindragIFData(void* _src, void* _dest)
       /* copy rkIKCell */
       for( cell_id=0; cell_id < src_info2->cell_size; cell_id++){
         if( src_info2->cell[cell_id] != NULL ){
-          if( dest_info2->cell[cell_id] == NULL ){
-            dest_info2->cell[cell_id] = zAlloc( rkIKCell, 1 );
+          if( dest_info2->cell[cell_id] != NULL ){
+            zNameFree( &dest_info2->cell[cell_id]->data );
+            rkIKCellDestroy( dest_info2->cell[cell_id] );
+            zFree( dest_info2->cell[cell_id] );
+            dest_info2->cell[cell_id] = NULL;
           }
-          rkIKCellCopy( src_info2->cell[cell_id], dest_info2->cell[cell_id] );
+          dest_info2->cell[cell_id] = rkIKCellClone( src_info2->cell[cell_id] );
+        } else{
+          dest_info2->cell[cell_id] = NULL;
         }
       }
     } /* end of for link_id = 0 -> rkChainLinkNum(src_chain) */
@@ -673,7 +684,7 @@ void register_att_link(int chain_id, int link_id, double weight)
 {
   rkIKAttr attr;
   attr.id = link_id;
-  g_main->gcs[chain_id].info2[link_id].cell[0] = rkChainRegIKCellWldAtt( &g_main->gcs[chain_id].chain, &attr, RK_IK_ATTR_ID );
+  g_main->gcs[chain_id].info2[link_id].cell[0] = rkChainRegisterIKCellWldAtt( &g_main->gcs[chain_id].chain, NULL, 0, &attr, RK_IK_ATTR_MASK_ID );
   rkIKCellSetWeight( g_main->gcs[chain_id].info2[link_id].cell[0], weight, weight, weight );
 }
 
@@ -681,9 +692,9 @@ void register_pos_link(int chain_id, int link_id, double weight)
 {
   rkIKAttr attr;
   attr.id = link_id;
-  g_main->gcs[chain_id].info2[link_id].cell[1] = rkChainRegIKCellWldPos( &g_main->gcs[chain_id].chain, &attr, RK_IK_ATTR_ID | RK_IK_ATTR_AP );
+  g_main->gcs[chain_id].info2[link_id].cell[1] = rkChainRegisterIKCellWldPos( &g_main->gcs[chain_id].chain, NULL, 0, &attr, RK_IK_ATTR_MASK_ID | RK_IK_ATTR_MASK_ATTENTION_POINT );
   rkIKCellSetWeight( g_main->gcs[chain_id].info2[link_id].cell[1], weight, weight, weight );
-  zVec3DCopy( &g_main->selected.ap, rkIKCellAP( g_main->gcs[chain_id].info2[link_id].cell[1] ) );
+  zVec3DCopy( &g_main->selected.ap, rkIKCellAttentionPoint( g_main->gcs[chain_id].info2[link_id].cell[1] ) );
 }
 
 void register_one_link_for_IK(int chain_id, int link_id, bool is_drag_link)
@@ -712,9 +723,9 @@ void unregister_one_link_for_IK(int chain_id, int link_id, bool is_drag_link)
 {
   pinInfo* pinfo = &g_main->gcs[chain_id].info2[link_id].pinfo;
   if( is_drag_link || pinfo->pin == PIN_LOCK_6D )
-    rkChainUnregIKCell( &g_main->gcs[chain_id].chain, g_main->gcs[chain_id].info2[link_id].cell[0] );
+    rkChainUnregisterAndDestroyIKCell( &g_main->gcs[chain_id].chain, g_main->gcs[chain_id].info2[link_id].cell[0] );
   if( is_drag_link || pinfo->pin == PIN_LOCK_POS3D || pinfo->pin == PIN_LOCK_6D )
-    rkChainUnregIKCell( &g_main->gcs[chain_id].chain, g_main->gcs[chain_id].info2[link_id].cell[1] );
+    rkChainUnregisterAndDestroyIKCell( &g_main->gcs[chain_id].chain, g_main->gcs[chain_id].info2[link_id].cell[1] );
 }
 
 void register_ap_in_one_link_for_IK(int chain_id, int link_id)
@@ -724,9 +735,9 @@ void register_ap_in_one_link_for_IK(int chain_id, int link_id)
   for( ap_id=0; ap_id < pinfo->ap_cnt; ap_id++ ){
     rkIKAttr ap_attr;
     ap_attr.id = link_id;
-    pinfo->ap_cell[ap_id] = rkChainRegIKCellWldPos( &g_main->gcs[chain_id].chain, &ap_attr, RK_IK_ATTR_ID | RK_IK_ATTR_AP );
+    pinfo->ap_cell[ap_id] = rkChainRegisterIKCellWldPos( &g_main->gcs[chain_id].chain, NULL, 0, &ap_attr, RK_IK_ATTR_MASK_ID | RK_IK_ATTR_MASK_ATTENTION_POINT );
     rkIKCellSetWeight( pinfo->ap_cell[ap_id], IK_PIN_WEIGHT, IK_PIN_WEIGHT, IK_PIN_WEIGHT );
-    zVec3DCopy( &pinfo->ap[ap_id], rkIKCellAP( pinfo->ap_cell[ap_id] ) );
+    zVec3DCopy( &pinfo->ap[ap_id], rkIKCellAttentionPoint( pinfo->ap_cell[ap_id] ) );
   }
  }
 
@@ -735,7 +746,7 @@ void unregister_ap_in_one_link_for_IK(int chain_id, int link_id)
   int ap_id;
   pinInfo* pinfo = &g_main->gcs[chain_id].info2[link_id].pinfo;
   for( ap_id = 0; ap_id < pinfo->ap_cnt; ap_id++ ){
-    rkChainUnregIKCell( &g_main->gcs[chain_id].chain, pinfo->ap_cell[ap_id] );
+    rkChainUnregisterAndDestroyIKCell( &g_main->gcs[chain_id].chain, pinfo->ap_cell[ap_id] );
   }
 }
 
@@ -844,7 +855,7 @@ bool is_collision_detected()
 void update_alljoint_by_IK_with_frame(int drag_chain_id, int drag_link_id, zVec init_joints, zFrame3D *ref_frame)
 {
   /* prepare IK */
-  rkChainDeactivateIK( &g_main->gcs[drag_chain_id].chain );
+  rkChainDisableIK( &g_main->gcs[drag_chain_id].chain );
   rkChainBindIK( &g_main->gcs[drag_chain_id].chain );
   if( init_joints != NULL ) {
     rkChainSetJointDisAll( &g_main->gcs[drag_chain_id].chain, init_joints );
@@ -1062,6 +1073,7 @@ bool set_q_state_array(const int chain_id, double* src_q, const int joint_size)
   dis = zVecAlloc( jointSize_of_chain( chain_id ) );
   zVecCopyArray( src_q, joint_size, dis );
   rkChainSetJointDisAll( &g_main->gcs[chain_id].chain, dis );
+  rkChainUpdateFK( &g_main->gcs[chain_id].chain );
 
   return true;
 }
@@ -1514,7 +1526,7 @@ bool init(void)
 
     /* IK */
     rkChainCreateIK( &g_main->gcs[chain_id].chain );
-    rkChainRegIKJointAll( &g_main->gcs[chain_id].chain, IK_DRAG_WEIGHT );
+    rkChainRegisterIKJointAll( &g_main->gcs[chain_id].chain, IK_DRAG_WEIGHT );
   } /* end of for i : 0 -> g_main->chainNUM */
 
   /* Collision Detection */
