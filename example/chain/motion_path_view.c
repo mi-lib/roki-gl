@@ -1,6 +1,5 @@
 #include <roki_gl/roki_glfw.h>
-#include "rk_ik_attr_register.h"
-
+#include "rk_ik_cell_register.h"
 
 static rkIKRegSelectClass *g_ik_reg_cls = &rkIKRegSelectClassImpl;
 
@@ -54,6 +53,7 @@ zArrayClass( keyFrameInfoArray, keyFrameInfo );
 
 
 /* the weight of joint & pin & path link for IK */
+#define IK_TARGET_LINK_ID 6
 #define IK_JOINT_WEIGHT 0.01
 #define IK_PIN_WEIGHT 1.0
 #define IK_PATH_WEIGHT 1.0
@@ -86,22 +86,8 @@ const int test_pin[TEST_KEYFRAME_SIZE][TEST_LINK_SIZE] =
       PIN_LOCK_OFF, PIN_LOCK_OFF, PIN_LOCK_OFF, PIN_LOCK_POS3D },
     { PIN_LOCK_OFF, PIN_LOCK_OFF, PIN_LOCK_OFF,
       PIN_LOCK_OFF, PIN_LOCK_OFF, PIN_LOCK_OFF, PIN_LOCK_POS3D }};
-/*** _target, _quantity, _ref_frame, _priority ***/
-const rkIKRegSelectable TEST_IK_REG_SELECTABLE__PATH01_IK01 =
-  {RK_IK_TARGET_LINK, RK_IK_TARGET_QUANTITY_POS, RK_IK_REF_FRAME_WLD, RK_IK_PRIORITY_WEIGHT};
-const int    TEST_IK_ATTR_ID_SUB = 0;
-const zVec3D TEST_IK_ATTR_AP     = { {0, 0, 0} };
-const byte   TEST_IK_ATTR_MODE   = 0x0;
-const zVec3D TEST_IK_ATTR_WEIGHT = { {IK_PATH_WEIGHT, IK_PATH_WEIGHT, IK_PATH_WEIGHT} };
-/*** id, id_sub, ap, mode, w ***/
-const rkIKAttr TEST_IK_ATTR__PATH01_IK01 =
-  { 6, TEST_IK_ATTR_ID_SUB, TEST_IK_ATTR_AP, TEST_IK_ATTR_MODE, TEST_IK_ATTR_WEIGHT };
-/*** { rkIKAttrSelectable, rkIKAttr } ***/
-const rkIKRegister TEST_IK_REG__PATH01_IK01 =
-    { TEST_IK_REG_SELECTABLE__PATH01_IK01, TEST_IK_ATTR__PATH01_IK01 };
-rkIKRegister TEST_IK_REG_ARRAY__PATH01[TEST_IK_NUM__PATH01] =
-  { TEST_IK_REG__PATH01_IK01 };
-rkIKRegister* TEST_IK_REG_ARRAY__PATH01_PTR = TEST_IK_REG_ARRAY__PATH01;
+
+rkIKCell TEST_IK_REG__PATH01_IK01;
 
 zVec3DList TEST_CP_LIST01;
 zVec3DList TEST_CP_LIST02;
@@ -205,6 +191,7 @@ typedef struct{
   rkChain chain;
   rkglChain glChain;
   /* for interation */
+  bool is_selected;
   int selected_cp;
   int selected_path_id;
   int selected_ik_id;
@@ -691,6 +678,12 @@ void clone_from_cp_list(int path_id, int ik_id, void* dest_cp_list)
   }
 }
 
+int size_of_cp_list(void* src_cp_list)
+{
+  zVec3DList* src = (zVec3DList*)( src_cp_list );
+  return zListSize( src );
+}
+
 void copy_from_selected_cp(void* dest_cp_list)
 {
   zNURBS3D* nurbs = &g_main->p2p_array.buf[g_main->selected_path_id].ref_path_array.buf[g_main->selected_ik_id].nurbs;
@@ -1071,7 +1064,7 @@ void dump_interpolated_path(const char* filename){
 
 void register_cell_in_one_pin_link_for_IK(rkChain* chain, const double s,  const int path_id, const int link_id)
 {
-  int cell_id;
+  int ik_id, cell_id;
   double weight;
   rkIKAttr attr;
 
@@ -1081,24 +1074,24 @@ void register_cell_in_one_pin_link_for_IK(rkChain* chain, const double s,  const
     pinPathIKInfo* p = &link_pin_path_ik_info->c[cell_id];
     if( p->is_constrained ){
       if( p->cell_type == IK_CELL_TYPE_WLD_ATT )
-        p->cell = rkChainRegIKCellWldAtt( chain, &attr, RK_IK_ATTR_ID );
+        p->cell = rkChainRegisterIKCellWldAtt( chain, NULL, RK_IK_MAX_PRIORITY, &attr, RK_IK_ATTR_MASK_ID );
       if( p->cell_type == IK_CELL_TYPE_WLD_POS )
-        p->cell = rkChainRegIKCellWldPos( chain, &attr, RK_IK_ATTR_ID | RK_IK_ATTR_AP );
+        p->cell = rkChainRegisterIKCellWldPos( chain, NULL, RK_IK_MAX_PRIORITY, &attr, RK_IK_ATTR_MASK_ID | RK_IK_ATTR_MASK_ATTENTION_POINT );
       weight = zPexIPVal( &p->weight_path, s );
       rkIKCellSetWeight( p->cell, weight, weight, weight );
-      zVec3DCopy( &p->ap, rkIKCellAP( p->cell ) );
+      zVec3DCopy( &p->ap, rkIKCellAttentionPoint( p->cell ) );
     }
   }
 }
 
 void unregister_cell_in_one_pin_link_for_IK(rkChain* chain, const int path_id, const int link_id)
 {
-  int cell_id;
+  int cell_id, ik_id;
 
   linkPinPathIKInfo* link_pin_path_ik_info = &g_main->p2p_array.buf[path_id].all_link_pin_path_ik_info.buf[link_id];
   for( cell_id=0; cell_id < link_pin_path_ik_info->cell_size; cell_id++ )
     if( link_pin_path_ik_info->c[cell_id].is_constrained )
-      rkChainUnregIKCell( chain, link_pin_path_ik_info->c[cell_id].cell );
+      rkChainUnregisterAndDestroyIKCell( chain, link_pin_path_ik_info->c[cell_id].cell );
 }
 
 void register_all_pin_links_for_IK(rkChain* chain, const double s, const int path_id)
@@ -1232,7 +1225,7 @@ bool pop_pose(const double s, rkChain* chain, p2pPathArray *p2p_array)
   register_ref_path_in_one_path_for_IK(chain, path_id);
   register_all_pin_links_for_IK( chain, pexIP_s, path_id );
 
-  rkChainDeactivateIK( chain );
+  rkChainDisableIK( chain );
   rkChainBindIK( chain );
 
   /* set reference */
@@ -1318,6 +1311,7 @@ bool create_empty_motionPathViewData(void** src)
     return false;
   }
   (*main_ptr)->modelfile = NULL;
+  (*main_ptr)->is_selected = false;
   (*main_ptr)->selected_cp = -1;
   (*main_ptr)->selected_path_id = -1;
   (*main_ptr)->selected_ik_id = -1;
@@ -1527,25 +1521,24 @@ void motion(GLFWwindow* window, double x, double y)
 void mouse(GLFWwindow* window, int button, int state, int mods)
 {
   int path_size;
-  static bool is_selected = false;
 
   if( button == GLFW_MOUSE_BUTTON_LEFT ){
     if( state == GLFW_PRESS ){
-      is_selected = false;
+      g_main->is_selected = false;
       /* cp selection */
       path_size = zArraySize( &g_main->p2p_array );
-      for( g_main->draw_path_id=0; g_main->draw_path_id < path_size && !is_selected; g_main->draw_path_id++ ){
+      for( g_main->draw_path_id=0; g_main->draw_path_id < path_size && !g_main->is_selected; g_main->draw_path_id++ ){
         rkglClear();
         rkglSelect( &g_main->sb, g_cam, draw_nurbs_in_one_path, rkgl_mouse_x, rkgl_mouse_y, SIZE_CP, SIZE_CP );
         if( find_cp( &g_main->sb ) >= 0 ){
           eprintf( "Selected control point [%d]\n", g_main->selected_cp );
-          is_selected = true;
+          g_main->is_selected = true;
           break;
         }
       }
       /* keyframe selection */
       g_main->selected_key_id = -1;
-      if( !is_selected &&
+      if( !g_main->is_selected &&
           rkglSelectNearest( &g_main->sb, g_cam, draw_keyframes_phantom_chain, rkgl_mouse_x, rkgl_mouse_y, 1, 1 ) ){
         if( find_keyframes_phantom_chain( &g_main->sb ) >= 0 ){
           eprintf( "Selected keyframe id [%d]\n", g_main->selected_key_id );
@@ -1553,7 +1546,7 @@ void mouse(GLFWwindow* window, int button, int state, int mods)
       }
       /* */
     } else if( state == GLFW_RELEASE ){
-      if( is_selected ){
+      if( g_main->is_selected ){
         copy_from_selected_cp( g_main->p2p_array.buf[g_main->selected_path_id].ref_path_array.buf[g_main->selected_ik_id].cp_list_ptr );
       }
       g_main->sb.hits = 0;
@@ -1756,8 +1749,9 @@ bool init(void)
   }
   /* IK */
   rkChainCreateIK( &g_main->chain );
-  rkChainRegIKJointAll( &g_main->chain, IK_JOINT_WEIGHT );
+  rkChainRegisterIKJointAll( &g_main->chain, IK_JOINT_WEIGHT );
 
+  g_main->is_selected = false;
   g_main->sb.hits = 0;
   return true;
 }
@@ -1847,8 +1841,16 @@ int main(int argc, char *argv[])
     for( ik_id=0; ik_id < ik_num_ptr[path_id]; ik_id++ ){
       g_ik_reg_cls->init( &ik_reg_ptr_2array[path_id][ik_id] );
       refPathInputComponent* rpic = &test_ref_path_input_array[path_id].buf[ik_id];
+      /* Test Dataset ********************************************************************/
+      g_ik_reg_cls->select_link( rpic->ik_reg );
+      g_ik_reg_cls->set_link_id( rpic->ik_reg, IK_TARGET_LINK_ID );
+      g_ik_reg_cls->select_pos( rpic->ik_reg );
+      g_ik_reg_cls->select_wld_frame( rpic->ik_reg );
+      g_ik_reg_cls->set_weight( rpic->ik_reg, IK_PATH_WEIGHT, IK_PATH_WEIGHT, IK_PATH_WEIGHT );
+      g_ik_reg_cls->set_ap( rpic->ik_reg, 0.0, 0.0, 0.0 );
+      /* End of Test Dataset *************************************************************/
       g_ik_reg_cls->copy( (void*)( rpic->ik_reg ), ik_reg_ptr_2array[path_id][ik_id] );
-      init_cp_list( (void**)( &rpic->cp_list_ptr ) );
+      zListInit( (zVec3DList*)( rpic->cp_list_ptr ) );
       init_cp_list( &cp_list_ptr_2array[path_id][ik_id] );
     }
   }
