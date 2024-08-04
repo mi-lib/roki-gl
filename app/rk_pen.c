@@ -107,9 +107,9 @@ void rk_penShowLinkList(void)
     printf( "[%2d] %s\n", i, zName(rkChainLink(&chain,i)) );
 }
 
-void rk_penShowConnect(void)
+void rk_penShowConnectivity(void)
 {
-  rkChainConnectionPrint( &chain );
+  rkChainConnectivityPrint( &chain );
 }
 
 void rk_penShowJointDis(void)
@@ -223,14 +223,12 @@ void rk_penSetLinkPos(void)
   for( lp=l; lp!=rkChainRoot(&chain); lp=rkLinkParent(lp) )
     if( rkLinkJointDOF(lp) > 0 ){
       printf( "register joint [%s].\n", zName(lp) );
-      rkChainRegIKJointID( &chain, lp - rkChainRoot(&chain), 0.001 );
+      rkChainRegisterIKJointID( &chain, lp - rkChainRoot(&chain), 0.001 );
     }
   attr.id = l - rkChainRoot(&chain);
   printf( "IK of link [%s].\n", rkChainLinkName(&chain,attr.id) );
-  zVec3DZero( &attr.ap );
-  cell = rkChainRegIKCellWldPos( &chain, &attr, RK_IK_ATTR_ID | RK_IK_ATTR_AP );
-  rkChainDeactivateIK( &chain );
-  rkChainBindIK( &chain );
+  zVec3DZero( &attr.attention_point );
+  cell = rkChainRegisterIKCellWldPos( &chain, NULL, 0, &attr, RK_IK_ATTR_MASK_ID | RK_IK_ATTR_MASK_ATTENTION_POINT );
   rkIKCellSetRef( cell, p[0], p[1], p[2] );
 
   rkChainIK( &chain, dis, zTOL, 0 );
@@ -259,15 +257,13 @@ void rk_penSetLinkFrame(void)
   for( lp=l; lp!=rkChainRoot(&chain); lp=rkLinkParent(lp) )
     if( rkLinkJointDOF(lp) > 0 ){
       printf( "register joint [%s].\n", zName(lp) );
-      rkChainRegIKJointID( &chain, lp - rkChainRoot(&chain), 0.001 );
+      rkChainRegisterIKJointID( &chain, lp - rkChainRoot(&chain), 0.001 );
     }
   attr.id = l - rkChainRoot(&chain);
   printf( "IK of link [%s].\n", rkChainLinkName(&chain,attr.id) );
-  zVec3DZero( &attr.ap );
-  cell_pos = rkChainRegIKCellWldPos( &chain, &attr, RK_IK_ATTR_ID | RK_IK_ATTR_AP );
-  cell_att = rkChainRegIKCellWldAtt( &chain, &attr, RK_IK_ATTR_ID );
-  rkChainDeactivateIK( &chain );
-  rkChainBindIK( &chain );
+  zVec3DZero( &attr.attention_point );
+  cell_pos = rkChainRegisterIKCellWldPos( &chain, NULL, 0, &attr, RK_IK_ATTR_MASK_ID | RK_IK_ATTR_MASK_ATTENTION_POINT );
+  cell_att = rkChainRegisterIKCellWldAtt( &chain, NULL, 0, &attr, RK_IK_ATTR_MASK_ID );
   rkIKCellSetRef( cell_pos, p[0], p[1], p[2] );
   rkIKCellSetRef( cell_att, a[0], a[1], a[2] );
 
@@ -537,7 +533,7 @@ struct{
   void (* action)(void);
 } menu[] = {
   { "show link list", rk_penShowLinkList },
-  { "show structure", rk_penShowConnect },
+  { "show structure", rk_penShowConnectivity },
   { "show joint displacements", rk_penShowJointDis },
   { "show link frame", rk_penShowLinkFrame },
   { "show link mass property", rk_penShowLinkMass },
