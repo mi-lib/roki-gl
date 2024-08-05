@@ -88,6 +88,7 @@ const int test_pin[TEST_KEYFRAME_SIZE][TEST_LINK_SIZE] =
       PIN_LOCK_OFF, PIN_LOCK_OFF, PIN_LOCK_OFF, PIN_LOCK_POS3D }};
 
 rkIKCell TEST_IK_REG__PATH01_IK01;
+rkIKCell TEST_IK_REG__PATH01_IK02;
 
 zVec3DList TEST_CP_LIST01;
 zVec3DList TEST_CP_LIST02;
@@ -116,7 +117,7 @@ refPathInputComponent TEST_REF_PATH_INPUT_COMPONENT_ARRAY02[TEST_IK_NUM__PATH01]
   {
     {
       /*** ik_reg, cp_list_ptr ***/
-      (void*)(&TEST_IK_REG__PATH01_IK01), (void*)(&TEST_CP_LIST02)
+      (void*)(&TEST_IK_REG__PATH01_IK02), (void*)(&TEST_CP_LIST02)
     }
     /*** TEST_IK_NUM__PATH01 ***/
   };
@@ -1064,7 +1065,7 @@ void dump_interpolated_path(const char* filename){
 
 void register_cell_in_one_pin_link_for_IK(rkChain* chain, const double s,  const int path_id, const int link_id)
 {
-  int ik_id, cell_id;
+  int cell_id;
   double weight;
   rkIKAttr attr;
 
@@ -1073,10 +1074,14 @@ void register_cell_in_one_pin_link_for_IK(rkChain* chain, const double s,  const
   for( cell_id=0; cell_id < link_pin_path_ik_info->cell_size; cell_id++ ){
     pinPathIKInfo* p = &link_pin_path_ik_info->c[cell_id];
     if( p->is_constrained ){
-      if( p->cell_type == IK_CELL_TYPE_WLD_ATT )
-        p->cell = rkChainRegisterIKCellWldAtt( chain, NULL, RK_IK_MAX_PRIORITY, &attr, RK_IK_ATTR_MASK_ID );
-      if( p->cell_type == IK_CELL_TYPE_WLD_POS )
-        p->cell = rkChainRegisterIKCellWldPos( chain, NULL, RK_IK_MAX_PRIORITY, &attr, RK_IK_ATTR_MASK_ID | RK_IK_ATTR_MASK_ATTENTION_POINT );
+      if( p->cell_type == IK_CELL_TYPE_WLD_ATT ){
+        p->cell = rkChainRegisterIKCellWldAtt( chain, NULL, 0, &attr, RK_IK_ATTR_MASK_ID );
+        /* p->cell = rkChainRegisterIKCellWldAtt( chain, NULL, RK_IK_MAX_PRIORITY, &attr, RK_IK_ATTR_MASK_ID ); */
+      }
+      if( p->cell_type == IK_CELL_TYPE_WLD_POS ){
+        p->cell = rkChainRegisterIKCellWldPos( chain, NULL, 0, &attr, RK_IK_ATTR_MASK_ID | RK_IK_ATTR_MASK_ATTENTION_POINT );
+        /* p->cell = rkChainRegisterIKCellWldPos( chain, NULL, RK_IK_MAX_PRIORITY, &attr, RK_IK_ATTR_MASK_ID | RK_IK_ATTR_MASK_ATTENTION_POINT ); */
+      }
       weight = zPexIPVal( &p->weight_path, s );
       rkIKCellSetWeight( p->cell, weight, weight, weight );
       zVec3DCopy( &p->ap, rkIKCellAttentionPoint( p->cell ) );
@@ -1086,7 +1091,7 @@ void register_cell_in_one_pin_link_for_IK(rkChain* chain, const double s,  const
 
 void unregister_cell_in_one_pin_link_for_IK(rkChain* chain, const int path_id, const int link_id)
 {
-  int cell_id, ik_id;
+  int cell_id;
 
   linkPinPathIKInfo* link_pin_path_ik_info = &g_main->p2p_array.buf[path_id].all_link_pin_path_ik_info.buf[link_id];
   for( cell_id=0; cell_id < link_pin_path_ik_info->cell_size; cell_id++ )
@@ -1148,8 +1153,6 @@ void unregister_ref_path_in_one_path_for_IK(rkChain* chain, const int path_id)
 void update_alljoint_by_IK(rkChain* chain, zVec init_joints, bool is_free_joints_with_no_IK)
 {
   /* prepare IK */
-  /* rkChainDeactivateIK( chain ); */
-  /* rkChainBindIK( chain ); */
   if( init_joints != NULL ) {
     rkChainSetJointDisAll( chain, init_joints );
     rkChainUpdateFK( chain );
@@ -1218,15 +1221,17 @@ bool pop_pose(const double s, rkChain* chain, p2pPathArray *p2p_array)
   printf("s = %f / %f \n", s, g_main->p2p_array.buf[path_size-1].goal_feedrate.s);
   const double pexIP_s = s - p2p_buf->start_feedrate.s;
   zVec qref = pop_qref( pexIP_s, &p2p_buf->qref_path );
-  /* In IK, no path free joints, but as qref */
-  rkChainSetJointDisAll( chain, qref );
-  rkChainUpdateFK( chain );
+  /* In IK, if no path free joints, but solved as qref */
+
   /* register pin link (with weight path) for IK */
   register_ref_path_in_one_path_for_IK(chain, path_id);
   register_all_pin_links_for_IK( chain, pexIP_s, path_id );
 
-  rkChainDisableIK( chain );
   rkChainBindIK( chain );
+
+  /* this FK is duprecated with the post process in update_alljoint_by_IK() */
+  /* rkChainSetJointDisAll( chain, qref ); */
+  /* rkChainUpdateFK( chain ); */
 
   /* set reference */
   int ik_id;
@@ -1240,11 +1245,13 @@ bool pop_pose(const double s, rkChain* chain, p2pPathArray *p2p_array)
                        &ref_path->nurbs,
                        &ref_pos );
       set_one_target_reference_of_3D_translate_position_for_IK( path_id, ik_id, &ref_pos );
-      /* @TODO : attitude */
-      /* set_one_target_reference_of_3D_attitude_position_for_IK( path_id, ik_id, &ref_att ); */
-      /* @TODO : velocity */
-      /* @TODO : accerlation */
+      /* @TODO : translate velocity */
+      /* @TODO : translate accerlation */
     }
+    /* @TODO : attitude */
+    /* set_one_target_reference_of_3D_attitude_position_for_IK( path_id, ik_id, &ref_att ); */
+    /* @TODO : attitude velocity */
+    /* @TODO : attitude accerlation */
   }
   /* IK */
   bool is_free_joints_with_no_IK = ( p2p_buf->ik_num==0 ); /* no path = no IK target */
@@ -1842,12 +1849,14 @@ int main(int argc, char *argv[])
       g_ik_reg_cls->init( &ik_reg_ptr_2array[path_id][ik_id] );
       refPathInputComponent* rpic = &test_ref_path_input_array[path_id].buf[ik_id];
       /* Test Dataset ********************************************************************/
+      g_ik_reg_cls->init( &rpic->ik_reg );
       g_ik_reg_cls->select_link( rpic->ik_reg );
       g_ik_reg_cls->set_link_id( rpic->ik_reg, IK_TARGET_LINK_ID );
       g_ik_reg_cls->select_pos( rpic->ik_reg );
       g_ik_reg_cls->select_wld_frame( rpic->ik_reg );
       g_ik_reg_cls->set_weight( rpic->ik_reg, IK_PATH_WEIGHT, IK_PATH_WEIGHT, IK_PATH_WEIGHT );
       g_ik_reg_cls->set_ap( rpic->ik_reg, 0.0, 0.0, 0.0 );
+      /* g_ik_reg_cls->select_force( rpic->ik_reg ); */
       /* End of Test Dataset *************************************************************/
       g_ik_reg_cls->copy( (void*)( rpic->ik_reg ), ik_reg_ptr_2array[path_id][ik_id] );
       zListInit( (zVec3DList*)( rpic->cp_list_ptr ) );

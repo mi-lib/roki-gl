@@ -159,14 +159,20 @@ static const int32_t RK_IK_ATTR_TYPE_QUANTITY__AM       = 0x0000003;
 
 void* rkIKRegSelect_init(void** instance)
 {
-  *instance = (void*)rkIKCellAlloc();
-  return instance;
+  rkIKCell* cell;
+  cell = rkIKCellAlloc();
+  cell->data.mode = RK_IK_CELL_MODE_XYZ;
+  cell->data.attr.user_defined_type = RK_IK_ATTR_TYPE__WORLD_LINK_POS;
+  /* initial constraint */
+  cell->data.constraint = rkIKConstraintFind( "world_pos" );
+  *instance = (void*)cell;
+  return *instance;
 }
 
 void rkIKRegSelect_copy(void* src, void* dest)
 {
   zNameFree( &((rkIKCell*)dest)->data );
-  zCopy( rkIKCell, (rkIKCell*)(src), (rkIKCell*)(dest) );
+  zCopy( rkIKCellDat, &((rkIKCell*)src)->data, &((rkIKCell*)dest)->data );
   zNameSet( &((rkIKCell*)dest)->data, ((rkIKCell*)src)->data.name );
 }
 
