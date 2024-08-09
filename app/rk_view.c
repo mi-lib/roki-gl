@@ -229,6 +229,7 @@ bool rk_viewCommandArgs(int argc, char *argv[])
     ZRUNERROR( "model not specified" );
     return false;
   }
+  zPH3DEchoOn();
   rk_viewInit();
   rk_viewReadModel( &modellist );
   rk_viewResetCamera();
