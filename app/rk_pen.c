@@ -76,7 +76,7 @@ rkLink *rk_penLink(void)
 
   printf( "enter link ID> " );
   if( scanf( "%d", &id ) == 0 ) return NULL;
-  return id >= 0 ? rkChainLink( &chain, id ) : NULL;
+  return id >= 0 && id < rkChainLinkNum(&chain) ? rkChainLink( &chain, id ) : NULL;
 }
 
 void rk_penPos(double *x, double *y, double *z)
