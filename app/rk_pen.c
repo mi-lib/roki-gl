@@ -476,9 +476,14 @@ void rk_penInit(void)
     vv_near = zSphere3DRadius(&bball);
     vv_far = 1000*zSphere3DRadius(&bball);
   } else{
-    rkglCASet( &cam,
-      atof( opt[OPT_OX].arg ), atof( opt[OPT_OY].arg ), atof( opt[OPT_OZ].arg ),
-      atof( opt[OPT_PAN].arg ),  atof( opt[OPT_TILT].arg ), atof( opt[OPT_ROLL].arg ) );
+    if( opt[OPT_PAN].flag || opt[OPT_TILT].flag || opt[OPT_ROLL].flag )
+      rkglCASet( &cam,
+        atof( opt[OPT_OX].arg ), atof( opt[OPT_OY].arg ), atof( opt[OPT_OZ].arg ),
+        atof( opt[OPT_PAN].arg ),  atof( opt[OPT_TILT].arg ), atof( opt[OPT_ROLL].arg ) );
+    else
+      rkglCALookAt( &cam,
+        atof( opt[OPT_OX].arg ), atof( opt[OPT_OY].arg ), atof( opt[OPT_OZ].arg ),
+        0, 0, 0, 0, 0, 1 );
     vv_width = 0.2;
     vv_near = 1;
     vv_far = 200;

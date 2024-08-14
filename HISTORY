@@ -1,3 +1,4 @@
+2024. 8.14. Modified rk_penInit in rk_pen to look at the origin unless pan/tilt/roll angles are specified. [app]
 2024. 8.12. Debugged rk_penLink in rk_pen. [app]
 2024. 8.12. Added rk_viewResetLight to automatically adjust the position of lighting. [app]
 2024. 8.12. Remove rkChainCreateIK in rk_pen. [app]
