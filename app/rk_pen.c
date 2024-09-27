@@ -26,7 +26,7 @@ enum{
 zOption opt[] = {
   { "model", NULL, "<.ztk file>", "kinematic chain model file", NULL, false },
   { "env", NULL, "<.ztk file>", "environment shape model file", NULL, false },
-  { "init", NULL, "<.zkci file>", "initial state file", NULL, false },
+  { "init", NULL, "<.ztk file>", "initial state file", NULL, false },
   { "pan", NULL, "<pan value>", "set camera pan angle", (char *)"0", false },
   { "tilt", NULL, "<tilt value>", "set camera tilt angle", (char *)"0", false },
   { "roll", NULL, "<roll value>", "set camera roll angle", (char *)"0", false },
@@ -76,7 +76,7 @@ rkLink *rk_penLink(void)
 
   printf( "enter link ID> " );
   if( scanf( "%d", &id ) == 0 ) return NULL;
-  return id >= 0 ? rkChainLink( &chain, id ) : NULL;
+  return id >= 0 && id < rkChainLinkNum(&chain) ? rkChainLink( &chain, id ) : NULL;
 }
 
 void rk_penPos(double *x, double *y, double *z)
@@ -218,8 +218,6 @@ void rk_penSetLinkPos(void)
   zVec3DPrint( rkLinkWldPos(l) );
   rk_penPos( &p[0], &p[1], &p[2] );
   dis = zVecAlloc( rkChainJointSize(&chain) );
-
-  rkChainCreateIK( &chain );
   for( lp=l; lp!=rkChainRoot(&chain); lp=rkLinkParent(lp) )
     if( rkLinkJointDOF(lp) > 0 ){
       printf( "register joint [%s].\n", zName(lp) );
@@ -252,8 +250,6 @@ void rk_penSetLinkFrame(void)
   rk_penPos( &p[0], &p[1], &p[2] );
   rk_penZYX( &a[0], &a[1], &a[2] );
   dis = zVecAlloc( rkChainJointSize(&chain) );
-
-  rkChainCreateIK( &chain );
   for( lp=l; lp!=rkChainRoot(&chain); lp=rkLinkParent(lp) )
     if( rkLinkJointDOF(lp) > 0 ){
       printf( "register joint [%s].\n", zName(lp) );
@@ -480,9 +476,14 @@ void rk_penInit(void)
     vv_near = zSphere3DRadius(&bball);
     vv_far = 1000*zSphere3DRadius(&bball);
   } else{
-    rkglCASet( &cam,
-      atof( opt[OPT_OX].arg ), atof( opt[OPT_OY].arg ), atof( opt[OPT_OZ].arg ),
-      atof( opt[OPT_PAN].arg ),  atof( opt[OPT_TILT].arg ), atof( opt[OPT_ROLL].arg ) );
+    if( opt[OPT_PAN].flag || opt[OPT_TILT].flag || opt[OPT_ROLL].flag )
+      rkglCASet( &cam,
+        atof( opt[OPT_OX].arg ), atof( opt[OPT_OY].arg ), atof( opt[OPT_OZ].arg ),
+        atof( opt[OPT_PAN].arg ),  atof( opt[OPT_TILT].arg ), atof( opt[OPT_ROLL].arg ) );
+    else
+      rkglCALookAt( &cam,
+        atof( opt[OPT_OX].arg ), atof( opt[OPT_OY].arg ), atof( opt[OPT_OZ].arg ),
+        0, 0, 0, 0, 0, 1 );
     vv_width = 0.2;
     vv_near = 1;
     vv_far = 200;
