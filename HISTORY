@@ -1,3 +1,8 @@
+2024. 8.14. Modified rk_penInit in rk_pen to look at the origin unless pan/tilt/roll angles are specified. [app]
+2024. 8.12. Debugged rk_penLink in rk_pen. [app]
+2024. 8.12. Added rk_viewResetLight to automatically adjust the position of lighting. [app]
+2024. 8.12. Remove rkChainCreateIK in rk_pen. [app]
+2024. 8.10. Modified rk_view to output counters of vertices and faces while reading a 3D model. [app]
 2024. 8. 3. Debugged continual image capturing of rk_anim. [app]
 2024. 8. 2. Modified rk_pen to apply rkChainConnectivityFPrint. [app]
 2024. 7.31. Modified makefile in example to enable batch compilation of all examples in the same directory. [example]

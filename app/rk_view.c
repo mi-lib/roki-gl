@@ -52,7 +52,7 @@ rkglShadow shadow;
 int model = -1;
 
 /* view volume */
-zSphere3D bball;
+zSphere3D boundingsphere;
 double vv_width, vv_near, vv_far;
 
 void rk_viewUsage(void)
@@ -168,7 +168,7 @@ void rk_viewReadModel(zStrAddrList *modellist)
   }
   glEndList();
   if( opt[OPT_AUTO].flag ){
-    if( !zBoundingBall3DPL( &bball, &pl_all, NULL ) ) exit( EXIT_FAILURE );
+    if( !zBoundingBall3DPL( &boundingsphere, &pl_all, NULL ) ) exit( EXIT_FAILURE );
     zVec3DListDestroy( &pl_all );
   }
   if( model < 0 ) exit( EXIT_FAILURE );
@@ -178,12 +178,12 @@ void rk_viewResetCamera(void)
 {
   if( opt[OPT_AUTO].flag ){
     rkglCALookAt( &cam,
-      zSphere3DCenter(&bball)->c.x+zSphere3DRadius(&bball)*18, zSphere3DCenter(&bball)->c.y, zSphere3DCenter(&bball)->c.z,
-      zSphere3DCenter(&bball)->c.x, zSphere3DCenter(&bball)->c.y, zSphere3DCenter(&bball)->c.z,
+      zSphere3DCenter(&boundingsphere)->c.x+zSphere3DRadius(&boundingsphere)*18, zSphere3DCenter(&boundingsphere)->c.y, zSphere3DCenter(&boundingsphere)->c.z,
+      zSphere3DCenter(&boundingsphere)->c.x, zSphere3DCenter(&boundingsphere)->c.y, zSphere3DCenter(&boundingsphere)->c.z,
       0, 0, 1 );
-    vv_width = zSphere3DRadius(&bball) / 8;
-    vv_near = zSphere3DRadius(&bball);
-    vv_far = 1000*zSphere3DRadius(&bball);
+    vv_width = zSphere3DRadius(&boundingsphere) / 8;
+    vv_near = zSphere3DRadius(&boundingsphere);
+    vv_far = 1000*zSphere3DRadius(&boundingsphere);
   } else{
     rkglCASet( &cam,
       atof(opt[OPT_OX].arg), atof(opt[OPT_OY].arg), atof(opt[OPT_OZ].arg),
@@ -192,6 +192,24 @@ void rk_viewResetCamera(void)
     vv_near = 1;
     vv_far = 200;
   }
+}
+
+void rk_viewResetLight(void)
+{
+  double x, y, z;
+
+  x = atof(opt[OPT_LX].arg);
+  y = atof(opt[OPT_LY].arg);
+  z = atof(opt[OPT_LZ].arg);
+  glEnable( GL_LIGHTING );
+  rkglLightCreate( &light, 0.5, 0.5, 0.5, 0.8, 0.8, 0.8, 0, 0, 0 );
+  if( opt[OPT_AUTO].flag ){
+    if( !opt[OPT_LX].flag ) x = 0;
+    if( !opt[OPT_LY].flag ) y = 0;
+    if( !opt[OPT_LZ].flag ) z = zSphere3DRadius(&boundingsphere)*3;
+  }
+  rkglLightMove( &light, x, y, z );
+  rkglShadowInit( &shadow, 512, 512, 1.5, 0.2, 0.1 );
 }
 
 void rk_viewInit(void)
@@ -208,10 +226,6 @@ void rk_viewInit(void)
   rkglVPCreate( &cam, 0, 0, atoi(opt[OPT_WIDTH].arg), atoi(opt[OPT_HEIGHT].arg) );
   rkglVPCreate( &cam, 0, 0, atoi( opt[OPT_WIDTH].arg ), atoi( opt[OPT_HEIGHT].arg ) );
 
-  glEnable( GL_LIGHTING );
-  rkglLightCreate( &light, 0.5, 0.5, 0.5, 0.8, 0.8, 0.8, 0, 0, 0 );
-  rkglLightMove( &light, atof(opt[OPT_LX].arg), atof(opt[OPT_LY].arg), atof(opt[OPT_LZ].arg) );
-  rkglShadowInit( &shadow, 512, 512, 1.5, 0.2, 0.1 );
   rkglTextureEnable();
 
   if( opt[OPT_SMOOTH].flag ) glEnable( GL_LINE_SMOOTH );
@@ -229,9 +243,11 @@ bool rk_viewCommandArgs(int argc, char *argv[])
     ZRUNERROR( "model not specified" );
     return false;
   }
+  zPH3DEchoOn();
   rk_viewInit();
   rk_viewReadModel( &modellist );
   rk_viewResetCamera();
+  rk_viewResetLight();
   zStrAddrListDestroy( &modellist );
   return true;
 }
