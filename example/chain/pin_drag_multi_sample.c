@@ -62,14 +62,8 @@ typedef struct{
   rkglLinkInfo2 *info2; /* num chainlink */
   rkChain chain;
   rkglChain glChain;
+  zVec pre_q; /* joint angles before step */
 } rkglChainBlock;
-
-/* the collision detector & the result list */
-typedef struct{
-  int chain_id;
-  int link_id;
-} cdInfoCellDat;
-zListClass( cdInfoCellList, cdInfoCell, cdInfoCellDat );
 
 typedef enum{
   GHOST_MODE_OFF=-1,
@@ -92,8 +86,9 @@ typedef struct{
   rkglChainBlock *gcs; /* main data */
   int chainNUM;
   rkCD cd; /* collision detector */
-  cdInfoCellList cdlist; /* the result list of collided chain & link IDs by rkCDColChk**() */
+  rkCDPairList cplist; /* the result list of collided chain & link IDs by rkCDColChk**() */
   bool is_sum_collision; /* simple summary result whether collision occured or not */
+  bool is_collision_avoidance;
   ghostInfo ghost_info;
   int fixed_scene_display_id;
   bool is_visible;
@@ -187,7 +182,7 @@ void copy_pindragIFData(void* _src, void* _dest)
   dest->fh._depth = src->fh._depth;
   /* not copy chainNum, it must be guaranteed to be the same at init() */
   /* not copy rkCD cd, because it is depends on the result of chain state */
-  /* not copy cdInfoCellList cdlist, the reason is the same as rkCD cd */
+  /* not copy rkCDPairList cplist, the reason is the same as rkCD cd */
   /* not copy bool is_sum_collision, the reason is the same as rkCD cd */
   /* not copy ghostInfo ghost_info, keep destination as initial state(GHOST_MODE_OFF) */
   /* not copy fixed_scene_display_id, set destination as initial state */
@@ -256,7 +251,21 @@ void rkglChainUnload_for_rkglChainBlock(rkglChainBlock *gcb)
   zFree( gcb->info2 );
 }
 
+/* utilized function -------------------------------------------------------------- */
 
+int get_chain_id(rkChain *chain)
+{
+  int i;
+  for( i=0; i < g_main->chainNUM; ++i )
+    if( &g_main->gcs[i].chain == chain ) return i;
+  return -1;
+}
+
+int get_link_id(rkChain *chain, rkLink* link)
+{
+  int l;
+  return ( ( ( l=( link - rkChainRoot(chain) ) ) < rkChainLinkNum(chain) ) ? l : -1 );
+}
 
 /* draw part --------------------------------------------------------------------- */
 
@@ -391,16 +400,22 @@ bool draw_pindrag_link(int chain_id, int link_id, bool is_alt)
 
 void draw_collision_link(void)
 {
+  int i, chain_id, link_id;
   zOpticalInfo oi_alt;
   /* Red */
   zOpticalInfoCreateSimple( &oi_alt, 1.0, 0.0, 0.0, NULL );
-  cdInfoCell *cdcell;
-  zListForEachRew( &g_main->cdlist, cdcell ){
-    if( g_main->gcs[cdcell->data.chain_id].glChain.linkinfo[cdcell->data.link_id]._list_backup==-1 ){
-      g_main->gcs[cdcell->data.chain_id].glChain.attr.disptype = RKGL_FACE;
-      draw_alternate_link( &g_main->gcs[cdcell->data.chain_id].glChain, cdcell->data.chain_id, cdcell->data.link_id, &oi_alt, &g_main->gcs[cdcell->data.chain_id].glChain.attr, g_light );
+  rkCDPair* cp;
+  zListForEachRew( &g_main->cplist, cp ){
+    for( i=0; i < 2; i++ ){
+      chain_id = get_chain_id( cp->data.cell[i]->data.chain );
+      link_id  = get_link_id(  cp->data.cell[i]->data.chain, cp->data.cell[i]->data.link );
+      rkglChain* glChain = &g_main->gcs[chain_id].glChain; /* for omission */
+      if( glChain->linkinfo[link_id]._list_backup==-1 ){
+        glChain->attr.disptype = RKGL_FACE;
+        draw_alternate_link( glChain, chain_id, link_id, &oi_alt, &glChain->attr, g_light );
+      }
     }
-  }
+  } /* end of zListForEachRew( &g_main->cplist, cp ) */
 }
 
 void draw_all_chain_link(void)
@@ -794,55 +809,45 @@ void unregister_chain_for_CD(rkglChainBlock *glChainBlock)
     rkCDPairChainUnreg( &g_main->cd, &glChainBlock[i].chain );
 }
 
-int get_chain_num(rkChain *chain)
-{
-  int i;
-  for( i=0; i < g_main->chainNUM; ++i )
-    if( &g_main->gcs[i].chain == chain ) return i;
-  return -1;
-}
-
-int get_link_num(rkChain *chain, rkLink* link)
-{
-  int l;
-  return ( ( ( l=( link - rkChainRoot(chain) ) ) < rkChainLinkNum(chain) ) ? l : -1 );
-}
-
 bool is_collision_detected()
 {
+  int chain0_id, link0_id, chain1_id, link1_id;
   rkCDPair* cp;
   bool is_collision = false;
-  cdInfoCell *cdcell;
-  zListForEachRew( &g_main->cdlist, cdcell ){
-    reset_link_drawing( cdcell->data.chain_id, cdcell->data.link_id );
-    g_main->gcs[cdcell->data.chain_id].info2[cdcell->data.link_id].is_collision = false;
-    g_main->gcs[cdcell->data.chain_id].info2[cdcell->data.link_id].is_collision = false;
+  zListForEachRew( &g_main->cplist, cp ){
+    chain0_id = get_chain_id( cp->data.cell[0]->data.chain );
+    link0_id  = get_link_id(  cp->data.cell[0]->data.chain, cp->data.cell[0]->data.link );
+    reset_link_drawing( chain0_id, link0_id );
+    chain1_id = get_chain_id( cp->data.cell[1]->data.chain );
+    link1_id  = get_link_id(  cp->data.cell[1]->data.chain, cp->data.cell[1]->data.link );
+    reset_link_drawing( chain1_id, link1_id );
+    g_main->gcs[chain0_id].info2[link0_id].is_collision = false;
+    g_main->gcs[chain1_id].info2[link1_id].is_collision = false;
   }
-  zListDestroy( cdInfoCell, &g_main->cdlist );
+  zListDestroy( rkCDPair, &g_main->cplist );
   rkCDColChkGJK( &g_main->cd );
   zListForEach( &(g_main->cd.plist), cp ){
     if ( cp->data.is_col ){
-      cdInfoCell* cdcell0 = zAlloc( cdInfoCell, 1 );
-      cdInfoCell* cdcell1 = zAlloc( cdInfoCell, 1 );
-      cdcell0->data.chain_id = get_chain_num( cp->data.cell[0]->data.chain );
-      cdcell1->data.chain_id = get_chain_num( cp->data.cell[1]->data.chain );
-      cdcell0->data.link_id  = get_link_num( cp->data.cell[0]->data.chain, cp->data.cell[0]->data.link );
-      cdcell1->data.link_id  = get_link_num( cp->data.cell[1]->data.chain, cp->data.cell[1]->data.link );
-      reset_link_drawing( cdcell0->data.chain_id, cdcell0->data.link_id );
-      reset_link_drawing( cdcell1->data.chain_id, cdcell1->data.link_id );
-      g_main->gcs[cdcell0->data.chain_id].info2[cdcell0->data.link_id].is_collision = true;
-      g_main->gcs[cdcell1->data.chain_id].info2[cdcell1->data.link_id].is_collision = true;
-      zQueueEnqueue( &g_main->cdlist, cdcell0 );
-      zQueueEnqueue( &g_main->cdlist, cdcell1 );
+      chain0_id = get_chain_id( cp->data.cell[0]->data.chain );
+      link0_id  = get_link_id(  cp->data.cell[0]->data.chain, cp->data.cell[0]->data.link );
+      reset_link_drawing( chain0_id, link0_id );
+      chain1_id = get_chain_id( cp->data.cell[1]->data.chain );
+      link1_id  = get_link_id(  cp->data.cell[1]->data.chain, cp->data.cell[1]->data.link );
+      reset_link_drawing( chain1_id, link1_id );
+      g_main->gcs[chain0_id].info2[link0_id].is_collision = true;
+      g_main->gcs[chain1_id].info2[link1_id].is_collision = true;
+      rkCDPair* cp_new = zAlloc( rkCDPair, 1 );
+      zCopy( rkCDPairDat, &cp->data, &cp_new->data );
+      zQueueEnqueue( &g_main->cplist, cp_new );
       debug_printf("Collision is %s : chain[%d] %s link[%d] %s %s : chain[%d] %s link[%d] %s %s\n",
         zBoolStr(cp->data.is_col),
-        cdcell0->data.chain_id,
+        chain0_id,
           zName(cp->data.cell[0]->data.chain),
-          cdcell0->data.link_id,
+          link0_id,
           zName(cp->data.cell[0]->data.link), zName(cp->data.cell[0]->data.shape),
-        cdcell1->data.chain_id,
+        chain1_id,
           zName(cp->data.cell[1]->data.chain),
-          cdcell1->data.link_id,
+          link1_id,
           zName(cp->data.cell[1]->data.link), zName(cp->data.cell[1]->data.shape) );
       is_collision = true;
     }
@@ -877,6 +882,8 @@ void update_alljoint_by_IK_with_frame(int drag_chain_id, int drag_link_id, zVec 
   /* printf("pre IK Joint[deg]  = "); zVecPrint(zVecMulDRC(zVecClone(dis),180.0/zPI)); */
   int iter = 100;
   double ztol = zTOL;
+  /* keep joint angles before step */
+  rkChainGetJointDisAll( &g_main->gcs[drag_chain_id].chain, g_main->gcs[drag_chain_id].pre_q );
   /* backup in case the result of rkChainIK() is NaN */
   rkChain clone_chain;
   rkChainClone( &g_main->gcs[drag_chain_id].chain, &clone_chain );
@@ -895,11 +902,6 @@ void update_alljoint_by_IK_with_frame(int drag_chain_id, int drag_link_id, zVec 
       rkChainCopyState( &clone_chain, &g_main->gcs[drag_chain_id].chain );
     }
     register_one_link_for_IK( drag_chain_id, drag_link_id, true );
-
-    /* keep FrameHandle position */
-    if( rkglFrameHandleIsInRotation( &g_main->fh ) )
-      zFrame3DCopy( rkChainLinkWldFrame( &g_main->gcs[drag_chain_id].chain, drag_link_id ), &g_main->fh.frame );
-    zXform3D( rkChainLinkWldFrame( &g_main->gcs[drag_chain_id].chain, drag_link_id ), &g_main->selected.ap, zFrame3DPos( &g_main->fh.frame ) );
   }
   /* printf("post IK Joint[deg] = "); zVecPrint(zVecMulDRC(zVecClone(dis),180.0/zPI)); */
   zVecFree(dis);
@@ -1024,6 +1026,134 @@ void restore_original_chain_phantom(ghostInfo* backup_ghost_info)
       debug_printf("restore & register g_main->gcs[%d].info2[%d].pin = %d\n", chain_id, link_id, g_main->gcs[chain_id].info2[link_id].pinfo.pin);
     }
   }
+}
+
+void switch_collision_avoidance(bool is_ON)
+{
+  if( !is_ON ){
+    g_main->is_collision_avoidance = true;
+    printf("collision avoidance is ON\n");
+  } else {
+    g_main->is_collision_avoidance = false;
+    printf("collision avoidance is OFF\n");
+  }
+}
+
+typedef struct{
+  rkIKCell *cell_att[2];
+  rkIKCell *cell_pos[2];
+} cell6D;
+void resolve_collision()
+{
+  int i, selected_chain_id, selected_link_id, chain0_id, chain1_id, link0_id, link1_id;
+  rkChain *chain;
+  zVec q, pre_q;
+  rkCDPair* cp;
+  if( zListIsEmpty( &g_main->cplist ) )
+    return;
+  cell6D* cell_array = zAlloc( cell6D, zListSize(&g_main->cplist) );
+  /* A collision should always occur with the dragged link. Is this premise correct ? */
+  selected_chain_id = g_main->selected.chain_id;
+  selected_link_id = g_main->selected.link_id;
+  if( selected_chain_id < 0 )
+    return;
+  chain = &g_main->gcs[selected_chain_id].chain;
+  /* keep original collided joint angles q */
+  q = zVecAlloc( rkChainJointSize( chain ) ); /* collided q */
+  pre_q = g_main->gcs[selected_chain_id].pre_q;
+  rkChainGetJointDisAll( chain, q );
+  /* restore joint angles pre_q before collided */
+  rkChainSetJointDisAll( chain, pre_q );
+  rkChainUpdateFK( chain );
+  /* */
+  i=0;
+  zListForEachRew( &g_main->cplist, cp ){
+    chain0_id = get_chain_id( cp->data.cell[0]->data.chain );
+    chain1_id = get_chain_id( cp->data.cell[1]->data.chain );
+    link0_id  = get_link_id(  cp->data.cell[0]->data.chain, cp->data.cell[0]->data.link );
+    link1_id  = get_link_id(  cp->data.cell[1]->data.chain, cp->data.cell[1]->data.link );
+    if( chain0_id == selected_chain_id ||
+        chain1_id == selected_chain_id ){
+      if( chain0_id == chain1_id ){
+        /* self collsion */
+        /* lock */
+        rkIKAttr attr0, attr1;
+        attr0.id = link0_id;
+        cell_array[i].cell_att[0] = rkChainRegisterIKCellWldAtt( chain, NULL, 0, &attr0, RK_IK_ATTR_MASK_ID );
+        rkIKCellSetWeight( cell_array[i].cell_att[0], IK_PIN_WEIGHT, IK_PIN_WEIGHT, IK_PIN_WEIGHT );
+        cell_array[i].cell_pos[0] = rkChainRegisterIKCellWldPos( chain, NULL, 0, &attr0, RK_IK_ATTR_MASK_ID | RK_IK_ATTR_MASK_ATTENTION_POINT );
+        rkIKCellSetWeight( cell_array[i].cell_pos[0], IK_PIN_WEIGHT, IK_PIN_WEIGHT, IK_PIN_WEIGHT );
+        attr1.id = link1_id;
+        cell_array[i].cell_att[1] = rkChainRegisterIKCellWldAtt( chain, NULL, 0, &attr1, RK_IK_ATTR_MASK_ID );
+        rkIKCellSetWeight( cell_array[i].cell_att[1], IK_PIN_WEIGHT, IK_PIN_WEIGHT, IK_PIN_WEIGHT );
+        cell_array[i].cell_pos[1] = rkChainRegisterIKCellWldPos( chain, NULL, 0, &attr1, RK_IK_ATTR_MASK_ID | RK_IK_ATTR_MASK_ATTENTION_POINT );
+        rkIKCellSetWeight( cell_array[i].cell_pos[1], IK_PIN_WEIGHT, IK_PIN_WEIGHT, IK_PIN_WEIGHT );
+      } else{
+        /* with environment collision */
+        zVec3D moving_nearest_p0, env_nearest_p1;
+        rkCDCell *moving_cell, *env_cell;
+        int moving_link_id;
+        if( chain0_id == selected_chain_id ){
+          moving_cell    = cp->data.cell[0];
+          moving_link_id = link0_id;
+          env_cell       = cp->data.cell[1];
+        } else {
+          moving_cell    = cp->data.cell[1];
+          moving_link_id = link1_id;
+          env_cell       = cp->data.cell[0];
+        }
+        /* */
+        rkCDCellUpdatePH( moving_cell );
+        rkCDCellUpdatePH( env_cell );
+        zColChkPH3D( &moving_cell->data.ph, &env_cell->data.ph, &moving_nearest_p0, &env_nearest_p1 );
+        zVec3D p1_to_p0, wld_ap, link_ap;
+        zVec3DSub( &moving_nearest_p0, &env_nearest_p1, &p1_to_p0 );
+        double d = zVec3DNorm( &p1_to_p0 );
+        if( d > zTOL ){
+          zVec3DCat( &p1_to_p0, (( 1.5 * zTOL ) / d), &env_nearest_p1, &wld_ap );
+          zXform3DInv( rkChainLinkWldFrame( chain, moving_link_id ), &wld_ap, &link_ap );
+        }
+        /* lock */
+        rkIKAttr attr;
+        attr.id = moving_link_id;
+        cell_array[i].cell_att[0] = rkChainRegisterIKCellWldAtt( chain, NULL, 0, &attr, RK_IK_ATTR_MASK_ID );
+        rkIKCellSetWeight( cell_array[i].cell_att[0], IK_PIN_WEIGHT, IK_PIN_WEIGHT, IK_PIN_WEIGHT );
+        cell_array[i].cell_pos[0] = rkChainRegisterIKCellWldPos( chain, NULL, 0, &attr, RK_IK_ATTR_MASK_ID | RK_IK_ATTR_MASK_ATTENTION_POINT );
+        rkIKCellSetWeight( cell_array[i].cell_pos[0], IK_PIN_WEIGHT, IK_PIN_WEIGHT, IK_PIN_WEIGHT );
+        zVec3DCopy( &link_ap, rkIKCellAttentionPoint( cell_array[i].cell_pos[0] ) );
+      }
+    } else {
+      ZRUNERROR("A collision occurred between links that were not dragged chain ! (chain_id=%d, link_id=%d) & (chain_id=%d, link_id=%d). Could this really happen?\n", chain0_id, link0_id, chain1_id, link1_id );
+    }
+    i++;
+  } /* end of zListForEachRew( &g_main->cplist, cp ) */
+  /* IK */
+  update_alljoint_by_IK_with_frame( selected_chain_id, selected_link_id, q, &g_main->fh.frame );
+  /* */
+  i=0;
+  zListForEachRew( &g_main->cplist, cp ){
+    chain0_id = get_chain_id( cp->data.cell[0]->data.chain );
+    chain1_id = get_chain_id( cp->data.cell[1]->data.chain );
+    if( chain0_id == selected_chain_id ||
+        chain1_id == selected_chain_id ){
+      if( chain0_id == chain1_id ){
+        /* self collsion */
+        /* unlock */
+        rkChainUnregisterAndDestroyIKCell( chain, cell_array[i].cell_att[0] );
+        rkChainUnregisterAndDestroyIKCell( chain, cell_array[i].cell_pos[0] );
+        rkChainUnregisterAndDestroyIKCell( chain, cell_array[i].cell_att[1] );
+        rkChainUnregisterAndDestroyIKCell( chain, cell_array[i].cell_pos[1] );
+      } else{
+        /* with environment collision */
+        /* unlock */
+        rkChainUnregisterAndDestroyIKCell( chain, cell_array[i].cell_att[0] );
+        rkChainUnregisterAndDestroyIKCell( chain, cell_array[i].cell_pos[0] );
+      }
+    }
+    g_main->gcs[chain0_id].info2[link0_id].is_collision = false;
+    g_main->gcs[chain1_id].info2[link1_id].is_collision = false;
+    i++;
+  } /* end of zListForEachRew( &g_main->cplist, cp ) */
 }
 
 void update_alljoint_by_IK_with_ghost()
@@ -1200,6 +1330,7 @@ bool create_empty_pindragIFData(void** src)
   }
   (*main_ptr)->modelfiles = NULL;
   (*main_ptr)->is_visible = true;
+  (*main_ptr)->is_collision_avoidance = false;
 
   return true;
 }
@@ -1222,6 +1353,7 @@ void destroy_pindragIFData(void* src)
   for( i=0; i < main_ptr->chainNUM; i++ ){
     rkglChainUnload_for_rkglChainBlock( &main_ptr->gcs[i] );
     rkChainDestroy( &main_ptr->gcs[i].chain );
+    zListDestroy( rkCDPair, &g_main->cplist );
     rkCDDestroy( &main_ptr->cd );
     delete_original_chain_phantom( &main_ptr->ghost_info );
   }
@@ -1246,6 +1378,15 @@ void motion(GLFWwindow* window, double x, double y)
     update_alljoint_by_IK_with_frame( g_main->selected.chain_id, g_main->selected.link_id, NULL, &g_main->fh.frame );
     /* Collision Detection */
     g_main->is_sum_collision = is_collision_detected();
+
+    if( g_main->is_collision_avoidance )
+      resolve_collision();
+
+    /* keep FrameHandle position of the link's AP relative to the world frame */
+    if( rkglFrameHandleIsInRotation( &g_main->fh ) )
+      zFrame3DCopy( rkChainLinkWldFrame( &g_main->gcs[g_main->selected.chain_id].chain, g_main->selected.link_id ), &g_main->fh.frame );
+    zXform3D( rkChainLinkWldFrame( &g_main->gcs[g_main->selected.chain_id].chain, g_main->selected.link_id ), &g_main->selected.ap, zFrame3DPos( &g_main->fh.frame ) );
+
   } else{
     rkglMouseDragFuncGLFW( window, x, y );
   }
@@ -1365,6 +1506,9 @@ void keyboard(GLFWwindow* window, unsigned int key)
     }
     break;
   case 'h': move_link(-zDeg2Rad(5) ); break;
+  case 'c':
+    switch_collision_avoidance( g_main->is_collision_avoidance );
+    break;
   case 'q': case 'Q': case '\033':
     g_is_exit = true;
   default: ;
@@ -1524,13 +1668,16 @@ bool init(void)
     /* AP */
     create_chain_ap_displaylist( chain_id );
 
+    /* joint angles before step */
+    g_main->gcs[chain_id].pre_q = zVecAlloc( rkChainJointSize( &g_main->gcs[chain_id].chain ) );
+
     /* IK */
     rkChainCreateIK( &g_main->gcs[chain_id].chain );
     rkChainRegisterIKJointAll( &g_main->gcs[chain_id].chain, IK_DRAG_WEIGHT );
   } /* end of for i : 0 -> g_main->chainNUM */
 
   /* Collision Detection */
-  zListInit( &g_main->cdlist );
+  zListInit( &g_main->cplist );
   rkCDCreate( &g_main->cd );
   register_chain_for_CD( g_main->gcs );
 
