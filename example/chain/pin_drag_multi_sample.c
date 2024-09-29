@@ -1154,6 +1154,7 @@ void resolve_collision()
     g_main->gcs[chain1_id].info2[link1_id].is_collision = false;
     i++;
   } /* end of zListForEachRew( &g_main->cplist, cp ) */
+  zFree( cell_array );
 }
 
 void update_alljoint_by_IK_with_ghost()
