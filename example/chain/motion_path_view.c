@@ -1095,8 +1095,10 @@ void unregister_cell_in_one_pin_link_for_IK(rkChain* chain, const int path_id, c
 
   linkPinPathIKInfo* link_pin_path_ik_info = &g_main->p2p_array.buf[path_id].all_link_pin_path_ik_info.buf[link_id];
   for( cell_id=0; cell_id < link_pin_path_ik_info->cell_size; cell_id++ )
-    if( link_pin_path_ik_info->c[cell_id].is_constrained )
+    if( link_pin_path_ik_info->c[cell_id].is_constrained ){
       rkChainUnregisterAndDestroyIKCell( chain, link_pin_path_ik_info->c[cell_id].cell );
+      link_pin_path_ik_info->c[cell_id].cell = NULL;
+    }
 }
 
 void register_all_pin_links_for_IK(rkChain* chain, const double s, const int path_id)
@@ -1219,6 +1221,12 @@ bool pop_pose(const double s, rkChain* chain, p2pPathArray *p2p_array)
     return false;
   }
   printf("s = %f / %f \n", s, g_main->p2p_array.buf[path_size-1].goal_feedrate.s);
+  const double range_s = p2p_buf->goal_feedrate.s - p2p_buf->start_feedrate.s;
+  if( range_s < DBL_MIN ){
+    ZRUNERROR("range_s = %f is too short!!", range_s);
+    return false;
+  }
+
   const double pexIP_s = s - p2p_buf->start_feedrate.s;
   zVec qref = pop_qref( pexIP_s, &p2p_buf->qref_path );
   /* In IK, if no path free joints, but solved as qref */
@@ -1237,7 +1245,6 @@ bool pop_pose(const double s, rkChain* chain, p2pPathArray *p2p_array)
   int ik_id;
   refPath* ref_path; /* for omission */
   zVec3D ref_pos;
-  const double range_s = p2p_buf->goal_feedrate.s - p2p_buf->start_feedrate.s;
   for( ik_id=0; ik_id < p2p_buf->ik_num; ik_id++ ){
     ref_path = &p2p_buf->ref_path_array.buf[ik_id];
     if( g_ik_reg_cls->pos( ref_path->ik_reg ) ){
@@ -1280,9 +1287,11 @@ double run_test(void)
   interpolate_path();
 
   const char dump_filename[] = "motion_path_view.dat";
-  dump_interpolated_path( dump_filename );
 
-  pop_pose( g_main->feedrate_s, &g_main->chain, &g_main->p2p_array );
+  if( !pop_pose( g_main->feedrate_s, &g_main->chain, &g_main->p2p_array ) )
+    return -1.0;
+
+  dump_interpolated_path( dump_filename );
 
   int path_size = zArraySize( &g_main->p2p_array );
   double end_s = g_main->p2p_array.buf[path_size-1].goal_feedrate.s;
