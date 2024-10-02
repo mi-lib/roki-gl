@@ -737,10 +737,14 @@ void register_one_link_for_IK(int chain_id, int link_id, bool is_drag_link)
 void unregister_one_link_for_IK(int chain_id, int link_id, bool is_drag_link)
 {
   pinInfo* pinfo = &g_main->gcs[chain_id].info2[link_id].pinfo;
-  if( is_drag_link || pinfo->pin == PIN_LOCK_6D )
+  if( is_drag_link || pinfo->pin == PIN_LOCK_6D ){
     rkChainUnregisterAndDestroyIKCell( &g_main->gcs[chain_id].chain, g_main->gcs[chain_id].info2[link_id].cell[0] );
-  if( is_drag_link || pinfo->pin == PIN_LOCK_POS3D || pinfo->pin == PIN_LOCK_6D )
+    g_main->gcs[chain_id].info2[link_id].cell[0] = NULL;
+  }
+  if( is_drag_link || pinfo->pin == PIN_LOCK_POS3D || pinfo->pin == PIN_LOCK_6D ){
     rkChainUnregisterAndDestroyIKCell( &g_main->gcs[chain_id].chain, g_main->gcs[chain_id].info2[link_id].cell[1] );
+    g_main->gcs[chain_id].info2[link_id].cell[1] = NULL;
+  }
 }
 
 void register_ap_in_one_link_for_IK(int chain_id, int link_id)
@@ -762,6 +766,7 @@ void unregister_ap_in_one_link_for_IK(int chain_id, int link_id)
   pinInfo* pinfo = &g_main->gcs[chain_id].info2[link_id].pinfo;
   for( ap_id = 0; ap_id < pinfo->ap_cnt; ap_id++ ){
     rkChainUnregisterAndDestroyIKCell( &g_main->gcs[chain_id].chain, pinfo->ap_cell[ap_id] );
+    pinfo->ap_cell[ap_id] = NULL;
   }
 }
 
