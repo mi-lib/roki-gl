@@ -1045,7 +1045,7 @@ typedef struct{
 } cell6D;
 void resolve_collision()
 {
-  int i, selected_chain_id, selected_link_id, chain0_id, chain1_id, link0_id, link1_id;
+  int i, j, selected_chain_id, selected_link_id, chain0_id, chain1_id, link0_id, link1_id;
   rkChain *chain;
   zVec q, pre_q;
   rkCDPair* cp;
@@ -1068,6 +1068,10 @@ void resolve_collision()
   /* */
   i=0;
   zListForEachRew( &g_main->cplist, cp ){
+    cell_array[i].cell_att[0] = NULL;
+    cell_array[i].cell_att[1] = NULL;
+    cell_array[i].cell_pos[0] = NULL;
+    cell_array[i].cell_pos[1] = NULL;
     chain0_id = get_chain_id( cp->data.cell[0]->data.chain );
     chain1_id = get_chain_id( cp->data.cell[1]->data.chain );
     link0_id  = get_link_id(  cp->data.cell[0]->data.chain, cp->data.cell[0]->data.link );
@@ -1103,16 +1107,17 @@ void resolve_collision()
           env_cell       = cp->data.cell[0];
         }
         /* */
-        rkCDCellUpdatePH( moving_cell );
-        rkCDCellUpdatePH( env_cell );
+        zPH3DXform( zShape3DPH(moving_cell->data.shape), rkLinkWldFrame(moving_cell->data.link), &moving_cell->data.ph );
+        zPH3DXform( zShape3DPH(env_cell->data.shape), rkLinkWldFrame(env_cell->data.link), &env_cell->data.ph );
         zColChkPH3D( &moving_cell->data.ph, &env_cell->data.ph, &moving_nearest_p0, &env_nearest_p1 );
         zVec3D p1_to_p0, wld_ap, link_ap;
+        zXform3DInv( rkChainLinkWldFrame( chain, moving_link_id ), &moving_nearest_p0, &link_ap );
         zVec3DSub( &moving_nearest_p0, &env_nearest_p1, &p1_to_p0 );
         double d = zVec3DNorm( &p1_to_p0 );
-        if( d > zTOL ){
+        if( d > zTOL )
           zVec3DCat( &p1_to_p0, (( 1.5 * zTOL ) / d), &env_nearest_p1, &wld_ap );
-          zXform3DInv( rkChainLinkWldFrame( chain, moving_link_id ), &wld_ap, &link_ap );
-        }
+        else
+          zVec3DCopy( &env_nearest_p1, &wld_ap );
         /* lock */
         rkIKAttr attr;
         attr.id = moving_link_id;
@@ -1120,6 +1125,7 @@ void resolve_collision()
         rkIKCellSetWeight( cell_array[i].cell_att[0], IK_PIN_WEIGHT, IK_PIN_WEIGHT, IK_PIN_WEIGHT );
         cell_array[i].cell_pos[0] = rkChainRegisterIKCellWldPos( chain, NULL, 0, &attr, RK_IK_ATTR_MASK_ID | RK_IK_ATTR_MASK_ATTENTION_POINT );
         rkIKCellSetWeight( cell_array[i].cell_pos[0], IK_PIN_WEIGHT, IK_PIN_WEIGHT, IK_PIN_WEIGHT );
+        rkIKCellSetRefVec( cell_array[i].cell_pos[0], &wld_ap );
         zVec3DCopy( &link_ap, rkIKCellAttentionPoint( cell_array[i].cell_pos[0] ) );
       }
     } else {
@@ -1127,33 +1133,19 @@ void resolve_collision()
     }
     i++;
   } /* end of zListForEachRew( &g_main->cplist, cp ) */
+
   /* IK */
   update_alljoint_by_IK_with_frame( selected_chain_id, selected_link_id, q, &g_main->fh.frame );
-  /* */
-  i=0;
-  zListForEachRew( &g_main->cplist, cp ){
-    chain0_id = get_chain_id( cp->data.cell[0]->data.chain );
-    chain1_id = get_chain_id( cp->data.cell[1]->data.chain );
-    if( chain0_id == selected_chain_id ||
-        chain1_id == selected_chain_id ){
-      if( chain0_id == chain1_id ){
-        /* self collsion */
-        /* unlock */
-        rkChainUnregisterAndDestroyIKCell( chain, cell_array[i].cell_att[0] );
-        rkChainUnregisterAndDestroyIKCell( chain, cell_array[i].cell_pos[0] );
-        rkChainUnregisterAndDestroyIKCell( chain, cell_array[i].cell_att[1] );
-        rkChainUnregisterAndDestroyIKCell( chain, cell_array[i].cell_pos[1] );
-      } else{
-        /* with environment collision */
-        /* unlock */
-        rkChainUnregisterAndDestroyIKCell( chain, cell_array[i].cell_att[0] );
-        rkChainUnregisterAndDestroyIKCell( chain, cell_array[i].cell_pos[0] );
-      }
-    }
-    g_main->gcs[chain0_id].info2[link0_id].is_collision = false;
-    g_main->gcs[chain1_id].info2[link1_id].is_collision = false;
-    i++;
-  } /* end of zListForEachRew( &g_main->cplist, cp ) */
+
+  /* unlock */
+  for( i=0; i < zListSize(&g_main->cplist); i++){
+    for( j=0; j < 2; j++ ){
+      if( cell_array[i].cell_att[j] != NULL )
+        rkChainUnregisterAndDestroyIKCell( chain, cell_array[i].cell_att[j] );
+      if( cell_array[i].cell_pos[j] != NULL )
+        rkChainUnregisterAndDestroyIKCell( chain, cell_array[i].cell_pos[j] );
+    }/* end of for j=0->2(pair size) */
+  } /* end of for i=0->size of cell_array */
   zFree( cell_array );
 }
 
