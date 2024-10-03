@@ -1050,6 +1050,7 @@ typedef struct{
 } cell6D;
 void resolve_collision()
 {
+  bool is_selected_link_collision = false;
   int i, j, selected_chain_id, selected_link_id, chain0_id, chain1_id, link0_id, link1_id;
   rkChain *chain;
   zVec q, pre_q;
@@ -1083,6 +1084,10 @@ void resolve_collision()
     link1_id  = get_link_id(  cp->data.cell[1]->data.chain, cp->data.cell[1]->data.link );
     if( chain0_id == selected_chain_id ||
         chain1_id == selected_chain_id ){
+      /* check drag link collision */
+      if( (chain0_id == selected_chain_id && link0_id == selected_link_id) ||
+          (chain1_id == selected_chain_id && link1_id == selected_link_id) )
+        is_selected_link_collision = true;
       if( chain0_id == chain1_id ){
         /* self collsion */
         /* lock */
@@ -1120,7 +1125,7 @@ void resolve_collision()
         zVec3DSub( &moving_nearest_p0, &env_nearest_p1, &p1_to_p0 );
         double d = zVec3DNorm( &p1_to_p0 );
         if( d > zTOL )
-          zVec3DCat( &p1_to_p0, (( 1.5 * zTOL ) / d), &env_nearest_p1, &wld_ap );
+          zVec3DCat( &env_nearest_p1, (( 1.5 * zTOL ) / d), &p1_to_p0, &wld_ap );
         else
           zVec3DCopy( &env_nearest_p1, &wld_ap );
         /* lock */
@@ -1140,7 +1145,10 @@ void resolve_collision()
   } /* end of zListForEachRew( &g_main->cplist, cp ) */
 
   /* IK */
-  update_alljoint_by_IK_with_frame( selected_chain_id, selected_link_id, q, &g_main->fh.frame );
+  if( is_selected_link_collision )
+    update_alljoint_by_IK_with_frame( selected_chain_id, selected_link_id, q, NULL );
+  else
+    update_alljoint_by_IK_with_frame( selected_chain_id, selected_link_id, q, &g_main->fh.frame );
 
   /* unlock */
   for( i=0; i < zListSize(&g_main->cplist); i++){
