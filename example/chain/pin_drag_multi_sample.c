@@ -1066,9 +1066,9 @@ void resolve_collision()
   chain = &g_main->gcs[selected_chain_id].chain;
   /* keep original collided joint angles q */
   q = zVecAlloc( rkChainJointSize( chain ) ); /* collided q */
-  pre_q = g_main->gcs[selected_chain_id].pre_q;
   rkChainGetJointDisAll( chain, q );
   /* restore joint angles pre_q before collided */
+  pre_q = g_main->gcs[selected_chain_id].pre_q;
   rkChainSetJointDisAll( chain, pre_q );
   rkChainUpdateFK( chain );
   /* */
@@ -1146,9 +1146,9 @@ void resolve_collision()
 
   /* IK */
   if( is_selected_link_collision )
-    update_alljoint_by_IK_with_frame( selected_chain_id, selected_link_id, q, NULL );
+    update_alljoint_by_IK_with_frame( selected_chain_id, -1, pre_q, NULL );
   else
-    update_alljoint_by_IK_with_frame( selected_chain_id, selected_link_id, q, &g_main->fh.frame );
+    update_alljoint_by_IK_with_frame( selected_chain_id, selected_link_id, pre_q, &g_main->fh.frame );
 
   /* unlock */
   for( i=0; i < zListSize(&g_main->cplist); i++){
