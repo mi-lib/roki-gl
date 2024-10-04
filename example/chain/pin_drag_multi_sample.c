@@ -1044,11 +1044,16 @@ void switch_collision_avoidance(bool is_ON)
   }
 }
 
+bool is_collision_avoidance(void)
+{
+  return g_main->is_collision_avoidance;
+}
+
 typedef struct{
   rkIKCell *cell_att[2];
   rkIKCell *cell_pos[2];
 } cell6D;
-void resolve_collision()
+void resolve_collision(void)
 {
   bool is_selected_link_collision = false;
   int i, j, selected_chain_id, selected_link_id, chain0_id, chain1_id, link0_id, link1_id;
@@ -1088,9 +1093,10 @@ void resolve_collision()
       if( (chain0_id == selected_chain_id && link0_id == selected_link_id) ||
           (chain1_id == selected_chain_id && link1_id == selected_link_id) )
         is_selected_link_collision = true;
+      /* */
       if( chain0_id == chain1_id ){
         /* self collsion */
-        /* lock */
+        /* lock link 6D pose at previous motion() event */
         rkIKAttr attr0, attr1;
         attr0.id = link0_id;
         cell_array[i].cell_att[0] = rkChainRegisterIKCellWldAtt( chain, NULL, 0, &attr0, RK_IK_ATTR_MASK_ID );
@@ -1116,19 +1122,21 @@ void resolve_collision()
           moving_link_id = link1_id;
           env_cell       = cp->data.cell[0];
         }
-        /* */
+        /* calculate nearest points on both of moving link and environment at previous motion() event */
         zPH3DXform( zShape3DPH(moving_cell->data.shape), rkLinkWldFrame(moving_cell->data.link), &moving_cell->data.ph );
         zPH3DXform( zShape3DPH(env_cell->data.shape), rkLinkWldFrame(env_cell->data.link), &env_cell->data.ph );
         zColChkPH3D( &moving_cell->data.ph, &env_cell->data.ph, &moving_nearest_p0, &env_nearest_p1 );
         zVec3D p1_to_p0, wld_ap, link_ap;
+        /* link_ap is the attention point on moving_link frame from the nearest point of moving_link (moving_nearest_p0). */
+        /* wld_ap is the avoided position of moving_link on world frame. */
         zXform3DInv( rkChainLinkWldFrame( chain, moving_link_id ), &moving_nearest_p0, &link_ap );
         zVec3DSub( &moving_nearest_p0, &env_nearest_p1, &p1_to_p0 );
         double d = zVec3DNorm( &p1_to_p0 );
         if( d > zTOL )
-          zVec3DCat( &env_nearest_p1, (( 1.5 * zTOL ) / d), &p1_to_p0, &wld_ap );
+          zVec3DCat( &env_nearest_p1, (( 2.5 * zTOL ) / d), &p1_to_p0, &wld_ap );
         else
           zVec3DCopy( &env_nearest_p1, &wld_ap );
-        /* lock */
+        /* lock at wld_ap */
         rkIKAttr attr;
         attr.id = moving_link_id;
         cell_array[i].cell_att[0] = rkChainRegisterIKCellWldAtt( chain, NULL, 0, &attr, RK_IK_ATTR_MASK_ID );
@@ -1139,7 +1147,7 @@ void resolve_collision()
         zVec3DCopy( &link_ap, rkIKCellAttentionPoint( cell_array[i].cell_pos[0] ) );
       }
     } else {
-      ZRUNERROR("A collision occurred between links that were not dragged chain ! (chain_id=%d, link_id=%d) & (chain_id=%d, link_id=%d). Could this really happen?\n", chain0_id, link0_id, chain1_id, link1_id );
+      ZRUNERROR("A collision has occurred between links that were not dragged chain ! (chain_id=%d, link_id=%d) & (chain_id=%d, link_id=%d). This should not occur,\n", chain0_id, link0_id, chain1_id, link1_id );
     }
     i++;
   } /* end of zListForEachRew( &g_main->cplist, cp ) */
@@ -1745,6 +1753,8 @@ int main(int argc, char *argv[])
     display(g_window);
     glfwPollEvents();
     glfwSwapBuffers( g_window );
+    /* for monitoring stdout & stderr */
+    fflush(stdout); fflush(stderr);
   }
 
   destroy_pindragIFData( g_main );
