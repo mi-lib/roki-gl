@@ -699,7 +699,7 @@ void register_att_link(int chain_id, int link_id, double weight)
 {
   rkIKAttr attr;
   attr.id = link_id;
-  g_main->gcs[chain_id].info2[link_id].cell[0] = rkChainRegisterIKCellWldAtt( &g_main->gcs[chain_id].chain, NULL, 0, &attr, RK_IK_ATTR_MASK_ID );
+  g_main->gcs[chain_id].info2[link_id].cell[0] = rkChainRegisterIKCellWldAtt( &g_main->gcs[chain_id].chain, NULL, 1, &attr, RK_IK_ATTR_MASK_ID );
   rkIKCellSetWeight( g_main->gcs[chain_id].info2[link_id].cell[0], weight, weight, weight );
 }
 
@@ -707,7 +707,7 @@ void register_pos_link(int chain_id, int link_id, double weight)
 {
   rkIKAttr attr;
   attr.id = link_id;
-  g_main->gcs[chain_id].info2[link_id].cell[1] = rkChainRegisterIKCellWldPos( &g_main->gcs[chain_id].chain, NULL, 0, &attr, RK_IK_ATTR_MASK_ID | RK_IK_ATTR_MASK_ATTENTION_POINT );
+  g_main->gcs[chain_id].info2[link_id].cell[1] = rkChainRegisterIKCellWldPos( &g_main->gcs[chain_id].chain, NULL, 1, &attr, RK_IK_ATTR_MASK_ID | RK_IK_ATTR_MASK_ATTENTION_POINT );
   rkIKCellSetWeight( g_main->gcs[chain_id].info2[link_id].cell[1], weight, weight, weight );
   zVec3DCopy( &g_main->selected.ap, rkIKCellAttentionPoint( g_main->gcs[chain_id].info2[link_id].cell[1] ) );
 }
@@ -754,7 +754,7 @@ void register_ap_in_one_link_for_IK(int chain_id, int link_id)
   for( ap_id=0; ap_id < pinfo->ap_cnt; ap_id++ ){
     rkIKAttr ap_attr;
     ap_attr.id = link_id;
-    pinfo->ap_cell[ap_id] = rkChainRegisterIKCellWldPos( &g_main->gcs[chain_id].chain, NULL, 0, &ap_attr, RK_IK_ATTR_MASK_ID | RK_IK_ATTR_MASK_ATTENTION_POINT );
+    pinfo->ap_cell[ap_id] = rkChainRegisterIKCellWldPos( &g_main->gcs[chain_id].chain, NULL, 1, &ap_attr, RK_IK_ATTR_MASK_ID | RK_IK_ATTR_MASK_ATTENTION_POINT );
     rkIKCellSetWeight( pinfo->ap_cell[ap_id], IK_PIN_WEIGHT, IK_PIN_WEIGHT, IK_PIN_WEIGHT );
     zVec3DCopy( &pinfo->ap[ap_id], rkIKCellAttentionPoint( pinfo->ap_cell[ap_id] ) );
   }
@@ -1099,14 +1099,16 @@ void resolve_collision(void)
         /* lock link 6D pose at previous motion() event */
         rkIKAttr attr0, attr1;
         attr0.id = link0_id;
-        cell_array[i].cell_att[0] = rkChainRegisterIKCellWldAtt( chain, NULL, 0, &attr0, RK_IK_ATTR_MASK_ID );
+        attr0.id_sub = link1_id;
+        cell_array[i].cell_att[0] = rkChainRegisterIKCellL2LAtt( chain, NULL, 0, &attr0, RK_IK_ATTR_MASK_ID | RK_IK_ATTR_MASK_ID_SUB );
         rkIKCellSetWeight( cell_array[i].cell_att[0], IK_PIN_WEIGHT, IK_PIN_WEIGHT, IK_PIN_WEIGHT );
-        cell_array[i].cell_pos[0] = rkChainRegisterIKCellWldPos( chain, NULL, 0, &attr0, RK_IK_ATTR_MASK_ID | RK_IK_ATTR_MASK_ATTENTION_POINT );
+        cell_array[i].cell_pos[0] = rkChainRegisterIKCellL2LPos( chain, NULL, 0, &attr0, RK_IK_ATTR_MASK_ID | RK_IK_ATTR_MASK_ID_SUB | RK_IK_ATTR_MASK_ATTENTION_POINT );
         rkIKCellSetWeight( cell_array[i].cell_pos[0], IK_PIN_WEIGHT, IK_PIN_WEIGHT, IK_PIN_WEIGHT );
         attr1.id = link1_id;
-        cell_array[i].cell_att[1] = rkChainRegisterIKCellWldAtt( chain, NULL, 0, &attr1, RK_IK_ATTR_MASK_ID );
+        attr1.id_sub = link0_id;
+        cell_array[i].cell_att[1] = rkChainRegisterIKCellL2LAtt( chain, NULL, 0, &attr1, RK_IK_ATTR_MASK_ID | RK_IK_ATTR_MASK_ID_SUB );
         rkIKCellSetWeight( cell_array[i].cell_att[1], IK_PIN_WEIGHT, IK_PIN_WEIGHT, IK_PIN_WEIGHT );
-        cell_array[i].cell_pos[1] = rkChainRegisterIKCellWldPos( chain, NULL, 0, &attr1, RK_IK_ATTR_MASK_ID | RK_IK_ATTR_MASK_ATTENTION_POINT );
+        cell_array[i].cell_pos[1] = rkChainRegisterIKCellL2LPos( chain, NULL, 0, &attr1, RK_IK_ATTR_MASK_ID | RK_IK_ATTR_MASK_ID_SUB | RK_IK_ATTR_MASK_ATTENTION_POINT );
         rkIKCellSetWeight( cell_array[i].cell_pos[1], IK_PIN_WEIGHT, IK_PIN_WEIGHT, IK_PIN_WEIGHT );
       } else{
         /* with environment collision */
