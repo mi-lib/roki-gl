@@ -937,130 +937,6 @@ bool interpolate_path()
 /* end interpolate path ----------------------------------------------------------------- */
 
 
-/* print path --------------------------------------------------------------------------- */
-
-void print_header_label_feedrate(FILE *fp, const double end_s)
-{
-  fprintf( fp, "#No. s(0.0-%f) ", end_s );
-}
-
-void print_header_label_of_qref_path(FILE *fp, const int joint_size)
-{
-  int jid;
-
-  for( jid=0; jid < joint_size; jid++ )
-    fprintf( fp, "qref[%d] ", jid );
-}
-
-void print_header_label_of_ik_weight_path(FILE *fp, const int all_link_size, const int cell_size)
-{
-  int link_id, cell_id;
-
-  for( link_id=0; link_id < all_link_size; link_id++ )
-    for( cell_id=0; cell_id<cell_size; cell_id++)
-      fprintf( fp, "weight[%d][%d] ", link_id, cell_id);
-}
-
-void print_headr_label_of_ik_nurbs_path(FILE *fp, const int cell_size)
-{
-  int cell_id;
-
-  for( cell_id=0; cell_id<cell_size; cell_id++)
-    fprintf( fp, "cell[%d].x cell[%d].y cell[%d].z ", cell_id, cell_id, cell_id );
-}
-
-void print_interpolated_qref_path(FILE *fp, const double s, zPexIPArray* qref_path)
-{
-  int jid;
-
-  for( jid=0; jid < zArraySize( qref_path ); jid++ )
-    fprintf( fp, "%.10f ", zPexIPVal( &qref_path->buf[jid], s ) );
-}
-
-void print_interpolated_ik_weight_path(FILE *fp, const double s, zPexIP *weight_path)
-{
-  fprintf( fp, "%.10f ", zPexIPVal( weight_path, s ) );
-}
-
-void print_interpolated_nurbs_path_3d_position(FILE *fp, const double s, zNURBS3D *nurbs, bool is_path)
-{
-  zVec3D v;
-
-  if( is_path ){
-    zNURBS3D1Vec( nurbs, s, &v );
-    fprintf( fp, "%.10f %.10f %.10f ", v.c.x, v.c.y, v.c.z );
-  }
-  else
-    fprintf( fp, "0.0 0.0 0.0 " ); /* fprintf( fp, "NaN NaN NaN " ); */
-}
-
-void print_interpolated_path(FILE *fp, rkChain* chain, p2pPathArray *p2p_array, const int s_slice_num)
-{
-  bool is_find;
-  int path_id, link_id, cell_id, ik_id;
-  int sid;
-  double s, pexIP_s, range_s, end_s;
-
-  const int joint_size = zArraySize( &p2p_array->buf[0].qref_path );
-  const int all_link_size = p2p_array->buf[0].all_link_size;
-  const int cell_size = p2p_array->buf[0].all_link_pin_path_ik_info.buf[0].cell_size;
-  const int path_size = zArraySize( p2p_array );
-
-  end_s = p2p_array->buf[path_size-1].goal_feedrate.s;
-
-  print_header_label_feedrate( fp, end_s );
-  print_header_label_of_qref_path( fp, joint_size );
-  print_header_label_of_ik_weight_path( fp, all_link_size, cell_size );
-  print_headr_label_of_ik_nurbs_path( fp, cell_size );
-  fprintf( fp, "\n" );
-
-  for( sid=0; sid < s_slice_num; sid++ ){
-    s = (double)(sid) * end_s / (double)(s_slice_num);
-    fprintf( fp, "%d %.10f ", sid, s );
-    p2pPathInfo* p2p_buf = NULL;
-    path_id = 0;
-    while( path_id < path_size ){
-      p2p_buf = &p2p_array->buf[path_id];
-      if( p2p_buf->start_feedrate.s <= s && s <= p2p_buf->goal_feedrate.s ){
-        is_find = true;
-        break;
-      }
-      path_id++;
-    }
-    if( !is_find ){
-      ZRUNERROR("Out of range feedrate s = %f which must be within %f <= s < %f.", s, p2p_array->buf[0].start_feedrate.s, p2p_buf->goal_feedrate.s);
-      return;
-    }
-    pexIP_s = s - p2p_buf->start_feedrate.s;
-    print_interpolated_qref_path( fp, pexIP_s, &p2p_buf->qref_path );
-    for( link_id=0; link_id < all_link_size; link_id++ ){
-      for( cell_id=0; cell_id < cell_size; cell_id++){
-        pinPathIKInfo* cell_info = &p2p_buf->all_link_pin_path_ik_info.buf[link_id].c[cell_id];
-        print_interpolated_ik_weight_path( fp, pexIP_s, &cell_info->weight_path );
-      }
-    }
-    range_s = p2p_buf->goal_feedrate.s - p2p_buf->start_feedrate.s;
-    for( ik_id=0; ik_id < p2p_buf->ik_num; ik_id++ ){
-      refPath* ref_path = &p2p_buf->ref_path_array.buf[ik_id]; /* for omission */
-      const bool is_path = true;
-      print_interpolated_nurbs_path_3d_position( fp, (pexIP_s/range_s), &ref_path->nurbs, is_path );
-    }
-    fprintf( fp, "\n" );
-  }
-}
-
-void dump_interpolated_path(const char* filename){
-  FILE *fp;
-
-  /* fp = stdout; */
-  fp = fopen( filename, "w" );
-  print_interpolated_path( fp, &g_main->chain, &g_main->p2p_array, SLICE_NUM);
-  fclose( fp );
-}
-
-/* end print path ------------------------------------------------------------------- */
-
-
 /* IK ------------------------------------------------------------------------------- */
 
 void register_cell_in_one_pin_link_for_IK(rkChain* chain, const double s,  const int path_id, const int link_id)
@@ -1095,10 +971,8 @@ void unregister_cell_in_one_pin_link_for_IK(rkChain* chain, const int path_id, c
 
   linkPinPathIKInfo* link_pin_path_ik_info = &g_main->p2p_array.buf[path_id].all_link_pin_path_ik_info.buf[link_id];
   for( cell_id=0; cell_id < link_pin_path_ik_info->cell_size; cell_id++ )
-    if( link_pin_path_ik_info->c[cell_id].is_constrained ){
+    if( link_pin_path_ik_info->c[cell_id].is_constrained )
       rkChainUnregisterAndDestroyIKCell( chain, link_pin_path_ik_info->c[cell_id].cell );
-      link_pin_path_ik_info->c[cell_id].cell = NULL;
-    }
 }
 
 void register_all_pin_links_for_IK(rkChain* chain, const double s, const int path_id)
@@ -1162,7 +1036,7 @@ void update_alljoint_by_IK(rkChain* chain, zVec init_joints, bool is_free_joints
       return;
   }
   /* IK */
-  printf("pre IK Joint[deg]  = "); zVecPrint(zVecMulDRC(zVecClone(init_joints),180.0/zPI));
+  /* printf("pre IK Joint[deg]  = "); zVecPrint(zVecMulDRC(zVecClone(init_joints),180.0/zPI)); */
   int iter = 100;
   double ztol = zTOL;
   /* backup in case the result of rkChainIK() is NaN */
@@ -1174,7 +1048,7 @@ void update_alljoint_by_IK(rkChain* chain, zVec init_joints, bool is_free_joints
     printf("the result of rkChainIK() is NaN\n");
     rkChainCopyState( &clone_chain, chain );
   }
-  printf("post IK Joint[deg] = "); zVecPrint(zVecMulDRC(zVecClone(dis),180.0/zPI));
+  /* printf("post IK Joint[deg] = "); zVecPrint(zVecMulDRC(zVecClone(dis),180.0/zPI)); */
   rkChainDestroy( &clone_chain );
   zVecFree(dis);
 }
@@ -1223,7 +1097,7 @@ bool pop_pose(const double s, rkChain* chain, p2pPathArray *p2p_array)
   printf("s = %f / %f \n", s, g_main->p2p_array.buf[path_size-1].goal_feedrate.s);
   const double range_s = p2p_buf->goal_feedrate.s - p2p_buf->start_feedrate.s;
   if( range_s < DBL_MIN ){
-    ZRUNERROR("range_s = %f is too short!!", range_s);
+    ZRUNERROR("range_s = %f is too shord!!", range_s);
     return false;
   }
 
@@ -1274,6 +1148,194 @@ bool pop_pose(const double s, rkChain* chain, p2pPathArray *p2p_array)
   return true;
 }
 
+/* print path --------------------------------------------------------------------------- */
+
+void print_header_label_feedrate(FILE *fp, const double end_s)
+{
+  fprintf( fp, "#No. s(0.0-%f) ", end_s );
+}
+
+void print_header_label_of_qref_path(FILE *fp, const int joint_size)
+{
+  int jid;
+
+  for( jid=0; jid < joint_size; jid++ )
+    fprintf( fp, "qref[%d] ", jid );
+}
+
+void print_header_label_of_ik_weight_path(FILE *fp, const int all_link_size, const int cell_size)
+{
+  int link_id, cell_id;
+
+  for( link_id=0; link_id < all_link_size; link_id++ )
+    for( cell_id=0; cell_id<cell_size; cell_id++)
+      fprintf( fp, "weight[%d][%d] ", link_id, cell_id);
+}
+
+void print_header_label_of_ik_nurbs_path(FILE *fp, const int cell_size)
+{
+  int cell_id;
+
+  for( cell_id=0; cell_id<cell_size; cell_id++)
+    fprintf( fp, "cell[%d].x cell[%d].y cell[%d].z ", cell_id, cell_id, cell_id );
+}
+
+void print_header_label_of_ik_result_q_path(FILE *fp, const int joint_size)
+{
+  int jid;
+
+  for( jid=0; jid < joint_size; jid++ )
+    fprintf( fp, "q[%d] ", jid );
+}
+
+void print_interpolated_qref_path(FILE *fp, const double s, zPexIPArray* qref_path, zVec* qref)
+{
+  int jid;
+
+  *qref = pop_qref( s, qref_path );
+  for( jid=0; jid < zVecSize( *qref ); jid++ )
+    fprintf( fp, "%.10f ", (*qref)->buf[jid] );
+}
+
+void print_interpolated_ik_weight_path(FILE *fp, const double s, zPexIP *weight_path)
+{
+  fprintf( fp, "%.10f ", zPexIPVal( weight_path, s ) );
+}
+
+void print_interpolated_nurbs_path_3d_position(FILE *fp, const double s, zNURBS3D *nurbs, bool is_path, zVec3D* out_pos)
+{
+  if( is_path ){
+    zNURBS3D1Vec( nurbs, s, out_pos );
+    fprintf( fp, "%.10f %.10f %.10f ", out_pos->c.x, out_pos->c.y, out_pos->c.z );
+  }
+  else
+    fprintf( fp, "0.0 0.0 0.0 " ); /* fprintf( fp, "NaN NaN NaN " ); */
+}
+
+void print_ik_result_q_path(FILE *fp, rkChain* chain, zVec tmp_q){
+  int i;
+  rkChainGetJointDisAll( chain, tmp_q );
+  for( i=0; i<zVecSizeNC(tmp_q); i++ )
+    fprintf( fp, "%.10f ", zVecElemNC(tmp_q,i) );
+}
+
+void print_interpolated_path(FILE *fp, rkChain* chain, p2pPathArray *p2p_array, const int s_slice_num)
+{
+  bool is_find;
+  int path_id, link_id, cell_id, ik_id;
+  int sid;
+  double s, pexIP_s, range_s, end_s;
+
+  const int joint_size = zArraySize( &p2p_array->buf[0].qref_path );
+  const int all_link_size = p2p_array->buf[0].all_link_size;
+  const int cell_size = p2p_array->buf[0].all_link_pin_path_ik_info.buf[0].cell_size;
+  const int path_size = zArraySize( p2p_array );
+
+  end_s = p2p_array->buf[path_size-1].goal_feedrate.s;
+
+  print_header_label_feedrate( fp, end_s );
+  print_header_label_of_qref_path( fp, joint_size );
+  print_header_label_of_ik_weight_path( fp, all_link_size, cell_size );
+  print_header_label_of_ik_result_q_path( fp, joint_size );
+  print_header_label_of_ik_nurbs_path( fp, cell_size );
+  fprintf( fp, "\n" );
+
+  zVec q_out = zVecAlloc( rkChainJointSize( chain ) );
+  for( sid=0; sid < s_slice_num; sid++ ){
+    s = (double)(sid) * end_s / (double)(s_slice_num);
+    fprintf( fp, "%d %.10f ", sid, s );
+    p2pPathInfo* p2p_buf = NULL;
+    path_id = 0;
+    while( path_id < path_size ){
+      p2p_buf = &p2p_array->buf[path_id];
+      if( p2p_buf->start_feedrate.s <= s && s <= p2p_buf->goal_feedrate.s ){
+        is_find = true;
+        break;
+      }
+      path_id++;
+    }
+    if( !is_find ){
+      ZRUNERROR("Out of range feedrate s = %f which must be within %f <= s < %f.", s, p2p_array->buf[0].start_feedrate.s, p2p_buf->goal_feedrate.s);
+      return;
+    }
+    pexIP_s = s - p2p_buf->start_feedrate.s;
+    zVec qref;
+    print_interpolated_qref_path( fp, pexIP_s, &p2p_buf->qref_path, &qref );
+
+    for( link_id=0; link_id < all_link_size; link_id++ ){
+      for( cell_id=0; cell_id < cell_size; cell_id++){
+        pinPathIKInfo* cell_info = &p2p_buf->all_link_pin_path_ik_info.buf[link_id].c[cell_id];
+        print_interpolated_ik_weight_path( fp, pexIP_s, &cell_info->weight_path );
+      }
+    }
+
+    /* register pin link (with weight path) for IK */
+    register_ref_path_in_one_path_for_IK( chain, path_id );
+    register_all_pin_links_for_IK( chain, pexIP_s, path_id );
+
+    rkChainBindIK( chain );
+
+    range_s = p2p_buf->goal_feedrate.s - p2p_buf->start_feedrate.s;
+    zVec3D ref_pos;
+    for( ik_id=0; ik_id < p2p_buf->ik_num; ik_id++ ){
+      refPath* ref_path = &p2p_buf->ref_path_array.buf[ik_id]; /* for omission */
+      if( g_ik_reg_cls->pos( ref_path->ik_reg ) ){
+        pop_nurbs_point( (pexIP_s / range_s),
+                         &ref_path->nurbs,
+                         &ref_pos );
+        set_one_target_reference_of_3D_translate_position_for_IK( path_id, ik_id, &ref_pos );
+        /* @TODO : translate velocity */
+        /* @TODO : translate accerlation */
+      }
+      /* @TODO : attitude */
+      /* set_one_target_reference_of_3D_attitude_position_for_IK( path_id, ik_id, &ref_att ); */
+      /* @TODO : attitude velocity */
+      /* @TODO : attitude accerlation */
+    }
+    /**/
+    /* IK */
+    bool is_free_joints_with_no_IK = ( p2p_buf->ik_num==0 ); /* no path = no IK target */
+    update_alljoint_by_IK( chain, qref, is_free_joints_with_no_IK );
+    zVecFree( qref );
+    print_ik_result_q_path( fp, chain, q_out );
+    /* print nurbs path if exsits */
+    for( ik_id=0; ik_id < p2p_buf->ik_num; ik_id++ ){
+      refPath* ref_path = &p2p_buf->ref_path_array.buf[ik_id]; /* for omission */
+      if( g_ik_reg_cls->pos( ref_path->ik_reg ) ){
+        const bool is_path = true;
+        print_interpolated_nurbs_path_3d_position( fp, (pexIP_s / range_s), &ref_path->nurbs, is_path, &ref_pos );
+      }
+    }
+    fprintf( fp, "\n" );
+
+    /* for next pop_pose() */
+    unregister_all_pin_links_for_IK(chain, path_id);
+    unregister_ref_path_in_one_path_for_IK(chain, path_id);
+
+  } /* end of for( sid=0; sid < s_slice_num; sid++ ) */
+}
+
+void dump_interpolated_path(const char* filename, const int _sliceNUM ){
+  FILE *fp;
+  int slice_num;
+
+  if( filename != NULL )
+    fp = fopen( filename, "w" );
+  else
+    fp = stdout;
+
+  if( _sliceNUM <= 0 )
+    slice_num = SLICE_NUM;
+  else
+    slice_num = _sliceNUM;
+
+  print_interpolated_path( fp, &g_main->chain, &g_main->p2p_array, slice_num );
+
+  if( filename != NULL )
+    fclose( fp );
+}
+
+/* end print path ------------------------------------------------------------------- */
 
 /* ---------------------------------------------------------------------------------- */
 
@@ -1286,12 +1348,11 @@ double run_test(void)
   /* interpolate path of weight & qref_& specific pin(NURBS) */
   interpolate_path();
 
-  const char dump_filename[] = "motion_path_view.dat";
-
   if( !pop_pose( g_main->feedrate_s, &g_main->chain, &g_main->p2p_array ) )
     return -1.0;
 
-  dump_interpolated_path( dump_filename );
+  const char dump_filename[] = "motion_path_view.dat";
+  dump_interpolated_path( dump_filename, SLICE_NUM );
 
   int path_size = zArraySize( &g_main->p2p_array );
   double end_s = g_main->p2p_array.buf[path_size-1].goal_feedrate.s;
@@ -1314,6 +1375,7 @@ void release_path(void)
   free_keyframe_array();
   free_p2p_array();
 }
+
 
 /******************************************************************************************/
 
