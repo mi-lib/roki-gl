@@ -887,8 +887,6 @@ void update_alljoint_by_IK_with_frame(int drag_chain_id, int drag_link_id, zVec 
   /* printf("pre IK Joint[deg]  = "); zVecPrint(zVecMulDRC(zVecClone(dis),180.0/zPI)); */
   int iter = 100;
   double ztol = zTOL;
-  /* keep joint angles before step */
-  rkChainGetJointDisAll( &g_main->gcs[drag_chain_id].chain, g_main->gcs[drag_chain_id].pre_q );
   /* backup in case the result of rkChainIK() is NaN */
   rkChain clone_chain;
   rkChainClone( &g_main->gcs[drag_chain_id].chain, &clone_chain );
@@ -909,6 +907,7 @@ void update_alljoint_by_IK_with_frame(int drag_chain_id, int drag_link_id, zVec 
     register_one_link_for_IK( drag_chain_id, drag_link_id, true );
   }
   /* printf("post IK Joint[deg] = "); zVecPrint(zVecMulDRC(zVecClone(dis),180.0/zPI)); */
+  rkChainDestroy( &clone_chain );
   zVecFree(dis);
 }
 
@@ -1049,10 +1048,26 @@ bool is_collision_avoidance(void)
   return g_main->is_collision_avoidance;
 }
 
+double get_contact_link_pose(zVec3D* out_moving_nearest_p0, zVec3D* out_env_nearest_p1, rkChain* collided_moving_chain, zPH3D* moving_ph, int moving_link_id, rkCDCell* env_cell)
+{
+  bool is_contact = true;
+  double distance;
+  zFrame3D moving_link_frame;
+  /* Get initial moving link frame */
+  zFrame3DCopy( rkLinkWldFrame(moving_cell->data.link), &moving_link_frame );
+
+  zPH3DXform( zShape3DPH(moving_cell->data.shape), &moving_link_frame, &moving_cell->data.ph );
+  is_contact = zColChkPH3D( &moving_cell->data.ph, &env_cell->data.ph, out_moving_nearest_p0, out_env_nearest_p1 );
+
+  distance = zVec3DDist( out_moving_nearest_p0, out_env_nearest_p1 );
+
+  return distance;
+}
+
 typedef struct{
   rkIKCell *cell_att[2];
   rkIKCell *cell_pos[2];
-} cell6D;
+} ikCell6D;
 void resolve_collision(void)
 {
   bool is_selected_link_collision = false;
@@ -1062,13 +1077,15 @@ void resolve_collision(void)
   rkCDPair* cp;
   if( zListIsEmpty( &g_main->cplist ) )
     return;
-  cell6D* cell_array = zAlloc( cell6D, zListSize(&g_main->cplist) );
+  ikCell6D* cell_array = zAlloc( ikCell6D, zListSize(&g_main->cplist) );
   /* A collision should always occur with the dragged link. Is this premise correct ? */
   selected_chain_id = g_main->selected.chain_id;
   selected_link_id = g_main->selected.link_id;
   if( selected_chain_id < 0 )
     return;
   chain = &g_main->gcs[selected_chain_id].chain;
+  rkChain collided_moving_chain;
+  rkChainClone( chain, &collided_moving_chain ); /* */
   /* keep original collided joint angles q */
   q = zVecAlloc( rkChainJointSize( chain ) ); /* collided q */
   rkChainGetJointDisAll( chain, q );
@@ -1112,7 +1129,6 @@ void resolve_collision(void)
         rkIKCellSetWeight( cell_array[i].cell_pos[1], IK_PIN_WEIGHT, IK_PIN_WEIGHT, IK_PIN_WEIGHT );
       } else{
         /* with environment collision */
-        zVec3D moving_nearest_p0, env_nearest_p1;
         rkCDCell *moving_cell, *env_cell;
         int moving_link_id;
         if( chain0_id == selected_chain_id ){
@@ -1125,19 +1141,32 @@ void resolve_collision(void)
           env_cell       = cp->data.cell[0];
         }
         /* calculate nearest points on both of moving link and environment at previous motion() event */
+        /* zPH3DXform( zShape3DPH(env_cell->data.shape), rkLinkWldFrame(env_cell->data.link), &env_cell->data.ph ); */
+        zVec3D moving_nearest_p0, env_nearest_p1;
+        zPH3D *org_moving_ph,  *collided_moving_ph;
+        zPH3DClone( &moving_cell->data.ph, collided_moving_ph );
+        int moving_link_id = get_link_id( moving_cell->data.chain, moving_cell->data.link );
+        zFrame3D* moving_collided_frame = rkLinkWldFrame( rkChainLink( collided_moving_chain, moving_link_id ) );
         zPH3DXform( zShape3DPH(moving_cell->data.shape), rkLinkWldFrame(moving_cell->data.link), &moving_cell->data.ph );
-        zPH3DXform( zShape3DPH(env_cell->data.shape), rkLinkWldFrame(env_cell->data.link), &env_cell->data.ph );
-        zColChkPH3D( &moving_cell->data.ph, &env_cell->data.ph, &moving_nearest_p0, &env_nearest_p1 );
-        zVec3D p1_to_p0, wld_ap, link_ap;
-        /* link_ap is the attention point on moving_link frame from the nearest point of moving_link (moving_nearest_p0). */
-        /* wld_ap is the avoided position of moving_link on world frame. */
-        zXform3DInv( rkChainLinkWldFrame( chain, moving_link_id ), &moving_nearest_p0, &link_ap );
+        zPH3DClone( &moving_cell->data.ph, org_moving_ph );
+        /* zColChkPH3D( &moving_cell->data.ph, &env_cell->data.ph, &moving_nearest_p0, &env_nearest_p1 ); */
+        zVec3D p1_to_p0;
+        /* /\* link_ap is the attention point on moving_link frame from the nearest point of moving_link (moving_nearest_p0). *\/ */
+        /* /\* wld_ap is the avoided position of moving_link on world frame. *\/ */
+
         zVec3DSub( &moving_nearest_p0, &env_nearest_p1, &p1_to_p0 );
         double d = zVec3DNorm( &p1_to_p0 );
+
+        zVec3D link_ap;
+        zXform3DInv( rkChainLinkWldFrame( chain, moving_link_id ), &moving_nearest_p0, &link_ap );
+
+        zVec3D wld_ap;
         if( d > zTOL )
           zVec3DCat( &env_nearest_p1, (( 2.5 * zTOL ) / d), &p1_to_p0, &wld_ap );
         else
           zVec3DCopy( &env_nearest_p1, &wld_ap );
+
+
         /* lock at wld_ap */
         rkIKAttr attr;
         attr.id = moving_link_id;
@@ -1169,6 +1198,7 @@ void resolve_collision(void)
         rkChainUnregisterAndDestroyIKCell( chain, cell_array[i].cell_pos[j] );
     }/* end of for j=0->2(pair size) */
   } /* end of for i=0->size of cell_array */
+  rkChainDestroy( &collided_moving_chain ); /* */
   zFree( cell_array );
 }
 
@@ -1390,13 +1420,19 @@ void motion(GLFWwindow* window, double x, double y)
     /* moving mode */
     rkglFrameHandleMove( &g_main->fh, g_cam, rkgl_mouse_x, rkgl_mouse_y );
     switch_ghost_mode( g_main->ghost_info.mode != GHOST_MODE_OFF );
+
+    /* keep joint angles before step */
+    rkChainGetJointDisAll( &g_main->gcs[g_main->selected.chain_id].chain, g_main->gcs[g_main->selected.chain_id].pre_q );
+
     /* IK */
     update_alljoint_by_IK_with_frame( g_main->selected.chain_id, g_main->selected.link_id, NULL, &g_main->fh.frame );
-    /* Collision Detection */
-    g_main->is_sum_collision = is_collision_detected();
 
-    if( g_main->is_collision_avoidance )
+    /* Collision Detection */
+    while( (g_main->is_sum_collision = is_collision_detected()) ){
+      if( g_main->is_collision_avoidance )
+        break;
       resolve_collision();
+    }
 
     /* keep FrameHandle position of the link's AP relative to the world frame */
     if( rkglFrameHandleIsInRotation( &g_main->fh ) )
