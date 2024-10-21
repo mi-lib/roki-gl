@@ -79,6 +79,8 @@ typedef struct{
   int phantom_display_id;
 } ghostInfo;
 
+#define COLLISION_RESOLVING_DISTANCE (5.0*zTOL)
+
 typedef struct{
   char **modelfiles;
   selectInfo selected;
@@ -1083,7 +1085,7 @@ double get_contact_link_pose(zPH3D* moving_original_ph,
     return -1.0;
     /* break; */
 
-  rate = ( new_distance - 2.0 * zTOL ) / previous_distance;
+  rate = ( new_distance - COLLISION_RESOLVING_DISTANCE ) / previous_distance;
 
   /* LERP */
   zVec3DCat( moving_new_previous_p0, rate, &p0_to_p1, &moving_new_interpolated_pos );
@@ -1109,7 +1111,6 @@ typedef struct{
 } ikCell6D;
 void resolve_collision(void)
 {
-  bool is_selected_link_collision = false;
   int i, j, selected_chain_id, selected_link_id, chain0_id, chain1_id, link0_id, link1_id;
   rkChain *chain;
   zVec q, pre_q;
@@ -1145,10 +1146,6 @@ void resolve_collision(void)
     link1_id  = get_link_id(  cp->data.cell[1]->data.chain, cp->data.cell[1]->data.link );
     if( chain0_id == selected_chain_id ||
         chain1_id == selected_chain_id ){
-      /* check drag link collision */
-      if( (chain0_id == selected_chain_id && link0_id == selected_link_id) ||
-          (chain1_id == selected_chain_id && link1_id == selected_link_id) )
-        is_selected_link_collision = true;
       /* */
       if( chain0_id == chain1_id ){
         /* self collsion */
@@ -1181,7 +1178,7 @@ void resolve_collision(void)
         }
         /* calculate nearest points on both of moving link and environment at previous motion() event */
         zPH3DXform( zShape3DPH(env_cell->data.shape), rkLinkWldFrame(env_cell->data.link), &env_cell->data.ph );
-        /*  */
+        /* nearest at the previsous time before collision */
         zFrame3D* moving_previous_link_frame = rkLinkWldFrame(moving_cell->data.link);
         zFrame3D* moving_collided_link_frame = rkLinkWldFrame( rkChainLink( &collided_moving_chain, moving_link_id ) );
         zPH3D* moving_original_ph = zShape3DPH(moving_cell->data.shape);
@@ -1197,7 +1194,7 @@ void resolve_collision(void)
                                                  &moving_nearest_frame,
                                                  &moving_nearest_p0, &env_nearest_p1, &moving_ph );
 
-        /* /\* link_ap is the attention point on moving_link frame from the nearest point of moving_link (moving_nearest_p0). *\/ */
+        /* link_ap is the attention point on moving_link frame from the nearest point of moving_link (moving_nearest_p0). */
         zVec3D link_ap;
         zXform3DInv( &moving_nearest_frame, &moving_nearest_p0, &link_ap );
 
@@ -1208,23 +1205,22 @@ void resolve_collision(void)
 
         zVec3D wld_ap;
         if( d > zTOL )
-          zVec3DCat( &env_nearest_p1, (( 2.5 * zTOL ) / d), &p1_to_p0, &wld_ap );
+          zVec3DCat( &env_nearest_p1, ( COLLISION_RESOLVING_DISTANCE / d), &p1_to_p0, &wld_ap );
         else
           zVec3DCopy( &env_nearest_p1, &wld_ap );
 
-
+        /* deepest at the posted time after collision */
         zVec3D link_ap2, wld_ap2;
         zVec3D moving_deepest_collided_p0, env_deepest_collided_p1;
         zGJKDepth( zPH3DVertBuf(&moving_collided_ph), zPH3DVertNum(&moving_collided_ph), zPH3DVertBuf(&env_cell->data.ph), zPH3DVertNum(&env_cell->data.ph), &moving_deepest_collided_p0, &env_deepest_collided_p1 );
         zXform3DInv( moving_collided_link_frame, &moving_deepest_collided_p0, &link_ap2 );
-        /* zXform3D( &moving_nearest_frame, &link_ap2, &wld_ap2 ); */
         zVec3D deep_p0_to_p1;
-        zVec3DSub( &moving_deepest_collided_p0, &env_deepest_collided_p1, &deep_p0_to_p1 );
+        zVec3DSub( &env_deepest_collided_p1, &moving_deepest_collided_p0, &deep_p0_to_p1 );
         double deep_d = zVec3DNorm( &deep_p0_to_p1 );
         if( deep_d > zTOL )
-          zVec3DCat( &moving_deepest_collided_p0, (( 2.5 * zTOL ) / deep_d), &deep_p0_to_p1, &wld_ap2 );
+          zVec3DCat( &env_deepest_collided_p1, (COLLISION_RESOLVING_DISTANCE / deep_d), &deep_p0_to_p1, &wld_ap2 );
         else
-          zVec3DCopy( &moving_deepest_collided_p0, &wld_ap2 );
+          zVec3DCopy( &env_deepest_collided_p1, &wld_ap2 );
 
         /* lock at wld_ap */
         rkIKAttr attr;
