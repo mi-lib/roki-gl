@@ -79,7 +79,7 @@ typedef struct{
   int phantom_display_id;
 } ghostInfo;
 
-#define COLLISION_RESOLVING_DISTANCE (5.0*zTOL)
+#define COLLISION_RESOLVING_DISTANCE (2.0*zTOL)
 
 typedef struct{
   char **modelfiles;
@@ -1195,15 +1195,13 @@ void resolve_collision(void)
                                                  &moving_nearest_p0, &env_nearest_p1, &moving_ph );
 
         /* link_ap is the attention point on moving_link frame from the nearest point of moving_link (moving_nearest_p0). */
-        zVec3D link_ap;
+        zVec3D link_ap, wld_ap;
         zXform3DInv( &moving_nearest_frame, &moving_nearest_p0, &link_ap );
 
         /* wld_ap is the avoided position of moving_link on world frame. */
         zVec3D p1_to_p0;
         zVec3DSub( &moving_nearest_p0, &env_nearest_p1, &p1_to_p0 );
         double d = zVec3DNorm( &p1_to_p0 );
-
-        zVec3D wld_ap;
         if( d > zTOL )
           zVec3DCat( &env_nearest_p1, ( COLLISION_RESOLVING_DISTANCE / d), &p1_to_p0, &wld_ap );
         else
@@ -1226,17 +1224,20 @@ void resolve_collision(void)
         rkIKAttr attr;
         attr.id = moving_link_id;
 
-        cell_array[i].cell_pos[0] = rkChainRegisterIKCellWldPos( chain, NULL, 1, &attr, RK_IK_ATTR_MASK_ID | RK_IK_ATTR_MASK_ATTENTION_POINT );
-        rkIKCellSetWeight( cell_array[i].cell_pos[0], IK_PIN_WEIGHT, IK_PIN_WEIGHT, IK_PIN_WEIGHT );
+        if( d > zTOL ){
+          cell_array[i].cell_pos[0] = rkChainRegisterIKCellWldPos( chain, NULL, 1, &attr, RK_IK_ATTR_MASK_ID | RK_IK_ATTR_MASK_ATTENTION_POINT );
+          rkIKCellSetWeight( cell_array[i].cell_pos[0], IK_PIN_WEIGHT, IK_PIN_WEIGHT, IK_PIN_WEIGHT );
+          rkIKCellSetRefVec( cell_array[i].cell_pos[0], &wld_ap );
+          zVec3DCopy( &link_ap, rkIKCellAttentionPoint( cell_array[i].cell_pos[0] ) );
+        }
 
-        cell_array[i].cell_pos[1] = rkChainRegisterIKCellWldPos( chain, NULL, 1, &attr, RK_IK_ATTR_MASK_ID | RK_IK_ATTR_MASK_ATTENTION_POINT );
-        rkIKCellSetWeight( cell_array[i].cell_pos[1], IK_PIN_WEIGHT, IK_PIN_WEIGHT, IK_PIN_WEIGHT );
+        if( deep_d > zTOL ){
+          cell_array[i].cell_pos[1] = rkChainRegisterIKCellWldPos( chain, NULL, 1, &attr, RK_IK_ATTR_MASK_ID | RK_IK_ATTR_MASK_ATTENTION_POINT );
+          rkIKCellSetWeight( cell_array[i].cell_pos[1], IK_PIN_WEIGHT, IK_PIN_WEIGHT, IK_PIN_WEIGHT );
+          rkIKCellSetRefVec( cell_array[i].cell_pos[1], &wld_ap2 ); /* nearly */
+          zVec3DCopy( &link_ap2, rkIKCellAttentionPoint( cell_array[i].cell_pos[1] ) );
+        }
 
-        rkIKCellSetRefVec( cell_array[i].cell_pos[0], &wld_ap );
-        rkIKCellSetRefVec( cell_array[i].cell_pos[1], &wld_ap2 ); /* nearly */
-
-        zVec3DCopy( &link_ap, rkIKCellAttentionPoint( cell_array[i].cell_pos[0] ) );
-        zVec3DCopy( &link_ap2, rkIKCellAttentionPoint( cell_array[i].cell_pos[1] ) );
       }
     } else {
       ZRUNERROR("A collision has occurred between links that were not dragged chain ! (chain_id=%d, link_id=%d) & (chain_id=%d, link_id=%d). This should not occur,\n", chain0_id, link0_id, chain1_id, link1_id );
