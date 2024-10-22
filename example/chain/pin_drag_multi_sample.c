@@ -85,7 +85,7 @@ typedef struct{
   int phantom_display_id;
 } ghostInfo;
 
-#define COLLISION_RESOLVING_DISTANCE (2.0*zTOL)
+#define COLLISION_RESOLVING_DISTANCE (5.0*zTOL)
 
 typedef struct{
   char **modelfiles;
@@ -1080,6 +1080,7 @@ double get_contact_link_pose(zPH3D* moving_original_ph,
     nearest_distance = zVec3DDist( out_env_nearest_p1, out_moving_nearest_p0 );
   else {
     /* printf("contact at previous pose!\n"); */
+    zPH3DDestroy( &moving_ph );
     return -1.0;
   }
 
@@ -1098,6 +1099,7 @@ double get_contact_link_pose(zPH3D* moving_original_ph,
   /* new ph, p0, p1 */
   zPH3DXform( moving_original_ph, &moving_interpolated_frame, &moving_ph );
   is_contact = zColChkPH3D( &moving_ph, env_ph, &moving_interpolated_nearest_p0, &env_interpolated_nearest_p1 );
+  zPH3DDestroy( &moving_ph );
   if( is_contact ){
     /* printf("contact at interpolated pose!\n"); */
     return nearest_distance;
@@ -1227,7 +1229,6 @@ void resolve_collision(void)
                                                          &moving_nearest_p0, &env_nearest_p1 );
 
         /* link_ap is the attention point on moving_link frame from the nearest point of moving_link (moving_nearest_p0). */
-
         /* wld_ap is the avoided position of moving_link on world frame. */
         zVec3D p1_to_p0, wld_ap;
         zVec3DSub( &moving_nearest_p0, &env_nearest_p1, &p1_to_p0 );
@@ -1239,6 +1240,7 @@ void resolve_collision(void)
         /* deepest at the posted time after collision */
         zVec3D moving_deepest_collided_p0, env_deepest_collided_p1;
         zGJKDepth( zPH3DVertBuf(&moving_collided_ph), zPH3DVertNum(&moving_collided_ph), zPH3DVertBuf(&env_cell->data.ph), zPH3DVertNum(&env_cell->data.ph), &moving_deepest_collided_p0, &env_deepest_collided_p1 );
+        zPH3DDestroy( &moving_collided_ph );
         zVec3D deep_p0_to_p1, wld_ap2;
         zVec3DSub( &env_deepest_collided_p1, &moving_deepest_collided_p0, &deep_p0_to_p1 );
         double deepest_distance = zVec3DNorm( &deep_p0_to_p1 );
