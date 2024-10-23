@@ -1050,11 +1050,10 @@ double get_contact_link_pose(zPH3D* moving_original_ph,
                              zFrame3D* moving_previous_link_frame, zFrame3D* moving_collided_link_frame,
                              zPH3D* env_ph,
                              zFrame3D* out_moving_nearest_frame,
-                             zVec3D* out_moving_nearest_p0, zVec3D* out_env_nearest_p1)
+                             zVec3D* out_moving_nearest_p0, zVec3D* out_env_nearest_p1, zPH3D* out_moving_ph)
 {
   bool is_contact = true;
   double previous_distance, nearest_distance, rate;
-  zPH3D moving_ph;
   zEP moving_collided_ep;
   zEP moving_previous_ep;
   zEP moving_interpolated_ep;
@@ -1073,14 +1072,12 @@ double get_contact_link_pose(zPH3D* moving_original_ph,
   previous_distance = zVec3DNorm( &p0_to_p1 );
 
   /* new ph, p0, p1 */
-  zPH3DClone( moving_original_ph, &moving_ph );
-  zPH3DXform( moving_original_ph, moving_previous_link_frame, &moving_ph );
-  is_contact = zColChkPH3D( &moving_ph, env_ph, out_moving_nearest_p0, out_env_nearest_p1 );
+  zPH3DXform( moving_original_ph, moving_previous_link_frame, out_moving_ph );
+  is_contact = zColChkPH3D( out_moving_ph, env_ph, out_moving_nearest_p0, out_env_nearest_p1 );
   if( !is_contact )
     nearest_distance = zVec3DDist( out_env_nearest_p1, out_moving_nearest_p0 );
   else {
     /* printf("contact at previous pose!\n"); */
-    zPH3DDestroy( &moving_ph );
     return -1.0;
   }
 
@@ -1097,9 +1094,8 @@ double get_contact_link_pose(zPH3D* moving_original_ph,
   zFrame3DSetAtt( &moving_interpolated_frame, &moving_interpolated_mat );
 
   /* new ph, p0, p1 */
-  zPH3DXform( moving_original_ph, &moving_interpolated_frame, &moving_ph );
-  is_contact = zColChkPH3D( &moving_ph, env_ph, &moving_interpolated_nearest_p0, &env_interpolated_nearest_p1 );
-  zPH3DDestroy( &moving_ph );
+  zPH3DXform( moving_original_ph, &moving_interpolated_frame, out_moving_ph );
+  is_contact = zColChkPH3D( out_moving_ph, env_ph, &moving_interpolated_nearest_p0, &env_interpolated_nearest_p1 );
   if( is_contact ){
     /* printf("contact at interpolated pose!\n"); */
     return nearest_distance;
@@ -1116,9 +1112,9 @@ typedef struct{
   rkIKCell *cell_att[2];
   rkIKCell *cell_pos[2];
 } ikCell6D;
-void resolve_collision(void)
+void resolve_collision(int resolve_collision_count)
 {
-  bool is_selected_link_collision = false;
+  /* bool is_selected_link_collision = false; */
   int i, j, selected_chain_id, selected_link_id, chain0_id, chain1_id, link0_id, link1_id;
   rkChain *chain;
   zVec q, pre_q;
@@ -1133,7 +1129,9 @@ void resolve_collision(void)
     return;
   chain = &g_main->gcs[selected_chain_id].chain;
   rkChain collided_moving_chain;
+  rkIK * org_ik = chain->_ik; chain->_ik = NULL; /* temporary */
   rkChainClone( chain, &collided_moving_chain ); /* */
+  chain->_ik = org_ik; /* recover ik info */
   /* keep original collided joint angles q */
   q = zVecAlloc( rkChainJointSize( chain ) ); /* collided q */
   rkChainGetJointDisAll( chain, q );
@@ -1155,9 +1153,9 @@ void resolve_collision(void)
     if( chain0_id == selected_chain_id ||
         chain1_id == selected_chain_id ){
       /* check drag link collision */
-      if( (chain0_id == selected_chain_id && link0_id == selected_link_id) ||
-          (chain1_id == selected_chain_id && link1_id == selected_link_id) )
-        is_selected_link_collision = true;
+      /* if( (chain0_id == selected_chain_id && link0_id == selected_link_id) || */
+      /*     (chain1_id == selected_chain_id && link1_id == selected_link_id) ) */
+      /*   is_selected_link_collision = true; */
       /* */
       if( chain0_id == chain1_id ){
         /* self collsion */
@@ -1219,72 +1217,69 @@ void resolve_collision(void)
         zPH3D* moving_original_ph = zShape3DPH(moving_cell->data.shape);
         zFrame3D moving_nearest_frame;
         zVec3D moving_nearest_p0, env_nearest_p1;
-        zPH3D moving_collided_ph;
-        zPH3DClone( &moving_cell->data.ph, &moving_collided_ph );
-        zPH3DXform( moving_original_ph, moving_collided_link_frame, &moving_collided_ph );
         double nearest_distance = get_contact_link_pose( moving_original_ph,
                                                          moving_previous_link_frame, moving_collided_link_frame,
                                                          &env_cell->data.ph,
                                                          &moving_nearest_frame,
-                                                         &moving_nearest_p0, &env_nearest_p1 );
+                                                         &moving_nearest_p0, &env_nearest_p1, &moving_cell->data.ph );
 
         /* link_ap is the attention point on moving_link frame from the nearest point of moving_link (moving_nearest_p0). */
-        /* wld_ap is the avoided position of moving_link on world frame. */
-        zVec3D p1_to_p0, wld_ap;
-        zVec3DSub( &moving_nearest_p0, &env_nearest_p1, &p1_to_p0 );
-        if( nearest_distance > zTOL )
-          zVec3DCat( &env_nearest_p1, (COLLISION_RESOLVING_DISTANCE / nearest_distance), &p1_to_p0, &wld_ap );
-        else
-          zVec3DCopy( &env_nearest_p1, &wld_ap );
-
-        /* deepest at the posted time after collision */
-        zVec3D moving_deepest_collided_p0, env_deepest_collided_p1;
-        zGJKDepth( zPH3DVertBuf(&moving_collided_ph), zPH3DVertNum(&moving_collided_ph), zPH3DVertBuf(&env_cell->data.ph), zPH3DVertNum(&env_cell->data.ph), &moving_deepest_collided_p0, &env_deepest_collided_p1 );
-        zPH3DDestroy( &moving_collided_ph );
-        zVec3D deep_p0_to_p1, wld_ap2;
-        zVec3DSub( &env_deepest_collided_p1, &moving_deepest_collided_p0, &deep_p0_to_p1 );
-        double deepest_distance = zVec3DNorm( &deep_p0_to_p1 );
-        if( deepest_distance > zTOL )
-          zVec3DCat( &env_deepest_collided_p1, (COLLISION_RESOLVING_DISTANCE / deepest_distance), &deep_p0_to_p1, &wld_ap2 );
-        else
-          zVec3DCopy( &env_deepest_collided_p1, &wld_ap2 );
-
-        /* lock at wld_ap */
         rkIKAttr attr;
         attr.id = moving_link_id;
-
+        /* wld_ap is the avoided position of moving_link on world frame. */
+        zVec3D p1_to_p0;
+        zVec3DSub( &moving_nearest_p0, &env_nearest_p1, &p1_to_p0 );
         if( nearest_distance > zTOL ){
+          zVec3D wld_ap, link_ap;
+          zVec3DCat( &env_nearest_p1, (1.0 + COLLISION_RESOLVING_DISTANCE / nearest_distance), &p1_to_p0, &wld_ap );
           cell_array[i].cell_pos[0] = rkChainRegisterIKCellWldPos( chain, NULL, IK_PRIORITY_COLLISION, &attr, RK_IK_ATTR_MASK_ID | RK_IK_ATTR_MASK_ATTENTION_POINT );
           rkIKCellSetWeight( cell_array[i].cell_pos[0], IK_WEIGHT_PIN, IK_WEIGHT_PIN, IK_WEIGHT_PIN );
           rkIKCellSetRefVec( cell_array[i].cell_pos[0], &wld_ap );
-          zVec3D link_ap;
           zXform3DInv( &moving_nearest_frame, &moving_nearest_p0, &link_ap );
           zVec3DCopy( &link_ap, rkIKCellAttentionPoint( cell_array[i].cell_pos[0] ) );
         }
 
+        /* deepest at the posted time after collision */
+        zVec3D moving_deepest_collided_p0, env_deepest_collided_p1;
+        /* zPH3D moving_collided_ph; */
+        /* zPH3DClone( &moving_cell->data.ph, &moving_collided_ph ); */
+        zPH3DXform( moving_original_ph, moving_collided_link_frame, &moving_cell->data.ph );
+        zGJKDepth( zPH3DVertBuf(&moving_cell->data.ph), zPH3DVertNum(&moving_cell->data.ph), zPH3DVertBuf(&env_cell->data.ph), zPH3DVertNum(&env_cell->data.ph), &moving_deepest_collided_p0, &env_deepest_collided_p1 );
+        zVec3D deep_p0_to_p1;
+        zVec3DSub( &env_deepest_collided_p1, &moving_deepest_collided_p0, &deep_p0_to_p1 );
+        double deepest_distance = zVec3DNorm( &deep_p0_to_p1 );
         if( deepest_distance > zTOL ){
           cell_array[i].cell_pos[1] = rkChainRegisterIKCellWldPos( chain, NULL, IK_PRIORITY_COLLISION, &attr, RK_IK_ATTR_MASK_ID | RK_IK_ATTR_MASK_ATTENTION_POINT );
           rkIKCellSetWeight( cell_array[i].cell_pos[1], IK_WEIGHT_PIN, IK_WEIGHT_PIN, IK_WEIGHT_PIN );
-          rkIKCellSetRefVec( cell_array[i].cell_pos[1], &wld_ap2 ); /* nearly */
-          zVec3D link_ap2;
-          zXform3DInv( moving_collided_link_frame, &moving_deepest_collided_p0, &link_ap2 );
-          zVec3DCopy( &link_ap2, rkIKCellAttentionPoint( cell_array[i].cell_pos[1] ) );
-        }
+          if( resolve_collision_count<=0 ){
+            zVec3D wld_ap2, link_ap2;
+            zVec3DCat( &env_deepest_collided_p1, (1.0 + COLLISION_RESOLVING_DISTANCE / deepest_distance), &deep_p0_to_p1, &wld_ap2 );
+            rkIKCellSetRefVec( cell_array[i].cell_pos[1], &wld_ap2 );
+            zXform3DInv( moving_collided_link_frame, &moving_deepest_collided_p0, &link_ap2 );
+            zVec3DCopy( &link_ap2, rkIKCellAttentionPoint( cell_array[i].cell_pos[1] ) );
+          } else{
+            cell_array[i].cell_att[1] = rkChainRegisterIKCellWldAtt( chain, NULL, IK_PRIORITY_COLLISION, &attr, RK_IK_ATTR_MASK_ID | RK_IK_ATTR_MASK_ID_SUB );
+            rkIKCellSetWeight( cell_array[i].cell_att[1], IK_WEIGHT_PIN, IK_WEIGHT_PIN, IK_WEIGHT_PIN );
+            zVec3DCatDRC( &moving_collided_link_frame->pos, (1.0 + COLLISION_RESOLVING_DISTANCE / deepest_distance), &deep_p0_to_p1  );
+            rkIKCellSetRefVec( cell_array[i].cell_pos[1], &moving_collided_link_frame->pos );
+          }
+        } /* end of if( deepest_distance > zTOL ) */
 
-      }
+      } /* end of if-else self-environment collision */
     } else {
       ZRUNERROR("A collision has occurred between links that were not dragged chain ! (chain_id=%d, link_id=%d) & (chain_id=%d, link_id=%d). This should not occur,\n", chain0_id, link0_id, chain1_id, link1_id );
     }
     i++;
   } /* end of zListForEachRew( &g_main->cplist, cp ) */
 
-  if( is_selected_link_collision ){
-    /* the priority of selected link with collision is foreced to be highest as same as IK_PRIORITY_COLLISION. */
-    rkChainSetIKCellPriority( &g_main->gcs[selected_chain_id].chain, g_main->gcs[g_main->selected.chain_id].info2[g_main->selected.link_id].cell[0], IK_PRIORITY_COLLISION );
-    rkChainSetIKCellPriority( &g_main->gcs[selected_chain_id].chain, g_main->gcs[g_main->selected.chain_id].info2[g_main->selected.link_id].cell[1], IK_PRIORITY_COLLISION );
-  }
+  /* if( is_selected_link_collision ){ */
+  /*   /\* the priority of selected link with collision is foreced to be highest as same as IK_PRIORITY_COLLISION. *\/ */
+  /*   rkChainSetIKCellPriority( &g_main->gcs[selected_chain_id].chain, g_main->gcs[g_main->selected.chain_id].info2[g_main->selected.link_id].cell[0], IK_PRIORITY_COLLISION ); */
+  /*   rkChainSetIKCellPriority( &g_main->gcs[selected_chain_id].chain, g_main->gcs[g_main->selected.chain_id].info2[g_main->selected.link_id].cell[1], IK_PRIORITY_COLLISION ); */
+  /* } */
 
-  update_alljoint_by_IK_with_frame( selected_chain_id, selected_link_id, pre_q, &g_main->fh.frame );
+  rkChainGetJointDisAll( chain, g_main->gcs[g_main->selected.chain_id].pre_q );
+  update_alljoint_by_IK_with_frame( selected_chain_id, selected_link_id, q, &g_main->fh.frame );
 
   /* unlock */
   for( i=0; i < zListSize(&g_main->cplist); i++){
@@ -1524,11 +1519,13 @@ void motion(GLFWwindow* window, double x, double y)
     /* IK */
     update_alljoint_by_IK_with_frame( g_main->selected.chain_id, g_main->selected.link_id, NULL, &g_main->fh.frame );
 
-    /* Collision Detection */
-    g_main->is_sum_collision = is_collision_detected();
-    if( g_main->is_collision_avoidance )
-      resolve_collision();
-
+    int i;
+    for(i=0; i<2; i++){
+      if( (g_main->is_sum_collision = is_collision_detected()) && g_main->is_collision_avoidance )
+        resolve_collision( i );
+      else
+        break;
+    }
 
     /* keep FrameHandle position of the link's AP relative to the world frame */
     if( rkglFrameHandleIsInRotation( &g_main->fh ) )
