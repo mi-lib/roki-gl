@@ -1,4 +1,4 @@
-[optic]
+[zeo::optic]
 name: white
 ambient: 1.0 1.0 1.0
 diffuse: 1.0 1.0 1.0
@@ -6,7 +6,7 @@ specular: 1.0 1.0 1.0
 alpha: 1.0
 esr: 1.0
 
-[shape]
+[zeo::shape]
 name: bunny
 type: polyhedron
 optic: white

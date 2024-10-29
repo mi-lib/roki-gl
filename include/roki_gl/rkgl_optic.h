@@ -31,9 +31,9 @@ __ROKI_GL_EXPORT void rkglMaterial(zOpticalInfo *oi);
 typedef struct{
   GLenum id;
   GLfloat pos[4];
-  GLfloat amb[4];
-  GLfloat dif[4];
-  GLfloat spc[4];
+  GLfloat ambient[4];
+  GLfloat diffuse[4];
+  GLfloat specular[4];
   GLfloat dir[4];
   GLfloat cutoffangle;
   GLfloat exponent;
@@ -46,13 +46,13 @@ __ROKI_GL_EXPORT int rkglLightNum(void);
   (l)->pos[0] = (x); (l)->pos[1] = (y); (l)->pos[2] = (z); (l)->pos[3] = 1;\
 } while(0)
 #define rkglLightSetAmbient(l,r,g,b) do{\
-  (l)->amb[0] = (r); (l)->amb[1] = (g); (l)->amb[2] = (b); (l)->amb[3] = 1;\
+  (l)->ambient[0] = (r); (l)->ambient[1] = (g); (l)->ambient[2] = (b); (l)->ambient[3] = 1;\
 } while(0)
 #define rkglLightSetDiffuse(l,r,g,b) do{\
-  (l)->dif[0] = (r); (l)->dif[1] = (g); (l)->dif[2] = (b); (l)->dif[3] = 1;\
+  (l)->diffuse[0] = (r); (l)->diffuse[1] = (g); (l)->diffuse[2] = (b); (l)->diffuse[3] = 1;\
 } while(0)
 #define rkglLightSetSpecular(l,r,g,b) do{\
-  (l)->spc[0] = (r); (l)->spc[1] = (g); (l)->spc[2] = (b); (l)->spc[3] = 1;\
+  (l)->specular[0] = (r); (l)->specular[1] = (g); (l)->specular[2] = (b); (l)->specular[3] = 1;\
 } while(0)
 #define rkglLightSetDir(l,x,y,z) do{\
   (l)->dir[0] = (x); (l)->dir[1] = (y); (l)->dir[2] = (z); (l)->dir[3] = 1;\

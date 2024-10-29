@@ -40,16 +40,16 @@ void rkglMaterialOpticalInfo(zOpticalInfo *oi)
 
   color[3] = oi->alpha; /* alpha value */
   /* ambient */
-  zRGB2fv( &oi->amb, color );
+  zRGB2fv( &oi->ambient, color );
   glMaterialfv( GL_FRONT, GL_AMBIENT, color );
   /* diffuse */
-  zRGB2fv( &oi->dif, color );
+  zRGB2fv( &oi->diffuse, color );
   glMaterialfv( GL_FRONT, GL_DIFFUSE, color );
   /* specular */
-  zRGB2fv( &oi->spc, color );
+  zRGB2fv( &oi->specular, color );
   glMaterialfv( GL_FRONT, GL_SPECULAR, color );
   /* shininess */
-  color[0] = oi->sns;
+  color[0] = oi->shininess;
   glMaterialfv( GL_FRONT, GL_SHININESS, color );
 }
 
@@ -128,9 +128,9 @@ int rkglLightNum(void)
 
 void rkglLightLoad(rkglLight *light)
 {
-  glLightfv( light->id, GL_AMBIENT,  light->amb );
-  glLightfv( light->id, GL_DIFFUSE,  light->dif );
-  glLightfv( light->id, GL_SPECULAR, light->spc );
+  glLightfv( light->id, GL_AMBIENT,  light->ambient );
+  glLightfv( light->id, GL_DIFFUSE,  light->diffuse );
+  glLightfv( light->id, GL_SPECULAR, light->specular );
 }
 
 void rkglLightSetAttenuation(rkglLight *light, GLfloat att_const, GLfloat att_lin, GLfloat att_quad)
