@@ -1,4 +1,4 @@
-[optic]
+[zeo::optic]
 name: white
 ambient: 0.8 0.8 0.8
 diffuse: 0.8 0.8 0.8
@@ -6,7 +6,7 @@ specular: 0.0 0.0 0.0
 alpha: 0.8
 esr: 1.0
 
-[shape]
+[zeo::shape]
 name: torus
 type: polyhedron
 optic: white
