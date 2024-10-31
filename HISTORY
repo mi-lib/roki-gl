@@ -1,3 +1,5 @@
+2024.10.29. Renamed members amb, dif, and spc to ambient, diffuse, and specular, respectively. [rkgl_optic, rkgl_envmap]
+2024.10.29. Reflected new tags of Zeo and RoKi for ZTK. [rkgl_optic]
 2024. 8.14. Modified rk_penInit in rk_pen to look at the origin unless pan/tilt/roll angles are specified. [app]
 2024. 8.12. Debugged rk_penLink in rk_pen. [app]
 2024. 8.12. Added rk_viewResetLight to automatically adjust the position of lighting. [app]

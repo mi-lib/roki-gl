@@ -1,4 +1,4 @@
-[optic]
+[zeo::optic]
 name: red
 ambient: 0.2, 0.2, 0.2
 diffuse: 1.0, 0.2, 0.2
@@ -6,7 +6,7 @@ specular: 0.0, 0.0, 0.0
 alpha: 1
 exp: 1
 
-[texture]
+[zeo::texture]
 name: lena
 file: ../fig/lena_mini.jpg
 coord: 0 ( 0, 1 )
@@ -16,7 +16,7 @@ coord: 3 ( 0, 0 )
 face: 0 1 2
 face: 0 2 3
 
-[texture]
+[zeo::texture]
 name: lena_flop
 file: ../fig/lena_flop_mini.jpg
 coord: 0 ( 0, 1 )
@@ -26,7 +26,7 @@ coord: 3 ( 0, 0 )
 face: 0 1 2
 face: 0 2 3
 
-[shape]
+[zeo::shape]
 name: box
 type: box
 optic: red
@@ -37,7 +37,7 @@ width: 4.0
 height: 4.0
 depth: 2.0
 
-[shape]
+[zeo::shape]
 name: board1
 type: polyhedron
 texture: lena
@@ -48,7 +48,7 @@ vert: 3 ( 1, -2,  2 )
 face: 0 1 2
 face: 0 2 3
 
-[shape]
+[zeo::shape]
 name: board2
 type: polyhedron
 texture: lena_flop

@@ -152,13 +152,13 @@ static void _rkglShadowPut(rkglShadow *shadow, rkglCamera *cam, rkglLight *light
 
   _rkglShadowResetProjection( shadow, cam, light );
   /* shadowy lighting */
-  dim[0] = light->dif[0] * shadow->ratio;
-  dim[1] = light->dif[1] * shadow->ratio;
-  dim[2] = light->dif[2] * shadow->ratio;
+  dim[0] = light->diffuse[0] * shadow->ratio;
+  dim[1] = light->diffuse[1] * shadow->ratio;
+  dim[2] = light->diffuse[2] * shadow->ratio;
   dim[3] = 1.0;
-  blk[0] = light->spc[0] * shadow->ratio;
-  blk[1] = light->spc[1] * shadow->ratio;
-  blk[2] = light->spc[2] * shadow->ratio;
+  blk[0] = light->specular[0] * shadow->ratio;
+  blk[1] = light->specular[1] * shadow->ratio;
+  blk[2] = light->specular[2] * shadow->ratio;
   blk[3] = 1.0;
   glLightfv( light->id, GL_DIFFUSE, dim );
   glLightfv( light->id, GL_SPECULAR, blk );
