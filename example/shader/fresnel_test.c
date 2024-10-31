@@ -122,7 +122,7 @@ void init(void)
   zVec3DCreate( &pc2, -10, -10, 10 );
   rkglCheckerBoard( &pc0, &pc1, &pc2, 10, 10, &oi, &oi2 );
   zOpticalInfoCreateSimple( &oi, 1.0, 1.0, 0.0, NULL ); /* ball 1 */
-  zOpticalInfoSetShininess( &oi, 3.0 );
+  oi.shininess = 3.0;
   zVec3DCreate( &c, 7.0, 7.0, 7.0 );
   zSphere3DCreate( &sphere, &c, 1.0, 16 );
   rkglMaterialOpticalInfo( &oi );
@@ -132,7 +132,7 @@ void init(void)
   rkglMaterialOpticalInfo( &oi );
   rkglSphere( &sphere, RKGL_FACE );
   zOpticalInfoCreateSimple( &oi, 0.0, 0.0, 1.0, NULL ); /* ball 2 */
-  zOpticalInfoSetShininess( &oi, 3.0 );
+  oi.shininess = 3.0;
   zVec3DCreate( &c,-7.0, 7.0, 7.0 );
   zSphere3DCreate( &sphere, &c, 1.0, 16 );
   rkglMaterialOpticalInfo( &oi );
@@ -142,7 +142,7 @@ void init(void)
   rkglMaterialOpticalInfo( &oi );
   rkglSphere( &sphere, RKGL_FACE );
   zOpticalInfoCreateSimple( &oi, 1.0, 0.0, 0.0, NULL ); /* ball 3 */
-  zOpticalInfoSetShininess( &oi, 3.0 );
+  oi.shininess = 3.0;
   zVec3DCreate( &c,-7.0,-7.0, 7.0 );
   zSphere3DCreate( &sphere, &c, 1.0, 16 );
   rkglMaterialOpticalInfo( &oi );
@@ -152,7 +152,7 @@ void init(void)
   rkglMaterialOpticalInfo( &oi );
   rkglSphere( &sphere, RKGL_FACE );
   zOpticalInfoCreateSimple( &oi, 0.0, 1.0, 0.0, NULL ); /* ball 4 */
-  zOpticalInfoSetShininess( &oi, 3.0 );
+  oi.shininess = 3.0;
   zVec3DCreate( &c, 7.0,-7.0, 7.0 );
   zSphere3DCreate( &sphere, &c, 1.0, 16 );
   rkglMaterialOpticalInfo( &oi );
