@@ -1,18 +1,6 @@
 /* with a courtesy to Mr. Daishi Kaneta. */
 #include <roki_gl/roki_glut.h>
 
-/* zMat3D(absolute) -> point of the end of XYZ frame array on sphere surface */
-void zMat3DToSphereXYZ(zMat3D* mat, zVec3D *sphere_center, double sphere_radius, zVec3D *out_x, zVec3D *out_y, zVec3D *out_z )
-{
-  zVec3D xarray_pos, yarray_pos, zarray_pos;
-  zVec3DCat( sphere_center, sphere_radius, ZVEC3DX, &xarray_pos );
-  zVec3DCat( sphere_center, sphere_radius, ZVEC3DY, &yarray_pos );
-  zVec3DCat( sphere_center, sphere_radius, ZVEC3DZ, &zarray_pos );
-  zMulMat3DVec3D( mat, &xarray_pos, out_x );
-  zMulMat3DVec3D( mat, &yarray_pos, out_y );
-  zMulMat3DVec3D( mat, &zarray_pos, out_z );
-}
-
 /* zRotIp defenition */
 
 ZDEF_STRUCT( __ZEO_CLASS_EXPORT, zRotIpCPCell ){
@@ -118,20 +106,29 @@ zMat3D* zRotIpPopMat3D(zRotIp *rotip, double s, zMat3D* out_mat)
 
 
 /* data defenition */
-rkglFrameHandle g_fh;
-double g_feedrate_s;
 typedef struct{
   zShape3D shape;
   int display_id[2]; /* wire off/on */
 } rkglShapeSphereData;
-rkglShapeSphereData g_sphere;
 
 typedef struct{
   zRotIp rotip;
   zVec3D start_draw_unitvec;
   int display_id;
 } sphereXYZ;
-sphereXYZ g_rot_curve;
+
+typedef struct{
+  rkglFrameHandle fh;
+  double feedrate_s;
+  rkglShapeSphereData sphere;
+  sphereXYZ rot_curve;
+  int selected_rot_cp;
+  zVec3D selected_rot_cp_anchor_pos;
+  zMat3D selected_rot_cp_anchor_att;
+  rkglSelectionBuffer sb;
+} motionPathViewData;
+
+motionPathViewData* g_main;
 
 static const int g_SLICE_NUM = 100;
 static const int g_CP_NUM = 3;
@@ -150,6 +147,7 @@ static const double g_LENGTH = 2.0;
 static const double g_MAGNITUDE = 1.0;
 static const double g_CP_SIZE = 10.0;
 
+#define NAME_ROTIP 1000
 #define SHAPE_SPHERE_ALPHA 0.3
 
 /* end of data defenition */
@@ -329,19 +327,63 @@ void rkglRotationCurveCP(zRotIp *rotip, zVec3D* start_draw_unitvec, zVec3D* cent
 
 /* end of rotation curve drawing */
 
+/* data handling */
+
+bool create_empty_motionPathViewData(void** src)
+{
+  motionPathViewData** main_ptr = (motionPathViewData**)( src );
+  if( !( *main_ptr = zAlloc( motionPathViewData, 1 ) ) ){
+    ZALLOCERROR();
+    return false;
+  }
+  (*main_ptr)->selected_rot_cp = -1;
+
+  return true;
+}
+
+void set_motionPathViewData(void* src)
+{
+  g_main = (motionPathViewData*)( src );
+}
+
+void* get_motionPathViewData(void)
+{
+  return (void *)( g_main );
+}
+
+void destroy_motionPathViewData(void* src)
+{
+  motionPathViewData* main_ptr = (motionPathViewData*)( src );
+  zFree( main_ptr );
+}
+
+/* end of data handling */
+
+void update_framehandle_att(double s)
+{
+  zMat3D mat;
+  g_main->feedrate_s = s;
+  double start_s = zRotIpKnotSlice( &g_main->rot_curve.rotip, 0 );
+  double end_s = zRotIpKnotSlice( &g_main->rot_curve.rotip, zRotIpSliceNum(&g_main->rot_curve.rotip) );
+  if( g_main->feedrate_s < start_s ) g_main->feedrate_s = start_s;
+  if( g_main->feedrate_s > end_s ) g_main->feedrate_s = end_s;
+  zRotIpPopMat3D( &g_main->rot_curve.rotip, s, &mat );
+  zMat3DCopy( &mat, rkglFrameHandleAtt( &g_main->fh ) );
+}
+
 /* draw part */
 
 void draw_framehandle(void)
 {
-  rkglFrameHandleDraw( &g_fh );
+  rkglFrameHandleDraw( &g_main->fh );
 }
 
 void draw_sphere(void)
 {
   glPushMatrix();
-  rkglTranslate( rkglFrameHandlePos( &g_fh ) );
+  rkglTranslate( rkglFrameHandlePos( &g_main->fh ) );
   glPushName( 0 );
-  g_dispswitch ? glCallList( g_sphere.display_id[0] ) : glCallList( g_sphere.display_id[1] );
+  g_dispswitch ? glCallList( g_main->sphere.display_id[0] ) : glCallList( g_main->sphere.display_id[1] );
   glPopName();
   glPopMatrix();
 }
@@ -351,11 +393,12 @@ void draw_frame_rot_curve(void)
   zRGB rgb;
   glPushMatrix();
   zRGBSet( &rgb, 1.0, 1.0, 1.0 );
+  glLoadName( NAME_ROTIP );
   glLineWidth( 3 );
-  rkglRotationCurve( &g_rot_curve.rotip, &g_rot_curve.start_draw_unitvec, rkglFrameHandlePos( &g_fh ), g_LENGTH, &rgb);
+  rkglRotationCurve( &g_main->rot_curve.rotip, &g_main->rot_curve.start_draw_unitvec, rkglFrameHandlePos( &g_main->fh ), g_LENGTH, &rgb);
   zRGBSet( &rgb, 0.5, 1.0, 0.5 );
   glLineWidth( 1 );
-  rkglRotationCurveCP(&g_rot_curve.rotip, &g_rot_curve.start_draw_unitvec, rkglFrameHandlePos( &g_fh ), g_LENGTH, g_CP_SIZE, &rgb);
+  rkglRotationCurveCP(&g_main->rot_curve.rotip, &g_main->rot_curve.start_draw_unitvec, rkglFrameHandlePos( &g_main->fh ), g_LENGTH, g_CP_SIZE, &rgb);
   glPopMatrix();
 }
 
@@ -375,23 +418,55 @@ void display(void)
   glutSwapBuffers();
 }
 
+int find_rot_cp(rkglSelectionBuffer *sb)
+{
+  int i, selected_rotip_id_tmp, selected_rot_cp_tmp;
+
+  g_main->selected_rot_cp = -1;
+  for( i=0; i<sb->hits; i++ ){
+    selected_rotip_id_tmp = rkglSelectionName(sb,0) - NAME_ROTIP;
+    if( selected_rotip_id_tmp == 0 ){
+      zRotIp* rotip = &g_main->rot_curve.rotip;
+      selected_rot_cp_tmp = rkglSelectionName(sb,1);
+      if( selected_rot_cp_tmp >= 0 &&
+          selected_rot_cp_tmp < zRotIpCPNum(rotip) ){
+        g_main->selected_rot_cp = selected_rot_cp_tmp;
+        break;
+      }
+      rkglSelectionNext( sb );
+    }
+    eprintf(" sp->hits=%d : i=%d : rotip_id_tmp=%d, rkglSeleionName(sb,0)=%d, Name(sb,1)=%d\n", sb->hits, i, selected_rotip_id_tmp, rkglSelectionName(sb,0), rkglSelectionName(sb,1));
+  }
+
+  return g_main->selected_rot_cp;
+}
+
 /* end of draw part */
 
 /* callback event */
 
 void mouse(int button, int state, int x, int y)
 {
-  rkglSelectionBuffer sb;
-
   switch( button ){
   case GLUT_LEFT_BUTTON:
     if( state == GLUT_DOWN ){
-      if( rkglSelectNearest( &sb, &g_cam, draw_framehandle, x, y, 1, 1 ) ){
-        rkglFrameHandleAnchor( &g_fh, &sb, &g_cam, x, y );
+      rkglClear();
+      rkglSelect( &g_main->sb, &g_cam, draw_frame_rot_curve, x, y, g_CP_SIZE, g_CP_SIZE );
+      if( find_rot_cp( &g_main->sb ) >= 0 ){
+        zMat3DCopy( zRotIpCP( &g_main->rot_curve.rotip, g_main->selected_rot_cp ), &g_main->selected_rot_cp_anchor_att );
+        /* rkglUnproject( &g_cam, x, y, rkglSelectionZnearDepth(&g_main->sb), &g_main->selected_rot_cp_anchor_pos ); */
+        getDrawPoint( &g_main->selected_rot_cp_anchor_att, &g_main->rot_curve.start_draw_unitvec, rkglFrameHandlePos( &g_main->fh ), g_LENGTH, &g_main->selected_rot_cp_anchor_pos );
+        eprintf( "Selected rotation control point [%d]\n", g_main->selected_rot_cp );
+        break;
+      }
+      if( g_main->selected_rot_cp < 0 &&
+          rkglSelectNearest( &g_main->sb, &g_cam, draw_framehandle, x, y, 1, 1 ) ){
+        rkglFrameHandleAnchor( &g_main->fh, &g_main->sb, &g_cam, x, y );
       }
     } else
     if( state == GLUT_UP ){
-      rkglFrameHandleUnselect( &g_fh );
+      rkglFrameHandleUnselect( &g_main->fh );
+      g_main->sb.hits = 0;
     }
     break;
   case GLUT_MIDDLE_BUTTON:
@@ -400,14 +475,61 @@ void mouse(int button, int state, int x, int y)
     break;
   default: ;
   }
-  if( rkglFrameHandleIsUnselected( &g_fh ) )
+  if( g_main->selected_rot_cp < 0 &&
+      rkglFrameHandleIsUnselected( &g_main->fh ) )
     rkglMouseFuncGLUT( button, state, x, y );
 }
 
 void motion(int x, int y)
 {
-  if( !rkglFrameHandleIsUnselected( &g_fh ) ){
-    rkglFrameHandleMove( &g_fh, &g_cam, x, y );
+  zVec3D destp, axis, r0, dr, *center, aa;
+  zVec3D dur, r0prod2dr;
+  double dis_dr, angle0, angle1, angle;
+  double r0_cos, dis_r0, dis_r0prod2dr;
+  zMat3D dest_rot;
+
+  zRotIp* rotip = &g_main->rot_curve.rotip;
+  if( g_main->selected_rot_cp >= 0 && g_main->selected_rot_cp < zRotIpCPNum( rotip ) ){
+    /* cp dragging control */
+    center = rkglFrameHandlePos( &g_main->fh );
+    zVec3DSub( &g_main->selected_rot_cp_anchor_pos, center, &r0 );
+    dis_r0 = zVec3DNorm( &r0 );
+    rkglUnproject( &g_cam, x, y, rkglSelectionZnearDepth(&g_main->sb), &destp );
+    zVec3DSub( &destp, &g_main->selected_rot_cp_anchor_pos, &dr );
+    dis_dr = zVec3DNorm( &dr );
+    if( !zIsTiny( dis_dr ) ){
+      zVec3DNormalizeNC( &dr, &dur );
+      r0_cos = zVec3DInnerProd( &r0, &dur );
+      zVec3DMul( &dur, r0_cos, &r0prod2dr );
+      dis_r0prod2dr = zVec3DNorm( &r0prod2dr );
+      angle0 = acos( r0_cos / dis_r0 );
+      if( angle0 > 0.5*zPI ) angle0 = 0.5*zPI;
+      if( r0_cos >= 0 ){
+        if( dis_r0 - dis_r0prod2dr - dis_dr > zTOL ){
+          angle1 = acos( ( dis_r0prod2dr + dis_dr ) / dis_r0 );
+          angle = angle0 - angle1;
+        } else
+          angle = angle0;
+      } else{
+        if( dis_r0 - ( dis_dr - dis_r0prod2dr ) > zTOL ){
+          angle1 = acos( fabs( dis_dr - dis_r0prod2dr ) / dis_r0 );
+          if( dis_dr >= dis_r0prod2dr ){
+            angle = zPI - angle0 - angle1;
+          } else
+            angle = angle1 - angle0;
+        } else
+          angle = zPI - angle0;
+      }
+      zVec3DOuterProd( &r0, &destp, &axis );
+      zVec3DNormalizeNCDRC( &axis );
+      zVec3DMul( &axis, angle, &aa );
+      zMat3DRot( &g_main->selected_rot_cp_anchor_att, &aa, &dest_rot );
+      zRotIpSetCP( rotip, g_main->selected_rot_cp, &dest_rot );
+      update_framehandle_att( g_main->feedrate_s );
+    }
+  } else
+  if( !rkglFrameHandleIsUnselected( &g_main->fh ) ){
+    rkglFrameHandleMove( &g_main->fh, &g_cam, x, y );
   } else
     rkglMouseDragFuncGLUT( x, y );
 }
@@ -418,21 +540,9 @@ void resize(int w, int h)
   rkglOrthoScaleH( &g_cam, g_scale, g_znear, g_zfar );
 }
 
-void update_framehandle_att(double s)
-{
-  zMat3D mat;
-  g_feedrate_s = s;
-  double start_s = zRotIpKnotSlice( &g_rot_curve.rotip, 0 );
-  double end_s = zRotIpKnotSlice( &g_rot_curve.rotip, zRotIpSliceNum(&g_rot_curve.rotip) );
-  if( g_feedrate_s < start_s ) g_feedrate_s = start_s;
-  if( g_feedrate_s > end_s ) g_feedrate_s = end_s;
-  zRotIpPopMat3D( &g_rot_curve.rotip, s, &mat );
-  zMat3DCopy( &mat, rkglFrameHandleAtt( &g_fh ) );
-}
-
 void keyboard(unsigned char key, int x, int y)
 {
-  double ds = zRotIpKnotOneSlice( &g_rot_curve.rotip );
+  double ds = zRotIpKnotOneSlice( &g_main->rot_curve.rotip );
   switch( key ){
   case 'u': rkglCALockonPTR( &g_cam, 5, 0, 0 ); break;
   case 'U': rkglCALockonPTR( &g_cam,-5, 0, 0 ); break;
@@ -446,8 +556,8 @@ void keyboard(unsigned char key, int x, int y)
   case '(': rkglCARelMove( &g_cam, 0,-0.05, 0 ); break;
   case '0': rkglCARelMove( &g_cam, 0, 0, 0.05 ); break;
   case ')': rkglCARelMove( &g_cam, 0, 0,-0.05 ); break;
-  case 'f': update_framehandle_att( g_feedrate_s + ds); break; /* forward */
-  case 'b': update_framehandle_att( g_feedrate_s - ds); break; /* backward */
+  case 'f': update_framehandle_att( g_main->feedrate_s + ds); break; /* forward */
+  case 'b': update_framehandle_att( g_main->feedrate_s - ds); break; /* backward */
   case 'w': g_dispswitch = 1 - g_dispswitch; break;
   case 'q': case 'Q': case '\033':
     exit( EXIT_SUCCESS );
@@ -466,34 +576,38 @@ void init(void)
   rkglLightCreate( &g_light, 0.4, 0.4, 0.4, 1, 1, 1, 0, 0, 0 );
   rkglLightMove( &g_light, 8, 0, 8 );
   /* frame handle */
-  rkglFrameHandleCreate( &g_fh, 0, g_LENGTH, g_MAGNITUDE );
+  rkglFrameHandleCreate( &g_main->fh, 0, g_LENGTH, g_MAGNITUDE );
   /* sphere */
   int div = 8;
-  zShape3DSphereCreate( &g_sphere.shape, rkglFrameHandlePos( &g_fh ), g_LENGTH, div );
+  zShape3DSphereCreate( &g_main->sphere.shape, rkglFrameHandlePos( &g_main->fh ), g_LENGTH, div );
   double r=1.0, g=1.0, b=1.0;
   zOpticalInfo oi_alt;
   zOpticalInfoCreate( &oi_alt, r, g, b, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, SHAPE_SPHERE_ALPHA, NULL );
-  g_sphere.display_id[0] = rkglEntryShape( &g_sphere.shape, &oi_alt, RKGL_FACE, &g_light );
-  g_sphere.display_id[1] = rkglEntryShape( &g_sphere.shape, &oi_alt, (RKGL_FACE | RKGL_WIREFRAME), &g_light );
+  g_main->sphere.display_id[0] = rkglEntryShape( &g_main->sphere.shape, &oi_alt, RKGL_FACE, &g_light );
+  g_main->sphere.display_id[1] = rkglEntryShape( &g_main->sphere.shape, &oi_alt, (RKGL_FACE | RKGL_WIREFRAME), &g_light );
   /**/
-  zVec3DCreate( &g_rot_curve.start_draw_unitvec, 1.0, 0.0, 0.0 );
-  zRotIpInit( &g_rot_curve.rotip );
-  zRotIpAlloc( &g_rot_curve.rotip, g_CP_NUM );
-  zRotIpSetSliceNum( &g_rot_curve.rotip, g_SLICE_NUM );
+  zVec3DCreate( &g_main->rot_curve.start_draw_unitvec, 1.0, 0.0, 0.0 );
+  zRotIpInit( &g_main->rot_curve.rotip );
+  zRotIpAlloc( &g_main->rot_curve.rotip, g_CP_NUM );
+  zRotIpSetSliceNum( &g_main->rot_curve.rotip, g_SLICE_NUM );
   /**/
-  g_feedrate_s = 0.0;
+  g_main->feedrate_s = 0.0;
   /**/
   zMat3D m0, m1, m2;
   zMat3DFromZYX( &m0, zRandF(-zPI,zPI), zRandF(-zPI,zPI), zRandF(-zPI,zPI) );
   zMat3DFromZYX( &m1, zRandF(-zPI,zPI), zRandF(-zPI,zPI), zRandF(-zPI,zPI) );
   zMat3DFromZYX( &m2, zRandF(-zPI,zPI), zRandF(-zPI,zPI), zRandF(-zPI,zPI) );
-  zRotIpSetCP( &g_rot_curve.rotip, 0, &m0 );
-  zRotIpSetCP( &g_rot_curve.rotip, 1, &m1 );
-  zRotIpSetCP( &g_rot_curve.rotip, 2, &m2 );
+  zRotIpSetCP( &g_main->rot_curve.rotip, 0, &m0 );
+  zRotIpSetCP( &g_main->rot_curve.rotip, 1, &m1 );
+  zRotIpSetCP( &g_main->rot_curve.rotip, 2, &m2 );
 }
 
 int main(int argc, char *argv[])
 {
+  void* main_ptr = NULL;
+  create_empty_motionPathViewData( &main_ptr );
+  set_motionPathViewData( main_ptr );
+
   rkglInitGLUT( &argc, argv );
   rkglWindowCreateGLUT( 0, 0, 640, 640, argv[0] );
 
@@ -505,5 +619,8 @@ int main(int argc, char *argv[])
   glutIdleFunc( rkglIdleFuncGLUT );
   init();
   glutMainLoop();
+
+  destroy_motionPathViewData( main_ptr );
+
   return 0;
 }
