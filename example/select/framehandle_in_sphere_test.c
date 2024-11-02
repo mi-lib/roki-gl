@@ -1,5 +1,4 @@
-/* with a courtesy to Mr. Daishi Kaneta. */
-#include <roki_gl/roki_glut.h>
+#include <roki_gl/roki_glfw.h>
 
 /* zRotIp defenition */
 
@@ -272,6 +271,13 @@ void update_framehandle_att(double s)
 
 /* draw part */
 
+bool g_is_exit = false;
+
+bool is_exit(void)
+{
+  return g_is_exit;
+}
+
 void draw_framehandle(void)
 {
   rkglFrameHandleDraw( &g_main->fh );
@@ -308,13 +314,12 @@ void draw_scene(void)
   draw_frame_rot_curve();
 }
 
-void display(void)
+void display(GLFWwindow* window)
 {
   rkglCALoad( &g_cam );
   rkglLightPut( &g_light );
   rkglClear();
   draw_scene();
-  glutSwapBuffers();
 }
 
 int find_rot_cp(rkglSelectionBuffer *sb)
@@ -344,42 +349,35 @@ int find_rot_cp(rkglSelectionBuffer *sb)
 
 /* callback event */
 
-void mouse(int button, int state, int x, int y)
+void mouse(GLFWwindow* window, int button, int state, int mods)
 {
-  switch( button ){
-  case GLUT_LEFT_BUTTON:
-    if( state == GLUT_DOWN ){
-      rkglClear();
-      rkglSelect( &g_main->sb, &g_cam, draw_frame_rot_curve, x, y, g_CP_SIZE, g_CP_SIZE );
+  rkglMouseFuncGLFW( window, button, state, mods );
+
+  if( button == GLFW_MOUSE_BUTTON_LEFT ){
+    if( state == GLFW_PRESS ){
+      rkglSelect( &g_main->sb, &g_cam, draw_frame_rot_curve, rkgl_mouse_x, rkgl_mouse_y, g_CP_SIZE, g_CP_SIZE );
       if( find_rot_cp( &g_main->sb ) >= 0 ){
+        rkglFrameHandleUnselect( &g_main->fh );
         zMat3DCopy( zRotIpCP( &g_main->rot_curve.rotip, g_main->selected_rot_cp ), &g_main->selected_rot_cp_anchor_att );
         /* rkglUnproject( &g_cam, x, y, rkglSelectionZnearDepth(&g_main->sb), &g_main->selected_rot_cp_anchor_pos ); */
         getDrawPoint( &g_main->selected_rot_cp_anchor_att, &g_main->rot_curve.start_draw_unitvec, rkglFrameHandlePos( &g_main->fh ), g_LENGTH, &g_main->selected_rot_cp_anchor_pos );
         eprintf( "Selected rotation control point [%d]\n", g_main->selected_rot_cp );
-        break;
-      }
+      } else
       if( g_main->selected_rot_cp < 0 &&
-          rkglSelectNearest( &g_main->sb, &g_cam, draw_framehandle, x, y, 1, 1 ) ){
-        rkglFrameHandleAnchor( &g_main->fh, &g_main->sb, &g_cam, x, y );
+          rkglSelectNearest( &g_main->sb, &g_cam, draw_framehandle, rkgl_mouse_x, rkgl_mouse_y, 1, 1 ) ){
+        rkglFrameHandleAnchor( &g_main->fh, &g_main->sb, &g_cam, rkgl_mouse_x, rkgl_mouse_y );
       }
     } else
-    if( state == GLUT_UP ){
-      rkglFrameHandleUnselect( &g_main->fh );
+    if( state == GLFW_RELEASE ){
       g_main->sb.hits = 0;
     }
-    break;
-  case GLUT_MIDDLE_BUTTON:
-    break;
-  case GLUT_RIGHT_BUTTON:
-    break;
-  default: ;
+  } else if( button == GLFW_MOUSE_BUTTON_RIGHT ){
+    if( state == GLFW_PRESS ){
+    }
   }
-  if( g_main->selected_rot_cp < 0 &&
-      rkglFrameHandleIsUnselected( &g_main->fh ) )
-    rkglMouseFuncGLUT( button, state, x, y );
 }
 
-void motion(int x, int y)
+void motion(GLFWwindow* window, double x, double y)
 {
   zVec3D destp, axis, r0, dr, *center, aa;
   zVec3D dur, r0prod2dr;
@@ -388,58 +386,74 @@ void motion(int x, int y)
   zMat3D dest_rot;
 
   zRotIp* rotip = &g_main->rot_curve.rotip;
-  if( g_main->selected_rot_cp >= 0 && g_main->selected_rot_cp < zRotIpCPNum( rotip ) ){
-    /* cp dragging control */
-    center = rkglFrameHandlePos( &g_main->fh );
-    zVec3DSub( &g_main->selected_rot_cp_anchor_pos, center, &r0 );
-    dis_r0 = zVec3DNorm( &r0 );
-    rkglUnproject( &g_cam, x, y, rkglSelectionZnearDepth(&g_main->sb), &destp );
-    zVec3DSub( &destp, &g_main->selected_rot_cp_anchor_pos, &dr );
-    dis_dr = zVec3DNorm( &dr );
-    if( !zIsTiny( dis_dr ) ){
-      zVec3DNormalizeNC( &dr, &dur );
-      r0_cos = zVec3DInnerProd( &r0, &dur );
-      zVec3DMul( &dur, r0_cos, &r0prod2dr );
-      dis_r0prod2dr = zVec3DNorm( &r0prod2dr );
-      angle0 = acos( r0_cos / dis_r0 );
-      if( angle0 > 0.5*zPI ) angle0 = 0.5*zPI;
-      if( r0_cos >= 0 ){
-        if( dis_r0 - dis_r0prod2dr - dis_dr > zTOL ){
-          angle1 = acos( ( dis_r0prod2dr + dis_dr ) / dis_r0 );
-          angle = angle0 - angle1;
-        } else
-          angle = angle0;
-      } else{
-        if( dis_r0 - ( dis_dr - dis_r0prod2dr ) > zTOL ){
-          angle1 = acos( fabs( dis_dr - dis_r0prod2dr ) / dis_r0 );
-          if( dis_dr >= dis_r0prod2dr ){
-            angle = zPI - angle0 - angle1;
+  if( g_main->sb.hits == 0 ){
+    rkglMouseDragFuncGLFW( window, x, y );
+    return;
+  }
+  if( rkgl_mouse_button == GLFW_MOUSE_BUTTON_LEFT ){
+    if( g_main->selected_rot_cp >= 0 && g_main->selected_rot_cp < zRotIpCPNum( rotip ) ){
+      /* cp dragging control */
+      center = rkglFrameHandlePos( &g_main->fh );
+      zVec3DSub( &g_main->selected_rot_cp_anchor_pos, center, &r0 );
+      dis_r0 = zVec3DNorm( &r0 );
+      rkglUnproject( &g_cam, x, y, rkglSelectionZnearDepth(&g_main->sb), &destp );
+      zVec3DSub( &destp, &g_main->selected_rot_cp_anchor_pos, &dr );
+      dis_dr = zVec3DNorm( &dr );
+      if( !zIsTiny( dis_dr ) ){
+        zVec3DNormalizeNC( &dr, &dur );
+        r0_cos = zVec3DInnerProd( &r0, &dur );
+        zVec3DMul( &dur, r0_cos, &r0prod2dr );
+        dis_r0prod2dr = zVec3DNorm( &r0prod2dr );
+        angle0 = acos( r0_cos / dis_r0 );
+        if( angle0 > 0.5*zPI ) angle0 = 0.5*zPI;
+        if( r0_cos >= 0 ){
+          if( dis_r0 - dis_r0prod2dr - dis_dr > zTOL ){
+            angle1 = acos( ( dis_r0prod2dr + dis_dr ) / dis_r0 );
+            angle = angle0 - angle1;
           } else
-            angle = angle1 - angle0;
-        } else
-          angle = zPI - angle0;
+            angle = angle0;
+        } else{
+          if( dis_r0 - ( dis_dr - dis_r0prod2dr ) > zTOL ){
+            angle1 = acos( fabs( dis_dr - dis_r0prod2dr ) / dis_r0 );
+            if( dis_dr >= dis_r0prod2dr ){
+              angle = zPI - angle0 - angle1;
+            } else
+              angle = angle1 - angle0;
+          } else
+            angle = zPI - angle0;
+        }
+        zVec3DOuterProd( &r0, &destp, &axis );
+        zVec3DNormalizeNCDRC( &axis );
+        zVec3DMul( &axis, angle, &aa );
+        zMat3DRot( &g_main->selected_rot_cp_anchor_att, &aa, &dest_rot );
+        zRotIpSetCP( rotip, g_main->selected_rot_cp, &dest_rot );
+        update_framehandle_att( g_main->feedrate_s );
       }
-      zVec3DOuterProd( &r0, &destp, &axis );
-      zVec3DNormalizeNCDRC( &axis );
-      zVec3DMul( &axis, angle, &aa );
-      zMat3DRot( &g_main->selected_rot_cp_anchor_att, &aa, &dest_rot );
-      zRotIpSetCP( rotip, g_main->selected_rot_cp, &dest_rot );
-      update_framehandle_att( g_main->feedrate_s );
+    } else
+    if( !rkglFrameHandleIsUnselected( &g_main->fh ) ){
+      rkglFrameHandleMove( &g_main->fh, &g_cam, x, y );
     }
-  } else
-  if( !rkglFrameHandleIsUnselected( &g_main->fh ) ){
-    rkglFrameHandleMove( &g_main->fh, &g_cam, x, y );
-  } else
-    rkglMouseDragFuncGLUT( x, y );
+  }
+
+  rkglMouseStoreXY( floor(x), floor(y) );
 }
 
-void resize(int w, int h)
+void mouse_wheel(GLFWwindow* window, double xoffset, double yoffset)
+{
+  if ( yoffset < 0 ) {
+    g_scale -= 0.0001; rkglOrthoScaleH( &g_cam, g_scale, g_znear, g_zfar );
+  } else if ( yoffset > 0 ) {
+    g_scale += 0.0001; rkglOrthoScaleH( &g_cam, g_scale, g_znear, g_zfar );
+  }
+}
+
+void resize(GLFWwindow* window, int w, int h)
 {
   rkglVPCreate( &g_cam, 0, 0, w, h );
   rkglOrthoScaleH( &g_cam, g_scale, g_znear, g_zfar );
 }
 
-void keyboard(unsigned char key, int x, int y)
+void keyboard(GLFWwindow* window, unsigned int key)
 {
   double ds = zRotIpKnotOneSlice( &g_main->rot_curve.rotip );
   switch( key ){
@@ -459,7 +473,7 @@ void keyboard(unsigned char key, int x, int y)
   case 'b': update_framehandle_att( g_main->feedrate_s - ds); break; /* backward */
   case 'w': g_dispswitch = 1 - g_dispswitch; break;
   case 'q': case 'Q': case '\033':
-    exit( EXIT_SUCCESS );
+    g_is_exit = true;
   default: ;
   }
 }
@@ -501,25 +515,45 @@ void init(void)
   zRotIpSetCP( &g_main->rot_curve.rotip, 2, &m2 );
 }
 
+GLFWwindow* g_window;
+
 int main(int argc, char *argv[])
 {
   void* main_ptr = NULL;
   create_empty_motionPathViewData( &main_ptr );
   set_motionPathViewData( main_ptr );
 
-  rkglInitGLUT( &argc, argv );
-  rkglWindowCreateGLUT( 0, 0, 640, 640, argv[0] );
+  int width;
+  int height;
+  if( rkglInitGLFW( &argc, argv ) < 0 )
+    return 1;
+  glfwWindowHint( GLFW_VISIBLE, false );
+  width = 640;
+  height = 480;
+  if( !( g_window = rkglWindowCreateAndOpenGLFW( 0, 0, width, height, argv[0] ) ) )
+    return 1;
 
-  glutDisplayFunc( display );
-  glutMouseFunc( mouse );
-  glutMotionFunc( motion );
-  glutReshapeFunc( resize );
-  glutKeyboardFunc( keyboard );
-  glutIdleFunc( rkglIdleFuncGLUT );
+  glfwSetWindowSizeCallback( g_window, resize );
+  glfwSetCursorPosCallback( g_window, motion );
+  glfwSetMouseButtonCallback( g_window, mouse );
+  glfwSetScrollCallback( g_window, mouse_wheel );
+  glfwSetCharCallback( g_window, keyboard );
+
   init();
-  glutMainLoop();
+
+  resize( g_window, width, height );
+  glfwSwapInterval(1);
+
+  while ( glfwWindowShouldClose( g_window ) == GL_FALSE &&
+          !is_exit() ){
+    display(g_window);
+    glfwPollEvents();
+    glfwSwapBuffers( g_window );
+  }
 
   destroy_motionPathViewData( main_ptr );
+  glfwDestroyWindow( g_window );
+  glfwTerminate();
 
   return 0;
 }
