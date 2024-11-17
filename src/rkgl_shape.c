@@ -894,12 +894,12 @@ static int _rkglNURBSVertNorm(zNURBS3D *nurbs, zMesh3D *vert, zMesh3D *norm)
   double u, v;
   int i, j;
 
-  zMesh3DAlloc( vert, nurbs->ns[0]+1, nurbs->ns[1]+1 );
-  zMesh3DAlloc( norm, nurbs->ns[0]+1, nurbs->ns[1]+1 );
+  zMesh3DAlloc( vert, zNURBS3DSlice(nurbs,0)+1, zNURBS3DSlice(nurbs,1)+1 );
+  zMesh3DAlloc( norm, zNURBS3DSlice(nurbs,0)+1, zNURBS3DSlice(nurbs,1)+1 );
   if( zArray2RowSize(vert) == 0 || zArray2RowSize(norm) == 0 ) return -1;
-  for( i=0; i<=nurbs->ns[0]; i++ ){
+  for( i=0; i<=zNURBS3DSlice(nurbs,0); i++ ){
     u = zNURBS3DKnotSlice( nurbs, 0, i );
-    for( j=0; j<=nurbs->ns[1]; j++ ){
+    for( j=0; j<=zNURBS3DSlice(nurbs,1); j++ ){
       v = zNURBS3DKnotSlice( nurbs, 1, j );
       zNURBS3DVecNorm( nurbs, u, v, zArray2ElemNC(vert,i,j), zArray2ElemNC(norm,i,j) );
     }
@@ -912,8 +912,8 @@ static void _rkglNURBSFace(zNURBS3D *nurbs, zMesh3D *vert, zMesh3D *norm)
   int i, j;
 
   glShadeModel( GL_SMOOTH );
-  for( i=0; i<nurbs->ns[0]; i++ ){
-    for( j=0; j<nurbs->ns[1]; j++ ){
+  for( i=0; i<zNURBS3DSlice(nurbs,0); i++ ){
+    for( j=0; j<zNURBS3DSlice(nurbs,1); j++ ){
       glBegin( GL_TRIANGLE_STRIP );
       rkglNormal( zArray2ElemNC(norm,i,j) );     rkglVertex( zArray2ElemNC(vert,i,j) );
       rkglNormal( zArray2ElemNC(norm,i+1,j) );   rkglVertex( zArray2ElemNC(vert,i+1,j) );
@@ -931,15 +931,15 @@ static void _rkglNURBSWireframe(zNURBS3D *nurbs, zMesh3D *vert)
 
   rkglSaveLighting( &lighting_is_enabled );
   rkglColorWhite();
-  for( i=0; i<=nurbs->ns[0]; i++ ){
+  for( i=0; i<=zNURBS3DSlice(nurbs,0); i++ ){
     glBegin( GL_LINE_STRIP );
-    for( j=0; j<=nurbs->ns[1]; j++ )
+    for( j=0; j<=zNURBS3DSlice(nurbs,1); j++ )
       rkglVertex( zArray2ElemNC(vert,i,j) );
     glEnd();
   }
-  for( j=0; j<=nurbs->ns[1]; j++ ){
+  for( j=0; j<=zNURBS3DSlice(nurbs,1); j++ ){
     glBegin( GL_LINE_STRIP );
-    for( i=0; i<=nurbs->ns[0]; i++ )
+    for( i=0; i<=zNURBS3DSlice(nurbs,0); i++ )
       rkglVertex( zArray2ElemNC(vert,i,j) );
     glEnd();
   }
@@ -1016,7 +1016,7 @@ void rkglNURBSCurve(zNURBS3D *nurbs, zRGB *rgb)
   rkglRGB( rgb );
   glPushName( -1 );
   glBegin( GL_LINE_STRIP );
-  for( i=0; i<=zNURBS3D1SliceNum(nurbs); i++ ){
+  for( i=0; i<=zNURBS3D1Slice(nurbs); i++ ){
     u = zNURBS3D1KnotSlice( nurbs, i );
     zNURBS3D1Vec( nurbs, u, &vert );
     rkglVertex( &vert );
