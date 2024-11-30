@@ -1,3 +1,5 @@
+2024.11.17. Reflected new specifications of zNURBS3D. [rkgl_shape]
+2024.11.12. Modified .gitignore. [all]
 2024.10.29. Renamed members amb, dif, and spc to ambient, diffuse, and specular, respectively. [rkgl_optic, rkgl_envmap]
 2024.10.29. Reflected new tags of Zeo and RoKi for ZTK. [rkgl_optic]
 2024. 8.14. Modified rk_penInit in rk_pen to look at the origin unless pan/tilt/roll angles are specified. [app]
