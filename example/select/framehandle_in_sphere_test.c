@@ -4,54 +4,61 @@
 
 ZDEF_STRUCT( __ZEO_CLASS_EXPORT, zRotIpCPCell ){
   zMat3D cp; /*!< control point */
+  double w;  /*!< weight */
 };
 
 zArrayClass( zRotIpCPArray, zRotIpCPCell );
 
 ZDEF_STRUCT( __ZEO_CLASS_EXPORT, zRotIp ){
-  int order;     /*!< \brief orders of a curve */
-  zVec knot;     /*!< \brief knot vectors */
-  int ns;        /*!< \brief number of slices in sphere angle axis */
+  zBSplineParam param; /*!< \brief B-spline parameter */
   /*! \cond */
   zRotIpCPArray cparray; /* an array of control points */
   /*! \endcond */
 };
 
-#define zRotIpKnotNum(r)        zVecSizeNC((r)->knot)
-#define zRotIpKnot(r,i)         zVecElemNC((r)->knot,i)
-#define zRotIpSetKnot(r,i,v)    ( zRotIpKnot(r,i) = (v) )
-#define zRotIpKnotS(r)          zRotIpKnot(r,0)
-#define zRotIpKnotE(r)          zRotIpKnot(r,zRotIpCPNum(r)-1)
-#define zRotIpKnotOneSlice(r)   ( ( zRotIpKnotE(r) - zRotIpKnotS(r) ) / (r)->ns )
-#define zRotIpKnotSlice(r,i)    ( zRotIpKnotOneSlice(r) * i + zRotIpKnotS(r) )
-#define zRotIpSliceNum(r)       (r)->ns
-/*! \brief set numbers of slices of a NURBS curve / surface. */
-#define zRotIpSetSliceNum(r,snum) do{ \
-  (r)->ns = (snum);\
+#define zRotIpOrder(r)          (r)->param.order
+#define zRotIpKnotNum(r)        zBSplineParamKnotNum( &(r)->param )
+#define zRotIpKnot(r,i)         zBSplineParamKnot( &(r)->param, i )
+#define zRotIpSetKnot(r,v)      zBSplineParamSetKnot( &(r)->param, v )
+#define zRotIpKnotS(r)          zBSplineParamKnotS( &(r)->param )
+#define zRotIpKnotE(r)          zBSplineParamKnotE( &(r)->param )
+#define zRotIpKnotS(r)          zBSplineParamKnotS( &(r)->param )
+#define zRotIpKnotE(r)          zBSplineParamKnotE( &(r)->param )
+#define zRotIpKnotOneSlice(r)   ( ( zRotIpKnotE(r) - zRotIpKnotS(r) ) / (r)->param.slice )
+#define zRotIpKnotSlice(r,k)    zBSplineParamKnotSlice( &(r)->param, k )
+#define zRotIpSlice(r)          (r)->param.slice
+/*! \brief set numbers of slices of a curve. */
+#define zRotIpSetSlice(r,snum) do{\
+  zBSplineParamSetSlice( &(r)->param, snum );\
 } while(0)
 
-#define zRotIpCPNum(r)       zArraySize(&(r)->cparray)
-#define zRotIpCP(r,i)        ( &zArrayElemNC(&(r)->cparray,i)->cp )
-#define zRotIpSetCP(r,i,v)   zMat3DCopy( v, zRotIpCP(r,i) )
+#define zRotIpCPNum(r)         zArraySize(&(r)->cparray)
+#define zRotIpWeight(r,i)      ( zArrayElemNC(&(r)->cparray,i)->w )
+#define zRotIpSetWeight(r,i,v) ( zRotIpWeight(r,i) = (v) )
+#define zRotIpCP(r,i)          ( &zArrayElemNC(&(r)->cparray,i)->cp )
+#define zRotIpSetCP(r,i,v)     zMat3DCopy( v, zRotIpCP(r,i) )
 
 /* allocate a zRotIp curve. */
-bool zRotIpAlloc(zRotIp *rotip, int size)
+bool zRotIpAlloc(zRotIp *rotip, int order, int size)
 {
   int i;
-  rotip->knot = zVecAlloc( size );
+  if( order > 0 )
+    zBSplineParamAlloc( &rotip->param, order, size, 0 ); /* NURBS */
+  else
+    zBSplineParamAlloc( &rotip->param, 0, size-1, 0 ); /* Slerp */
   zArrayAlloc( &rotip->cparray, zRotIpCPCell, size );
-  i=0; zRotIpSetKnot( rotip, i, 0 );
-  for( i=0; i<= ( size - 1 ); i++ )
-    zRotIpSetKnot( rotip, i, (double)(i)/(double)( size - 1 ) );
-
+  zBSplineParamKnotInit( &rotip->param );
+  for( i=0; i<size; i++ ){
+    zRotIpSetWeight( rotip, i, 1.0 );
+    zMat3DZero( zRotIpCP( rotip, i ) );
+  }
   return true;
 }
 
 /* initialize a Rotation curve. */
 zRotIp *zRotIpInit(zRotIp *rotip)
 {
-  zRotIpSetSliceNum( rotip, 0 );
-  rotip->knot = NULL;
+  zBSplineParamInit( &rotip->param );
   zArrayInit( &rotip->cparray );
   return rotip;
 }
@@ -59,37 +66,46 @@ zRotIp *zRotIpInit(zRotIp *rotip)
 /* destroy a Rotation curve. */
 void zRotIpDestroy(zRotIp *rotip)
 {
-  zVecFree( rotip->knot );
+  zBSplineParamFree( &rotip->param );
   zArrayFree( &rotip->cparray );
   zRotIpInit( rotip );
 }
 
-/* find a knot segment that includes the given parameter. */
-static int _zRotIpSeg(zRotIp *rotip, double t)
+/* compute a vector on a NURBS curve / surface. */
+zMat3D *zRotIpNURBS3D(const zRotIp *rotip, double s, zMat3D *out_mat)
 {
-  int i, j, k;
+  int seg_idx, i0, i;
+  double bs, den;
+  zMat3D *m0, tmp;
 
-  for( i=0, j=zRotIpCPNum(rotip)-1; ; ){
-    if( j <= i + 1 ) break;
-    k = ( i + j ) / 2;
-    if( zRotIpKnot(rotip,k) > t )
-      j = k;
-    else
-      i = k;
+  seg_idx = zBSplineParamSeg( &rotip->param, s );
+  i0 = seg_idx - zRotIpOrder(rotip);
+  zMat3DCopy( zRotIpCP( rotip, i0 ), out_mat );
+  for( den=0, i=i0; i<=seg_idx; i++ ){
+    den += bs = zRotIpWeight(rotip,i) * zBSplineParamBasis( &rotip->param, s, i, zRotIpOrder(rotip), seg_idx );
+    m0 = zRotIpCP( rotip, i );
+    zMat3DInterDiv( out_mat, m0, bs, &tmp );
+    zMat3DCopy( &tmp, out_mat );
   }
-  return i;
+
+  return zIsTiny(den) ? NULL : zMat3DDivDRC( out_mat, den );
 }
 
-zMat3D* zRotIpPopMat3D(zRotIp *rotip, double s, zMat3D* out_mat)
+
+zMat3D* zRotIpPopMat3D(const zRotIp *rotip, double s, zMat3D* out_mat)
 {
+  if( zRotIpOrder(rotip) > 0 )
+    return zRotIpNURBS3D( rotip, s, out_mat );
+
+  /* Slerp */
   double s0, s1, t;
   zMat3D *m0, *m1;
   zEP ep0, ep1, ep;
   int seg_idx;
-  seg_idx = _zRotIpSeg( rotip, s );
+  seg_idx = zBSplineParamSeg( &rotip->param, s );
   s0 = zRotIpKnot( rotip, seg_idx );
   s1 = zRotIpKnot( rotip, seg_idx+1 );
-  /* Slerp */
+  /**/
   t  = (s - s0) / (s1 - s0);
   m0 = zRotIpCP( rotip, seg_idx );
   m1 = zRotIpCP( rotip, seg_idx+1 );
@@ -130,7 +146,9 @@ typedef struct{
 motionPathViewData* g_main;
 
 static const int g_SLICE_NUM = 100;
-static const int g_CP_NUM = 3;
+static const int g_ORDER = 3;
+static const int g_CP_NUM = 4;
+static const double g_WEIGHT = 1.0;
 
 static ubyte g_dispswitch = 1;
 
@@ -179,7 +197,7 @@ void rkglRotationCurve(zRotIp *rotip, zVec3D* start_draw_unitvec, zVec3D *center
   rkglRGB( rgb );
   glPushName( -1 );
   glBegin( GL_LINE_STRIP );
-  for( i=0; i<=zRotIpSliceNum(rotip); i++ ){
+  for( i=0; i<=zRotIpSlice(rotip); i++ ){
     u = zRotIpKnotSlice( rotip, i );
     zRotIpPopMat3D( rotip, u, &mat );
     getDrawPoint( &mat, start_draw_unitvec, center, radius, &vert );
@@ -225,6 +243,7 @@ void rkglRotationCurveCP(zRotIp *rotip, zVec3D* start_draw_unitvec, zVec3D* cent
 
 /* end of rotation curve drawing */
 
+
 /* data handling */
 
 bool create_empty_motionPathViewData(void** src)
@@ -257,17 +276,19 @@ void destroy_motionPathViewData(void* src)
 
 /* end of data handling */
 
+
 void update_framehandle_att(double s)
 {
   zMat3D mat;
   g_main->feedrate_s = s;
   double start_s = zRotIpKnotSlice( &g_main->rot_curve.rotip, 0 );
-  double end_s = zRotIpKnotSlice( &g_main->rot_curve.rotip, zRotIpSliceNum(&g_main->rot_curve.rotip) );
+  double end_s = zRotIpKnotSlice( &g_main->rot_curve.rotip, zRotIpSlice(&g_main->rot_curve.rotip) );
   if( g_main->feedrate_s < start_s ) g_main->feedrate_s = start_s;
   if( g_main->feedrate_s > end_s ) g_main->feedrate_s = end_s;
   zRotIpPopMat3D( &g_main->rot_curve.rotip, s, &mat );
   zMat3DCopy( &mat, rkglFrameHandleAtt( &g_main->fh ) );
 }
+
 
 /* draw part */
 
@@ -359,7 +380,6 @@ void mouse(GLFWwindow* window, int button, int state, int mods)
       if( find_rot_cp( &g_main->sb ) >= 0 ){
         rkglFrameHandleUnselect( &g_main->fh );
         zMat3DCopy( zRotIpCP( &g_main->rot_curve.rotip, g_main->selected_rot_cp ), &g_main->selected_rot_cp_anchor_att );
-        /* rkglUnproject( &g_cam, x, y, rkglSelectionZnearDepth(&g_main->sb), &g_main->selected_rot_cp_anchor_pos ); */
         getDrawPoint( &g_main->selected_rot_cp_anchor_att, &g_main->rot_curve.start_draw_unitvec, rkglFrameHandlePos( &g_main->fh ), g_LENGTH, &g_main->selected_rot_cp_anchor_pos );
         eprintf( "Selected rotation control point [%d]\n", g_main->selected_rot_cp );
       } else
@@ -501,19 +521,21 @@ void init(void)
   /**/
   zVec3DCreate( &g_main->rot_curve.start_draw_unitvec, 1.0, 0.0, 0.0 );
   zRotIpInit( &g_main->rot_curve.rotip );
-  zRotIpAlloc( &g_main->rot_curve.rotip, g_CP_NUM );
-  zRotIpSetSliceNum( &g_main->rot_curve.rotip, g_SLICE_NUM );
+  zRotIpAlloc( &g_main->rot_curve.rotip, -1,      g_CP_NUM ); /* Slerp */
+  zRotIpAlloc( &g_main->rot_curve.rotip, g_ORDER, g_CP_NUM ); /* NURBS */
+  zRotIpSetSlice( &g_main->rot_curve.rotip, g_SLICE_NUM );
   /**/
   g_main->feedrate_s = 0.0;
   /**/
-  zMat3D m0, m1, m2;
-  zMat3DFromZYX( &m0, zRandF(-zPI,zPI), zRandF(-zPI,zPI), zRandF(-zPI,zPI) );
-  zMat3DFromZYX( &m1, zRandF(-zPI,zPI), zRandF(-zPI,zPI), zRandF(-zPI,zPI) );
-  zMat3DFromZYX( &m2, zRandF(-zPI,zPI), zRandF(-zPI,zPI), zRandF(-zPI,zPI) );
-  zRotIpSetCP( &g_main->rot_curve.rotip, 0, &m0 );
-  zRotIpSetCP( &g_main->rot_curve.rotip, 1, &m1 );
-  zRotIpSetCP( &g_main->rot_curve.rotip, 2, &m2 );
+  int i;
+  zMat3D m;
+  for( i=0; i < g_CP_NUM; i++ ){
+    zMat3DFromZYX( &m, zRandF(-zPI,zPI), zRandF(-zPI,zPI), zRandF(-zPI,zPI) );
+    zRotIpSetCP( &g_main->rot_curve.rotip, i, &m );
+    zRotIpSetWeight( &g_main->rot_curve.rotip, i, g_WEIGHT );
+  }
 }
+
 
 GLFWwindow* g_window;
 
