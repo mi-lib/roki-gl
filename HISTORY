@@ -1,3 +1,7 @@
+2024.12.10. Modified rk_view to reflect new specifications of zVec3DDataReadPCDFile and zMShape3DVertData. [app]
+2024.12.10. Modified rkglPointCloud to accept zVec3DData. [rkgl_shape]
+2024.12.10. Modified specification of rkglPointCloud to acccept an instance of zVec3DData. [rkgl_shape]
+2024.12.10. Modified rkglShape to reflect new specification of zVec3DDataOBB. [rkgl_shape]
 2024.11.17. Reflected new specifications of zNURBS3D. [rkgl_shape]
 2024.11.12. Modified .gitignore. [all]
 2024.10.29. Renamed members amb, dif, and spc to ambient, diffuse, and specular, respectively. [rkgl_optic, rkgl_envmap]

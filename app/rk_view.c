@@ -121,28 +121,29 @@ void rk_viewReadPH(zMShape3D *ms, const char *filename, char *sfx)
 void rk_viewReadModel(zStrAddrList *modellist)
 {
   zStrListCell *cp;
-  zVec3DList pl, pl_all;
+  zVec3DList pointlist_all;
+  zVec3DData pointdata, pointdata_all;
   char *sfx;
   double scale;
   zMShape3D ms;
   char dirname[BUFSIZ], filename[BUFSIZ], cwd[BUFSIZ];
   int i;
 
-  zListInit( &pl_all );
+  zListInit( &pointlist_all );
   model = rkglBeginList();
   zListForEach( modellist, cp ){
     if( !( sfx = zGetSuffix( cp->data ) ) ) sfx = "ztk";
     rk_viewChangeDir( cp->data, dirname, filename, cwd, BUFSIZ );
     if( strcmp( sfx, "pcd" ) == 0 ){
-      if( !zVec3DListReadPCDFile( &pl, filename ) ){
+      if( !zVec3DDataReadPCDFile( &pointdata, filename ) ){
         ZOPENERROR( cp->data );
         rk_viewUsage();
       }
-      rkglPointCloud( &pl, ZVEC3DZERO, 1 );
+      rkglPointCloud( &pointdata, ZVEC3DZERO, 1 );
       if( opt[OPT_AUTO].flag )
-        zListAppend( &pl_all, &pl );
+        zListAppend( &pointlist_all, &pointdata.data.list );
       else
-        zVec3DListDestroy( &pl );
+        zVec3DDataDestroy( &pointdata );
       continue;
     }
     if( strcmp( sfx, "ztk" ) == 0 ){
@@ -161,15 +162,17 @@ void rk_viewReadModel(zStrAddrList *modellist)
     }
     rkglMShape( &ms, opt[OPT_WIREFRAME].flag ? RKGL_WIREFRAME : RKGL_FACE, &light );
     if( opt[OPT_AUTO].flag ){
-      zMShape3DVertList( &ms, &pl );
-      zListAppend( &pl_all, &pl );
+      zMShape3DVertData( &ms, &pointdata );
+      zListAppend( &pointlist_all, &pointdata.data.list );
     }
     zMShape3DDestroy( &ms );
   }
   glEndList();
   if( opt[OPT_AUTO].flag ){
-    if( !zBoundingBall3DPL( &boundingsphere, &pl_all, NULL ) ) exit( EXIT_FAILURE );
-    zVec3DListDestroy( &pl_all );
+    zVec3DDataAssignList( &pointdata_all, &pointlist_all );
+    if( !zVec3DDataBoundingBall( &pointdata_all, &boundingsphere, NULL ) ) exit( EXIT_FAILURE );
+    zVec3DDataDestroy( &pointdata_all );
+    zVec3DListDestroy( &pointlist_all );
   }
   if( model < 0 ) exit( EXIT_FAILURE );
 }

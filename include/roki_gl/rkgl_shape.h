@@ -24,7 +24,10 @@ __BEGIN_DECLS
 #define RKGL_BB        0x40
 
 /* transformation */
+
+/*! \brief translate coordinates. */
 __ROKI_GL_EXPORT void rkglTranslate(zVec3D *v);
+/*! \brief transform coordinates. */
 __ROKI_GL_EXPORT void rkglXform(zFrame3D *f);
 
 /* 3D object drawing */
@@ -33,52 +36,82 @@ __ROKI_GL_EXPORT void rkglXform(zFrame3D *f);
 #define rkglNormal(n)    glNormal3dv( (n)->e )
 #define rkglNormalRev(n) glNormal3d( -(n)->c.x, -(n)->c.y, -(n)->c.z )
 
+/*! \brief put a 3D point. */
 __ROKI_GL_EXPORT void rkglPoint(zVec3D *p);
+/*! \brief put a 3D edge. */
 __ROKI_GL_EXPORT void rkglEdge(zEdge3D *e);
-__ROKI_GL_EXPORT void rkglTri(zTri3D *t);
+
+/*! \brief put a 3D triangle face. */
+__ROKI_GL_EXPORT void rkglTriFace(zTri3D *t);
+/*! \brief put a 3D triangle wireframe. */
+__ROKI_GL_EXPORT void rkglTriWireframe(zTri3D *t);
+/*! \brief put a 3D triangle with texture. */
 __ROKI_GL_EXPORT void rkglTriTexture(zTri3D *t, zTri2D *f);
+/*! \brief put a 3D triangle with bump map. */
 __ROKI_GL_EXPORT void rkglTriBump(zTri3D *t, zTri2D *f, zVec3D *lp);
+/*! \brief put a 3D polygons. */
 __ROKI_GL_EXPORT void rkglPolygon(zVec3D v[], int n, ...);
 
 /* primitive shapes */
 
+/*! \brief draw a 3D box. */
 __ROKI_GL_EXPORT void rkglBox(zBox3D *box, ubyte disptype);
+/*! \brief draw a 3D hemisphere. */
 __ROKI_GL_EXPORT void rkglHemisphere(zSphere3D *sphere, zVec3D *dir, ubyte disptype);
+/*! \brief draw a 3D sphere. */
 __ROKI_GL_EXPORT void rkglSphere(zSphere3D *sphere, ubyte disptype);
+/*! \brief draw a 3D ellipsoid. */
 __ROKI_GL_EXPORT void rkglEllips(zEllips3D *ellips, ubyte disptype);
+/*! \brief draw a 3D tube. */
 __ROKI_GL_EXPORT void rkglTube(zCyl3D *tube, ubyte disptype);
+/*! \brief draw a 3D cylinder. */
 __ROKI_GL_EXPORT void rkglCyl(zCyl3D *cyl, ubyte disptype);
+/*! \brief draw a 3D capsule. */
 __ROKI_GL_EXPORT void rkglCapsule(zCapsule3D *capsule, ubyte disptype);
+/*! \brief draw a 3D elliptic cylinder. */
 __ROKI_GL_EXPORT void rkglECyl(zECyl3D *ecyl, ubyte disptype);
+/*! \brief draw a 3D cone. */
 __ROKI_GL_EXPORT void rkglCone(zCone3D *cone, ubyte disptype);
-
+/*! \brief draw a 3D torus. */
 __ROKI_GL_EXPORT void rkglTorus(zVec3D *c, zVec3D *n, double r1, double r2, int div1, int div2, ubyte disptype);
 
 /* NURBS surface and curve */
 
+/*! \brief draw a 3D NURBS surface. */
 __ROKI_GL_EXPORT void rkglNURBS(zNURBS3D *nurbs, ubyte disptype);
+/*! \brief draw a 3D NURBS surface with conrol points. */
 __ROKI_GL_EXPORT void rkglNURBSCP(zNURBS3D *nurbs, GLfloat size, zRGB *rgb);
 
+/*! \brief draw a 3D NURBS curve. */
 __ROKI_GL_EXPORT void rkglNURBSCurve(zNURBS3D *nurbs, zRGB *rgb);
+/*! \brief draw a 3D NURBS curve with conrol points. */
 __ROKI_GL_EXPORT void rkglNURBSCurveCP(zNURBS3D *nurbs, GLfloat size, zRGB *rgb);
 
 /* polyhedron */
 
+/*! \brief draw a polyhedron. */
 __ROKI_GL_EXPORT void rkglPH(zPH3D *ph, ubyte disptype);
+/*! \brief draw a polyhedron with texture. */
 __ROKI_GL_EXPORT void rkglPHTexture(zPH3D *ph, zOpticalInfo *oi, zTexture *texture);
+/*! \brief draw a polyhedron with bump map. */
 __ROKI_GL_EXPORT void rkglPHBump(zPH3D *ph, zTexture *bump, rkglLight *light);
 
 /* shape and multishape */
 
+/*! \brief draw a 3D shape. */
 __ROKI_GL_EXPORT void rkglShape(zShape3D *s, zOpticalInfo *oi_alt, ubyte disptype, rkglLight *light);
+/*! \brief entry a 3D shape to the display list. */
 __ROKI_GL_EXPORT int rkglEntryShape(zShape3D *s, zOpticalInfo *oi_alt, ubyte disptype, rkglLight *light);
 
+/*! \brief draw multiple 3D shapes. */
 __ROKI_GL_EXPORT void rkglMShape(zMShape3D *s, ubyte disptype, rkglLight *light);
+/*! \brief entry multiple 3D shapes to the display list. */
 __ROKI_GL_EXPORT int rkglEntryMShape(zMShape3D *s, ubyte disptype, rkglLight *light);
 
 /* point cloud */
 
-__ROKI_GL_EXPORT void rkglPointCloud(zVec3DList *pc, zVec3D *center, short size);
+/*! \brief draw 3D pointcloud. */
+__ROKI_GL_EXPORT void rkglPointCloud(zVec3DData *data, zVec3D *center, short size);
 
 /* fancy geometries */
 
@@ -86,12 +119,17 @@ __ROKI_GL_EXPORT void rkglPointCloud(zVec3DList *pc, zVec3D *center, short size)
 #define RKGL_ARROW_BOTTOM_RAD 0.05
 #define RKGL_ARROW_NECK_RAD   0.1
 #define RKGL_ARROW_TIP_LEN    0.2
+/*! \brief draw a 3D arrow. */
 __ROKI_GL_EXPORT void rkglArrow(zVec3D *bot, zVec3D *vec, double mag);
 
+/*! \brief draw a 3D coordinate frame. */
 __ROKI_GL_EXPORT void rkglFrame(zFrame3D *f, double l, double w);
 
+/*! \brief draw a 3D coordinate axis. */
 __ROKI_GL_EXPORT void rkglAxis(zAxis axis, double d, double w, GLfloat color[]);
+/*! \brief draw 3D wireframe gauges. */
 __ROKI_GL_EXPORT void rkglGauge(zAxis axis1, double d1, zAxis axis2, double d2, double w, double step, GLfloat color[]);
+/*! \brief draw a 3D checker board. */
 __ROKI_GL_EXPORT void rkglCheckerBoard(zVec3D *pc0, zVec3D *pc1, zVec3D *pc2, int div1, int div2, zOpticalInfo *oi1, zOpticalInfo *oi2);
 
 __END_DECLS
