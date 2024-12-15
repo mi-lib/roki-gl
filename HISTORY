@@ -1,3 +1,4 @@
+2024.12.13. Debugged rk_viewReadModel in rk_view. [app]
 2024.12.10. Modified rk_view to reflect new specifications of zVec3DDataReadPCDFile and zMShape3DVertData. [app]
 2024.12.10. Modified rkglPointCloud to accept zVec3DData. [rkgl_shape]
 2024.12.10. Modified specification of rkglPointCloud to acccept an instance of zVec3DData. [rkgl_shape]
