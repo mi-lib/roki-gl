@@ -8,13 +8,13 @@
 #include <roki_gl/rkgl_shape.h>
 #include <zeo/zeo_bv3d.h>
 
-/* 3D object drawing */
-
+/* translate coordinates. */
 void rkglTranslate(zVec3D *v)
 {
   glTranslated( v->e[zX], v->e[zY], v->e[zZ] );
 }
 
+/* transform coordinates. */
 void rkglXform(zFrame3D *f)
 {
   GLdouble m[16];
@@ -27,6 +27,9 @@ void rkglXform(zFrame3D *f)
   glMultMatrixd( m );
 }
 
+/* 3D object drawing */
+
+/* put a 3D point. */
 void rkglPoint(zVec3D *p)
 {
   glBegin( GL_POINTS );
@@ -34,6 +37,7 @@ void rkglPoint(zVec3D *p)
   glEnd();
 }
 
+/* put a 3D edge. */
 void rkglEdge(zEdge3D *e)
 {
   glBegin( GL_LINES );
@@ -42,6 +46,7 @@ void rkglEdge(zEdge3D *e)
   glEnd();
 }
 
+/* put a 3D triangle face. */
 void rkglTriFace(zTri3D *t)
 {
   glBegin( GL_TRIANGLES );
@@ -56,6 +61,7 @@ void rkglTriFace(zTri3D *t)
   glEnd();
 }
 
+/* put a 3D triangle wireframe. */
 void rkglTriWireframe(zTri3D *t)
 {
   glBegin( GL_LINE_LOOP );
@@ -65,6 +71,7 @@ void rkglTriWireframe(zTri3D *t)
   glEnd();
 }
 
+/* put a 3D triangle with texture. */
 void rkglTriTexture(zTri3D *t, zTri2D *f)
 {
   glBegin( GL_TRIANGLES );
@@ -75,6 +82,7 @@ void rkglTriTexture(zTri3D *t, zTri2D *f)
   glEnd();
 }
 
+/* put a 3D triangle with bump map. */
 void rkglTriBump(zTri3D *t, zTri2D *f, zVec3D *lp)
 {
   GLdouble m[16];
@@ -94,6 +102,7 @@ void rkglTriBump(zTri3D *t, zTri2D *f, zVec3D *lp)
   glEnd();
 }
 
+/* put a 3D polygons. */
 void rkglPolygon(zVec3D v[], int n, ...)
 {
   zVec3D v0, v1, v2, norm;
@@ -124,6 +133,7 @@ void rkglPolygon(zVec3D v[], int n, ...)
   glEnd();
 }
 
+/* draw a face of a 3D box. */
 static void _rkglBoxFace(zVec3D vert[8])
 {
   glShadeModel( GL_FLAT );
@@ -135,6 +145,7 @@ static void _rkglBoxFace(zVec3D vert[8])
   rkglPolygon( vert, 4, 2, 6, 7, 3 );
 }
 
+/* draw a wireframe of a 3D box. */
 static void _rkglBoxWireframe(zVec3D vert[8])
 {
   bool lighting_is_enabled;
@@ -166,6 +177,7 @@ static void _rkglBoxWireframe(zVec3D vert[8])
   rkglLoadLighting( lighting_is_enabled );
 }
 
+/* draw a 3D box. */
 void rkglBox(zBox3D *box, ubyte disptype)
 {
   zVec3D vert[8];
@@ -179,8 +191,6 @@ void rkglBox(zBox3D *box, ubyte disptype)
     _rkglBoxWireframe( vert );
 }
 static void _rkglShapeBox(void *box, ubyte disptype){ rkglBox( (zBox3D *)box, disptype ); }
-
-#define zVec3DArrayAlloc(va,size) zArrayAlloc( va, zVec3D, size )
 
 zArray2Class( zMesh3D, zVec3D );
 #define zMesh3DAlloc(mesh,row,col) zArray2Alloc( mesh, zVec3D, row, col )
@@ -259,6 +269,7 @@ static void _rkglHemisphereWireframe(zMesh3D *vert, int nl, int ndiv)
   rkglLoadLighting( lighting_is_enabled );
 }
 
+/* draw a 3D hemisphere. */
 void rkglHemisphere(zSphere3D *sphere, zVec3D *dir, ubyte disptype)
 {
   int nl;
@@ -337,6 +348,7 @@ static void _rkglSphereWireframe(zSphere3D *sphere, zMesh3D *vert, int nl)
   rkglLoadLighting( lighting_is_enabled );
 }
 
+/* draw a 3D sphere. */
 void rkglSphere(zSphere3D *sphere, ubyte disptype)
 {
   int n2;
@@ -426,6 +438,7 @@ static void _rkglEllipsWireframe(zMesh3D *vert, zMesh3D *norm, int nl, int ndiv)
   rkglLoadLighting( lighting_is_enabled );
 }
 
+/* draw a 3D ellipsoid. */
 void rkglEllips(zEllips3D *ellips, ubyte disptype)
 {
   int n2;
@@ -508,6 +521,7 @@ static void _rkglTubeWireframe(zCyl3D *tube, zMesh3D *vert)
   rkglLoadLighting( lighting_is_enabled );
 }
 
+/* draw a 3D tube. */
 void rkglTube(zCyl3D *tube, ubyte disptype)
 {
   zMesh3D vert;
@@ -579,6 +593,7 @@ static void _rkglCylWireframe(zCyl3D *cyl, zMesh3D *vert)
   rkglLoadLighting( lighting_is_enabled );
 }
 
+/* draw a 3D cylinder. */
 void rkglCyl(zCyl3D *cyl, ubyte disptype)
 {
   zVec3DArray norm;
@@ -596,6 +611,7 @@ void rkglCyl(zCyl3D *cyl, ubyte disptype)
 }
 static void _rkglShapeCyl(void *cyl, ubyte disptype){ rkglCyl( (zCyl3D *)cyl, disptype ); }
 
+/* draw a 3D capsule. */
 void rkglCapsule(zCapsule3D *capsule, ubyte disptype)
 {
   zVec3D dir;
@@ -693,6 +709,7 @@ static void _rkglECylWireframe(zECyl3D *ecyl, zMesh3D *vert)
   rkglLoadLighting( lighting_is_enabled );
 }
 
+/* draw a 3D elliptic cylinder. */
 void rkglECyl(zECyl3D *ecyl, ubyte disptype)
 {
   zVec3DArray norm;
@@ -787,6 +804,7 @@ static void _rkglConeWireframe(zCone3D *cone, zVec3DArray *vert)
   rkglLoadLighting( lighting_is_enabled );
 }
 
+/* draw a 3D cone. */
 void rkglCone(zCone3D *cone, ubyte disptype)
 {
   zVec3DArray vert, norm;
@@ -875,6 +893,7 @@ static void _rkglTorusWireframe(zMesh3D *vert, int div1, int div2)
   rkglLoadLighting( lighting_is_enabled );
 }
 
+/* draw a 3D torus. */
 void rkglTorus(zVec3D *c, zVec3D *n, double r1, double r2, int div1, int div2, ubyte disptype)
 {
   zMesh3D vert, norm;
@@ -946,6 +965,7 @@ static void _rkglNURBSWireframe(zNURBS3D *nurbs, zMesh3D *vert)
   rkglLoadLighting( lighting_is_enabled );
 }
 
+/* draw a 3D NURBS surface. */
 void rkglNURBS(zNURBS3D *nurbs, ubyte disptype)
 {
   zMesh3D vert, norm;
@@ -963,6 +983,7 @@ void rkglNURBS(zNURBS3D *nurbs, ubyte disptype)
 }
 static void _rkglShapeNURBS(void *nurbs, ubyte disptype){ rkglNURBS( (zNURBS3D *)nurbs, disptype ); }
 
+/* draw a 3D NURBS surface with conrol points. */
 void rkglNURBSCP(zNURBS3D *nurbs, GLfloat size, zRGB *rgb)
 {
   int i, j;
@@ -1005,6 +1026,7 @@ void rkglNURBSCP(zNURBS3D *nurbs, GLfloat size, zRGB *rgb)
   rkglLoadLighting( lighting_is_enabled );
 }
 
+/* draw a 3D NURBS curve. */
 void rkglNURBSCurve(zNURBS3D *nurbs, zRGB *rgb)
 {
   int i;
@@ -1026,6 +1048,7 @@ void rkglNURBSCurve(zNURBS3D *nurbs, zRGB *rgb)
   rkglLoadLighting( lighting_is_enabled );
 }
 
+/* draw a 3D NURBS curve with conrol points. */
 void rkglNURBSCurveCP(zNURBS3D *nurbs, GLfloat size, zRGB *rgb)
 {
   int i;
@@ -1055,6 +1078,7 @@ void rkglNURBSCurveCP(zNURBS3D *nurbs, GLfloat size, zRGB *rgb)
   rkglLoadLighting( lighting_is_enabled );
 }
 
+/* draw a polyhedron. */
 void rkglPH(zPH3D *ph, ubyte disptype)
 {
   int i;
@@ -1075,6 +1099,7 @@ void rkglPH(zPH3D *ph, ubyte disptype)
 }
 static void _rkglShapePH(void *ph, ubyte disptype){ rkglPH( (zPH3D *)ph, disptype ); }
 
+/* draw a polyhedron with texture. */
 void rkglPHTexture(zPH3D *ph, zOpticalInfo *oi, zTexture *texture)
 {
   int i;
@@ -1091,6 +1116,7 @@ void rkglPHTexture(zPH3D *ph, zOpticalInfo *oi, zTexture *texture)
   rkglTextureUnbind();
 }
 
+/* draw a polyhedron with bump map. */
 void rkglPHBump(zPH3D *ph, zTexture *bump, rkglLight *light)
 {
   zVec3D lp;
@@ -1121,6 +1147,7 @@ void rkglPHBump(zPH3D *ph, zTexture *bump, rkglLight *light)
   rkglTextureUnbind();
 }
 
+/* draw a 3D shape. */
 void rkglShape(zShape3D *s, zOpticalInfo *oi_alt, ubyte disptype, rkglLight *light)
 {
   struct{
@@ -1155,7 +1182,10 @@ void rkglShape(zShape3D *s, zOpticalInfo *oi_alt, ubyte disptype, rkglLight *lig
     rkglMaterial( zShape3DOptic(s) );
   if( disptype & RKGL_BB ){
     zBox3D box;
-    zOBB3D( &box, zShape3DVertBuf(s), zShape3DVertNum(s) );
+    zVec3DData data;
+    zVec3DDataAssignArray( &data, &zShape3DPH(s)->vert );
+    zVec3DDataOBB( &data, &box );
+    zVec3DDataDestroy( &data );
     rkglBox( &box, disptype );
   }
   for( i=0; shapelist[i].typestr; i++ )
@@ -1165,6 +1195,7 @@ void rkglShape(zShape3D *s, zOpticalInfo *oi_alt, ubyte disptype, rkglLight *lig
     }
 }
 
+/* entry a 3D shape to the display list. */
 int rkglEntryShape(zShape3D *s, zOpticalInfo *oi_alt, ubyte disptype, rkglLight *light)
 {
   int result;
@@ -1176,6 +1207,7 @@ int rkglEntryShape(zShape3D *s, zOpticalInfo *oi_alt, ubyte disptype, rkglLight 
   return result;
 }
 
+/* draw multiple 3D shapes. */
 void rkglMShape(zMShape3D *s, ubyte disptype, rkglLight *light)
 {
   int i;
@@ -1184,6 +1216,7 @@ void rkglMShape(zMShape3D *s, ubyte disptype, rkglLight *light)
     rkglShape( zMShape3DShape(s,i), NULL, disptype, light );
 }
 
+/* entry multiple 3D shapes to the display list. */
 int rkglEntryMShape(zMShape3D *s, ubyte disptype, rkglLight *light)
 {
   int result;
@@ -1194,32 +1227,36 @@ int rkglEntryMShape(zMShape3D *s, ubyte disptype, rkglLight *light)
   return result;
 }
 
-void rkglPointCloud(zVec3DList *pc, zVec3D *center, short size)
+/* draw 3D pointcloud. */
+void rkglPointCloud(zVec3DData *data, zVec3D *center, short size)
 {
-  zVec3DListCell *c;
+  zVec3D *v;
   zHSV hsv;
   zRGB rgb;
   double d, dmax = 0;
   bool lighting_is_enabled;
 
   hsv.sat = hsv.val = 1.0;
-  zListForEach( pc, c )
-    if( ( d = zVec3DDist( c->data, center ) ) > dmax ) dmax = d;
+  zVec3DDataRewind( data );
+  while( ( v = zVec3DDataFetch( data ) ) )
+    if( ( d = zVec3DDist( v, center ) ) > dmax ) dmax = d;
   if( zIsTiny( dmax ) ) dmax = 1.0; /* dummy */
 
   rkglSaveLighting( &lighting_is_enabled );
   glPointSize( size );
   glBegin( GL_POINTS );
-  zListForEach( pc, c ){
-    hsv.hue = 360 * zMin( zVec3DDist( c->data, center ) / dmax, 1.0 ) + 180;
+  zVec3DDataRewind( data );
+  while( ( v = zVec3DDataFetch( data ) ) ){
+    hsv.hue = 360 * zMin( zVec3DDist( v, center ) / dmax, 1.0 ) + 180;
     zHSV2RGB( &hsv, &rgb );
     rkglRGB( &rgb );
-    rkglVertex( c->data );
+    rkglVertex( v );
   }
   glEnd();
   rkglLoadLighting( lighting_is_enabled );
 }
 
+/* draw a 3D arrow. */
 void rkglArrow(zVec3D *bot, zVec3D *vec, double mag)
 {
   zCyl3D cyl;
@@ -1237,6 +1274,7 @@ void rkglArrow(zVec3D *bot, zVec3D *vec, double mag)
   rkglCone( &cone, RKGL_FACE );
 }
 
+/* draw a 3D coordinate frame. */
 void rkglFrame(zFrame3D *f, double l, double w)
 {
   bool lighting_is_enabled;
@@ -1269,6 +1307,7 @@ void rkglFrame(zFrame3D *f, double l, double w)
   rkglLoadLighting( lighting_is_enabled );
 }
 
+/* draw a 3D coordinate axis. */
 void rkglAxis(zAxis axis, double d, double w, GLfloat color[])
 {
   zEdge3D edge;
@@ -1286,6 +1325,7 @@ void rkglAxis(zAxis axis, double d, double w, GLfloat color[])
   rkglLoadLighting( lighting_is_enabled );
 }
 
+/* draw 3D wireframe gauges. */
 void rkglGauge(zAxis axis1, double d1, zAxis axis2, double d2, double w, double step, GLfloat color[])
 {
   zEdge3D edge;
@@ -1319,6 +1359,7 @@ void rkglGauge(zAxis axis1, double d1, zAxis axis2, double d2, double w, double 
   rkglLoadLighting( lighting_is_enabled );
 }
 
+/* draw a 3D checker board. */
 void rkglCheckerBoard(zVec3D *pc0, zVec3D *pc1, zVec3D *pc2, int div1, int div2, zOpticalInfo *oi1, zOpticalInfo *oi2)
 {
   int i, j;
