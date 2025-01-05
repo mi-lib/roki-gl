@@ -71,24 +71,30 @@ void zRotIpDestroy(zRotIp *rotip)
   zRotIpInit( rotip );
 }
 
-/* compute a vector on a NURBS curve / surface. */
+/* compute a 3D matrix on a NURBS curve / surface. */
 zMat3D *zRotIpNURBS3D(const zRotIp *rotip, double s, zMat3D *out_mat)
 {
   int seg_idx, i0, i;
   double bs, den;
   zMat3D *m0, tmp;
+  zVec3D omega;
 
   seg_idx = zBSplineParamSeg( &rotip->param, s );
+  for( den=0, i=0; i<zRotIpCPNum(rotip); i++ ){
+    den += zRotIpWeight(rotip,i) * zBSplineParamBasis( &rotip->param, s, i, zRotIpOrder(rotip), seg_idx );
+  }
   i0 = seg_idx - zRotIpOrder(rotip);
   zMat3DCopy( zRotIpCP( rotip, i0 ), out_mat );
-  for( den=0, i=i0; i<=seg_idx; i++ ){
-    den += bs = zRotIpWeight(rotip,i) * zBSplineParamBasis( &rotip->param, s, i, zRotIpOrder(rotip), seg_idx );
+  for( i=i0; i<=seg_idx; i++ ){
     m0 = zRotIpCP( rotip, i );
-    zMat3DInterDiv( out_mat, m0, bs, &tmp );
+    bs = zRotIpWeight(rotip,i) * zBSplineParamBasis( &rotip->param, s, i, zRotIpOrder(rotip), seg_idx ) / den;
+    /* zMat3DInterDiv( out_mat, m0, bs, &tmp ); */
+    zMat3DError( m0, out_mat, &omega );
+    zMat3DRotCat( out_mat, &omega, bs, &tmp );
     zMat3DCopy( &tmp, out_mat );
   }
 
-  return zIsTiny(den) ? NULL : zMat3DDivDRC( out_mat, den );
+  return zIsTiny(den) ? NULL : out_mat;
 }
 
 
@@ -128,6 +134,7 @@ typedef struct{
 
 typedef struct{
   zRotIp rotip;
+  zRotIp rotip_slerp;
   zVec3D start_draw_unitvec;
   int display_id;
 } sphereXYZ;
@@ -213,7 +220,6 @@ void rkglRotationCurveCP(zRotIp *rotip, zVec3D* start_draw_unitvec, zVec3D* cent
   int i;
   bool lighting_is_enabled;
   zVec3D cp;
-
   glPointSize( size );
   rkglSaveLighting( &lighting_is_enabled );
   rkglRGB( rgb );
@@ -237,6 +243,7 @@ void rkglRotationCurveCP(zRotIp *rotip, zVec3D* start_draw_unitvec, zVec3D* cent
       glEnd();
     }
   }
+  glEnd();
   glPopName();
   rkglLoadLighting( lighting_is_enabled );
 }
@@ -286,6 +293,7 @@ void update_framehandle_att(double s)
   if( g_main->feedrate_s < start_s ) g_main->feedrate_s = start_s;
   if( g_main->feedrate_s > end_s ) g_main->feedrate_s = end_s;
   zRotIpPopMat3D( &g_main->rot_curve.rotip, s, &mat );
+  printf("s=%f : pop mat=", s); zMat3DPrint( &mat );
   zMat3DCopy( &mat, rkglFrameHandleAtt( &g_main->fh ) );
 }
 
@@ -324,6 +332,7 @@ void draw_frame_rot_curve(void)
   rkglRotationCurve( &g_main->rot_curve.rotip, &g_main->rot_curve.start_draw_unitvec, rkglFrameHandlePos( &g_main->fh ), g_LENGTH, &rgb);
   zRGBSet( &rgb, 0.5, 1.0, 0.5 );
   glLineWidth( 1 );
+  rkglRotationCurve( &g_main->rot_curve.rotip_slerp, &g_main->rot_curve.start_draw_unitvec, rkglFrameHandlePos( &g_main->fh ), g_LENGTH, &rgb);
   rkglRotationCurveCP(&g_main->rot_curve.rotip, &g_main->rot_curve.start_draw_unitvec, rkglFrameHandlePos( &g_main->fh ), g_LENGTH, g_CP_SIZE, &rgb);
   glPopMatrix();
 }
@@ -405,6 +414,7 @@ void motion(GLFWwindow* window, double x, double y)
   double r0_cos, dis_r0, dis_r0prod2dr;
   zMat3D dest_rot;
 
+  zRotIp* rotip_slerp = &g_main->rot_curve.rotip_slerp;
   zRotIp* rotip = &g_main->rot_curve.rotip;
   if( g_main->sb.hits == 0 ){
     rkglMouseDragFuncGLFW( window, x, y );
@@ -446,7 +456,8 @@ void motion(GLFWwindow* window, double x, double y)
         zVec3DNormalizeNCDRC( &axis );
         zVec3DMul( &axis, angle, &aa );
         zMat3DRot( &g_main->selected_rot_cp_anchor_att, &aa, &dest_rot );
-        zRotIpSetCP( rotip, g_main->selected_rot_cp, &dest_rot );
+        zRotIpSetCP( rotip_slerp, g_main->selected_rot_cp, &dest_rot );
+        zRotIpSetCP( rotip,       g_main->selected_rot_cp, &dest_rot );
         update_framehandle_att( g_main->feedrate_s );
       }
     } else
@@ -521,9 +532,11 @@ void init(void)
   /**/
   zVec3DCreate( &g_main->rot_curve.start_draw_unitvec, 1.0, 0.0, 0.0 );
   zRotIpInit( &g_main->rot_curve.rotip );
-  zRotIpAlloc( &g_main->rot_curve.rotip, -1,      g_CP_NUM ); /* Slerp */
-  zRotIpAlloc( &g_main->rot_curve.rotip, g_ORDER, g_CP_NUM ); /* NURBS */
-  zRotIpSetSlice( &g_main->rot_curve.rotip, g_SLICE_NUM );
+  zRotIpInit( &g_main->rot_curve.rotip_slerp );
+  zRotIpAlloc( &g_main->rot_curve.rotip_slerp, -1,      g_CP_NUM ); /* Slerp */
+  zRotIpAlloc( &g_main->rot_curve.rotip,       g_ORDER, g_CP_NUM ); /* NURBS */
+  zRotIpSetSlice( &g_main->rot_curve.rotip_slerp, g_SLICE_NUM );
+  zRotIpSetSlice( &g_main->rot_curve.rotip,       g_SLICE_NUM );
   /**/
   g_main->feedrate_s = 0.0;
   /**/
@@ -531,8 +544,10 @@ void init(void)
   zMat3D m;
   for( i=0; i < g_CP_NUM; i++ ){
     zMat3DFromZYX( &m, zRandF(-zPI,zPI), zRandF(-zPI,zPI), zRandF(-zPI,zPI) );
-    zRotIpSetCP( &g_main->rot_curve.rotip, i, &m );
-    zRotIpSetWeight( &g_main->rot_curve.rotip, i, g_WEIGHT );
+    zRotIpSetCP( &g_main->rot_curve.rotip,       i, &m );
+    zRotIpSetCP( &g_main->rot_curve.rotip_slerp, i, &m );
+    zRotIpSetWeight( &g_main->rot_curve.rotip,       i, g_WEIGHT );
+    zRotIpSetWeight( &g_main->rot_curve.rotip_slerp, i, g_WEIGHT );
   }
 }
 
