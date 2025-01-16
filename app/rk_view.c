@@ -139,7 +139,7 @@ void rk_viewReadModel(zStrAddrList *modellist)
         ZOPENERROR( cp->data );
         rk_viewUsage();
       }
-      rkglPointCloud( &pointdata, ZVEC3DZERO, 1 );
+      rkglPointCloud( &pointdata, 1 );
       if( opt[OPT_AUTO].flag )
         zVec3DListAppendArray( &pointlist_all, &pointdata.data.array );
       else

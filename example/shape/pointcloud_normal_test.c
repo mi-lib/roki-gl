@@ -51,27 +51,14 @@ void init(void)
 
 void generate_pc(zVec3DData *pointdata, char *filename)
 {
-  zMShape3D ms;
-  zShape3D *s;
-  zTri3D *t;
-  int i;
-
-  zVec3DDataInitList( pointdata );
-  if( !zMShape3DReadZTK( &ms, filename ) )
+  if( !zVec3DDataReadPCDFile( pointdata, filename ) )
     exit( EXIT_FAILURE );
-  s = zMShape3DShape( &ms, 0 );
-  for( i=0; i<zShape3DFaceNum(s); i++ ){
-    t = zShape3DFace(s,i);
-    if( zTri3DNorm(t)->e[zX] < 0 ) continue;
-    zVec3DDataAdd( pointdata, zTri3DVert(t,0) );
-    zVec3DDataAdd( pointdata, zTri3DVert(t,1) );
-    zVec3DDataAdd( pointdata, zTri3DVert(t,2) );
-  }
 }
 
 int main(int argc, char *argv[])
 {
   zVec3DData pointdata;
+  zVec3DData normaldata;
 
   rkglInitGLUT( &argc, argv );
   rkglWindowCreateGLUT( 0, 0, 640, 640, argv[0] );
@@ -83,11 +70,13 @@ int main(int argc, char *argv[])
   glutMouseFunc( rkglMouseFuncGLUT );
   glutMotionFunc( rkglMouseDragFuncGLUT );
   init();
-  generate_pc( &pointdata, argc > 1 ? argv[1] : "../model/bunny.ztk" );
+  zVec3DDataReadPCDFile( &pointdata, "bun_zipper.pcd" );
+  zVec3DDataReadPCDFile( &normaldata, "normal.pcd" );
   pc_id = rkglBeginList();
-  rkglPointCloud( &pointdata, 1 );
+  rkglPointCloudNormal( &pointdata, &normaldata, 1, 0.01 );
   glEndList();
   zVec3DDataDestroy( &pointdata );
+  zVec3DDataDestroy( &normaldata );
   glutMainLoop();
   return 0;
 }

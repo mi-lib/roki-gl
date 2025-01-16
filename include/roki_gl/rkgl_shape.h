@@ -111,7 +111,9 @@ __ROKI_GL_EXPORT int rkglEntryMShape(zMShape3D *s, ubyte disptype, rkglLight *li
 /* point cloud */
 
 /*! \brief draw 3D pointcloud. */
-__ROKI_GL_EXPORT void rkglPointCloud(zVec3DData *data, zVec3D *center, short size);
+__ROKI_GL_EXPORT void rkglPointCloud(zVec3DData *data, short size);
+/*! \brief draw 3D pointcloud with estimated normal vectors. */
+__ROKI_GL_EXPORT void rkglPointCloudNormal(zVec3DData *pointdata, zVec3DData *normaldata, short size, double length);
 
 /* fancy geometries */
 

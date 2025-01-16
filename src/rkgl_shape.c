@@ -1228,29 +1228,46 @@ int rkglEntryMShape(zMShape3D *s, ubyte disptype, rkglLight *light)
 }
 
 /* draw 3D pointcloud. */
-void rkglPointCloud(zVec3DData *data, zVec3D *center, short size)
+void rkglPointCloud(zVec3DData *data, short size)
 {
   zVec3D *v;
-  zHSV hsv;
-  zRGB rgb;
-  double d, dmax = 0;
   bool lighting_is_enabled;
-
-  hsv.sat = hsv.val = 1.0;
-  zVec3DDataRewind( data );
-  while( ( v = zVec3DDataFetch( data ) ) )
-    if( ( d = zVec3DDist( v, center ) ) > dmax ) dmax = d;
-  if( zIsTiny( dmax ) ) dmax = 1.0; /* dummy */
 
   rkglSaveLighting( &lighting_is_enabled );
   glPointSize( size );
   glBegin( GL_POINTS );
   zVec3DDataRewind( data );
   while( ( v = zVec3DDataFetch( data ) ) ){
-    hsv.hue = 360 * zMin( zVec3DDist( v, center ) / dmax, 1.0 ) + 180;
-    zHSV2RGB( &hsv, &rgb );
-    rkglRGB( &rgb );
+    rkglRGB( ZRGBWHITE );
     rkglVertex( v );
+  }
+  glEnd();
+  rkglLoadLighting( lighting_is_enabled );
+}
+
+/* draw 3D pointcloud with estimated normal vectors. */
+void rkglPointCloudNormal(zVec3DData *pointdata, zVec3DData *normaldata, short size, double length)
+{
+  zRGB green = { 0.0, 1.0, 0.0 };
+  zVec3D *v, *n, p;
+  bool lighting_is_enabled;
+
+  rkglSaveLighting( &lighting_is_enabled );
+  zVec3DDataRewind( pointdata );
+  zVec3DDataRewind( normaldata );
+  while( ( v = zVec3DDataFetch( pointdata ) ) && ( n = zVec3DDataFetch( normaldata ) ) ){
+    glBegin( GL_POINTS );
+    rkglRGB( ZRGBWHITE );
+    glPointSize( size );
+    rkglVertex( v );
+    glEnd();
+    glBegin( GL_LINES );
+    rkglRGB( &green );
+    glPointSize( 1 );
+    rkglVertex( v );
+    zVec3DCat( v, length, n, &p );
+    rkglVertex( &p );
+    glEnd();
   }
   glEnd();
   rkglLoadLighting( lighting_is_enabled );
