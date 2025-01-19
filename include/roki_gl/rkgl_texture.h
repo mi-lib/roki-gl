@@ -50,14 +50,14 @@ __ROKI_GL_EXPORT GLuint rkglTextureInit(zTexture *texture, ubyte *buf);
 
 /*! \brief read an image file and make a texture data. */
 #if defined(__ROKI_GL_USE_ZX11)
-__ROKI_GL_EXPORT bool rkglTextureReadFileZX11(zTexture *texture, char *filename);
+__ROKI_GL_EXPORT bool rkglTextureReadFileZX11(zTexture *texture, const char *filename);
 #elif defined(__ROKI_GL_USE_MAGICKWAND)
-__ROKI_GL_EXPORT bool rkglTextureReadFileMagickWand(zTexture *texture, char *filename);
+__ROKI_GL_EXPORT bool rkglTextureReadFileMagickWand(zTexture *texture, const char *filename);
 #else
-__ROKI_GL_EXPORT bool rkglTextureReadFileDummy(zTexture *texture, char *filename);
+__ROKI_GL_EXPORT bool rkglTextureReadFileDummy(zTexture *texture, const char *filename);
 #endif /* __ROKI_GL_USE_ZX11 || __ROKI_GL_USE_MAGICKWAND */
 
-__ROKI_GL_EXPORT bool (* rkglTextureReadFile)(zTexture *, char *);
+__ROKI_GL_EXPORT bool (* rkglTextureReadFile)(zTexture *, const char *);
 #define rkglTextureEnable()   zTextureSetReadFunc( rkglTextureReadFile )
 
 #define rkglTextureBind(texture) glBindTexture( GL_TEXTURE_2D, (texture)->id )
@@ -65,7 +65,7 @@ __ROKI_GL_EXPORT bool (* rkglTextureReadFile)(zTexture *, char *);
 
 #define rkglTextureDelete(t)     glDeleteTextures( 1, &(t)->id )
 
-#define rkglCoord(coord)      glTexCoord2d( (coord)->c.x, (coord)->c.y )
+#define rkglCoord(coord)         glTexCoord2d( (coord)->c.x, (coord)->c.y )
 
 /* units for multitexture */
 
@@ -105,13 +105,13 @@ __ROKI_GL_EXPORT void rkglTextureDisableProjection(void);
 /* bump mapping */
 
 /*! \brief read an image file and make a bump map. */
-__ROKI_GL_EXPORT bool rkglTextureBumpReadFile(zTexture *bump, char *filename);
+__ROKI_GL_EXPORT bool rkglTextureBumpReadFile(zTexture *bump, const char *filename);
 #define rkglTextureBumpEnable() zTextureSetBumpReadFunc( rkglTextureBumpReadFile )
 
 #ifdef __ROKI_GL_USE_GLEW
 /* bump map using GLSL */
 /* create a bump map */
-__ROKI_GL_EXPORT bool rkglTextureBumpReadFileGLSL(zTexture *bump, char *filename);
+__ROKI_GL_EXPORT bool rkglTextureBumpReadFileGLSL(zTexture *bump, const char *filename);
 #endif /* __ROKI_GL_USE_GLEW */
 
 __END_DECLS

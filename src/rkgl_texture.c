@@ -39,7 +39,7 @@ GLuint rkglTextureInit(zTexture *texture, ubyte *buf)
 
 #if defined(__ROKI_GL_USE_ZX11)
 /* read an image file via zxImage and make a texture data. */
-bool rkglTextureReadFileZX11(zTexture *texture, char *filename)
+bool rkglTextureReadFileZX11(zTexture *texture, const char *filename)
 {
   zxImage img;
   zxPixelManip pm;
@@ -70,7 +70,7 @@ bool rkglTextureReadFileZX11(zTexture *texture, char *filename)
   if( !already_connected ) zxExit();
   return retval;
 }
-bool (* rkglTextureReadFile)(zTexture *, char *) = rkglTextureReadFileZX11;
+bool (* rkglTextureReadFile)(zTexture *, const char *) = rkglTextureReadFileZX11;
 #elif defined(__ROKI_GL_USE_MAGICKWAND)
 static void _rkglTextureMagickWandThrowException(MagickWand *wand)
 {
@@ -83,7 +83,7 @@ static void _rkglTextureMagickWandThrowException(MagickWand *wand)
 }
 
 /* read an image file via MagickWand and make a texture data. */
-bool rkglTextureReadFileMagickWand(zTexture *texture, char *filename)
+bool rkglTextureReadFileMagickWand(zTexture *texture, const char *filename)
 {
   MagickWand *wand;
   ulong width, height;
@@ -114,14 +114,14 @@ bool rkglTextureReadFileMagickWand(zTexture *texture, char *filename)
     MagickWandTerminus();
   return retval;
 }
-bool (* rkglTextureReadFile)(zTexture *, char *) = rkglTextureReadFileMagickWand;
+bool (* rkglTextureReadFile)(zTexture *, const char *) = rkglTextureReadFileMagickWand;
 #else
-bool rkglTextureReadFileDummy(zTexture *texture, char *filename)
+bool rkglTextureReadFileDummy(zTexture *texture, const char *filename)
 {
   rkglTextureInit( texture, NULL );
   return true;
 }
-bool (* rkglTextureReadFile)(zTexture *, char *) = rkglTextureReadFileDummy;
+bool (* rkglTextureReadFile)(zTexture *, const char *) = rkglTextureReadFileDummy;
 #endif
 
 /* units for multitexture */
@@ -268,7 +268,7 @@ static ubyte *_rkglTextureBumpVec(ubyte *p, double x, double y, double z)
 
 /* generate a normal map from a bump texture */
 #if defined(__ROKI_GL_USE_ZX11)
-static bool _rkglTextureBumpNormalMap(zTexture *bump, char *filename)
+static bool _rkglTextureBumpNormalMap(zTexture *bump, const char *filename)
 {
   uint i, j, k;
   zxImage img;
@@ -346,7 +346,7 @@ static void _rkglTextureNormalVec(ubyte *buf, uint width, uint height, double de
   *z = _rkglTextureValNormalize( 1.0 / l );
 }
 
-static bool _rkglTextureBumpNormalMap(zTexture *bump, char *filename)
+static bool _rkglTextureBumpNormalMap(zTexture *bump, const char *filename)
 {
   MagickWand *wand;
   uint width, height;
@@ -399,7 +399,7 @@ static bool _rkglTextureBumpNormalMap(zTexture *bump, char *filename)
   return retval;
 }
 #else
-static bool _rkglTextureBumpNormalMap(zTexture *bump, char *filename)
+static bool _rkglTextureBumpNormalMap(zTexture *bump, const char *filename)
 {
   ZRUNWARN( "bump map unavailable" );
   rkglTextureInit( bump, NULL );
@@ -451,7 +451,7 @@ static bool _rkglTextureBumpLightMap(zTexture *bump)
 }
 
 /* create a bump map */
-bool rkglTextureBumpReadFile(zTexture *bump, char *filename)
+bool rkglTextureBumpReadFile(zTexture *bump, const char *filename)
 {
   glActiveTexture( GL_TEXTURE0 );
   if( !_rkglTextureBumpNormalMap( bump, filename ) ) return false;
@@ -477,7 +477,7 @@ bool rkglTextureBumpReadFile(zTexture *bump, char *filename)
 /* bump map using GLSL */
 
 /* create a bump map */
-bool rkglTextureBumpReadFileGLSL(zTexture *bump, char *filename)
+bool rkglTextureBumpReadFileGLSL(zTexture *bump, const char *filename)
 {
   return _rkglTextureBumpNormalMap( bump, filename );
 }

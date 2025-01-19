@@ -464,7 +464,7 @@ void rk_penInit(void)
       !rkChainInitReadZTK( &chain, opt[OPT_INITFILE].arg ) )
     exit( 1 );
 
-  zRGBDec( &rgb, opt[OPT_BG].arg );
+  zRGBDecodeStr( &rgb, opt[OPT_BG].arg );
   rkglBGSet( &cam, rgb.r, rgb.g, rgb.b );
   rkglVPCreate( &cam, 0, 0, atoi( opt[OPT_WIDTH].arg ), atoi( opt[OPT_HEIGHT].arg ) );
   if( opt[OPT_AUTO].flag && rkChainBoundingBall( &chain, &bball ) ){

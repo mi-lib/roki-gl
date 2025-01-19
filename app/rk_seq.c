@@ -182,7 +182,7 @@ void rk_seqInit(void)
   rkglWindowMouseEnableGLX( win );
   rkglWindowOpenGLX( win );
 
-  zRGBDec( &rgb, opt[OPT_BG].arg );
+  zRGBDecodeStr( &rgb, opt[OPT_BG].arg );
   rkglBGSet( &cam, rgb.r, rgb.g, rgb.b );
   rkglVPCreate( &cam, 0, 0,
     atoi(opt[OPT_WIDTH].arg), atoi(opt[OPT_HEIGHT].arg) );

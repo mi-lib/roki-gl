@@ -1,3 +1,5 @@
+2025. 1.19. Reflected renaming of zRGBDecodeStr. [app]
+2025. 1.19. Added const qualifiers to rkglTextureReadFileZX11, rkglTextureReadFileMagickWand, rkglTextureReadFileDummy, rkglTextureReadFile, _rkglTextureBumpNormalMap, _rkglTextureBumpNormalMap, _rkglTextureBumpNormalMap, rkglTextureBumpReadFile, and rkglTextureBumpReadFileGLSL. [rkgl_texture]
 2025. 1.16. Added rkglPointCloudNormal. [rkgl_shape]
 2025. 1.16. Modified rkglPointCloud not to automatically colorize the points. [rkgl_shape, app]
 2024.12.13. Debugged rk_viewReadModel in rk_view. [app]
