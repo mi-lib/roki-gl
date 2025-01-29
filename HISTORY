@@ -1,3 +1,6 @@
+2025. 1.29. Modified rk_seqInit to read a kinematic chain model by rkChainReadFile. [app]
+2025. 1.29. Renamed rk_penChainReadZTK and rk_penMShapeReadZTK to rk_penReadChainFile and rk_penReadMShapeFile, and modified rk_penInit in rk_pen. [app]
+2025. 1.29. Renamed rkAnimChainReadZTK and rkAnimMShapeReadZTK to rkAnimReadChainFile and rkAnimReadMShapeFile, respectively, and modified rkAnimCellLoadChain in rk_anim. [app]
 2025. 1.19. Reflected renaming of zRGBDecodeStr. [app]
 2025. 1.19. Added const qualifiers to rkglTextureReadFileZX11, rkglTextureReadFileMagickWand, rkglTextureReadFileDummy, rkglTextureReadFile, _rkglTextureBumpNormalMap, _rkglTextureBumpNormalMap, _rkglTextureBumpNormalMap, rkglTextureBumpReadFile, and rkglTextureBumpReadFileGLSL. [rkgl_texture]
 2025. 1.16. Added rkglPointCloudNormal. [rkgl_shape]

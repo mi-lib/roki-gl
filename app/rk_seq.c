@@ -18,7 +18,7 @@ enum{
   OPT_INVALID
 };
 zOption opt[] = {
-  { "model", NULL, "<.ztk file>", "kinematic chain model file", NULL, false },
+  { "model", NULL, "<.ztk/.urdf file>", "kinematic chain model file", NULL, false },
   { "zvs", NULL, "<.zvs file>", "joint displacement sequence file", NULL, false },
   { "zkcs", NULL, "<.zkcs file>", "full configuration sequence file", NULL, false },
   { "env", NULL, "<.ztk file>", "environment shape model file", NULL, false },
@@ -197,7 +197,7 @@ void rk_seqInit(void)
   rkglTextureEnable();
 
   rkglChainAttrInit( &attr );
-  if( !rkChainReadZTK( &chain, opt[OPT_MODELFILE].arg ) ||
+  if( !rkChainReadFile( &chain, opt[OPT_MODELFILE].arg ) ||
       !rkglChainLoad( &gc, &chain, &attr, &light ) ){
     ZOPENERROR( opt[OPT_MODELFILE].arg );
     rk_seqUsage();

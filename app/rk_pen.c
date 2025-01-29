@@ -24,7 +24,7 @@ enum{
   OPT_INVALID
 };
 zOption opt[] = {
-  { "model", NULL, "<.ztk file>", "kinematic chain model file", NULL, false },
+  { "model", NULL, "<.ztk/.urdf file>", "kinematic chain model file", NULL, false },
   { "env", NULL, "<.ztk file>", "environment shape model file", NULL, false },
   { "init", NULL, "<.ztk file>", "initial state file", NULL, false },
   { "pan", NULL, "<pan value>", "set camera pan angle", (char *)"0", false },
@@ -404,17 +404,17 @@ int rk_penReturnDir(char *cwd)
   return 0;
 }
 
-rkChain *rk_penChainReadZTK(rkChain *chain, char *pathname)
+rkChain *rk_penReadChainFile(rkChain *chain, char *pathname)
 {
   char dirname[BUFSIZ], filename[BUFSIZ], cwd[BUFSIZ];
 
   rk_penChangeDir( pathname, dirname, filename, cwd, BUFSIZ );
-  chain = rkChainReadZTK( chain, filename );
+  chain = rkChainReadFile( chain, filename );
   rk_penReturnDir( cwd );
   return chain;
 }
 
-zMShape3D *rk_penMShapeReadZTK(zMShape3D *ms, char *pathname)
+zMShape3D *rk_penReadMShapeFile(zMShape3D *ms, char *pathname)
 {
   char dirname[BUFSIZ], filename[BUFSIZ], cwd[BUFSIZ];
 
@@ -444,12 +444,12 @@ void rk_penInit(void)
     attr.disptype = RKGL_ELLIPS;
     attr.ellips_mag = atof( opt[OPT_DRAW_ELLIPS].arg );
   }
-  if( !rk_penChainReadZTK( &chain, opt[OPT_MODELFILE].arg ) ||
+  if( !rk_penReadChainFile( &chain, opt[OPT_MODELFILE].arg ) ||
       !rkglChainLoad( &gr, &chain, &attr, &light ) )
     exit( 1 );
 
   if( opt[OPT_ENVFILE].flag ){
-    if( !rk_penMShapeReadZTK( &envshape, opt[OPT_ENVFILE].arg ) ){
+    if( !rk_penReadMShapeFile( &envshape, opt[OPT_ENVFILE].arg ) ){
       ZOPENERROR( opt[OPT_ENVFILE].arg );
       rk_penUsage();
       exit( 1 );

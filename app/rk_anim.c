@@ -33,7 +33,7 @@ enum{
 };
 zOption opt[] = {
   { "title", NULL, "<title name>", "title of sequence", (char *)"robot_animation", false },
-  { "env", NULL, "<.ztk file>", "environment model file", NULL, false },
+  { "env", NULL, "<.ztk/.urdf file>", "environment model file", NULL, false },
   { "pan", NULL, "<pan value>", "set camera pan angle", (char *)"0", false },
   { "tilt", NULL, "<tilt value>", "set camera tilt angle", (char *)"0", false },
   { "roll", NULL, "<roll value>", "set camera roll angle", (char *)"0", false },
@@ -138,17 +138,17 @@ int rkAnimReturnDir(char *cwd)
   return 0;
 }
 
-rkChain *rkAnimChainReadZTK(rkChain *chain, char *pathname)
+rkChain *rkAnimReadChainFile(rkChain *chain, char *pathname)
 {
   char dirname[BUFSIZ], filename[BUFSIZ], cwd[BUFSIZ];
 
   rkAnimChangeDir( pathname, dirname, filename, cwd, BUFSIZ );
-  chain = rkChainReadZTK( chain, filename );
+  chain = rkChainReadFile( chain, filename );
   rkAnimReturnDir( cwd );
   return chain;
 }
 
-zMShape3D *rkAnimMShapeReadZTK(zMShape3D *ms, char *pathname)
+zMShape3D *rkAnimReadMShapeFile(zMShape3D *ms, char *pathname)
 {
   char dirname[BUFSIZ], filename[BUFSIZ], cwd[BUFSIZ];
 
@@ -168,7 +168,7 @@ bool rkAnimCellLoadChain(char chainfile[], rkglChainAttr *attr)
     ZALLOCERROR();
     return false;
   }
-  if( !rkAnimChainReadZTK( &cell->data.chain, chainfile ) ||
+  if( !rkAnimReadChainFile( &cell->data.chain, chainfile ) ||
       !rkglChainLoad( &cell->data.gc, &cell->data.chain, attr, &light ) ){
     ZOPENERROR( chainfile );
     zFree( cell );
@@ -225,8 +225,9 @@ void rkAnimCellListDestroy(void)
 /* ************************************************************************* */
 void rkAnimUsage(void)
 {
-  eprintf( "Usage: rk_anim <.ztk file> <.zvs/.zkcs file> [options]\n" );
-  eprintf( "<.ztk file>\tkinematic chain model file\n" );
+  eprintf( "Usage: rk_anim <.ztk/.urdf file> <.zvs/.zkcs file> [options]\n" );
+  eprintf( "<.ztk file>\tZTK file that describes a kinematic chain model\n" );
+  eprintf( "<.urdf file>\tURDF file that describes a kinematic chain model\n" );
   eprintf( "<.zvs file>\tjoint displacement sequence file\n" );
   eprintf( "<.zkcs file>\tfull configuration sequence file\n" );
   eprintf( "[options]\n" );
@@ -486,14 +487,14 @@ void rkAnimLoadEnv(void)
   if( opt[OPT_DRAW_BB].flag )        attr.disptype = RKGL_BB;
 
   rkChainInit( &chain_env );
-  if( rkAnimChainReadZTK( &chain_env, opt[OPT_ENVFILE].arg ) ){
+  if( rkAnimReadChainFile( &chain_env, opt[OPT_ENVFILE].arg ) ){
     if( !rkglChainLoad( &g_env, &chain_env, &attr, &light ) ) exit( 1 );
     env = rkglBeginList();
     rkglChainDraw( &g_env );
     glEndList();
     rkChainDestroy( &chain_env );
   } else
-  if( rkAnimMShapeReadZTK( &ms_env, opt[OPT_ENVFILE].arg ) ){
+  if( rkAnimReadMShapeFile( &ms_env, opt[OPT_ENVFILE].arg ) ){
     env = rkglEntryMShape( &ms_env, attr.disptype, &light );
     zMShape3DDestroy( &ms_env );
   } else{
