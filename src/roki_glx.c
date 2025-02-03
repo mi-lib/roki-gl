@@ -168,18 +168,16 @@ static void _rkglReadBufferImage(zxImage *img, GLuint type, int bpp, int os1, in
 {
   GLint view[4];
   uint i, j, k;
-  zxPixelManip pm;
   ubyte *buf;
 
   glGetIntegerv( GL_VIEWPORT, view );
   buf = (ubyte *)malloc( sizeof(ubyte) * view[2] * view[3] * bpp );
   rkglReadBuffer( type, view[0], view[1], view[2], view[3], buf );
   zxImageAllocDefault( img, view[2], view[3] );
-  zxPixelManipSetDefault( &pm );
   for( i=img->height-1; i>=0; i-- )
     for( j=0; j<img->width; j++ ){
       k = bpp * ( i * img->width + j );
-      zxImageCellFromRGB( img, &pm, j, img->height-i-1, buf[k], buf[k+os1], buf[k+os2] );
+      zxImageCellFromRGB( img, j, img->height-i-1, buf[k], buf[k+os1], buf[k+os2] );
     }
   free( buf );
 }

@@ -1,3 +1,4 @@
+2025.02.03. Reflected the new specification of zxImage. [rkgl_texture, roki_glx]
 2025. 1.29. Modified rk_seqInit to read a kinematic chain model by rkChainReadFile. [app]
 2025. 1.29. Renamed rk_penChainReadZTK and rk_penMShapeReadZTK to rk_penReadChainFile and rk_penReadMShapeFile, and modified rk_penInit in rk_pen. [app]
 2025. 1.29. Renamed rkAnimChainReadZTK and rkAnimMShapeReadZTK to rkAnimReadChainFile and rkAnimReadMShapeFile, respectively, and modified rkAnimCellLoadChain in rk_anim. [app]

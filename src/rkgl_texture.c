@@ -42,7 +42,6 @@ GLuint rkglTextureInit(zTexture *texture, ubyte *buf)
 bool rkglTextureReadFileZX11(zTexture *texture, const char *filename)
 {
   zxImage img;
-  zxPixelManip pm;
   uint i, j;
   ubyte *buf, *pt;
   bool already_connected, retval = false;
@@ -54,10 +53,9 @@ bool rkglTextureReadFileZX11(zTexture *texture, const char *filename)
     goto TERMINATE;
   }
   retval = true;
-  zxPixelManipSet( &pm, zxdepth );
   for( pt=buf, i=0; i<img.height; i++ )
     for( j=0; j<img.width; j++, pt+=4 ){
-      zxImageCellRGB( &img, &pm, j, i, pt, pt+1, pt+2 );
+      zxImageCellRGB( &img, j, i, pt, pt+1, pt+2 );
       *( pt + 3 ) = 0xff;
     }
   texture->width = img.width;
@@ -272,7 +270,6 @@ static bool _rkglTextureBumpNormalMap(zTexture *bump, const char *filename)
 {
   uint i, j, k;
   zxImage img;
-  zxPixelManip pm;
   ubyte *buf;
   double nx, ny, nz;
   bool already_connected, retval = false;
@@ -288,10 +285,9 @@ static bool _rkglTextureBumpNormalMap(zTexture *bump, const char *filename)
     ZRUNWARN( "zero-depth bump unrenderable" );
     bump->depth = 1.0;
   }
-  zxPixelManipSetDefault( &pm );
   for( k=0, i=0; i<img.height; i++ ){
     for( j=0; j<img.width; j++, k+=4 ){
-      zxImageNormalVec( &img, &pm, bump->depth, j, i, &nx, &ny, &nz );
+      zxImageNormalVec( &img, bump->depth, j, i, &nx, &ny, &nz );
       _rkglTextureBumpVec( buf + k, nx, ny, nz );
     }
   }
