@@ -1,3 +1,4 @@
+2025.03.11. Added a function to compute normal vectors on the surface spanned by pointcloud in rk_view. [app]
 2025.02.03. Reflected the new specification of zxImage. [rkgl_texture, roki_glx]
 2025. 1.29. Modified rk_seqInit to read a kinematic chain model by rkChainReadFile. [app]
 2025. 1.29. Renamed rk_penChainReadZTK and rk_penMShapeReadZTK to rk_penReadChainFile and rk_penReadMShapeFile, and modified rk_penInit in rk_pen. [app]

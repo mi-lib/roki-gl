@@ -15,6 +15,7 @@ enum{
   OPT_BG,
   OPT_LX, OPT_LY, OPT_LZ,
   OPT_SMOOTH, OPT_SHADOW,
+  OPT_PCD_NORMAL,
   OPT_CAPTURE,
   OPT_HELP,
   OPT_INVALID
@@ -37,6 +38,7 @@ zOption opt[] = {
   { "lz", NULL, "<value>", "light position in z axis", (char *)"3", false },
   { "smooth", NULL, NULL, "enable antialias", NULL, false },
   { "shadow", NULL, NULL, "enable shadow", NULL, false },
+  { "normal", NULL, "<radius of vicinity>", "enable normal vector estimation (only available for pointcloud)", (char *)"0.003", false },
   { "xwd", NULL, "<suf>", "output image format suffix", (char *)"png", false },
   { "help", NULL, NULL, "show this message", NULL, false },
   { NULL, NULL, NULL, NULL, NULL, false },
@@ -122,7 +124,7 @@ void rk_viewReadModel(zStrAddrList *modellist)
 {
   zStrListCell *cp;
   zVec3DList pointlist_all;
-  zVec3DData pointdata, pointdata_all;
+  zVec3DData pointdata, normaldata, pointdata_all;
   char *sfx;
   double scale;
   zMShape3D ms;
@@ -139,7 +141,12 @@ void rk_viewReadModel(zStrAddrList *modellist)
         ZOPENERROR( cp->data );
         rk_viewUsage();
       }
-      rkglPointCloud( &pointdata, 1 );
+      if( opt[OPT_PCD_NORMAL].flag ){
+        zVec3DDataNormalVec_Octree( &pointdata, atof( opt[OPT_PCD_NORMAL].arg ), &normaldata );
+        rkglPointCloudNormal( &pointdata, &normaldata, 1, 0.01 );
+        zVec3DDataDestroy( &normaldata );
+      } else
+        rkglPointCloud( &pointdata, 1 );
       if( opt[OPT_AUTO].flag )
         zVec3DListAppendArray( &pointlist_all, &pointdata.data.array );
       else
@@ -248,9 +255,9 @@ bool rk_viewCommandArgs(int argc, char *argv[])
   }
   zPH3DEchoOn();
   rk_viewInit();
+  rk_viewResetLight();
   rk_viewReadModel( &modellist );
   rk_viewResetCamera();
-  rk_viewResetLight();
   zStrAddrListDestroy( &modellist );
   return true;
 }
