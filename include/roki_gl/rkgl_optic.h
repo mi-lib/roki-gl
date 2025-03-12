@@ -17,9 +17,12 @@ __BEGIN_DECLS
 #define rkglRGB(rgb)    glColor3f( (rgb)->r, (rgb)->g, (rgb)->b )
 #define rkglRGBA(rgb,a) glColor4f( (rgb)->r, (rgb)->g, (rgb)->b, (a) )
 
-__ROKI_GL_EXPORT void rkglColor24(unsigned color);
+__ROKI_GL_EXPORT void rkglRGBIntensify(GLfloat dr, GLfloat dg, GLfloat db);
 
-#define rkglColorWhite() glColor3ub( 0xff, 0xff, 0xff )
+__ROKI_GL_EXPORT void rkglRGBByName(const char *name);
+
+__ROKI_GL_EXPORT void rkglColor24(unsigned int color);
+#define rkglColorWhite() glColor3f( 1.0, 1.0, 1.0 )
 
 __ROKI_GL_EXPORT void rkglMaterialRGBA(zRGB *rgb, float alpha);
 __ROKI_GL_EXPORT void rkglMaterialWhite(void);

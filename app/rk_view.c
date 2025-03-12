@@ -141,12 +141,12 @@ void rk_viewReadModel(zStrAddrList *modellist)
         ZOPENERROR( cp->data );
         rk_viewUsage();
       }
+      rkglPointCloud( &pointdata, 1 );
       if( opt[OPT_PCD_NORMAL].flag ){
         zVec3DDataNormalVec_Octree( &pointdata, atof( opt[OPT_PCD_NORMAL].arg ), &normaldata );
         rkglPointCloudNormal( &pointdata, &normaldata, 1, 0.01 );
         zVec3DDataDestroy( &normaldata );
-      } else
-        rkglPointCloud( &pointdata, 1 );
+      }
       if( opt[OPT_AUTO].flag )
         zVec3DListAppendArray( &pointlist_all, &pointdata.data.array );
       else

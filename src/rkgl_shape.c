@@ -1236,9 +1236,9 @@ void rkglPointCloud(zVec3DData *data, short size)
   rkglSaveLighting( &lighting_is_enabled );
   glPointSize( size );
   glBegin( GL_POINTS );
+  rkglRGB( ZRGBWHITE );
   zVec3DDataRewind( data );
   while( ( v = zVec3DDataFetch( data ) ) ){
-    rkglRGB( ZRGBWHITE );
     rkglVertex( v );
   }
   glEnd();
@@ -1255,19 +1255,13 @@ void rkglPointCloudNormal(zVec3DData *pointdata, zVec3DData *normaldata, short s
   rkglSaveLighting( &lighting_is_enabled );
   zVec3DDataRewind( pointdata );
   zVec3DDataRewind( normaldata );
+  glBegin( GL_LINES );
+  rkglRGB( &green );
+  glPointSize( 1 );
   while( ( v = zVec3DDataFetch( pointdata ) ) && ( n = zVec3DDataFetch( normaldata ) ) ){
-    glBegin( GL_POINTS );
-    rkglRGB( ZRGBWHITE );
-    glPointSize( size );
-    rkglVertex( v );
-    glEnd();
-    glBegin( GL_LINES );
-    rkglRGB( &green );
-    glPointSize( 1 );
     rkglVertex( v );
     zVec3DCat( v, length, n, &p );
     rkglVertex( &p );
-    glEnd();
   }
   glEnd();
   rkglLoadLighting( lighting_is_enabled );
