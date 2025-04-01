@@ -177,6 +177,20 @@ static void _rkglBoxWireframe(zVec3D vert[8])
   rkglLoadLighting( lighting_is_enabled );
 }
 
+/* draw an axis-aligned 3D box. */
+void rkglAABox(zAABox3D *box, ubyte disptype)
+{
+  zVec3D vert[8];
+  int i;
+
+  for( i=0; i<8; i++ )
+    zAABox3DVert( box, i, &vert[i] ); /* vertices */
+  if( disptype & RKGL_FACE )
+    _rkglBoxFace( vert );
+  if( disptype & RKGL_WIREFRAME )
+    _rkglBoxWireframe( vert );
+}
+
 /* draw a 3D box. */
 void rkglBox(zBox3D *box, ubyte disptype)
 {
@@ -1263,6 +1277,75 @@ void rkglPointCloudNormal(zVec3DData *pointdata, zVec3DData *normaldata, short s
     zVec3DCat( v, length, n, &p );
     rkglVertex( &p );
   }
+  glEnd();
+  rkglLoadLighting( lighting_is_enabled );
+}
+
+/* draw a 3D ellipsoid represented by a barycenter and a variance-covariane matrix. */
+void rkglEllipsBaryCov(const zVec3D *center, const zMat3D *cov)
+{
+  zEllips3D ellips;
+  zVec3D eigval;
+  zMat3D eigbase;
+
+  zMat3DSymEig( cov, &eigval, &eigbase );
+  zEllips3DCreate( &ellips, center, &eigbase.b.x, &eigbase.b.y, &eigbase.b.z, 2*sqrt(eigval.c.x), 2*sqrt(eigval.c.y), 2*sqrt(eigval.c.z), 0 );
+  rkglEllips( &ellips, RKGL_FACE );
+}
+
+/* draw a 3D octant of an octree. */
+static void _rkglOctant(zVec3DOctant *octant)
+{
+  bool have_suboctant = false;
+  int i;
+
+  for( i=0; i<8; i++ ){
+    if( octant->suboctant[i] ){
+      have_suboctant = true;
+      _rkglOctant( octant->suboctant[i] );
+    }
+  }
+  if( !have_suboctant )
+    rkglAABox( &octant->region, RKGL_FACE );
+}
+
+/* draw an octree. */
+void rkglOctree(zVec3DOctree *octree)
+{
+  _rkglOctant( &octree->root );
+}
+
+/* draw normal vectors of a 3D octant of an octree. */
+static void _rkglOctantNormal(zVec3DOctant *octant, double length)
+{
+  bool have_suboctant = false;
+  int i;
+
+  for( i=0; i<8; i++ ){
+    if( octant->suboctant[i] ){
+      have_suboctant = true;
+      _rkglOctantNormal( octant->suboctant[i], length );
+    }
+  }
+  if( !have_suboctant ){
+    zVec3D p;
+    rkglVertex( &octant->center );
+    zVec3DCat( &octant->center, length, &octant->_norm, &p );
+    rkglVertex( &p );
+  }
+}
+
+/* draw normal vectors of an octree. */
+void rkglOctreeNormal(zVec3DOctree *octree, double length)
+{
+  zRGB green = { 0.0, 1.0, 0.0 };
+  bool lighting_is_enabled;
+
+  rkglSaveLighting( &lighting_is_enabled );
+  glBegin( GL_LINES );
+  rkglRGB( &green );
+  glPointSize( 1 );
+  _rkglOctantNormal( &octree->root, length );
   glEnd();
   rkglLoadLighting( lighting_is_enabled );
 }

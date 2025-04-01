@@ -1,3 +1,6 @@
+2025.04.01. Added _rkglOctant, rkglOctree, _rkglOctantNormal, and rkglOctreeNormal. [rkgl_shape]
+2025.04.01. Added rkglEllipsBaryCov. [rkgl_shape]
+2025.03.29. Added rkglAABox. [rkgl_shape]
 2025.03.12. Added rkglColorByName. [rkgl_optic]
 2025.03.12. Added rkglRGBIntensify. [rkgl_optic]
 2025.03.12. Redefined rkglColorWhite by using glColor3f. [rkgl_optic]

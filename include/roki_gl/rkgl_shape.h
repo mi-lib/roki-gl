@@ -54,6 +54,8 @@ __ROKI_GL_EXPORT void rkglPolygon(zVec3D v[], int n, ...);
 
 /* primitive shapes */
 
+/*! \brief draw an axis-aligned 3D box. */
+__ROKI_GL_EXPORT void rkglAABox(zAABox3D *box, ubyte disptype);
 /*! \brief draw a 3D box. */
 __ROKI_GL_EXPORT void rkglBox(zBox3D *box, ubyte disptype);
 /*! \brief draw a 3D hemisphere. */
@@ -114,6 +116,16 @@ __ROKI_GL_EXPORT int rkglEntryMShape(zMShape3D *s, ubyte disptype, rkglLight *li
 __ROKI_GL_EXPORT void rkglPointCloud(zVec3DData *data, short size);
 /*! \brief draw 3D pointcloud with estimated normal vectors. */
 __ROKI_GL_EXPORT void rkglPointCloudNormal(zVec3DData *pointdata, zVec3DData *normaldata, short size, double length);
+
+/*! \brief draw a 3D ellipsoid represented by a barycenter and a variance-covariane matrix. */
+__ROKI_GL_EXPORT void rkglEllipsBaryCov(const zVec3D *center, const zMat3D *cov);
+
+/* octree */
+
+/*! \brief draw an octree. */
+__ROKI_GL_EXPORT void rkglOctree(zVec3DOctree *octree);
+/*! \brief draw normal vectors of an octree. */
+__ROKI_GL_EXPORT void rkglOctreeNormal(zVec3DOctree *octree, double length);
 
 /* fancy geometries */
 
