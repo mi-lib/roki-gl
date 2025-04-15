@@ -21,7 +21,7 @@ void draw_scene(void)
 
 void display(void)
 {
-  rkglCALoad( &g_cam );
+  rkglCameraLoadViewframe( &g_cam );
   rkglLightPut( &g_light );
   rkglClear();
   draw_scene();
@@ -61,25 +61,15 @@ void motion(int x, int y)
 
 void resize(int w, int h)
 {
-  rkglVPCreate( &g_cam, 0, 0, w, h );
-  rkglOrthoScaleH( &g_cam, g_scale, g_znear, g_zfar );
+  rkglCameraSetViewport( &g_cam, 0, 0, w, h );
+  rkglCameraScaleOrthoHeight( &g_cam, g_scale, g_znear, g_zfar );
 }
 
 void keyboard(unsigned char key, int x, int y)
 {
   switch( key ){
-  case 'u': rkglCALockonPTR( &g_cam, 5, 0, 0 ); break;
-  case 'U': rkglCALockonPTR( &g_cam,-5, 0, 0 ); break;
-  case 'i': rkglCALockonPTR( &g_cam, 0, 5, 0 ); break;
-  case 'I': rkglCALockonPTR( &g_cam, 0,-5, 0 ); break;
-  case 'o': rkglCALockonPTR( &g_cam, 0, 0, 5 ); break;
-  case 'O': rkglCALockonPTR( &g_cam, 0, 0,-5 ); break;
-  case '8': g_scale += 0.001; rkglOrthoScaleH( &g_cam, g_scale, g_znear, g_zfar ); break;
-  case '*': g_scale -= 0.001; rkglOrthoScaleH( &g_cam, g_scale, g_znear, g_zfar ); break;
-  case '9': rkglCARelMove( &g_cam, 0, 0.05, 0 ); break;
-  case '(': rkglCARelMove( &g_cam, 0,-0.05, 0 ); break;
-  case '0': rkglCARelMove( &g_cam, 0, 0, 0.05 ); break;
-  case ')': rkglCARelMove( &g_cam, 0, 0,-0.05 ); break;
+  case '8': g_scale += 0.001; rkglCameraScaleOrthoHeight( &g_cam, g_scale, g_znear, g_zfar ); break;
+  case '*': g_scale -= 0.001; rkglCameraScaleOrthoHeight( &g_cam, g_scale, g_znear, g_zfar ); break;
   case 'q': case 'Q': case '\033':
     exit( EXIT_SUCCESS );
   default: ;
@@ -89,12 +79,11 @@ void keyboard(unsigned char key, int x, int y)
 void init(void)
 {
   rkglSetDefaultCallbackParam( &g_cam, 0, 0, 0, 0, 0 );
-  rkglBGSet( &g_cam, 0.5, 0.5, 0.5 );
-  rkglCASet( &g_cam, 5, 0, 2, 0, -20, 0 );
+  rkglCameraSetBackground( &g_cam, 0.5, 0.5, 0.5 );
+  rkglCameraSetViewframe( &g_cam, 5, 0, 2, 0, -20, 0 );
   glEnable( GL_LIGHTING );
   rkglLightCreate( &g_light, 0.4, 0.4, 0.4, 1, 1, 1, 0, 0, 0 );
   rkglLightMove( &g_light, 8, 0, 8 );
-  /* frame handle */
   rkglFrameHandleCreate( &fh, 0, g_LENGTH, g_MAGNITUDE );
 }
 

@@ -10,7 +10,7 @@ int clone_id = -1;
 
 void display(void)
 {
-  rkglCALoad( &cam );
+  rkglCameraLoadViewframe( &cam );
   rkglLightPut( &light );
 
   glPushMatrix();
@@ -23,8 +23,8 @@ void display(void)
 
 void resize(int w, int h)
 {
-  rkglVPCreate( &cam, 0, 0, w, h );
-  rkglFrustumScaleH( &cam, 1.0/1000, 0.5, 10 );
+  rkglCameraSetViewport( &cam, 0, 0, w, h );
+  rkglCameraScaleFrustumHeight( &cam, 1.0/1000, 0.5, 10 );
 }
 
 #define toggle_disptype( gc, type ) do{\
@@ -42,12 +42,12 @@ void keyboard(unsigned char key, int x, int y)
 
   zOpticalInfoCreateSimple( &oi_alt, 1.0, 0.0, 0.0, NULL );
   switch( key ){
-  case 'u': rkglCALockonPTR( &cam, 5, 0, 0 ); break;
-  case 'U': rkglCALockonPTR( &cam,-5, 0, 0 ); break;
-  case 'i': rkglCALockonPTR( &cam, 0, 5, 0 ); break;
-  case 'I': rkglCALockonPTR( &cam, 0,-5, 0 ); break;
-  case 'o': rkglCALockonPTR( &cam, 0, 0, 5 ); break;
-  case 'O': rkglCALockonPTR( &cam, 0, 0,-5 ); break;
+  case 'u': rkglCameraLockonAndSetPanTiltRoll( &cam, 5, 0, 0 ); break;
+  case 'U': rkglCameraLockonAndSetPanTiltRoll( &cam,-5, 0, 0 ); break;
+  case 'i': rkglCameraLockonAndSetPanTiltRoll( &cam, 0, 5, 0 ); break;
+  case 'I': rkglCameraLockonAndSetPanTiltRoll( &cam, 0,-5, 0 ); break;
+  case 'o': rkglCameraLockonAndSetPanTiltRoll( &cam, 0, 0, 5 ); break;
+  case 'O': rkglCameraLockonAndSetPanTiltRoll( &cam, 0, 0,-5 ); break;
   case 'c':
     if( clone_id >= 0 ){
       glDeleteLists( clone_id, 1 );
@@ -122,8 +122,8 @@ void init(void)
 {
   rkglChainAttr attr;
 
-  rkglBGSet( &cam, 0.5, 0.5, 0.5 );
-  rkglCASet( &cam, 1.0, 1.0, 1.0, 45, -30, 0 );
+  rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
+  rkglCameraSetViewframe( &cam, 1.0, 1.0, 1.0, 45, -30, 0 );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );

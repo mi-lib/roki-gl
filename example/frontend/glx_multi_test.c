@@ -46,13 +46,13 @@ GLvoid init(int width, int height)
 {
   obj = enter();
 
-  rkglBGSet( &cam[0], 0.1, 0.1, 0.1 );
-  rkglVPCreate( &cam[0], 0, 0, width, height );
-  rkglCALookAt( &cam[0], 5, 0, 3, 0, 0, 0, 0, 0, 1 );
+  rkglCameraSetBackground( &cam[0], 0.1, 0.1, 0.1 );
+  rkglCameraSetViewport( &cam[0], 0, 0, width, height );
+  rkglCameraLookAt( &cam[0], 5, 0, 3, 0, 0, 0, 0, 0, 1 );
 
-  rkglBGSet( &cam[1], 0.1, 0.1, 0.1 );
-  rkglVPCreate( &cam[1], 0, 0, width, height );
-  rkglCALookAt( &cam[1], 0, 5, 3, 0, 0, 0, 0, 0, 1 );
+  rkglCameraSetBackground( &cam[1], 0.1, 0.1, 0.1 );
+  rkglCameraSetViewport( &cam[1], 0, 0, width, height );
+  rkglCameraLookAt( &cam[1], 0, 5, 3, 0, 0, 0, 0, 0, 1 );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.4, 0.4, 0.4, 0.8, 0.8, 0.8, 0, 0, 0 );
@@ -84,21 +84,20 @@ void resize(zxWindow *win)
   glwin_resize( glwin[1], w+60, 20, w, h );
   draw_button( win );
 
-  x = 0.5;
-  rkglVPCreate( &cam[0], 0, 0, w, h );
-  y = x / rkglVPAspect(&cam[0]);
-  rkglFrustum( &cam[0], -x, x, -y, y, 1, 20 );
+  rkglCameraSetViewport( &cam[0], 0, 0, w, h );
+  y = ( x = 0.5 ) / rkglCameraViewportAspectRatio(&cam[0]);
+  rkglCameraSetFrustum( &cam[0], -x, x, -y, y, 1, 20 );
 
-  rkglVPCreate( &cam[1], 0, 0, w, h );
-  y = x / rkglVPAspect(&cam[1]);
-  rkglFrustum( &cam[1], -x, x, -y, y, 1, 20 );
+  rkglCameraSetViewport( &cam[1], 0, 0, w, h );
+  y = x / rkglCameraViewportAspectRatio(&cam[1]);
+  rkglCameraSetFrustum( &cam[1], -x, x, -y, y, 1, 20 );
 }
 
 GLvoid draw(Window win, rkglCamera *cam, rkglLight *light)
 {
   rkglWindowActivateGLX( win );
   rkglClear();
-  rkglCALoad( cam );
+  rkglCameraLoadViewframe( cam );
   rkglLightPut( light );
   glPushMatrix();
     glCallList( obj );

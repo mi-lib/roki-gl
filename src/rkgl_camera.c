@@ -8,162 +8,162 @@
 
 /* viewport */
 
-void rkglVPLoad(rkglCamera *c)
+void rkglCameraLoadViewport(rkglCamera *c)
 {
-  glViewport( c->vp[0], c->vp[1], c->vp[2], c->vp[3] );
-  glScissor( c->vp[0], c->vp[1], c->vp[2], c->vp[3] );
-  glClearColor( c->bg[0], c->bg[1], c->bg[2], c->bg[3] );
+  glViewport( c->viewport[0], c->viewport[1], c->viewport[2], c->viewport[3] );
+  glScissor( c->viewport[0], c->viewport[1], c->viewport[2], c->viewport[3] );
+  glClearColor( c->background[0], c->background[1], c->background[2], c->background[3] );
 }
 
-void rkglVPCreate(rkglCamera *c, GLint x, GLint y, GLsizei w, GLsizei h)
+void rkglCameraSetViewport(rkglCamera *c, GLint x, GLint y, GLsizei w, GLsizei h)
 {
-  c->vp[0] = x; /* x */
-  c->vp[1] = y; /* y */
-  c->vp[2] = w; /* width */
-  c->vp[3] = h; /* height */
-  rkglVPLoad( c );
+  c->viewport[0] = x; /* x */
+  c->viewport[1] = y; /* y */
+  c->viewport[2] = w; /* width */
+  c->viewport[3] = h; /* height */
+  rkglCameraLoadViewport( c );
 }
 
-void rkglVPGet(rkglCamera *c)
+void rkglCameraGetViewport(rkglCamera *c)
 {
-  glGetIntegerv( GL_VIEWPORT, c->vp );
+  glGetIntegerv( GL_VIEWPORT, c->viewport );
 }
 
 /* view volume */
 
-void rkglVVLoad(rkglCamera *c)
-{
-  glMatrixMode( GL_PROJECTION );
-  glLoadMatrixd( c->vv );
-}
-
-void rkglVVGet(rkglCamera *c)
-{
-  glGetDoublev( GL_PROJECTION_MATRIX, c->vv );
-}
-
-void rkglVVInit(void)
+void rkglInitViewvolume(void)
 {
   glMatrixMode( GL_PROJECTION );
   glLoadIdentity();
 }
 
-void rkglOrtho(rkglCamera *c, GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near, GLdouble far)
+void rkglCameraLoadViewvolume(rkglCamera *c)
 {
-  rkglVVInit();
+  glMatrixMode( GL_PROJECTION );
+  glLoadMatrixd( c->viewvolume );
+}
+
+void rkglCameraGetViewvolume(rkglCamera *c)
+{
+  glGetDoublev( GL_PROJECTION_MATRIX, c->viewvolume );
+}
+
+void rkglCameraSetOrtho(rkglCamera *c, GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near, GLdouble far)
+{
+  rkglInitViewvolume();
   glOrtho( left, right, bottom, top, near, far );
-  rkglVVGet( c );
+  rkglCameraGetViewvolume( c );
 }
 
-void rkglFrustum(rkglCamera *c, GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near, GLdouble far)
+void rkglCameraSetFrustum(rkglCamera *c, GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near, GLdouble far)
 {
-  rkglVVInit();
+  rkglInitViewvolume();
   glFrustum( left, right, bottom, top, near, far );
-  rkglVVGet( c );
+  rkglCameraGetViewvolume( c );
 }
 
-void rkglOrthoCenter(rkglCamera *c, GLdouble x, GLdouble y, GLdouble near, GLdouble far)
+void rkglCameraSetOrthoCenter(rkglCamera *c, GLdouble x, GLdouble y, GLdouble near, GLdouble far)
 {
-  rkglOrtho( c, -x, x, -y, y, near, far );
+  rkglCameraSetOrtho( c, -x, x, -y, y, near, far );
 }
 
-void rkglFrustumCenter(rkglCamera *c, GLdouble x, GLdouble y, GLdouble near, GLdouble far)
+void rkglCameraSetFrustumCenter(rkglCamera *c, GLdouble x, GLdouble y, GLdouble near, GLdouble far)
 {
-  rkglFrustum( c, -x, x, -y, y, near, far );
+  rkglCameraSetFrustum( c, -x, x, -y, y, near, far );
 }
 
-static void _rkglVVFitW2XY(rkglCamera *c, double width, double *x, double *y)
+static void _rkglCameraFitViewvolumeWidth(rkglCamera *c, double width, double *x, double *y)
 {
   *x = 0.5 * width;
-  *y = *x / rkglVPAspect(c);
+  *y = *x / rkglCameraViewportAspectRatio(c);
 }
 
-static void _rkglVVFitH2XY(rkglCamera *c, double height, double *x, double *y)
+static void _rkglCameraFitViewvolumeHeight(rkglCamera *c, double height, double *x, double *y)
 {
   *y = 0.5 * height;
-  *x = *y * rkglVPAspect(c);
+  *x = *y * rkglCameraViewportAspectRatio(c);
 }
 
-static void _rkglVVScaleW2XY(rkglCamera *c, double scale, double *x, double *y)
+static void _rkglCameraScaleViewvolumeWidth(rkglCamera *c, double scale, double *x, double *y)
 {
-  _rkglVVFitW2XY( c, rkglVPWidth(c) * scale, x, y );
+  _rkglCameraFitViewvolumeWidth( c, rkglCameraViewportWidth(c) * scale, x, y );
 }
 
-static void _rkglVVScaleH2XY(rkglCamera *c, double scale, double *x, double *y)
+static void _rkglCameraScaleViewvolumeHeight(rkglCamera *c, double scale, double *x, double *y)
 {
-  _rkglVVFitH2XY( c, rkglVPHeight(c) * scale, x, y );
+  _rkglCameraFitViewvolumeHeight( c, rkglCameraViewportHeight(c) * scale, x, y );
 }
 
-void rkglOrthoScaleW(rkglCamera *c, double scale, GLdouble near, GLdouble far)
-{
-  GLdouble x, y;
-
-  _rkglVVScaleW2XY( c, scale, &x, &y );
-  rkglOrthoCenter( c, x, y, near, far );
-}
-
-void rkglFrustumScaleW(rkglCamera *c, double scale, GLdouble near, GLdouble far)
+void rkglCameraScaleOrthoWidth(rkglCamera *c, double scale, GLdouble near, GLdouble far)
 {
   GLdouble x, y;
 
-  _rkglVVScaleW2XY( c, scale, &x, &y );
-  rkglFrustumCenter( c, x, y, near, far );
+  _rkglCameraScaleViewvolumeWidth( c, scale, &x, &y );
+  rkglCameraSetOrthoCenter( c, x, y, near, far );
 }
 
-void rkglOrthoScaleH(rkglCamera *c, double scale, GLdouble near, GLdouble far)
+void rkglCameraScaleFrustumWidth(rkglCamera *c, double scale, GLdouble near, GLdouble far)
 {
   GLdouble x, y;
 
-  _rkglVVScaleH2XY( c, scale, &x, &y );
-  rkglOrthoCenter( c, x, y, near, far );
+  _rkglCameraScaleViewvolumeWidth( c, scale, &x, &y );
+  rkglCameraSetFrustumCenter( c, x, y, near, far );
 }
 
-void rkglFrustumScaleH(rkglCamera *c, double scale, GLdouble near, GLdouble far)
+void rkglCameraScaleOrthoHeight(rkglCamera *c, double scale, GLdouble near, GLdouble far)
 {
   GLdouble x, y;
 
-  _rkglVVScaleH2XY( c, scale, &x, &y );
-  rkglFrustumCenter( c, x, y, near, far );
+  _rkglCameraScaleViewvolumeHeight( c, scale, &x, &y );
+  rkglCameraSetOrthoCenter( c, x, y, near, far );
 }
 
-void rkglPerspective(rkglCamera *c, GLdouble fovy, GLdouble aspect, GLdouble near, GLdouble far)
+void rkglCameraScaleFrustumHeight(rkglCamera *c, double scale, GLdouble near, GLdouble far)
 {
-  rkglVVInit();
+  GLdouble x, y;
+
+  _rkglCameraScaleViewvolumeHeight( c, scale, &x, &y );
+  rkglCameraSetFrustumCenter( c, x, y, near, far );
+}
+
+void rkglCameraSetPerspective(rkglCamera *c, GLdouble fovy, GLdouble aspect, GLdouble near, GLdouble far)
+{
+  rkglInitViewvolume();
   gluPerspective( fovy, aspect, near, far );
-  rkglVVGet( c );
+  rkglCameraGetViewvolume( c );
 }
 
-void rkglFrustumFit2VP(rkglCamera *cam, int w, int h, double width, double near, double far)
+void rkglCameraFitFrustumToViewport(rkglCamera *cam, int w, int h, double width, double near, double far)
 {
   double x, y;
 
-  rkglVPCreate( cam, 0, 0, w, h );
-  _rkglVVFitW2XY( cam, width, &x, &y );
-  rkglFrustumCenter( cam, x, y, near, far );
+  rkglCameraSetViewport( cam, 0, 0, w, h );
+  _rkglCameraFitViewvolumeWidth( cam, width, &x, &y );
+  rkglCameraSetFrustumCenter( cam, x, y, near, far );
 }
 
 /* camera angle */
 
-void rkglCALoad(rkglCamera *c)
+void rkglCameraLoadViewframe(rkglCamera *c)
 {
   glMatrixMode( GL_MODELVIEW );
-  glLoadMatrixd( c->ca );
+  glLoadMatrixd( c->viewframe );
 }
 
-void rkglCAGet(rkglCamera *c)
+void rkglCameraGetViewframe(rkglCamera *c)
 {
-  glGetDoublev( GL_MODELVIEW_MATRIX, c->ca );
+  glGetDoublev( GL_MODELVIEW_MATRIX, c->viewframe );
 }
 
-zFrame3D *rkglCAGetFrame3D(rkglCamera *cam, zFrame3D *f)
+zFrame3D *rkglCameraViewframeToFrame3D(rkglCamera *cam, zFrame3D *f)
 {
   zMat3D m0;
 
   zMat3DCreate( zFrame3DAtt(f),
-    cam->ca[0], cam->ca[1], cam->ca[2],
-    cam->ca[4], cam->ca[5], cam->ca[6],
-    cam->ca[8], cam->ca[9], cam->ca[10] );
-  zVec3DCreate( zFrame3DPos(f), -cam->ca[12], -cam->ca[13], -cam->ca[14] );
+    cam->viewframe[0], cam->viewframe[1], cam->viewframe[2],
+    cam->viewframe[4], cam->viewframe[5], cam->viewframe[6],
+    cam->viewframe[8], cam->viewframe[9], cam->viewframe[10] );
+  zVec3DCreate( zFrame3DPos(f), -cam->viewframe[12], -cam->viewframe[13], -cam->viewframe[14] );
   zMulMat3DVec3DDRC( zFrame3DAtt(f), zFrame3DPos(f) );
   zMat3DCreate( &m0,
     0, 0, 1,
@@ -173,118 +173,108 @@ zFrame3D *rkglCAGetFrame3D(rkglCamera *cam, zFrame3D *f)
   return f;
 }
 
-zVec3D *rkglCAGetViewVec(rkglCamera *cam, zVec3D *v)
+zVec3D *rkglCameraGetViewVec(rkglCamera *cam, zVec3D *v)
 {
-  _zVec3DCreate( v, cam->ca[2], cam->ca[6], cam->ca[10] );
+  _zVec3DCreate( v, cam->viewframe[2], cam->viewframe[6], cam->viewframe[10] );
   return v;
 }
 
-void rkglCAInit(void)
+void rkglInitViewframe(void)
 {
   glMatrixMode( GL_MODELVIEW );
   glLoadIdentity();
 }
 
-void rkglCAAlign(rkglCamera *c)
+void rkglCameraAlignViewframe(rkglCamera *c)
 {
-  c->ca[2] = c->ca[4] = c->ca[9] = c->ca[15] = 1;
-  c->ca[0] = c->ca[1] = c->ca[3] = c->ca[5] = c->ca[6] = c->ca[7] =
-  c->ca[8] = c->ca[10]= c->ca[11]= c->ca[12]= c->ca[13]= c->ca[14]= 0;
-  rkglCALoad( c );
+  c->viewframe[2] = c->viewframe[4] = c->viewframe[9] = c->viewframe[15] = 1;
+  c->viewframe[0] = c->viewframe[1] = c->viewframe[3] = c->viewframe[5] = c->viewframe[6] = c->viewframe[7] =
+  c->viewframe[8] = c->viewframe[10]= c->viewframe[11]= c->viewframe[12]= c->viewframe[13]= c->viewframe[14]= 0;
+  rkglCameraLoadViewframe( c );
 }
 
-static void _rkglCAPTR(double pan, double tilt, double roll)
+static void _rkglCameraRotatePanTiltRoll(double pan, double tilt, double roll)
 {
   glRotated( -tilt, 0.0, 1.0, 0.0 );
   glRotated( -roll, 1.0, 0.0, 0.0 );
   glRotated( -pan,  0.0, 0.0, 1.0 );
 }
 
-void rkglCASet(rkglCamera *c, double x, double y, double z, double pan, double tilt, double roll)
+void rkglCameraSetViewframe(rkglCamera *c, double x, double y, double z, double pan, double tilt, double roll)
 {
-  rkglCAAlign( c );
-  _rkglCAPTR( pan, tilt, roll );
+  rkglCameraAlignViewframe( c );
+  _rkglCameraRotatePanTiltRoll( pan, tilt, roll );
   glTranslated( -x, -y, -z );
-  rkglCAGet( c );
+  rkglCameraGetViewframe( c );
 }
 
-void rkglCAPTR(rkglCamera *c, double pan, double tilt, double roll)
+void rkglCameraSetPanTiltRoll(rkglCamera *c, double pan, double tilt, double roll)
 {
   double x, y, z;
 
-  rkglInvTranslated( c->ca, &x, &y, &z );
-  rkglCALoad( c );
+  rkglInvTranslated( c->viewframe, &x, &y, &z );
+  rkglCameraLoadViewframe( c );
   glTranslated( x, y, z );
-  _rkglCAPTR( pan, tilt, roll );
+  _rkglCameraRotatePanTiltRoll( pan, tilt, roll );
   glTranslated( -x, -y, -z );
-  rkglCAGet( c );
+  rkglCameraGetViewframe( c );
 }
 
-void rkglCALockonPTR(rkglCamera *c, double pan, double tilt, double roll)
+void rkglCameraLockonAndSetPanTiltRoll(rkglCamera *c, double pan, double tilt, double roll)
 {
-  rkglCALoad( c );
-  _rkglCAPTR( pan, tilt, roll );
-  rkglCAGet( c );
+  rkglCameraLoadViewframe( c );
+  _rkglCameraRotatePanTiltRoll( pan, tilt, roll );
+  rkglCameraGetViewframe( c );
 }
 
-void rkglCARotate(rkglCamera *c, double angle, double x, double y, double z)
+void rkglCameraRotate(rkglCamera *c, double angle, double x, double y, double z)
 {
-  rkglCAInit();
+  rkglInitViewframe();
   glRotated( angle, x, y, z );
-  glMultMatrixd( c->ca );
-  rkglCAGet( c );
+  glMultMatrixd( c->viewframe );
+  rkglCameraGetViewframe( c );
 }
 
-void rkglCALockonRotate(rkglCamera *c, double angle, double x, double y, double z)
+void rkglCameraLockonAndRotate(rkglCamera *c, double angle, double x, double y, double z)
 {
   double ax, ay, az;
 
-  ax = c->ca[0]*x + c->ca[1]*y + c->ca[2]*z;
-  ay = c->ca[4]*x + c->ca[5]*y + c->ca[6]*z;
-  az = c->ca[8]*x + c->ca[9]*y + c->ca[10]*z;
-  rkglCALoad( c );
+  ax = c->viewframe[0]*x + c->viewframe[1]*y + c->viewframe[2]*z;
+  ay = c->viewframe[4]*x + c->viewframe[5]*y + c->viewframe[6]*z;
+  az = c->viewframe[8]*x + c->viewframe[9]*y + c->viewframe[10]*z;
+  rkglCameraLoadViewframe( c );
   glRotated( angle, ax, ay, az );
-  rkglCAGet( c );
+  rkglCameraGetViewframe( c );
 }
 
-void rkglCAMove(rkglCamera *c, double x, double y, double z)
+void rkglCameraMove(rkglCamera *c, double x, double y, double z)
 {
-  rkglCALoad( c );
+  rkglCameraLoadViewframe( c );
   glTranslated( -x, -y, -z );
-  rkglCAGet( c );
+  rkglCameraGetViewframe( c );
 }
 
-void rkglCARelMove(rkglCamera *c, double x, double y, double z)
+void rkglCameraRelMove(rkglCamera *c, double x, double y, double z)
 {
-  rkglCAInit();
+  rkglInitViewframe();
   glTranslated( -y, -z, -x );
-  glMultMatrixd( c->ca );
-  rkglCAGet( c );
+  glMultMatrixd( c->viewframe );
+  rkglCameraGetViewframe( c );
 }
 
-void rkglCALookAt(rkglCamera *c, GLdouble eyex, GLdouble eyey, GLdouble eyez, GLdouble centerx, GLdouble centery, GLdouble centerz, GLdouble upx, GLdouble upy, GLdouble upz)
+void rkglCameraLookAt(rkglCamera *c, GLdouble eyex, GLdouble eyey, GLdouble eyez, GLdouble centerx, GLdouble centery, GLdouble centerz, GLdouble upx, GLdouble upy, GLdouble upz)
 {
-  rkglCAInit();
+  rkglInitViewframe();
   gluLookAt( eyex, eyey, eyez, centerx, centery, centerz, upx, upy, upz );
-  rkglCAGet( c );
+  rkglCameraGetViewframe( c );
 }
 
-void rkglCARelMoveLeft(rkglCamera *cam, double d){  rkglCARelMove( cam, 0,-d, 0 ); }
-void rkglCARelMoveRight(rkglCamera *cam, double d){ rkglCARelMove( cam, 0, d, 0 ); }
-void rkglCARelMoveUp(rkglCamera *cam, double d){    rkglCARelMove( cam, 0, 0, d ); }
-void rkglCARelMoveDown(rkglCamera *cam, double d){  rkglCARelMove( cam, 0, 0,-d ); }
-void rkglCAZoomIn(rkglCamera *cam, double d){       rkglCARelMove( cam,-d, 0, 0 ); }
-void rkglCAZoomOut(rkglCamera *cam, double d){      rkglCARelMove( cam, d, 0, 0 ); }
-
-void rkglCATiltUp(rkglCamera *cam, double angle){   rkglCARotate( cam, angle,-1, 0, 0 ); }
-void rkglCATiltDown(rkglCamera *cam, double angle){ rkglCARotate( cam, angle, 1, 0, 0 ); }
-void rkglCAPanLeft(rkglCamera *cam, double angle){  rkglCARotate( cam, angle, 0,-1, 0 ); }
-void rkglCAPanRight(rkglCamera *cam, double angle){ rkglCARotate( cam, angle, 0, 1, 0 ); }
-
-void rkglCAAngleUp(rkglCamera *cam, double angle){    rkglCALockonRotate( cam, angle, 1, 0, 0 ); }
-void rkglCAAngleDown(rkglCamera *cam, double angle){  rkglCALockonRotate( cam, angle,-1, 0, 0 ); }
-void rkglCARoundLeft(rkglCamera *cam, double angle){  rkglCALockonRotate( cam, angle, 0, 1, 0 ); }
-void rkglCARoundRight(rkglCamera *cam, double angle){ rkglCALockonRotate( cam, angle, 0,-1, 0 ); }
+void rkglCameraRelMoveLeft(rkglCamera *cam, double d){  rkglCameraRelMove( cam, 0,-d, 0 ); }
+void rkglCameraRelMoveRight(rkglCamera *cam, double d){ rkglCameraRelMove( cam, 0, d, 0 ); }
+void rkglCameraRelMoveUp(rkglCamera *cam, double d){    rkglCameraRelMove( cam, 0, 0, d ); }
+void rkglCameraRelMoveDown(rkglCamera *cam, double d){  rkglCameraRelMove( cam, 0, 0,-d ); }
+void rkglCameraZoomIn(rkglCamera *cam, double d){       rkglCameraRelMove( cam,-d, 0, 0 ); }
+void rkglCameraZoomOut(rkglCamera *cam, double d){      rkglCameraRelMove( cam, d, 0, 0 ); }
 
 /* camera */
 
@@ -295,10 +285,10 @@ rkglCamera *rkglCameraCopy(rkglCamera *src, rkglCamera *dest)
       ZRUNERROR( "default camera not assigned" );
       return NULL;
     }
-  rkglBGCopy( src, dest );
-  rkglVPCopy( src, dest );
-  rkglVVCopy( src, dest );
-  rkglCACopy( src, dest );
+  rkglCameraCopyBackground( src, dest );
+  rkglCameraCopyViewport( src, dest );
+  rkglCameraCopyViewvolume( src, dest );
+  rkglCameraCopyViewframe( src, dest );
   return dest;
 }
 

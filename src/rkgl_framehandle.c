@@ -139,7 +139,7 @@ static void _rkglFrameHandleRotate(rkglFrameHandle *handle, rkglCamera *cam /* d
   a0 = zFrame3DVec(&handle->frame,(handle->selected_id+0)%3);
   a1 = zFrame3DVec(&handle->frame,(handle->selected_id+1)%3);
   a2 = zFrame3DVec(&handle->frame,(handle->selected_id+2)%3);
-  rkglCAGetViewVec( cam, &u ); /* view vector */
+  rkglCameraGetViewVec( cam, &u ); /* view vector */
   zVec3DSub( &handle->_anchor, rkglFrameHandlePos(handle), &tmp );
   zVec3DOrthogonalize( &tmp, a0, &r0 ); /* anchor vector */
   zVec3DSub( v, rkglFrameHandlePos(handle), &d );

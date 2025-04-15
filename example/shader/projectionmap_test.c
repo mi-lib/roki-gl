@@ -16,8 +16,8 @@ GLuint shader_program;
 
 void resize(int w, int h)
 {
-  rkglVPCreate( &cam, 0, 0, w, h );
-  rkglFrustumScaleH( &cam, 1.0/160, 2, 100 );
+  rkglCameraSetViewport( &cam, 0, 0, w, h );
+  rkglCameraScaleFrustumHeight( &cam, 1.0/160, 2, 100 );
 }
 
 void display(void)
@@ -28,7 +28,7 @@ void display(void)
   gluPerspective( 90.0, 1.0, 1.0, 100.0 );
   gluLookAt( light.pos[0], light.pos[1], light.pos[2], 0.0, 0.0, 0.0, 1.0, 0.0, 0.0 );
 
-  rkglCALoad( &cam );
+  rkglCameraLoadViewframe( &cam );
   rkglLightPut( &light );
   glPushMatrix();
   rkglClear();
@@ -48,18 +48,6 @@ void display(void)
 void keyboard(unsigned char key, int x, int y)
 {
   switch( key ){
-  case 'u': rkglCALockonPTR( &cam, 5, 0, 0 ); break;
-  case 'U': rkglCALockonPTR( &cam,-5, 0, 0 ); break;
-  case 'i': rkglCALockonPTR( &cam, 0, 5, 0 ); break;
-  case 'I': rkglCALockonPTR( &cam, 0,-5, 0 ); break;
-  case 'o': rkglCALockonPTR( &cam, 0, 0, 5 ); break;
-  case 'O': rkglCALockonPTR( &cam, 0, 0,-5 ); break;
-  case '8': rkglCARelMove( &cam, 0.05, 0, 0 ); break;
-  case '*': rkglCARelMove( &cam,-0.05, 0, 0 ); break;
-  case '9': rkglCARelMove( &cam, 0, 0.05, 0 ); break;
-  case '(': rkglCARelMove( &cam, 0,-0.05, 0 ); break;
-  case '0': rkglCARelMove( &cam, 0, 0, 0.05 ); break;
-  case ')': rkglCARelMove( &cam, 0, 0,-0.05 ); break;
   case 'q': case 'Q': case '\033':
     rkglTextureDelete( &tex );
     glDeleteProgram( shader_program );
@@ -75,14 +63,14 @@ void init(void)
 
   rkglSetDefaultCallbackParam( &cam, 0, 0, 0, 0, 0 );
 
-  rkglBGSet( &cam, 0.5, 1.0, 1.0 );
+  rkglCameraSetBackground( &cam, 0.5, 1.0, 1.0 );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0, 0, 0 );
   rkglLightMove( &light, 0, 0, 15 );
   rkglLightSetAttenuationConst( &light, 1.0 );
 
-  rkglCALookAt( &cam, light.pos[0], light.pos[1], light.pos[2], 0, 0, 0, -1, 0, 0 );
+  rkglCameraLookAt( &cam, light.pos[0], light.pos[1], light.pos[2], 0, 0, 0, -1, 0, 0 );
 
   room_id = rkglBeginList();
   zOpticalInfoCreateSimple( &oi2, 1.0, 1.0, 1.0, NULL );

@@ -427,8 +427,8 @@ void rkAnimGetCamFrame(void)
   zFrame3D f;
   zVec3D ptr;
 
-  rkglCALoad( &cam );
-  rkglCAGetFrame3D( &cam, &f );
+  rkglCameraLoadViewframe( &cam );
+  rkglCameraViewframeToFrame3D( &cam, &f );
   /* pan, tilt and roll angle */
   _zMat3DToPTR( zFrame3DAtt(&f), &ptr );
   rkAnimCamOptWrite( zFrame3DPos(&f), &ptr );
@@ -457,7 +457,7 @@ void rkAnimDisplay(void)
   } else{
     /* non-shadowed rendering */
     rkglClear();
-    rkglCALoad( &cam );
+    rkglCameraLoadViewframe( &cam );
     rkglLightPut( &light );
     rkAnimDraw();
   }
@@ -538,10 +538,10 @@ void rkAnimInit(void)
   rkglWindowOpenGLX( glwin );
 
   zRGBDecodeStr( &rgb, opt[OPT_BG].arg );
-  rkglBGSet( &cam, rgb.r, rgb.g, rgb.b );
-  rkglVPCreate( &cam, 0, 0,
+  rkglCameraSetBackground( &cam, rgb.r, rgb.g, rgb.b );
+  rkglCameraSetViewport( &cam, 0, 0,
     atoi(opt[OPT_WIDTH].arg), atoi(opt[OPT_HEIGHT].arg) );
-  rkglCASet( &cam,
+  rkglCameraSetViewframe( &cam,
     atof(opt[OPT_OX].arg), atof(opt[OPT_OY].arg), atof(opt[OPT_OZ].arg),
     atof(opt[OPT_PAN].arg), atof(opt[OPT_TILT].arg), atof(opt[OPT_ROLL].arg) );
 
@@ -612,19 +612,18 @@ void rkAnimReshape(void)
     }
   }
   zxGetGeometry( glwin, &reg );
-  rkglVPCreate( &cam, 0, 0, reg.width, reg.height );
+  rkglCameraSetViewport( &cam, 0, 0, reg.width, reg.height );
   if( from_light ){
     double d;
-    rkglVVInit();
+    rkglInitViewvolume();
     d = sqrt( zSqr(light.pos[0])+zSqr(light.pos[1])+zSqr(light.pos[2]) );
     gluPerspective( 2*zRad2Deg(asin(shadow.radius/d)),
       (GLdouble)shadow.width/(GLdouble)shadow.height,
       d > shadow.radius ? d-shadow.radius : d*0.9, d+shadow.radius );
   } else{
     double x, y;
-    x = 0.1;
-    y = x / rkglVPAspect(&cam);
-    rkglFrustum( &cam, -x, x, -y, y, 1, 200 );
+    y = ( x = 0.1 ) / rkglCameraViewportAspectRatio(&cam);
+    rkglCameraSetFrustum( &cam, -x, x, -y, y, 1, 200 );
   }
 }
 
@@ -634,10 +633,9 @@ int rkAnimKeyPress(void)
   switch( zxKeySymbol() ){
   case XK_l: case XK_L: /* toggle viewpoint to light/camera */
     if( ( from_light = 1 - from_light ) ){
-      rkglCALookAt( &cam,
-        light.pos[0], light.pos[1], light.pos[2], 0, 0, 0, -1, 0, 1 );
+      rkglCameraLookAt( &cam, light.pos[0], light.pos[1], light.pos[2], 0, 0, 0, -1, 0, 1 );
     } else{
-      rkglCASet( &cam,
+      rkglCameraSetViewframe( &cam,
         atof(opt[OPT_OX].arg), atof(opt[OPT_OY].arg), atof(opt[OPT_OZ].arg),
         atof(opt[OPT_PAN].arg), atof(opt[OPT_TILT].arg), atof(opt[OPT_ROLL].arg) );
     }

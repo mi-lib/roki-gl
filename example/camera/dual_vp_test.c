@@ -34,21 +34,13 @@ rkglCamera cam1, cam2;
 void draw(rkglCamera *c, double r)
 {
   int i, j;
-  double x, y;
 
-  rkglVPLoad( c );
-  glMatrixMode( GL_PROJECTION );
-  glLoadIdentity();
-  y = 1.0 / 640 * rkglVPHeight(c);
-  x = y * rkglVPAspect(c);
-  /* keep size */
-  glFrustum( -x, x, -y, y, 1.0, 10.0 );
-
+  rkglCameraLoadViewport( c );
+  rkglCameraScaleFrustumHeight( c, 1.0/320, 1.0, 30.0 );
   glMatrixMode( GL_MODELVIEW );
   glLoadIdentity();
   gluLookAt( 3.0, 4.0, 5.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0 );
   glRotated( r, 0, 1, 0 );
-
   rkglClear();
   glBegin( GL_TRIANGLE_STRIP );
   for( i=0; i<6; i++ ){
@@ -76,13 +68,14 @@ void idle(void)
 
 void resize(int w, int h)
 {
-  glClearColor( 1, 1, 1, 1 );
   glViewport( 0, 0, w, h );
+  glScissor( 0, 0, w, h );
+  glClearColor( 1, 1, 1, 1 );
   rkglClear();
-  rkglBGSet( &cam1, 0.2, 0, 0 );
-  rkglVPCreate( &cam1, 10,    10, w-20, h/2-15 );
-  rkglBGSet( &cam2, 0, 0.2, 0 );
-  rkglVPCreate( &cam2, 10, h/2+5, w-20, h/2-15 );
+  rkglCameraSetBackground( &cam1, 0.2, 0, 0 );
+  rkglCameraSetViewport( &cam1, 10,    10, w-20, h/2-15 );
+  rkglCameraSetBackground( &cam2, 0, 0.2, 0 );
+  rkglCameraSetViewport( &cam2, 10, h/2+5, w-20, h/2-15 );
 }
 
 void keyboard(unsigned char key, int x, int y)

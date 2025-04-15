@@ -11,7 +11,7 @@ void display(void)
     { 0,-1, 1 },
   };
 
-  rkglCALoad( &cam );
+  rkglCameraLoadViewframe( &cam );
   glPushMatrix();
   rkglClear();
   glBegin( GL_TRIANGLE_STRIP );
@@ -26,8 +26,8 @@ void display(void)
 
 void resize(int w, int h)
 {
-  rkglVPCreate( &cam, 0, 0, w, h );
-  rkglFrustumScaleH( &cam, 1.0/160, 1, 10 );
+  rkglCameraSetViewport( &cam, 0, 0, w, h );
+  rkglCameraScaleFrustumHeight( &cam, 1.0/160, 1, 10 );
 }
 
 void keyboard(unsigned char key, int x, int y)
@@ -60,8 +60,8 @@ int main(int argc, char *argv[])
   glutKeyboardFunc( keyboard );
   glutIdleFunc( rkglIdleFuncGLUT );
   glCullFace( GL_FRONT );
-  rkglBGSet( &cam, 0.5, 0.5, 0.5 );
-  rkglCASet( &cam, 5, 0, 0, 0, 0, 0 );
+  rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
+  rkglCameraSetViewframe( &cam, 5, 0, 0, 0, 0, 0 );
   rkglRGBByName( "black" );
   glutMainLoop();
   return 0;

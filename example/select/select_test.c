@@ -27,7 +27,7 @@ void draw_scene(void)
 
 void display(void)
 {
-  rkglCALoad( &cam );
+  rkglCameraLoadViewframe( &cam );
   rkglLightPut( &light );
   rkglClear();
   draw_scene();
@@ -72,8 +72,8 @@ void mouse(int button, int state, int x, int y)
 
 void resize(int w, int h)
 {
-  rkglVPCreate( &cam, 0, 0, w, h );
-  rkglPerspective( &cam, 30.0, (double)w / (double)h, 1.0, 100.0 );
+  rkglCameraSetViewport( &cam, 0, 0, w, h );
+  rkglCameraSetPerspective( &cam, 30.0, (double)w / (double)h, 1.0, 100.0 );
 }
 
 void keyboard(unsigned char key, int x, int y)
@@ -90,8 +90,8 @@ void init(void)
   GLfloat color[4];
   int i;
 
-  rkglBGSet( &cam, 1.0, 1.0, 1.0 );
-  rkglCALookAt( &cam, 5.0, 4.0, 5.0, 0.4, 0.0, 0.0, 0.0, 1.0, 0.0 );
+  rkglCameraSetBackground( &cam, 1.0, 1.0, 1.0 );
+  rkglCameraLookAt( &cam, 5.0, 4.0, 5.0, 0.4, 0.0, 0.0, 0.0, 1.0, 0.0 );
 
   glEnable(GL_LIGHTING);
   rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );

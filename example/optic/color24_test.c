@@ -37,7 +37,7 @@ void display(void)
 {
   int i, j;
 
-  rkglCALoad( &cam );
+  rkglCameraLoadViewframe( &cam );
   glPushMatrix();
   glRotated( r, 0, 1, 0 );
   rkglClear();
@@ -54,8 +54,8 @@ void display(void)
 
 void resize(int w, int h)
 {
-  rkglVPCreate( &cam, 0, 0, w, h );
-  rkglFrustumScaleH( &cam, 1.0/160, 1, 10 );
+  rkglCameraSetViewport( &cam, 0, 0, w, h );
+  rkglCameraScaleFrustumHeight( &cam, 1.0/160, 1, 10 );
 }
 
 void keyboard(unsigned char key, int x, int y)
@@ -74,18 +74,18 @@ void keyboard(unsigned char key, int x, int y)
   case 'O': color[4] +=0x010001; break;
   case 'P': color[5] +=0x000101; break;
 
-  case 'j': rkglCALockonRotate( &cam, 1, 5, 0, 0 ); break;
-  case 'J': rkglCALockonRotate( &cam, 1,-5, 0, 0 ); break;
-  case 'k': rkglCALockonRotate( &cam, 1, 0, 5, 0 ); break;
-  case 'K': rkglCALockonRotate( &cam, 1, 0,-5, 0 ); break;
-  case 'l': rkglCALockonRotate( &cam, 1, 0, 0, 5 ); break;
-  case 'L': rkglCALockonRotate( &cam, 1, 0, 0,-5 ); break;
-  case 'n': rkglCARelMove( &cam, 0.05, 0, 0 ); break;
-  case 'N': rkglCARelMove( &cam,-0.05, 0, 0 ); break;
-  case 'm': rkglCARelMove( &cam, 0, 0.05, 0 ); break;
-  case 'M': rkglCARelMove( &cam, 0,-0.05, 0 ); break;
-  case ',': rkglCARelMove( &cam, 0, 0, 0.05 ); break;
-  case '<': rkglCARelMove( &cam, 0, 0,-0.05 ); break;
+  case 'j': rkglCameraLockonAndRotate( &cam, 1, 5, 0, 0 ); break;
+  case 'J': rkglCameraLockonAndRotate( &cam, 1,-5, 0, 0 ); break;
+  case 'k': rkglCameraLockonAndRotate( &cam, 1, 0, 5, 0 ); break;
+  case 'K': rkglCameraLockonAndRotate( &cam, 1, 0,-5, 0 ); break;
+  case 'l': rkglCameraLockonAndRotate( &cam, 1, 0, 0, 5 ); break;
+  case 'L': rkglCameraLockonAndRotate( &cam, 1, 0, 0,-5 ); break;
+  case 'n': rkglCameraRelMove( &cam, 0.05, 0, 0 ); break;
+  case 'N': rkglCameraRelMove( &cam,-0.05, 0, 0 ); break;
+  case 'm': rkglCameraRelMove( &cam, 0, 0.05, 0 ); break;
+  case 'M': rkglCameraRelMove( &cam, 0,-0.05, 0 ); break;
+  case ',': rkglCameraRelMove( &cam, 0, 0, 0.05 ); break;
+  case '<': rkglCameraRelMove( &cam, 0, 0,-0.05 ); break;
   case ' ': r += 10; break;
   case 'q': case 'Q': case '\033':
     exit( EXIT_SUCCESS );
@@ -97,8 +97,8 @@ void keyboard(unsigned char key, int x, int y)
 void init(void)
 {
   glCullFace( GL_FRONT );
-  rkglBGSet( &cam, 0.5, 0.5, 0.5 );
-  rkglCASet( &cam, 6, 0, 3, 0, -30, 0 );
+  rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
+  rkglCameraSetViewframe( &cam, 6, 0, 3, 0, -30, 0 );
 }
 
 int main(int argc, char *argv[])

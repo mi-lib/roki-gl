@@ -38,7 +38,7 @@ void draw_scene(void)
 
 void display(void)
 {
-  rkglCALoad( &cam );
+  rkglCameraLoadViewframe( &cam );
   rkglLightPut( &light );
   rkglClear();
   draw_scene();
@@ -132,8 +132,8 @@ void motion(int x, int y)
 
 void reshape(int w, int h)
 {
-  rkglVPCreate( &cam, 0, 0, w, h );
-  rkglPerspective( &cam, 45.0, (GLdouble)w/(GLdouble)h, 0.5, 10.0 );
+  rkglCameraSetViewport( &cam, 0, 0, w, h );
+  rkglCameraSetPerspective( &cam, 45.0, (GLdouble)w/(GLdouble)h, 0.5, 10.0 );
 }
 
 void init(void)
@@ -143,8 +143,8 @@ void init(void)
   zRandInit();
   rkglSetDefaultCallbackParam( &cam, 0, 0, 0, 0, 0 );
 
-  rkglBGSet( &cam, 0.0, 0.0, 0.0 );
-  rkglCALookAt( &cam, 5, 0, 1, 0, 0, 0, 0, 0, 1 );
+  rkglCameraSetBackground( &cam, 0.0, 0.0, 0.0 );
+  rkglCameraLookAt( &cam, 5, 0, 1, 0, 0, 0, 0, 0, 1 );
 
   glEnable( GL_LIGHTING );
   glLightModeli( GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE );
@@ -155,7 +155,7 @@ void init(void)
 
   for( i=0; i<NUM_NURBS; i++ ){
     zNURBS3D1Alloc( &nurbs[i], NUM_CP, 3 );
-    zNURBS3D1SetSliceNum( &nurbs[i], 50 );
+    zNURBS3D1SetSlice( &nurbs[i], 50 );
   }
   init_curve();
 }

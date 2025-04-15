@@ -9,7 +9,7 @@ bool show_cov_ellipsoid = false;
 
 void display(void)
 {
-  rkglCALoad( &cam );
+  rkglCameraLoadViewframe( &cam );
   rkglLightPut( &light );
 
   glPushMatrix();
@@ -23,8 +23,8 @@ void display(void)
 
 void resize(int w, int h)
 {
-  rkglVPCreate( &cam, 0, 0, w, h );
-  rkglFrustumScaleH( &cam, 1.0/5120, 0.1, 5 );
+  rkglCameraSetViewport( &cam, 0, 0, w, h );
+  rkglCameraScaleFrustumHeight( &cam, 1.0/5120, 0.1, 5 );
 }
 
 void keyboard(unsigned char key, int x, int y)
@@ -42,8 +42,8 @@ void init(void)
 {
   rkglSetDefaultCallbackParam( &cam, 0, 0, 0, 0.01, 0.01 );
 
-  rkglBGSet( &cam, 0.1, 0.1, 0.1 );
-  rkglCALookAt( &cam, 0.3, 0.0, 0.1, 0.0, 0.0, 0.1, 0.0, 0.0, 1.0 );
+  rkglCameraSetBackground( &cam, 0.1, 0.1, 0.1 );
+  rkglCameraLookAt( &cam, 0.3, 0.0, 0.1, 0.0, 0.0, 0.1, 0.0, 0.0, 1.0 );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );

@@ -29,12 +29,12 @@ void rkglReflectionRefraction(int width, int height, rkglCamera *cam, rkglLight 
   };
   int i;
 
-  rkglBGCopy( cam, &view );
+  rkglCameraCopyBackground( cam, &view );
   for( i=0; i<6; i++ ){
     rkglClear();
-    rkglVPCreate( &view, 0, 0, width, height );
-    rkglPerspective( &view, 90.0, 1.0, 0.1, 20.0 );
-    rkglCALookAt( &view,
+    rkglCameraSetViewport( &view, 0, 0, width, height );
+    rkglCameraSetPerspective( &view, 90.0, 1.0, 0.1, 20.0 );
+    rkglCameraLookAt( &view,
       center->c.x, center->c.y, center->c.z,
       center->c.x+viewvec[i].c.x, center->c.y+viewvec[i].c.y, center->c.z+viewvec[i].c.z,
       upvec[i].c.x, upvec[i].c.y, upvec[i].c.z );
@@ -44,8 +44,8 @@ void rkglReflectionRefraction(int width, int height, rkglCamera *cam, rkglLight 
     glPopMatrix();
     glCopyTexSubImage2D( rkgl_cubemap_id[i], 0, 0, 0, 0, 0, width, height );
   }
-  rkglVPLoad( cam );
-  rkglVVLoad( cam );
+  rkglCameraLoadViewport( cam );
+  rkglCameraLoadViewvolume( cam );
 }
 
 /* shadow mapping */
@@ -57,8 +57,8 @@ static void _rkglShadowInit(rkglShadow *shadow, int width, int height, double ra
   shadow->radius = radius;
   shadow->ratio = ratio;
   shadow->blur = blur; /* dummy */
-  rkglVVInit();
-  rkglCAInit();
+  rkglInitViewvolume();
+  rkglInitViewframe();
 
   /* assign texture for shadow map. */
   glGenTextures( 1, &shadow->texid );
@@ -114,8 +114,8 @@ static void _rkglShadowMap(rkglShadow *shadow, rkglCamera *cam, rkglLight *light
   glDisable( GL_SCISSOR_TEST );
   glClear( GL_DEPTH_BUFFER_BIT );
   glViewport( 0, 0, shadow->width, shadow->height );
-  rkglVVInit();
-  rkglCAInit();
+  rkglInitViewvolume();
+  rkglInitViewframe();
   _rkglShadowSetLight( shadow, light );
 
   glColorMask( GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE );
@@ -135,14 +135,14 @@ static void _rkglShadowMap(rkglShadow *shadow, rkglCamera *cam, rkglLight *light
 static void _rkglShadowResetProjection(rkglShadow *shadow, rkglCamera *cam, rkglLight *light)
 {
   glEnable( GL_SCISSOR_TEST );
-  rkglVPLoad( cam );
-  rkglVVLoad( cam );
+  rkglCameraLoadViewport( cam );
+  rkglCameraLoadViewvolume( cam );
   glColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
   glEnable( GL_LIGHTING );
   glCullFace( GL_BACK );
 
   rkglClear();
-  rkglCALoad( cam );
+  rkglCameraLoadViewframe( cam );
   rkglLightPut( light );
 }
 
@@ -172,7 +172,7 @@ static void _rkglShadowXformMap(rkglShadow *shadow, rkglCamera *cam)
   glTranslated( 0.5, 0.5, 0.5 );
   glScaled( 0.5, 0.5, 0.5 );
   glMultMatrixd( shadow->_lightview );
-  rkglMultInvMatrixd( cam->ca );
+  rkglMultInvMatrixd( cam->viewframe );
 }
 
 static void _rkglShadowSunnyside(rkglShadow *shadow, rkglCamera *cam, rkglLight *light, void (* scene)(void))

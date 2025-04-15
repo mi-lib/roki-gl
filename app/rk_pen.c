@@ -367,7 +367,7 @@ void scene(void)
 void display(void)
 {
   rkglClear();
-  rkglCALoad( &cam );
+  rkglCameraLoadViewframe( &cam );
   rkglLightPut( &light );
   scene();
   glutSwapBuffers();
@@ -465,10 +465,10 @@ void rk_penInit(void)
     exit( 1 );
 
   zRGBDecodeStr( &rgb, opt[OPT_BG].arg );
-  rkglBGSet( &cam, rgb.r, rgb.g, rgb.b );
-  rkglVPCreate( &cam, 0, 0, atoi( opt[OPT_WIDTH].arg ), atoi( opt[OPT_HEIGHT].arg ) );
+  rkglCameraSetBackground( &cam, rgb.r, rgb.g, rgb.b );
+  rkglCameraSetViewport( &cam, 0, 0, atoi( opt[OPT_WIDTH].arg ), atoi( opt[OPT_HEIGHT].arg ) );
   if( opt[OPT_AUTO].flag && rkChainBoundingBall( &chain, &bball ) ){
-    rkglCALookAt( &cam,
+    rkglCameraLookAt( &cam,
       zSphere3DCenter(&bball)->c.x+zSphere3DRadius(&bball)*18, zSphere3DCenter(&bball)->c.y, zSphere3DCenter(&bball)->c.z,
       zSphere3DCenter(&bball)->c.x, zSphere3DCenter(&bball)->c.y, zSphere3DCenter(&bball)->c.z,
       0, 0, 1 );
@@ -477,11 +477,11 @@ void rk_penInit(void)
     vv_far = 1000*zSphere3DRadius(&bball);
   } else{
     if( opt[OPT_PAN].flag || opt[OPT_TILT].flag || opt[OPT_ROLL].flag )
-      rkglCASet( &cam,
+      rkglCameraSetViewframe( &cam,
         atof( opt[OPT_OX].arg ), atof( opt[OPT_OY].arg ), atof( opt[OPT_OZ].arg ),
         atof( opt[OPT_PAN].arg ),  atof( opt[OPT_TILT].arg ), atof( opt[OPT_ROLL].arg ) );
     else
-      rkglCALookAt( &cam,
+      rkglCameraLookAt( &cam,
         atof( opt[OPT_OX].arg ), atof( opt[OPT_OY].arg ), atof( opt[OPT_OZ].arg ),
         0, 0, 0, 0, 0, 1 );
     vv_width = 0.2;

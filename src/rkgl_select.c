@@ -13,16 +13,16 @@ int rkglProject(rkglCamera *c, zVec3D *p, int *x, int *y)
   double _x, _y, _z;
   GLint ret;
 
-  ret = gluProject( p->e[zX], p->e[zY], p->e[zZ], c->ca, c->vv, c->vp, &_x, &_y, &_z );
+  ret = gluProject( p->e[zX], p->e[zY], p->e[zZ], c->viewframe, c->viewvolume, c->viewport, &_x, &_y, &_z );
   *x = _x;
-  *y = c->vp[3] - _y;
+  *y = c->viewport[3] - _y;
   return ret;
 }
 
 int rkglUnproject(rkglCamera *c, int x, int y, double depth, zVec3D *p)
 {
   zVec3DZero( p );
-  return gluUnProject( x, c->vp[3]-y, depth, c->ca, c->vv, c->vp,
+  return gluUnProject( x, c->viewport[3]-y, depth, c->viewframe, c->viewvolume, c->viewport,
     &p->e[zX], &p->e[zY], &p->e[zZ] );
 }
 
@@ -30,7 +30,7 @@ double rkglGetDepth(rkglCamera *c, int x, int y)
 {
   GLfloat depth;
 
-  glReadPixels( x, c->vp[3]-y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth );
+  glReadPixels( x, c->viewport[3]-y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth );
   return (double)depth;
 }
 
@@ -74,9 +74,9 @@ int rkglSelect(rkglSelectionBuffer *sb, rkglCamera *cam, void (* scene)(void), i
   glMatrixMode( GL_PROJECTION );
   glPushMatrix();
   glLoadIdentity();
-  gluPickMatrix( x, cam->vp[3]-y, w, h, cam->vp );
-  glMultMatrixd( cam->vv );
-  rkglCALoad( cam );
+  gluPickMatrix( x, cam->viewport[3]-y, w, h, cam->viewport );
+  glMultMatrixd( cam->viewvolume );
+  rkglCameraLoadViewframe( cam );
   scene();
   glMatrixMode( GL_PROJECTION );
   glPopMatrix();

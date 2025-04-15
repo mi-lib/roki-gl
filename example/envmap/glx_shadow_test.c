@@ -23,12 +23,7 @@ void display(Window win)
 
 void reshape(int w, int h)
 {
-  double x, y;
-
-  rkglVPCreate( &cam, 0, 0, w, h );
-  x = 0.5 * 5.0;
-  y = x / rkglVPAspect(&cam);
-  rkglFrustum( &cam, -x, x, -y, y, 5.0, 40.0 );
+  rkglCameraFitFrustumToViewport( &cam, w, h, 5.0, 5.0, 40.0 );
 }
 
 #define TEXWIDTH  1024
@@ -43,8 +38,8 @@ void init(void)
   zBox3D box3d;
   zVec3D c1, c2;
 
-  rkglBGSet( &cam, 0.5, 0.5, 0.5 );
-  rkglCASet( &cam, 10, 0, 4, 0, -30, 0 );
+  rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
+  rkglCameraSetViewframe( &cam, 10, 0, 4, 0, -30, 0 );
   rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
   rkglLightMove( &light, 3, 6, 20 );
   rkglShadowInit( &shadow, TEXWIDTH, TEXHEIGHT, 10.0, 0.2, 0 );

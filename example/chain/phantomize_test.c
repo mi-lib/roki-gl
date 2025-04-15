@@ -28,7 +28,7 @@ void draw_scene(void)
 
 void display(GLFWwindow* window)
 {
-  rkglCALoad( &g_cam );
+  rkglCameraLoadViewframe( &g_cam );
   rkglLightPut( &g_light );
   rkglClear();
   draw_scene();
@@ -77,24 +77,23 @@ void create_phantom_all(void)
 void mouse_wheel(GLFWwindow* window, double xoffset, double yoffset)
 {
   if ( yoffset < 0 ) {
-    g_scale -= 0.0001; rkglOrthoScaleH( &g_cam, g_scale, g_znear, g_zfar );
+    g_scale -= 0.0001; rkglCameraScaleOrthoHeight( &g_cam, g_scale, g_znear, g_zfar );
   } else if ( yoffset > 0 ) {
-    g_scale += 0.0001; rkglOrthoScaleH( &g_cam, g_scale, g_znear, g_zfar );
+    g_scale += 0.0001; rkglCameraScaleOrthoHeight( &g_cam, g_scale, g_znear, g_zfar );
   }
 }
 
 void resize(GLFWwindow* window, int w, int h)
 {
-  rkglVPCreate( &g_cam, 0, 0, w, h );
-  rkglOrthoScaleH( &g_cam, g_scale, g_znear, g_zfar );
+  rkglCameraSetViewport( &g_cam, 0, 0, w, h );
+  rkglCameraScaleOrthoHeight( &g_cam, g_scale, g_znear, g_zfar );
 }
 
 void init(void)
 {
   rkglSetDefaultCallbackParam( &g_cam, 1.0, 1.0, 20.0, 1.0, 5.0 );
-
-  rkglBGSet( &g_cam, 0.5, 0.5, 0.5 );
-  rkglCASet( &g_cam, 1, 1, 1, 45.0, -30.0, 0.0 );
+  rkglCameraSetBackground( &g_cam, 0.5, 0.5, 0.5 );
+  rkglCameraSetViewframe( &g_cam, 1, 1, 1, 45.0, -30.0, 0.0 );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &g_light, 0.8, 0.8, 0.8, 1.0, 1.0, 1.0, 0.2, 0.2, 0.2 );

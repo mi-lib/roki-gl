@@ -9,7 +9,7 @@ double r = 0;
 
 void display(void)
 {
-  rkglCALoad( &cam );
+  rkglCameraLoadViewframe( &cam );
   rkglLightPut( &light );
 
   glPushMatrix();
@@ -22,8 +22,8 @@ void display(void)
 
 void init(void)
 {
-  rkglBGSet( &cam, 0.6, 0.6, 0.6 );
-  rkglCASet( &cam, 1, 0, 0.7, 0, -30, 0 );
+  rkglCameraSetBackground( &cam, 0.6, 0.6, 0.6 );
+  rkglCameraSetViewframe( &cam, 1, 0, 0.7, 0, -30, 0 );
   rkglSetDefaultCallbackParam( &cam, 0.05, 0.1, 5.0, 0.05, 5 );
 
   glEnable( GL_LIGHTING );

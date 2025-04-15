@@ -10,7 +10,7 @@ double r = 0;
 
 void display(void)
 {
-  rkglCALoad( &cam );
+  rkglCameraLoadViewframe( &cam );
   rkglLightPut( &light );
 
   glPushMatrix();
@@ -23,21 +23,20 @@ void display(void)
 
 void resize(int w, int h)
 {
-  rkglVPCreate( &cam, 0, 0, w, h );
-  rkglFrustumScaleH( &cam, 1.0/160, 1, 100 );
+  rkglCameraSetViewport( &cam, 0, 0, w, h );
+  rkglCameraScaleFrustumHeight( &cam, 1.0/160, 1, 100 );
 }
 
 void keyboard(unsigned char key, int x, int y)
 {
   switch( key ){
-  case 'r': if( opt.dif.r > 0.0 ) opt.dif.r -= 0.01; break;
-  case 'R': if( opt.dif.r < 1.0 ) opt.dif.r += 0.01; break;
-  case 'g': if( opt.dif.g > 0.0 ) opt.dif.g -= 0.01; break;
-  case 'G': if( opt.dif.g < 1.0 ) opt.dif.g += 0.01; break;
-  case 'b': if( opt.dif.b > 0.0 ) opt.dif.b -= 0.01; break;
-  case 'B': if( opt.dif.b < 1.0 ) opt.dif.b += 0.01; break;
-  case ' ':
-    r += 10; break;
+  case 'r': if( opt.diffuse.r > 0.0 ) opt.diffuse.r -= 0.01; break;
+  case 'R': if( opt.diffuse.r < 1.0 ) opt.diffuse.r += 0.01; break;
+  case 'g': if( opt.diffuse.g > 0.0 ) opt.diffuse.g -= 0.01; break;
+  case 'G': if( opt.diffuse.g < 1.0 ) opt.diffuse.g += 0.01; break;
+  case 'b': if( opt.diffuse.b > 0.0 ) opt.diffuse.b -= 0.01; break;
+  case 'B': if( opt.diffuse.b < 1.0 ) opt.diffuse.b += 0.01; break;
+  case ' ': r += 10; break;
   case 'q': case 'Q': case '\033':
     zShape3DDestroy( &shape );
     exit( EXIT_SUCCESS );
@@ -49,8 +48,8 @@ void init(void)
 {
   rkglSetDefaultCallbackParam( &cam, 0, 0, 0, 0, 0 );
 
-  rkglBGSet( &cam, 0.5, 0.5, 0.5 );
-  rkglCASet( &cam, 6, 0, 3, 0, -30, 0 );
+  rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
+  rkglCameraSetViewframe( &cam, 6, 0, 3, 0, -30, 0 );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );

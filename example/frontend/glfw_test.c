@@ -17,7 +17,7 @@ void display(GLFWwindow* window)
   zOpticalInfo oi;
 
   rkglClear();
-  rkglCALoad( &g_cam );
+  rkglCameraLoadViewframe( &g_cam );
   rkglLightPut( &g_light );
   glPushMatrix();
   zOpticalInfoCreateSimple( &oi, 0.2, 0.4, 0.9, NULL );
@@ -33,8 +33,8 @@ void init(void)
 
   rkglSetDefaultCallbackParam( &g_cam, 1.0, 1.0, 20.0, 1.0, 5.0 );
 
-  rkglBGSet( &g_cam, 0.5, 0.5, 0.5 );
-  rkglCASet( &g_cam, 10.0, 0.0, 0.0, 0.0, 0.0, 0.0 );
+  rkglCameraSetBackground( &g_cam, 0.5, 0.5, 0.5 );
+  rkglCameraSetViewframe( &g_cam, 10.0, 0.0, 0.0, 0.0, 0.0, 0.0 );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &g_light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );

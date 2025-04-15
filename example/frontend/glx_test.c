@@ -1,5 +1,4 @@
 #include <roki_gl/roki_glx.h>
-#include <zx11/zximage.h>
 
 int obj;
 
@@ -43,10 +42,8 @@ GLvoid init(GLsizei width, GLsizei height)
 {
   enter();
 
-  rkglBGSet( &cam, 0.5, 0.5, 0.5 );
-  rkglVPCreate( &cam, 0, 0, width, height );
-  rkglFrustumScaleH( &cam, 1.0/180, 3, 10 );
-  rkglCALookAt( &cam, 5,-3, 3, 0, 0, 0, 0, 0, 1 );
+  rkglCameraSetBackground( &cam, 0.1, 0.1, 0.1 );
+  rkglCameraLookAt( &cam, 5,-3, 3, 0, 0, 0, 0, 0, 1 );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.4, 0.4, 0.4, 0.8, 0.8, 0.8, 0, 0, 0 );
@@ -56,8 +53,8 @@ GLvoid draw(Window win)
 {
   rkglWindowActivateGLX( win );
   rkglClear();
-  rkglCALoad( &cam );
-  rkglLightMove( &light, 10, 0, 8 );
+  rkglCameraLoadViewframe( &cam );
+  rkglLightMove( &light, 8, 10*sin(4*zPI*(double)clock()/CLOCKS_PER_SEC), 5 );
   glPushMatrix();
   glCallList( obj );
   glPopMatrix();
@@ -65,33 +62,58 @@ GLvoid draw(Window win)
   rkglFlushGLX();
 }
 
-#define WIDTH  480
-#define HEIGHT 480
+GLvoid mainloop(Window win)
+{
+  int event;
+  zxRegion reg;
+  int count = 0;
+
+  while( 1 ){
+    switch( ( event = zxGetEvent() ) ){
+    case ButtonPress:
+    case ButtonRelease:
+      rkglMouseFuncGLX( &cam, event, 1.0 );
+      break;
+    case MotionNotify:
+      rkglMouseDragFuncGLX( &cam );
+      break;
+    case KeyPress:
+      if( rkglKeyFuncGLX( &cam, 1.0, 5.0 ) < 0 )
+        return;
+      break;
+    case KeyRelease:
+      zxModkeyOff( zxKeySymbol() );
+      break;
+    case Expose:
+    case ConfigureNotify:
+      zxGetGeometry( win, &reg );
+      rkglReshapeGLX( &cam, reg.width, reg.height, 2.0, 2, 20 );
+      break;
+    default: ;
+    }
+    if( ++count > 5 ){
+      draw( win );
+      count = 0;
+    }
+  }
+}
+
+#define WIDTH  500
+#define HEIGHT 500
 
 int main(int argc, char **argv)
 {
   Window win;
-  zxImage img1, img2, img3;
 
   rkglInitGLX();
-  win = rkglWindowCreateGLX( NULL, 0, 0, WIDTH,  HEIGHT, "image capturing test" );
-  init( WIDTH, HEIGHT );
+  win = rkglWindowCreateGLX( NULL, 0, 0, WIDTH,  HEIGHT, "glx test" );
+  rkglWindowKeyEnableGLX( win );
+  rkglWindowMouseEnableGLX( win );
   rkglWindowOpenGLX( win );
-  draw( win );
-  draw( win );
-  draw( win );
-  glFinish();
 
-  rkglReadRGBImageGLX( win, &img1 );
-  rkglReadRGBImage( &img2 );
-  rkglReadDepthImage( &img3 );
-  zxImageWriteFile( &img1, "out_glx.bmp" );
-  zxImageWriteFile( &img2, "out_rgb.bmp" );
-  zxImageWriteFile( &img3, "out_dep.bmp" );
-  zxImageDestroy( &img1 );
-  zxImageDestroy( &img2 );
-  zxImageDestroy( &img3 );
-
+  init( WIDTH, HEIGHT );
+  mainloop( win );
+  rkglWindowCloseGLX( win );
   rkglExitGLX();
   return 0;
 }

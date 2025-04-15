@@ -34,7 +34,7 @@ void refresh(void)
 
 void display(void)
 {
-  rkglCALoad( &cam );
+  rkglCameraLoadViewframe( &cam );
   rkglLightPut( &light );
   rkglClear();
   glCallList( id_curve );
@@ -45,8 +45,8 @@ void display(void)
 
 void reshape(int w, int h)
 {
-  rkglVPCreate( &cam, 0, 0, w, h );
-  rkglPerspective( &cam, 30.0, (GLdouble)w/(GLdouble)h, 1.0, 30.0 );
+  rkglCameraSetViewport( &cam, 0, 0, w, h );
+  rkglCameraSetPerspective( &cam, 30.0, (GLdouble)w/(GLdouble)h, 1.0, 30.0 );
 }
 
 void keyboard(unsigned char key, int x, int y)
@@ -73,8 +73,8 @@ void init()
   zRandInit();
   rkglSetDefaultCallbackParam( &cam, 0, 0, 0, 0, 0 );
 
-  rkglBGSet( &cam, 0.8, 0.8, 0.8 );
-  rkglCALookAt( &cam, 5, 0, 5, 0, 0, 0, 0, 0, 1 );
+  rkglCameraSetBackground( &cam, 0.8, 0.8, 0.8 );
+  rkglCameraLookAt( &cam, 5, 0, 5, 0, 0, 0, 0, 0, 1 );
 
   glEnable( GL_LIGHTING );
   glLightModeli( GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE );

@@ -8,16 +8,14 @@ zCone3D cone[3];
 rkglCamera cam;
 rkglLight light;
 
-double r = 0;
 ubyte dispswitch = 1;
 
 void display(void)
 {
-  rkglCALoad( &cam );
+  rkglCameraLoadViewframe( &cam );
   rkglLightPut( &light );
 
   glPushMatrix();
-  glRotated( r, 0, 1, 0 );
   rkglClear();
   rkglMaterial( &red );
   rkglSphere( &sphere[0], RKGL_FACE | ( dispswitch ? 0 : RKGL_WIREFRAME ) );
@@ -37,26 +35,13 @@ void display(void)
 
 void resize(int w, int h)
 {
-  rkglVPCreate( &cam, 0, 0, w, h );
-  rkglFrustumScaleH( &cam, 1.0/160, 2, 10 );
+  rkglCameraSetViewport( &cam, 0, 0, w, h );
+  rkglCameraScaleFrustumHeight( &cam, 1.0/160, 2, 10 );
 }
 
 void keyboard(unsigned char key, int x, int y)
 {
   switch( key ){
-  case 'u': rkglCALockonPTR( &cam, 5, 0, 0 ); break;
-  case 'U': rkglCALockonPTR( &cam,-5, 0, 0 ); break;
-  case 'i': rkglCALockonPTR( &cam, 0, 5, 0 ); break;
-  case 'I': rkglCALockonPTR( &cam, 0,-5, 0 ); break;
-  case 'o': rkglCALockonPTR( &cam, 0, 0, 5 ); break;
-  case 'O': rkglCALockonPTR( &cam, 0, 0,-5 ); break;
-  case '8': rkglCARelMove( &cam, 0.05, 0, 0 ); break;
-  case '*': rkglCARelMove( &cam,-0.05, 0, 0 ); break;
-  case '9': rkglCARelMove( &cam, 0, 0.05, 0 ); break;
-  case '(': rkglCARelMove( &cam, 0,-0.05, 0 ); break;
-  case '0': rkglCARelMove( &cam, 0, 0, 0.05 ); break;
-  case ')': rkglCARelMove( &cam, 0, 0,-0.05 ); break;
-  case ' ': r += 10; break;
   case 'w': dispswitch = 1 - dispswitch; break;
   case 'q': case 'Q': case '\033':
     exit( EXIT_SUCCESS );
@@ -70,8 +55,8 @@ void init(void)
 
   rkglSetDefaultCallbackParam( &cam, 0, 0, 0, 0, 0 );
 
-  rkglBGSet( &cam, 0.5, 0.5, 0.5 );
-  rkglCASet( &cam, 6, 0, 3, 0, -30, 0 );
+  rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
+  rkglCameraSetViewframe( &cam, 6, 0, 3, 0, -30, 0 );
   glLineWidth( 2 );
 
   glEnable( GL_LIGHTING );

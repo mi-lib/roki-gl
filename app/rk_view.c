@@ -187,7 +187,7 @@ void rk_viewReadModel(zStrAddrList *modellist)
 void rk_viewResetCamera(void)
 {
   if( opt[OPT_AUTO].flag ){
-    rkglCALookAt( &cam,
+    rkglCameraLookAt( &cam,
       zSphere3DCenter(&boundingsphere)->c.x+zSphere3DRadius(&boundingsphere)*18, zSphere3DCenter(&boundingsphere)->c.y, zSphere3DCenter(&boundingsphere)->c.z,
       zSphere3DCenter(&boundingsphere)->c.x, zSphere3DCenter(&boundingsphere)->c.y, zSphere3DCenter(&boundingsphere)->c.z,
       0, 0, 1 );
@@ -195,7 +195,7 @@ void rk_viewResetCamera(void)
     vv_near = zSphere3DRadius(&boundingsphere);
     vv_far = 1000*zSphere3DRadius(&boundingsphere);
   } else{
-    rkglCASet( &cam,
+    rkglCameraSetViewframe( &cam,
       atof(opt[OPT_OX].arg), atof(opt[OPT_OY].arg), atof(opt[OPT_OZ].arg),
       atof(opt[OPT_PAN].arg), atof(opt[OPT_TILT].arg), atof(opt[OPT_ROLL].arg) );
     vv_width = 0.2;
@@ -232,12 +232,10 @@ void rk_viewInit(void)
   rkglWindowOpenGLX( win );
 
   zRGBDecodeStr( &rgb, opt[OPT_BG].arg );
-  rkglBGSet( &cam, rgb.r, rgb.g, rgb.b );
-  rkglVPCreate( &cam, 0, 0, atoi(opt[OPT_WIDTH].arg), atoi(opt[OPT_HEIGHT].arg) );
-  rkglVPCreate( &cam, 0, 0, atoi( opt[OPT_WIDTH].arg ), atoi( opt[OPT_HEIGHT].arg ) );
+  rkglCameraSetBackground( &cam, rgb.r, rgb.g, rgb.b );
+  rkglCameraSetViewport( &cam, 0, 0, atoi(opt[OPT_WIDTH].arg), atoi(opt[OPT_HEIGHT].arg) );
 
   rkglTextureEnable();
-
   if( opt[OPT_SMOOTH].flag ) glEnable( GL_LINE_SMOOTH );
 }
 
@@ -284,7 +282,7 @@ void rk_viewDisplay(void)
   } else{
     /* non-shadowed rendering */
     rkglClear();
-    rkglCALoad( &cam );
+    rkglCameraLoadViewframe( &cam );
     rkglLightPut( &light );
     rk_viewDraw();
   }
@@ -298,10 +296,9 @@ void rk_viewReshape(void)
   double x, y;
 
   zxGetGeometry( win, &reg );
-  rkglVPCreate( &cam, 0, 0, reg.width, reg.height );
-  x = vv_width / 2;
-  y = x / rkglVPAspect(&cam);
-  rkglFrustum( &cam, -x, x, -y, y, vv_near, vv_far );
+  rkglCameraSetViewport( &cam, 0, 0, reg.width, reg.height );
+  y = ( x = vv_width / 2 ) / rkglCameraViewportAspectRatio(&cam);
+  rkglCameraSetFrustum( &cam, -x, x, -y, y, vv_near, vv_far );
 }
 
 void rk_viewCapture(void)
@@ -327,7 +324,7 @@ int rk_viewKeyPress(void)
   switch( zxKeySymbol() ){
   case XK_l: /* toggle viewpoint to light/camera */
     if( ( from_light = 1 - from_light ) ){
-      rkglCALookAt( &cam,
+      rkglCameraLookAt( &cam,
         atof(opt[OPT_LX].arg), atof(opt[OPT_LY].arg), atof(opt[OPT_LZ].arg),
         0, 0, 0, -1, 0, 1 );
     } else

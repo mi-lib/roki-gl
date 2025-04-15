@@ -14,10 +14,10 @@ __BEGIN_DECLS
 /* key state */
 __ROKI_GL_EXPORT int rkgl_key_mod;
 
-__ROKI_GL_EXPORT void rkglKeyCARotateUp(rkglCamera *cam, double d, bool ctrlison);
-__ROKI_GL_EXPORT void rkglKeyCARotateDown(rkglCamera *cam, double d, bool ctrlison);
-__ROKI_GL_EXPORT void rkglKeyCARotateLeft(rkglCamera *cam, double d, bool ctrlison);
-__ROKI_GL_EXPORT void rkglKeyCARotateRight(rkglCamera *cam, double d, bool ctrlison);
+__ROKI_GL_EXPORT void rkglKeyCameraRotateUp(rkglCamera *cam, double d, bool ctrlison);
+__ROKI_GL_EXPORT void rkglKeyCameraRotateDown(rkglCamera *cam, double d, bool ctrlison);
+__ROKI_GL_EXPORT void rkglKeyCameraRotateLeft(rkglCamera *cam, double d, bool ctrlison);
+__ROKI_GL_EXPORT void rkglKeyCameraRotateRight(rkglCamera *cam, double d, bool ctrlison);
 
 /* mouse state */
 __ROKI_GL_EXPORT int rkgl_mouse_button;
@@ -33,9 +33,9 @@ __ROKI_GL_EXPORT void rkglMouseStoreButtonMod(int button, int state, int pressco
 __ROKI_GL_EXPORT void rkglMouseStoreInput(int button, int state, int presscode, int x, int y, int mod);
 __ROKI_GL_EXPORT void rkglMouseDragGetIncrementer(rkglCamera *cam, int x, int y, double *dx, double *dy);
 
-__ROKI_GL_EXPORT void rkglMouseDragCARotate(rkglCamera *cam, double dx, double dy, int ctrlkey);
-__ROKI_GL_EXPORT void rkglMouseDragCATranslate(rkglCamera *cam, double dx, double dy, int ctrlkey);
-__ROKI_GL_EXPORT void rkglMouseDragCAZoom(rkglCamera *cam, double dx, double dy, int ctrlkey);
+__ROKI_GL_EXPORT void rkglMouseDragCameraRotate(rkglCamera *cam, double dx, double dy, int ctrlkey);
+__ROKI_GL_EXPORT void rkglMouseDragCameraTranslate(rkglCamera *cam, double dx, double dy, int ctrlkey);
+__ROKI_GL_EXPORT void rkglMouseDragCameraZoom(rkglCamera *cam, double dx, double dy, int ctrlkey);
 
 __END_DECLS
 

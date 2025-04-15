@@ -10,7 +10,7 @@ void display(void)
   static GLfloat yellow[] = { 1.0, 1.0, 0.2, 1.0 };
   static GLfloat red[] = { 1.0, 0.0, 0.0, 1.0 };
 
-  rkglCALoad( &cam );
+  rkglCameraLoadViewframe( &cam );
   rkglLightPut( &light );
   rkglClear();
   glMaterialfv( GL_FRONT, GL_DIFFUSE, yellow );
@@ -47,8 +47,8 @@ void mouse(int button, int state, int x, int y)
 
 void resize(int w, int h)
 {
-  rkglVPCreate( &cam, 0, 0, w, h );
-  rkglPerspective( &cam, 30.0, (double)w / (double)h, 0.5, 20.0 );
+  rkglCameraSetViewport( &cam, 0, 0, w, h );
+  rkglCameraSetPerspective( &cam, 30.0, (double)w / (double)h, 0.5, 20.0 );
 }
 
 void keyboard(unsigned char key, int x, int y)
@@ -62,8 +62,8 @@ void keyboard(unsigned char key, int x, int y)
 
 void init(void)
 {
-  rkglBGSet( &cam, 0.0, 0.0, 0.4 );
-  rkglCALookAt( &cam, 5.0, 4.0, 6.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0 );
+  rkglCameraSetBackground( &cam, 0.0, 0.0, 0.4 );
+  rkglCameraLookAt( &cam, 5.0, 4.0, 6.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0 );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );

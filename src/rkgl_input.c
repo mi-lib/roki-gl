@@ -8,17 +8,17 @@
 #include <math.h>
 #include <roki_gl/rkgl_input.h>
 
-void rkglKeyCARotateUp(rkglCamera *cam, double d, bool ctrlison){
-  ctrlison ? rkglCATiltUp( cam, d ) : rkglCAAngleUp( cam, d );
+void rkglKeyCameraRotateUp(rkglCamera *cam, double d, bool ctrlison){
+  ctrlison ? rkglCameraRotate( cam, d,-1, 0, 0 ) : rkglCameraLockonAndRotate( cam, d, 1, 0, 0 );
 }
-void rkglKeyCARotateDown(rkglCamera *cam, double d, bool ctrlison){
-  ctrlison ? rkglCATiltDown( cam, d ) : rkglCAAngleDown( cam, d );
+void rkglKeyCameraRotateDown(rkglCamera *cam, double d, bool ctrlison){
+  ctrlison ? rkglCameraRotate( cam, d, 1, 0, 0 ) : rkglCameraLockonAndRotate( cam, d,-1, 0, 0 );
 }
-void rkglKeyCARotateLeft(rkglCamera *cam, double d, bool ctrlison){
-  ctrlison ? rkglCAPanLeft( cam, d ) : rkglCARoundLeft( cam, d );
+void rkglKeyCameraRotateLeft(rkglCamera *cam, double d, bool ctrlison){
+  ctrlison ? rkglCameraRotate( cam, d, 0,-1, 0 ) : rkglCameraLockonAndRotate( cam, d, 0, 1, 0 );
 }
-void rkglKeyCARotateRight(rkglCamera *cam, double d, bool ctrlison){
-  ctrlison ? rkglCAPanRight( cam, d ) : rkglCARoundRight( cam, d );
+void rkglKeyCameraRotateRight(rkglCamera *cam, double d, bool ctrlison){
+  ctrlison ? rkglCameraRotate( cam, d, 0, 1, 0 ) : rkglCameraLockonAndRotate( cam, d, 0,-1, 0 );
 }
 
 /* mouse state */
@@ -41,24 +41,24 @@ void rkglMouseStoreInput(int button, int state, int presscode, int x, int y, int
 
 void rkglMouseDragGetIncrementer(rkglCamera *cam, int x, int y, double *dx, double *dy)
 {
-  *dx = (double)( x - rkgl_mouse_x ) / cam->vp[3];
-  *dy =-(double)( y - rkgl_mouse_y ) / cam->vp[2];
+  *dx = (double)( x - rkgl_mouse_x ) / cam->viewport[3];
+  *dy =-(double)( y - rkgl_mouse_y ) / cam->viewport[2];
 }
 
-void rkglMouseDragCARotate(rkglCamera *cam, double dx, double dy, int ctrlkey)
+void rkglMouseDragCameraRotate(rkglCamera *cam, double dx, double dy, int ctrlkey)
 {
   double r;
 
   r = 180 * sqrt( dx*dx + dy*dy );
-  rkgl_key_mod & ctrlkey ? rkglCARotate( cam, r, -dy, dx, 0 ) : rkglCALockonRotate( cam, r, -dy, dx, 0 );
+  rkgl_key_mod & ctrlkey ? rkglCameraRotate( cam, r, -dy, dx, 0 ) : rkglCameraLockonAndRotate( cam, r, -dy, dx, 0 );
 }
 
-void rkglMouseDragCATranslate(rkglCamera *cam, double dx, double dy, int ctrlkey)
+void rkglMouseDragCameraTranslate(rkglCamera *cam, double dx, double dy, int ctrlkey)
 {
-  rkgl_key_mod & ctrlkey ? rkglCAMove( cam, 0, dx, dy ) : rkglCARelMove( cam, 0, dx, dy );
+  rkgl_key_mod & ctrlkey ? rkglCameraMove( cam, 0, dx, dy ) : rkglCameraRelMove( cam, 0, dx, dy );
 }
 
-void rkglMouseDragCAZoom(rkglCamera *cam, double dx, double dy, int ctrlkey)
+void rkglMouseDragCameraZoom(rkglCamera *cam, double dx, double dy, int ctrlkey)
 {
-  rkgl_key_mod & ctrlkey ? rkglCAMove( cam, -dy, 0, 0 ) : rkglCARelMove( cam, -dy, 0, 0 );
+  rkgl_key_mod & ctrlkey ? rkglCameraMove( cam, -dy, 0, 0 ) : rkglCameraRelMove( cam, -dy, 0, 0 );
 }

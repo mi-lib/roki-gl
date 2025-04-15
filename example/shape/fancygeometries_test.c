@@ -10,7 +10,7 @@ rkglLight light;
 
 void display(void)
 {
-  rkglCALoad( &cam );
+  rkglCameraLoadViewframe( &cam );
   rkglLightPut( &light );
 
   glPushMatrix();
@@ -28,25 +28,25 @@ void display(void)
 
 void resize(int w, int h)
 {
-  rkglVPCreate( &cam, 0, 0, w, h );
-  rkglFrustumScaleH( &cam, 1.0/160, 1, 100 );
+  rkglCameraSetViewport( &cam, 0, 0, w, h );
+  rkglCameraScaleFrustumHeight( &cam, 1.0/160, 1, 100 );
 }
 
 void keyboard(unsigned char key, int x, int y)
 {
   switch( key ){
-  case 'u': rkglCALockonPTR( &cam, 5, 0, 0 );  break;
-  case 'U': rkglCALockonPTR( &cam,-5, 0, 0 );  break;
-  case 'i': rkglCALockonPTR( &cam, 0, 5, 0 );  break;
-  case 'I': rkglCALockonPTR( &cam, 0,-5, 0 );  break;
-  case 'o': rkglCALockonPTR( &cam, 0, 0, 5 );  break;
-  case 'O': rkglCALockonPTR( &cam, 0, 0,-5 );  break;
-  case '8': rkglCARelMove( &cam, 0.05, 0, 0 ); break;
-  case '*': rkglCARelMove( &cam,-0.05, 0, 0 ); break;
-  case '9': rkglCARelMove( &cam, 0, 0.05, 0 ); break;
-  case '(': rkglCARelMove( &cam, 0,-0.05, 0 ); break;
-  case '0': rkglCARelMove( &cam, 0, 0, 0.05 ); break;
-  case ')': rkglCARelMove( &cam, 0, 0,-0.05 ); break;
+  case 'u': rkglCameraLockonAndSetPanTiltRoll( &cam, 5, 0, 0 );  break;
+  case 'U': rkglCameraLockonAndSetPanTiltRoll( &cam,-5, 0, 0 );  break;
+  case 'i': rkglCameraLockonAndSetPanTiltRoll( &cam, 0, 5, 0 );  break;
+  case 'I': rkglCameraLockonAndSetPanTiltRoll( &cam, 0,-5, 0 );  break;
+  case 'o': rkglCameraLockonAndSetPanTiltRoll( &cam, 0, 0, 5 );  break;
+  case 'O': rkglCameraLockonAndSetPanTiltRoll( &cam, 0, 0,-5 );  break;
+  case '8': rkglCameraRelMove( &cam, 0.05, 0, 0 ); break;
+  case '*': rkglCameraRelMove( &cam,-0.05, 0, 0 ); break;
+  case '9': rkglCameraRelMove( &cam, 0, 0.05, 0 ); break;
+  case '(': rkglCameraRelMove( &cam, 0,-0.05, 0 ); break;
+  case '0': rkglCameraRelMove( &cam, 0, 0, 0.05 ); break;
+  case ')': rkglCameraRelMove( &cam, 0, 0,-0.05 ); break;
   case ' ': r += 10; break;
   case 'q': case 'Q': case '\033':
     exit( EXIT_SUCCESS );
@@ -64,8 +64,8 @@ void init(void)
 
   rkglSetDefaultCallbackParam( &cam, 0, 0, 0, 0, 0 );
 
-  rkglBGSet( &cam, 0.5, 0.5, 0.5 );
-  rkglCASet( &cam, 4, 0, 2.4, 0, -30, 0 );
+  rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
+  rkglCameraSetViewframe( &cam, 4, 0, 2.4, 0, -30, 0 );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );

@@ -152,7 +152,7 @@ void rk_seqDisplay(void)
   } else{
     /* non-shadowed rendering */
     rkglClear();
-    rkglCALoad( &cam );
+    rkglCameraLoadViewframe( &cam );
     rkglLightPut( &light );
     rk_seqDraw();
   }
@@ -183,10 +183,10 @@ void rk_seqInit(void)
   rkglWindowOpenGLX( win );
 
   zRGBDecodeStr( &rgb, opt[OPT_BG].arg );
-  rkglBGSet( &cam, rgb.r, rgb.g, rgb.b );
-  rkglVPCreate( &cam, 0, 0,
+  rkglCameraSetBackground( &cam, rgb.r, rgb.g, rgb.b );
+  rkglCameraSetViewport( &cam, 0, 0,
     atoi(opt[OPT_WIDTH].arg), atoi(opt[OPT_HEIGHT].arg) );
-  rkglCASet( &cam,
+  rkglCameraSetViewframe( &cam,
     atof(opt[OPT_OX].arg), atof(opt[OPT_OY].arg), atof(opt[OPT_OZ].arg),
     atof(opt[OPT_PAN].arg), atof(opt[OPT_TILT].arg), atof(opt[OPT_ROLL].arg) );
 
@@ -254,10 +254,9 @@ void rk_seqReshape(void)
   double x, y;
 
   zxGetGeometry( win, &reg );
-  rkglVPCreate( &cam, 0, 0, reg.width, reg.height );
-  x = 0.1;
-  y = x / rkglVPAspect(&cam);
-  rkglFrustum( &cam, -x, x, -y, y, 1, 20 );
+  rkglCameraSetViewport( &cam, 0, 0, reg.width, reg.height );
+  y = ( x = 0.1 ) / rkglCameraViewportAspectRatio(&cam);
+  rkglCameraSetFrustum( &cam, -x, x, -y, y, 1, 20 );
 }
 
 int rk_seqKeyPress(void)
@@ -281,7 +280,7 @@ int rk_seqEvent(void)
   case ButtonRelease:   rkglMouseFuncGLX( &cam, event, 1.0 ); break;
   case MotionNotify:    rkglMouseDragFuncGLX( &cam ); break;
   case KeyPress:        if( rk_seqKeyPress() >= 0 )   break; return -1;
-  case KeyRelease: zxModkeyOff( zxKeySymbol() );      break;
+  case KeyRelease:      zxModkeyOff( zxKeySymbol() ); break;
   default: ;
   }
   return 0;

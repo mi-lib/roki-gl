@@ -19,7 +19,7 @@ void draw_scene(void)
 
 void display(void)
 {
-  rkglCALoad( &cam );
+  rkglCameraLoadViewframe( &cam );
   rkglLightPut( &light );
   rkglClear();
   draw_scene();
@@ -90,8 +90,8 @@ void mouse(int button, int state, int x, int y)
 
 void resize(int w, int h)
 {
-  rkglVPCreate( &cam, 0, 0, w, h );
-  rkglFrustumScaleH( &cam, 1.0/1000, 0.5, 10 );
+  rkglCameraSetViewport( &cam, 0, 0, w, h );
+  rkglCameraScaleFrustumHeight( &cam, 1.0/1000, 0.5, 10 );
 }
 
 void keyboard(unsigned char key, int x, int y)
@@ -99,12 +99,12 @@ void keyboard(unsigned char key, int x, int y)
   int i;
 
   switch( key ){
-  case 'u': rkglCALockonPTR( &cam, 5, 0, 0 ); break;
-  case 'U': rkglCALockonPTR( &cam,-5, 0, 0 ); break;
-  case 'i': rkglCALockonPTR( &cam, 0, 5, 0 ); break;
-  case 'I': rkglCALockonPTR( &cam, 0,-5, 0 ); break;
-  case 'o': rkglCALockonPTR( &cam, 0, 0, 5 ); break;
-  case 'O': rkglCALockonPTR( &cam, 0, 0,-5 ); break;
+  case 'u': rkglCameraLockonAndSetPanTiltRoll( &cam, 5, 0, 0 ); break;
+  case 'U': rkglCameraLockonAndSetPanTiltRoll( &cam,-5, 0, 0 ); break;
+  case 'i': rkglCameraLockonAndSetPanTiltRoll( &cam, 0, 5, 0 ); break;
+  case 'I': rkglCameraLockonAndSetPanTiltRoll( &cam, 0,-5, 0 ); break;
+  case 'o': rkglCameraLockonAndSetPanTiltRoll( &cam, 0, 0, 5 ); break;
+  case 'O': rkglCameraLockonAndSetPanTiltRoll( &cam, 0, 0,-5 ); break;
   case 'g': move_link( zDeg2Rad(5) ); break;
   case 'h': move_link(-zDeg2Rad(5) ); break;
   case 'q': case 'Q': case '\033':
@@ -121,8 +121,8 @@ void init(void)
 {
   int i;
 
-  rkglBGSet( &cam, 0.5, 0.5, 0.5 );
-  rkglCASet( &cam, 1, 1, 1, 45, -30, 0 );
+  rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
+  rkglCameraSetViewframe( &cam, 1, 1, 1, 45, -30, 0 );
 
   glEnable(GL_LIGHTING);
   rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );

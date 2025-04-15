@@ -6,6 +6,7 @@ zOpticalInfo red;
 zOpticalInfo yellow;
 zOpticalInfo orange;
 
+zBox3D box;
 zSphere3D hemisphere;
 zCapsule3D capsule;
 zCyl3D tube;
@@ -23,11 +24,13 @@ void display(void)
 {
   zVec3D c, d;
 
-  rkglCALoad( &cam );
+  rkglCameraLoadViewframe( &cam );
   rkglLightPut( &light );
 
   glPushMatrix();
   rkglClear();
+  rkglMaterial( &red );
+  rkglBox( &box, DISPSWITCH );
   rkglMaterial( &yellow );
   rkglEllips( &el, DISPSWITCH );
   rkglMaterial( &orange );
@@ -47,25 +50,13 @@ void display(void)
 
 void resize(int w, int h)
 {
-  rkglVPCreate( &cam, 0, 0, w, h );
-  rkglFrustumScaleH( &cam, 1.0/160, 1, 10 );
+  rkglCameraSetViewport( &cam, 0, 0, w, h );
+  rkglCameraSetPerspective( &cam, 120.0, (GLdouble)w/(GLdouble)h, 0.1, 30 );
 }
 
 void keyboard(unsigned char key, int x, int y)
 {
   switch( key ){
-  case 'u': rkglCALockonPTR( &cam, 5, 0, 0 ); break;
-  case 'U': rkglCALockonPTR( &cam,-5, 0, 0 ); break;
-  case 'i': rkglCALockonPTR( &cam, 0, 5, 0 ); break;
-  case 'I': rkglCALockonPTR( &cam, 0,-5, 0 ); break;
-  case 'o': rkglCALockonPTR( &cam, 0, 0, 5 ); break;
-  case 'O': rkglCALockonPTR( &cam, 0, 0,-5 ); break;
-  case '8': rkglCARelMove( &cam, 0.05, 0, 0 ); break;
-  case '*': rkglCARelMove( &cam,-0.05, 0, 0 ); break;
-  case '9': rkglCARelMove( &cam, 0, 0.05, 0 ); break;
-  case '(': rkglCARelMove( &cam, 0,-0.05, 0 ); break;
-  case '0': rkglCARelMove( &cam, 0, 0, 0.05 ); break;
-  case ')': rkglCARelMove( &cam, 0, 0,-0.05 ); break;
   case 'w': dispswitch = 1 - dispswitch; break;
   case 'q': case 'Q': case '\033':
     exit( EXIT_SUCCESS );
@@ -79,8 +70,8 @@ void init(void)
 
   rkglSetDefaultCallbackParam( &cam, 0, 0, 0, 0, 0 );
 
-  rkglBGSet( &cam, 0.5, 0.5, 0.5 );
-  rkglCASet( &cam, 6, 0, 3, 0, -30, 0 );
+  rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
+  rkglCameraSetViewframe( &cam, 10, 0, 0, 0, 0, 0 );
   glLineWidth( 2 );
 
   glEnable( GL_LIGHTING );
@@ -88,15 +79,21 @@ void init(void)
   rkglLightMove( &light, 1, 3, 6 );
 
   zOpticalInfoCreateSimple( &yellow, 0.8, 0.8, 0, NULL );
+  zOpticalInfoCreateSimple( &orange, 0.8, 0.4, 0, NULL );
+  zOpticalInfoCreateSimple( &blue, 0, 0, 1.0, NULL );
+  zOpticalInfoCreateSimple( &green, 0.0, 0.8, 0, NULL );
+  zOpticalInfoCreateSimple( &red, 1.0, 0, 0, NULL );
+
+  zVec3DCreate( &c1, 0, 5, 0 );
+  zBox3DCreateAlign( &box, &c1, 3, 1.5, 2.5 );
+
   zVec3DCreate( &c1, 3, 0, 0 );
   zEllips3DCreateAlign( &el, &c1, 2, 3, 1, 16 );
 
-  zOpticalInfoCreateSimple( &orange, 0.8, 0.4, 0, NULL );
   zVec3DCreate( &c1,-2, 0,-2 );
   zVec3DCreate( &c2,-3, 0, 2 );
   zECyl3DCreate( &ec, &c1, &c2, 3, 1, ZVEC3DY, 16 );
 
-  zOpticalInfoCreateSimple( &blue, 0, 0, 1.0, NULL );
   zVec3DCreate( &c1, 1, -3,-2 );
   zVec3DCreate( &c2,-1, -5, 2 );
   zCapsule3DCreate( &capsule, &c1, &c2, 1.5, 0 );
@@ -104,12 +101,9 @@ void init(void)
   zSphere3DCreate( &hemisphere, &c1, 2, 0 );
   zVec3DCreate( &hemisphere_dir, 1, 0.5, 2 );
 
-  zOpticalInfoCreateSimple( &green, 0.0, 0.8, 0, NULL );
   zVec3DCreate( &c1, 2,-3,-2 );
   zVec3DCreate( &c2, 2,-3, 2 );
   zCyl3DCreate( &tube, &c1, &c2, 1, 16 );
-
-  zOpticalInfoCreateSimple( &red, 1.0, 0, 0, NULL );
 }
 
 int main(int argc, char *argv[])

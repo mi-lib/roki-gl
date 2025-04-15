@@ -38,7 +38,7 @@ void display(void)
 {
   int i, j;
 
-  rkglCALoad( &cam );
+  rkglCameraLoadViewframe( &cam );
   glPushMatrix();
   glRotated( r, 0, 1, 0 );
   rkglClear();
@@ -55,8 +55,8 @@ void display(void)
 
 void resize(int w, int h)
 {
-  rkglVPCreate( &cam, 0, 0, w, h );
-  rkglFrustumScaleH( &cam, 1.0/160, 1, 10 );
+  rkglCameraSetViewport( &cam, 0, 0, w, h );
+  rkglCameraScaleFrustumHeight( &cam, 1.0/160, 1, 30 );
 }
 
 void keyboard(unsigned char key, int x, int y)
@@ -76,16 +76,16 @@ void keyboard(unsigned char key, int x, int y)
     exit( EXIT_SUCCESS );
   default: ;
   }
-  rkglCALookAt( &cam, eyex, eyey, eyez, centerx, centery, centerz, 0, 0, 1 );
+  rkglCameraLookAt( &cam, eyex, eyey, eyez, centerx, centery, centerz, 0, 0, 1 );
 }
 
 void init(void)
 {
   glCullFace( GL_FRONT );
-  rkglBGSet( &cam, 0.5, 0.5, 0.5 );
+  rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
   eyex = 6; eyey = 0; eyez = 3;
   centerx = centery = centerz = 0;
-  rkglCALookAt( &cam, eyex, eyey, eyez, centerx, centery, centerz, 0, 0, 1 );
+  rkglCameraLookAt( &cam, eyex, eyey, eyez, centerx, centery, centerz, 0, 0, 1 );
 }
 
 int main(int argc, char *argv[])

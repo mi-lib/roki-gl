@@ -1,7 +1,7 @@
 /* RoKi-GL - Robot Kinetics library: visualization using OpenGL
  * Copyright (C) 2000 Tomomichi Sugihara (Zhidao)
  *
- * rkgl_camera - camera work
+ * rkgl_camera - camera work.
  */
 
 #ifndef __RKGL_CAMERA_H__
@@ -12,103 +12,89 @@
 
 __BEGIN_DECLS
 
-typedef struct{
-  GLclampf bg[4];  /* background color */
-  GLint vp[4];     /* viewport */
-  GLdouble vv[16]; /* view volume */
-  GLdouble ca[16]; /* camera angle */
-} rkglCamera;
+ZDEF_STRUCT( __ROKI_GL_EXPORT, rkglCamera ){
+  GLclampf background[4];  /*! \brief background color */
+  GLint viewport[4];       /*! \brief viewport */
+  GLdouble viewvolume[16]; /*! \brief view volume */
+  GLdouble viewframe[16];  /*! \brief view frame */
+};
+
+__ROKI_GL_EXPORT void rkglCameraInit(rkglCamera *camera);
 
 /* background color */
 
-#define rkglBGSet(c,r,g,b) do{\
-  (c)->bg[0] = (r);\
-  (c)->bg[1] = (g);\
-  (c)->bg[2] = (b);\
-  (c)->bg[3] = 1.0;\
+#define rkglCameraSetBackground(camera,r,g,b) do{\
+  (camera)->background[0] = (r);\
+  (camera)->background[1] = (g);\
+  (camera)->background[2] = (b);\
+  (camera)->background[3] = 1.0;\
 } while(0)
 
-#define rkglBGCopy(cs,cd) memcpy( (cd)->bg, (cs)->bg, sizeof(GLclampf)*4 )
+#define rkglCameraCopyBackground(src,dest) memcpy( (dest)->background, (src)->background, sizeof(GLclampf)*4 )
 
 /* viewport */
 
-__ROKI_GL_EXPORT void rkglVPCreate(rkglCamera *c, GLint x, GLint y, GLsizei w, GLsizei h);
-__ROKI_GL_EXPORT void rkglVPLoad(rkglCamera *c);
-__ROKI_GL_EXPORT void rkglVPGet(rkglCamera *c);
+__ROKI_GL_EXPORT void rkglCameraSetViewport(rkglCamera *c, GLint x, GLint y, GLsizei w, GLsizei h);
+__ROKI_GL_EXPORT void rkglCameraLoadViewport(rkglCamera *c);
+__ROKI_GL_EXPORT void rkglCameraGetViewport(rkglCamera *c);
 
-#define rkglVPOX(c)     ( (double)(c)->vp[0] )
-#define rkglVPOY(c)     ( (double)(c)->vp[1] )
-#define rkglVPWidth(c)  ( (double)(c)->vp[2] )
-#define rkglVPHeight(c) ( (double)(c)->vp[3] )
+#define rkglCameraCopyViewport(src,dest) memcpy( (dest)->viewport, (src)->viewport, sizeof(GLint)*4 )
 
-#define rkglVPAspect(c) ( rkglVPWidth(c) / rkglVPHeight(c) )
-
-#define rkglVPCopy(cs,cd) memcpy( (cd)->vp, (cs)->vp, sizeof(GLint)*4 )
+#define rkglCameraViewportOX(c)          ( (double)(c)->viewport[0] )
+#define rkglCameraViewportOY(c)          ( (double)(c)->viewport[1] )
+#define rkglCameraViewportWidth(c)       ( (double)(c)->viewport[2] )
+#define rkglCameraViewportHeight(c)      ( (double)(c)->viewport[3] )
+#define rkglCameraViewportAspectRatio(c) ( rkglCameraViewportWidth(c) / rkglCameraViewportHeight(c) )
 
 /* view volume */
 
-__ROKI_GL_EXPORT void rkglVVLoad(rkglCamera *c);
-__ROKI_GL_EXPORT void rkglVVGet(rkglCamera *c);
+__ROKI_GL_EXPORT void rkglInitViewvolume(void);
 
-__ROKI_GL_EXPORT void rkglVVInit(void);
+__ROKI_GL_EXPORT void rkglCameraLoadViewvolume(rkglCamera *c);
+__ROKI_GL_EXPORT void rkglCameraGetViewvolume(rkglCamera *c);
+#define rkglCameraCopyViewvolume(src,dest) memcpy( (dest)->viewvolume, (src)->viewvolume, sizeof(GLdouble)*16 )
 
-#define rkglVVCopy(cs,cd) memcpy( (cd)->vv, (cs)->vv, sizeof(GLdouble)*16 )
-
-__ROKI_GL_EXPORT void rkglOrtho(rkglCamera *c, GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near, GLdouble far);
-__ROKI_GL_EXPORT void rkglFrustum(rkglCamera *c, GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near, GLdouble far);
-
-__ROKI_GL_EXPORT void rkglOrthoCenter(rkglCamera *c, GLdouble x, GLdouble y, GLdouble near, GLdouble far);
-__ROKI_GL_EXPORT void rkglFrustumCenter(rkglCamera *c, GLdouble x, GLdouble y, GLdouble near, GLdouble far);
-
-__ROKI_GL_EXPORT void rkglOrthoScaleW(rkglCamera *c, double scale, GLdouble near, GLdouble far);
-__ROKI_GL_EXPORT void rkglFrustumScaleW(rkglCamera *c, double scale, GLdouble near, GLdouble far);
-
-__ROKI_GL_EXPORT void rkglOrthoScaleH(rkglCamera *c, double scale, GLdouble near, GLdouble far);
-__ROKI_GL_EXPORT void rkglFrustumScaleH(rkglCamera *c, double scale, GLdouble near, GLdouble far);
-
-__ROKI_GL_EXPORT void rkglPerspective(rkglCamera *c, GLdouble fovy, GLdouble aspect, GLdouble near, GLdouble far);
-
-__ROKI_GL_EXPORT void rkglFrustumFit2VP(rkglCamera *cam, int w, int h, double width, double near, double far);
+__ROKI_GL_EXPORT void rkglCameraSetOrtho(rkglCamera *c, GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near, GLdouble far);
+__ROKI_GL_EXPORT void rkglCameraSetFrustum(rkglCamera *c, GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near, GLdouble far);
+__ROKI_GL_EXPORT void rkglCameraSetOrthoCenter(rkglCamera *c, GLdouble x, GLdouble y, GLdouble near, GLdouble far);
+__ROKI_GL_EXPORT void rkglCameraSetFrustumCenter(rkglCamera *c, GLdouble x, GLdouble y, GLdouble near, GLdouble far);
+__ROKI_GL_EXPORT void rkglCameraScaleOrthoWidth(rkglCamera *c, double scale, GLdouble near, GLdouble far);
+__ROKI_GL_EXPORT void rkglCameraScaleFrustumWidth(rkglCamera *c, double scale, GLdouble near, GLdouble far);
+__ROKI_GL_EXPORT void rkglCameraScaleOrthoHeight(rkglCamera *c, double scale, GLdouble near, GLdouble far);
+__ROKI_GL_EXPORT void rkglCameraScaleFrustumHeight(rkglCamera *c, double scale, GLdouble near, GLdouble far);
+__ROKI_GL_EXPORT void rkglCameraSetPerspective(rkglCamera *c, GLdouble fovy, GLdouble aspect, GLdouble near, GLdouble far);
+__ROKI_GL_EXPORT void rkglCameraFitFrustumToViewport(rkglCamera *cam, int w, int h, double width, double near, double far);
 
 /* camera angle */
 
-__ROKI_GL_EXPORT void rkglCALoad(rkglCamera *c);
-__ROKI_GL_EXPORT void rkglCAGet(rkglCamera *c);
-__ROKI_GL_EXPORT zFrame3D *rkglCAGetFrame3D(rkglCamera *cam, zFrame3D *f);
-__ROKI_GL_EXPORT zVec3D *rkglCAGetViewVec(rkglCamera *cam, zVec3D *v);
+__ROKI_GL_EXPORT void rkglCameraLoadViewframe(rkglCamera *c);
+__ROKI_GL_EXPORT void rkglCameraGetViewframe(rkglCamera *c);
+__ROKI_GL_EXPORT zFrame3D *rkglCameraViewframeToFrame3D(rkglCamera *cam, zFrame3D *f);
+__ROKI_GL_EXPORT zVec3D *rkglCameraGetViewVec(rkglCamera *cam, zVec3D *v);
 
-#define rkglCACopy(cs,cd) memcpy( (cd)->ca, (cs)->ca, sizeof(GLdouble)*16 )
+#define rkglCameraCopyViewframe(src,dest) memcpy( (dest)->viewframe, (src)->viewframe, sizeof(GLdouble)*16 )
 
-__ROKI_GL_EXPORT void rkglCAInit(void);
-__ROKI_GL_EXPORT void rkglCAAlign(rkglCamera *c);
+__ROKI_GL_EXPORT void rkglInitViewframe(void);
 
-__ROKI_GL_EXPORT void rkglCASet(rkglCamera *c, double x, double y, double z, double pan, double tilt, double roll);
-__ROKI_GL_EXPORT void rkglCAPTR(rkglCamera *c, double pan, double tilt, double roll);
-__ROKI_GL_EXPORT void rkglCALockonPTR(rkglCamera *c, double pan, double tilt, double roll);
-__ROKI_GL_EXPORT void rkglCARotate(rkglCamera *c, double angle, double x, double y, double z);
-__ROKI_GL_EXPORT void rkglCALockonRotate(rkglCamera *c, double angle, double x, double y, double z);
+__ROKI_GL_EXPORT void rkglCameraAlignViewframe(rkglCamera *c);
 
-__ROKI_GL_EXPORT void rkglCAMove(rkglCamera *c, double x, double y, double z);
-__ROKI_GL_EXPORT void rkglCARelMove(rkglCamera *c, double x, double y, double z);
+__ROKI_GL_EXPORT void rkglCameraSetViewframe(rkglCamera *c, double x, double y, double z, double pan, double tilt, double roll);
+__ROKI_GL_EXPORT void rkglCameraSetPanTiltRoll(rkglCamera *c, double pan, double tilt, double roll);
+__ROKI_GL_EXPORT void rkglCameraLockonAndSetPanTiltRoll(rkglCamera *c, double pan, double tilt, double roll);
+__ROKI_GL_EXPORT void rkglCameraRotate(rkglCamera *c, double angle, double x, double y, double z);
+__ROKI_GL_EXPORT void rkglCameraLockonAndRotate(rkglCamera *c, double angle, double x, double y, double z);
 
-__ROKI_GL_EXPORT void rkglCALookAt(rkglCamera *c, GLdouble eyex, GLdouble eyey, GLdouble eyez, GLdouble centerx, GLdouble centery, GLdouble centerz, GLdouble upx, GLdouble upy, GLdouble upz);
+__ROKI_GL_EXPORT void rkglCameraMove(rkglCamera *c, double x, double y, double z);
+__ROKI_GL_EXPORT void rkglCameraRelMove(rkglCamera *c, double x, double y, double z);
 
-__ROKI_GL_EXPORT void rkglCARelMoveLeft(rkglCamera *cam, double d);
-__ROKI_GL_EXPORT void rkglCARelMoveRight(rkglCamera *cam, double d);
-__ROKI_GL_EXPORT void rkglCARelMoveUp(rkglCamera *cam, double d);
-__ROKI_GL_EXPORT void rkglCARelMoveDown(rkglCamera *cam, double d);
-__ROKI_GL_EXPORT void rkglCAZoomIn(rkglCamera *cam, double d);
-__ROKI_GL_EXPORT void rkglCAZoomOut(rkglCamera *cam, double d);
+__ROKI_GL_EXPORT void rkglCameraLookAt(rkglCamera *c, GLdouble eyex, GLdouble eyey, GLdouble eyez, GLdouble centerx, GLdouble centery, GLdouble centerz, GLdouble upx, GLdouble upy, GLdouble upz);
 
-__ROKI_GL_EXPORT void rkglCATiltUp(rkglCamera *cam, double angle);
-__ROKI_GL_EXPORT void rkglCATiltDown(rkglCamera *cam, double angle);
-__ROKI_GL_EXPORT void rkglCAPanLeft(rkglCamera *cam, double angle);
-__ROKI_GL_EXPORT void rkglCAPanRight(rkglCamera *cam, double angle);
-
-__ROKI_GL_EXPORT void rkglCAAngleUp(rkglCamera *cam, double angle);
-__ROKI_GL_EXPORT void rkglCAAngleDown(rkglCamera *cam, double angle);
-__ROKI_GL_EXPORT void rkglCARoundLeft(rkglCamera *cam, double angle);
-__ROKI_GL_EXPORT void rkglCARoundRight(rkglCamera *cam, double angle);
+__ROKI_GL_EXPORT void rkglCameraRelMoveLeft(rkglCamera *cam, double d);
+__ROKI_GL_EXPORT void rkglCameraRelMoveRight(rkglCamera *cam, double d);
+__ROKI_GL_EXPORT void rkglCameraRelMoveUp(rkglCamera *cam, double d);
+__ROKI_GL_EXPORT void rkglCameraRelMoveDown(rkglCamera *cam, double d);
+__ROKI_GL_EXPORT void rkglCameraZoomIn(rkglCamera *cam, double d);
+__ROKI_GL_EXPORT void rkglCameraZoomOut(rkglCamera *cam, double d);
 
 /* camera */
 
