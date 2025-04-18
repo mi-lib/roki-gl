@@ -12,7 +12,7 @@ ubyte dispswitch = 1;
 
 void display(void)
 {
-  rkglCameraLoadViewframe( &cam );
+  rkglCameraPut( &cam );
   rkglLightPut( &light );
 
   glPushMatrix();
@@ -33,12 +33,6 @@ void display(void)
   glutSwapBuffers();
 }
 
-void resize(int w, int h)
-{
-  rkglCameraSetViewport( &cam, 0, 0, w, h );
-  rkglCameraScaleFrustumHeight( &cam, 1.0/160, 2, 10 );
-}
-
 void keyboard(unsigned char key, int x, int y)
 {
   switch( key ){
@@ -53,10 +47,9 @@ void init(void)
 {
   zVec3D c1, c2;
 
-  rkglSetDefaultCallbackParam( &cam, 0, 0, 0, 0, 0 );
-
+  rkglSetDefaultCamera( &cam, 30, 1, 100 );
   rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
-  rkglCameraSetViewframe( &cam, 6, 0, 3, 0, -30, 0 );
+  rkglCameraLookAt( &cam, 15, 0, 5, 0, 0, 0, 0, 0, 1 );
   glLineWidth( 2 );
 
   glEnable( GL_LIGHTING );
@@ -116,7 +109,7 @@ int main(int argc, char *argv[])
 
   glutDisplayFunc( display );
   glutIdleFunc( rkglIdleFuncGLUT );
-  glutReshapeFunc( resize );
+  glutReshapeFunc( rkglReshapeFuncGLUT );
   glutKeyboardFunc( keyboard );
   glutMouseFunc( rkglMouseFuncGLUT );
   glutMotionFunc( rkglMouseDragFuncGLUT );

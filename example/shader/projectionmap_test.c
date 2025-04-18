@@ -14,12 +14,6 @@ zTexture tex;
 
 GLuint shader_program;
 
-void resize(int w, int h)
-{
-  rkglCameraSetViewport( &cam, 0, 0, w, h );
-  rkglCameraScaleFrustumHeight( &cam, 1.0/160, 2, 100 );
-}
-
 void display(void)
 {
   glMatrixMode( GL_TEXTURE );
@@ -28,7 +22,7 @@ void display(void)
   gluPerspective( 90.0, 1.0, 1.0, 100.0 );
   gluLookAt( light.pos[0], light.pos[1], light.pos[2], 0.0, 0.0, 0.0, 1.0, 0.0, 0.0 );
 
-  rkglCameraLoadViewframe( &cam );
+  rkglCameraPut( &cam );
   rkglLightPut( &light );
   glPushMatrix();
   rkglClear();
@@ -61,13 +55,12 @@ void init(void)
   zVec3D c, pc0, pc1, pc2;
   zOpticalInfo oi, oi2;
 
-  rkglSetDefaultCallbackParam( &cam, 0, 0, 0, 0, 0 );
-
+  rkglSetDefaultCamera( &cam, 90, 1, 100 );
   rkglCameraSetBackground( &cam, 0.5, 1.0, 1.0 );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0, 0, 0 );
-  rkglLightMove( &light, 0, 0, 15 );
+  rkglLightMove( &light, 0, 0, 12 );
   rkglLightSetAttenuationConst( &light, 1.0 );
 
   rkglCameraLookAt( &cam, light.pos[0], light.pos[1], light.pos[2], 0, 0, 0, -1, 0, 0 );
@@ -104,7 +97,7 @@ int main(int argc, char *argv[])
 
   glutDisplayFunc( display );
   glutIdleFunc( rkglIdleFuncGLUT );
-  glutReshapeFunc( resize );
+  glutReshapeFunc( rkglReshapeFuncGLUT );
   glutKeyboardFunc( keyboard );
   glutMouseFunc( rkglMouseFuncGLUT );
   glutMotionFunc( rkglMouseDragFuncGLUT );

@@ -56,6 +56,32 @@ void rkglXformInvd(double m[], double p[], double px[])
   px[2] = m[8] * dp[0] + m[9] * dp[1] + m[10]* dp[2];
 }
 
+/* translate coordinates. */
+void rkglTranslate(zVec3D *v)
+{
+  glTranslated( v->e[zX], v->e[zY], v->e[zZ] );
+}
+
+/* transform coordinates. */
+void rkglXform(zFrame3D *f)
+{
+  GLdouble m[16];
+
+  zMat3DCol( zFrame3DAtt(f), 0, (zVec3D*)&m[0] );
+  zMat3DCol( zFrame3DAtt(f), 1, (zVec3D*)&m[4] );
+  zMat3DCol( zFrame3DAtt(f), 2, (zVec3D*)&m[8] );
+  zVec3DCopy( zFrame3DPos(f), (zVec3D*)&m[12] );
+  m[3]=m[7]=m[11]=0.0; m[15]=1.0;
+  glMultMatrixd( m );
+}
+
+/* inverse transform coordinates. */
+void rkglXformInv(zFrame3D *f)
+{
+  zFrame3D invframe;
+  rkglXform( zFrame3DInv( f, &invframe ) );
+}
+
 /* display list */
 
 int rkglBeginList(void)

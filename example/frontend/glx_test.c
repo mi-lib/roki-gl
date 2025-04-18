@@ -42,8 +42,9 @@ GLvoid init(GLsizei width, GLsizei height)
 {
   enter();
 
+  rkglSetDefaultCamera( &cam, 30.0, 2, 20 );
   rkglCameraSetBackground( &cam, 0.1, 0.1, 0.1 );
-  rkglCameraLookAt( &cam, 5,-3, 3, 0, 0, 0, 0, 0, 1 );
+  rkglCameraLookAt( &cam, 10,-3, 3, 0, 0, 0, 0, 0, 1 );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.4, 0.4, 0.4, 0.8, 0.8, 0.8, 0, 0, 0 );
@@ -53,7 +54,7 @@ GLvoid draw(Window win)
 {
   rkglWindowActivateGLX( win );
   rkglClear();
-  rkglCameraLoadViewframe( &cam );
+  rkglCameraPut( &cam );
   rkglLightMove( &light, 8, 10*sin(4*zPI*(double)clock()/CLOCKS_PER_SEC), 5 );
   glPushMatrix();
   glCallList( obj );
@@ -71,23 +72,13 @@ GLvoid mainloop(Window win)
   while( 1 ){
     switch( ( event = zxGetEvent() ) ){
     case ButtonPress:
-    case ButtonRelease:
-      rkglMouseFuncGLX( &cam, event, 1.0 );
-      break;
-    case MotionNotify:
-      rkglMouseDragFuncGLX( &cam );
-      break;
-    case KeyPress:
-      if( rkglKeyFuncGLX( &cam, 1.0, 5.0 ) < 0 )
-        return;
-      break;
-    case KeyRelease:
-      zxModkeyOff( zxKeySymbol() );
-      break;
-    case Expose:
-    case ConfigureNotify:
+    case ButtonRelease: rkglMouseFuncGLX( &cam, event ); break;
+    case MotionNotify:  rkglMouseDragFuncGLX( &cam ); break;
+    case KeyPress:      if( rkglKeyPressFuncGLX( &cam ) < 0 ) return; break;
+    case KeyRelease:    rkglKeyReleaseFuncGLX( &cam ); break;
+    case Expose: case ConfigureNotify:
       zxGetGeometry( win, &reg );
-      rkglReshapeGLX( &cam, reg.width, reg.height, 2.0, 2, 20 );
+      rkglReshapeGLX( &cam, reg.width, reg.height );
       break;
     default: ;
     }

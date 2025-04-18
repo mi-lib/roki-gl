@@ -1,25 +1,5 @@
 #include <roki_gl/roki_glut.h>
 
-GLdouble vertex[][3] = {
-  { 0, 0,-2 },
-  { 1, 0,-2 },
-  { 1, 1,-2 },
-  { 0, 1,-2 },
-  { 0, 0, 2 },
-  { 1, 0, 2 },
-  { 1, 1, 2 },
-  { 0, 1, 2 },
-};
-
-int face[][4] = {
-  { 0, 1, 3, 2 },
-  { 1, 5, 2, 6 },
-  { 5, 4, 6, 7 },
-  { 4, 0, 7, 3 },
-  { 4, 5, 0, 1 },
-  { 3, 2, 7, 6 },
-};
-
 unsigned color[] = {
   0xff0000,
   0x00ff00,
@@ -31,31 +11,25 @@ unsigned color[] = {
 
 rkglCamera cam;
 
-double r = 0;
-
 void display(void)
 {
-  int i, j;
+  int i;
 
-  rkglCameraLoadViewframe( &cam );
+  rkglCameraPut( &cam );
   glPushMatrix();
-  glRotated( r, 0, 1, 0 );
+  glTranslated( 0, -3, 0 );
   rkglClear();
-  glBegin( GL_TRIANGLE_STRIP );
   for( i=0; i<6; i++ ){
+    glBegin( GL_TRIANGLE_FAN );
     rkglColor24( color[i] );
-    for( j=0; j<4; j++ )
-      glVertex3dv( vertex[face[i][j]] );
+    glVertex3d( 0,-2.5+i*2, 2 );
+    glVertex3d( 0,-1.5+i*2, 2 );
+    glVertex3d( 0,-1.5+i*2,-2 );
+    glVertex3d( 0,-2.5+i*2,-2 );
+    glEnd();
   }
-  glEnd();
   glPopMatrix();
   glutSwapBuffers();
-}
-
-void resize(int w, int h)
-{
-  rkglCameraSetViewport( &cam, 0, 0, w, h );
-  rkglCameraScaleFrustumHeight( &cam, 1.0/160, 1, 10 );
 }
 
 void keyboard(unsigned char key, int x, int y)
@@ -73,20 +47,6 @@ void keyboard(unsigned char key, int x, int y)
   case 'I': color[3] +=0x010100; break;
   case 'O': color[4] +=0x010001; break;
   case 'P': color[5] +=0x000101; break;
-
-  case 'j': rkglCameraLockonAndRotate( &cam, 1, 5, 0, 0 ); break;
-  case 'J': rkglCameraLockonAndRotate( &cam, 1,-5, 0, 0 ); break;
-  case 'k': rkglCameraLockonAndRotate( &cam, 1, 0, 5, 0 ); break;
-  case 'K': rkglCameraLockonAndRotate( &cam, 1, 0,-5, 0 ); break;
-  case 'l': rkglCameraLockonAndRotate( &cam, 1, 0, 0, 5 ); break;
-  case 'L': rkglCameraLockonAndRotate( &cam, 1, 0, 0,-5 ); break;
-  case 'n': rkglCameraRelMove( &cam, 0.05, 0, 0 ); break;
-  case 'N': rkglCameraRelMove( &cam,-0.05, 0, 0 ); break;
-  case 'm': rkglCameraRelMove( &cam, 0, 0.05, 0 ); break;
-  case 'M': rkglCameraRelMove( &cam, 0,-0.05, 0 ); break;
-  case ',': rkglCameraRelMove( &cam, 0, 0, 0.05 ); break;
-  case '<': rkglCameraRelMove( &cam, 0, 0,-0.05 ); break;
-  case ' ': r += 10; break;
   case 'q': case 'Q': case '\033':
     exit( EXIT_SUCCESS );
   default: ;
@@ -97,17 +57,18 @@ void keyboard(unsigned char key, int x, int y)
 void init(void)
 {
   glCullFace( GL_FRONT );
+  rkglSetDefaultCamera( &cam, 90.0, 1, 100 );
   rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
-  rkglCameraSetViewframe( &cam, 6, 0, 3, 0, -30, 0 );
+  rkglCameraSetViewframe( &cam, 6, 0, 0, 0, 0, 0 );
 }
 
 int main(int argc, char *argv[])
 {
   rkglInitGLUT( &argc, argv );
-  rkglWindowCreateGLUT( 0, 0, 320, 240, argv[0] );
+  rkglWindowCreateGLUT( 0, 0, 640, 480, argv[0] );
 
   glutDisplayFunc( display );
-  glutReshapeFunc( resize );
+  glutReshapeFunc( rkglReshapeFuncGLUT );
   glutKeyboardFunc( keyboard );
   glutIdleFunc( rkglIdleFuncGLUT );
   init();

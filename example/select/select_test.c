@@ -27,7 +27,7 @@ void draw_scene(void)
 
 void display(void)
 {
-  rkglCameraLoadViewframe( &cam );
+  rkglCameraPut( &cam );
   rkglLightPut( &light );
   rkglClear();
   draw_scene();
@@ -70,12 +70,6 @@ void mouse(int button, int state, int x, int y)
   }
 }
 
-void resize(int w, int h)
-{
-  rkglCameraSetViewport( &cam, 0, 0, w, h );
-  rkglCameraSetPerspective( &cam, 30.0, (double)w / (double)h, 1.0, 100.0 );
-}
-
 void keyboard(unsigned char key, int x, int y)
 {
   switch( key ){
@@ -90,6 +84,7 @@ void init(void)
   GLfloat color[4];
   int i;
 
+  rkglSetDefaultCamera( &cam, 30.0, 1, 100 );
   rkglCameraSetBackground( &cam, 1.0, 1.0, 1.0 );
   rkglCameraLookAt( &cam, 5.0, 4.0, 5.0, 0.4, 0.0, 0.0, 0.0, 1.0, 0.0 );
 
@@ -121,8 +116,8 @@ int main(int argc, char *argv[])
 
   glutDisplayFunc( display );
   glutMouseFunc( mouse );
-  glutReshapeFunc( resize );
   glutKeyboardFunc( keyboard );
+  glutReshapeFunc( rkglReshapeFuncGLUT );
   glutIdleFunc( rkglIdleFuncGLUT );
   init();
   glutMainLoop();

@@ -28,7 +28,7 @@ void draw_scene(void)
 
 void display(GLFWwindow* window)
 {
-  rkglCameraLoadViewframe( &g_cam );
+  rkglCameraPut( &g_cam );
   rkglLightPut( &g_light );
   rkglClear();
   draw_scene();
@@ -91,7 +91,7 @@ void resize(GLFWwindow* window, int w, int h)
 
 void init(void)
 {
-  rkglSetDefaultCallbackParam( &g_cam, 1.0, 1.0, 20.0, 1.0, 5.0 );
+  rkglSetDefaultCamera( &g_cam, 30.0, 1.0, 20.0 );
   rkglCameraSetBackground( &g_cam, 0.5, 0.5, 0.5 );
   rkglCameraSetViewframe( &g_cam, 1, 1, 1, 45.0, -30.0, 0.0 );
 

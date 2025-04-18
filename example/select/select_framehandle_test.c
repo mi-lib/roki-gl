@@ -6,9 +6,6 @@ rkglFrameHandle fh;
 /* viewing parameters */
 rkglCamera g_cam;
 rkglLight g_light;
-static const GLdouble g_znear = -100.0;
-static const GLdouble g_zfar  = 100.0;
-static double g_scale = 0.01;
 
 /* FrameHandle shape property */
 static const double g_LENGTH = 2.0;
@@ -21,7 +18,7 @@ void draw_scene(void)
 
 void display(void)
 {
-  rkglCameraLoadViewframe( &g_cam );
+  rkglCameraPut( &g_cam );
   rkglLightPut( &g_light );
   rkglClear();
   draw_scene();
@@ -59,17 +56,9 @@ void motion(int x, int y)
     rkglMouseDragFuncGLUT( x, y );
 }
 
-void resize(int w, int h)
-{
-  rkglCameraSetViewport( &g_cam, 0, 0, w, h );
-  rkglCameraScaleOrthoHeight( &g_cam, g_scale, g_znear, g_zfar );
-}
-
 void keyboard(unsigned char key, int x, int y)
 {
   switch( key ){
-  case '8': g_scale += 0.001; rkglCameraScaleOrthoHeight( &g_cam, g_scale, g_znear, g_zfar ); break;
-  case '*': g_scale -= 0.001; rkglCameraScaleOrthoHeight( &g_cam, g_scale, g_znear, g_zfar ); break;
   case 'q': case 'Q': case '\033':
     exit( EXIT_SUCCESS );
   default: ;
@@ -78,9 +67,9 @@ void keyboard(unsigned char key, int x, int y)
 
 void init(void)
 {
-  rkglSetDefaultCallbackParam( &g_cam, 0, 0, 0, 0, 0 );
+  rkglSetDefaultCamera( &g_cam, 30.0, 1, 100 );
   rkglCameraSetBackground( &g_cam, 0.5, 0.5, 0.5 );
-  rkglCameraSetViewframe( &g_cam, 5, 0, 2, 0, -20, 0 );
+  rkglCameraSetViewframe( &g_cam, 10, 0, 2, 0, -20, 0 );
   glEnable( GL_LIGHTING );
   rkglLightCreate( &g_light, 0.4, 0.4, 0.4, 1, 1, 1, 0, 0, 0 );
   rkglLightMove( &g_light, 8, 0, 8 );
@@ -95,7 +84,7 @@ int main(int argc, char *argv[])
   glutDisplayFunc( display );
   glutMouseFunc( mouse );
   glutMotionFunc( motion );
-  glutReshapeFunc( resize );
+  glutReshapeFunc( rkglReshapeFuncGLUT );
   glutKeyboardFunc( keyboard );
   glutIdleFunc( rkglIdleFuncGLUT );
   init();

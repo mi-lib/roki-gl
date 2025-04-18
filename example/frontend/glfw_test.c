@@ -17,7 +17,7 @@ void display(GLFWwindow* window)
   zOpticalInfo oi;
 
   rkglClear();
-  rkglCameraLoadViewframe( &g_cam );
+  rkglCameraPut( &g_cam );
   rkglLightPut( &g_light );
   glPushMatrix();
   zOpticalInfoCreateSimple( &oi, 0.2, 0.4, 0.9, NULL );
@@ -31,8 +31,7 @@ void init(void)
 {
   zVec3D center;
 
-  rkglSetDefaultCallbackParam( &g_cam, 1.0, 1.0, 20.0, 1.0, 5.0 );
-
+  rkglSetDefaultCamera( &g_cam, 30.0, 1.0, 200.0 );
   rkglCameraSetBackground( &g_cam, 0.5, 0.5, 0.5 );
   rkglCameraSetViewframe( &g_cam, 10.0, 0.0, 0.0, 0.0, 0.0, 0.0 );
 

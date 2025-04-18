@@ -3,18 +3,15 @@
 int ax_id, ay_id, g_id, f_id, a_id;
 int checker_id;
 
-double r = 0;
-
 rkglCamera cam;
 rkglLight light;
 
 void display(void)
 {
-  rkglCameraLoadViewframe( &cam );
+  rkglCameraPut( &cam );
   rkglLightPut( &light );
 
   glPushMatrix();
-  glRotated( r, 0, 0, 1 );
   rkglClear();
   glCallList( checker_id );
   glCallList( g_id );
@@ -26,34 +23,6 @@ void display(void)
   glutSwapBuffers();
 }
 
-void resize(int w, int h)
-{
-  rkglCameraSetViewport( &cam, 0, 0, w, h );
-  rkglCameraScaleFrustumHeight( &cam, 1.0/160, 1, 100 );
-}
-
-void keyboard(unsigned char key, int x, int y)
-{
-  switch( key ){
-  case 'u': rkglCameraLockonAndSetPanTiltRoll( &cam, 5, 0, 0 );  break;
-  case 'U': rkglCameraLockonAndSetPanTiltRoll( &cam,-5, 0, 0 );  break;
-  case 'i': rkglCameraLockonAndSetPanTiltRoll( &cam, 0, 5, 0 );  break;
-  case 'I': rkglCameraLockonAndSetPanTiltRoll( &cam, 0,-5, 0 );  break;
-  case 'o': rkglCameraLockonAndSetPanTiltRoll( &cam, 0, 0, 5 );  break;
-  case 'O': rkglCameraLockonAndSetPanTiltRoll( &cam, 0, 0,-5 );  break;
-  case '8': rkglCameraRelMove( &cam, 0.05, 0, 0 ); break;
-  case '*': rkglCameraRelMove( &cam,-0.05, 0, 0 ); break;
-  case '9': rkglCameraRelMove( &cam, 0, 0.05, 0 ); break;
-  case '(': rkglCameraRelMove( &cam, 0,-0.05, 0 ); break;
-  case '0': rkglCameraRelMove( &cam, 0, 0, 0.05 ); break;
-  case ')': rkglCameraRelMove( &cam, 0, 0,-0.05 ); break;
-  case ' ': r += 10; break;
-  case 'q': case 'Q': case '\033':
-    exit( EXIT_SUCCESS );
-  default: ;
-  }
-}
-
 void init(void)
 {
   zVec3D pc0, pc1, pc2;
@@ -62,16 +31,14 @@ void init(void)
   GLfloat rgba_red[4] = { 1.0, 0.0, 0.0, 1.0 };
   zOpticalInfo red, white, yellow;
 
-  rkglSetDefaultCallbackParam( &cam, 0, 0, 0, 0, 0 );
-
+  rkglSetDefaultCamera( &cam, 30, 1, 100 );
   rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
-  rkglCameraSetViewframe( &cam, 4, 0, 2.4, 0, -30, 0 );
+  rkglCameraLookAt( &cam, 20, 0, 5, 0, 0, 0, 0, 0, 1 );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
   rkglLightMove( &light, 1, 3, 6 );
-  rkglLightSetAttenuationQuad( &light, 2.0 );
-  rkglFogExp( 0.5, 0.5, 0.5, 0.1 );
+  rkglFogExp( 0.6, 0.6, 0.6, 0.1 );
 
   /* checkerboard */
   zOpticalInfoCreateSimple( &red, 1.0, 0, 0, NULL );
@@ -113,8 +80,8 @@ int main(int argc, char *argv[])
 
   glutDisplayFunc( display );
   glutIdleFunc( rkglIdleFuncGLUT );
-  glutReshapeFunc( resize );
-  glutKeyboardFunc( keyboard );
+  glutReshapeFunc( rkglReshapeFuncGLUT );
+  glutKeyboardFunc( rkglKeyFuncGLUT );
   glutMouseFunc( rkglMouseFuncGLUT );
   glutMotionFunc( rkglMouseDragFuncGLUT );
   init();

@@ -38,6 +38,7 @@ void rkglReflectionRefraction(int width, int height, rkglCamera *cam, rkglLight 
       center->c.x, center->c.y, center->c.z,
       center->c.x+viewvec[i].c.x, center->c.y+viewvec[i].c.y, center->c.z+viewvec[i].c.z,
       upvec[i].c.x, upvec[i].c.y, upvec[i].c.z );
+    rkglCameraPut( &view );
     rkglLightPut( light );
     glPushMatrix();
     draw();
@@ -50,15 +51,15 @@ void rkglReflectionRefraction(int width, int height, rkglCamera *cam, rkglLight 
 
 /* shadow mapping */
 
-static void _rkglShadowInit(rkglShadow *shadow, int width, int height, double radius, double ratio, double blur)
+static void _rkglShadowInit(rkglShadow *shadow, int width, int height, double radius, double darkness_ratio, double blur)
 {
   shadow->width = width;
   shadow->height = height;
   shadow->radius = radius;
-  shadow->ratio = ratio;
+  shadow->darkness_ratio = darkness_ratio;
   shadow->blur = blur; /* dummy */
-  rkglInitViewvolume();
-  rkglInitViewframe();
+  rkglResetViewvolume();
+  rkglResetViewframe();
 
   /* assign texture for shadow map. */
   glGenTextures( 1, &shadow->texid );
@@ -80,9 +81,9 @@ static void _rkglShadowInit(rkglShadow *shadow, int width, int height, double ra
   rkglShadowEnableAntiZFighting( shadow );
 }
 
-GLuint rkglShadowInit(rkglShadow *shadow, int width, int height, double radius, double ratio, double blur)
+GLuint rkglShadowInit(rkglShadow *shadow, int width, int height, double radius, double darkness_ratio, double blur)
 {
-  _rkglShadowInit( shadow, width, height, radius, ratio, blur );
+  _rkglShadowInit( shadow, width, height, radius, darkness_ratio, blur );
 
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE );
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL );
@@ -114,8 +115,8 @@ static void _rkglShadowMap(rkglShadow *shadow, rkglCamera *cam, rkglLight *light
   glDisable( GL_SCISSOR_TEST );
   glClear( GL_DEPTH_BUFFER_BIT );
   glViewport( 0, 0, shadow->width, shadow->height );
-  rkglInitViewvolume();
-  rkglInitViewframe();
+  rkglResetViewvolume();
+  rkglResetViewframe();
   _rkglShadowSetLight( shadow, light );
 
   glColorMask( GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE );
@@ -142,7 +143,7 @@ static void _rkglShadowResetProjection(rkglShadow *shadow, rkglCamera *cam, rkgl
   glCullFace( GL_BACK );
 
   rkglClear();
-  rkglCameraLoadViewframe( cam );
+  rkglCameraPut( cam );
   rkglLightPut( light );
 }
 
@@ -152,13 +153,13 @@ static void _rkglShadowPut(rkglShadow *shadow, rkglCamera *cam, rkglLight *light
 
   _rkglShadowResetProjection( shadow, cam, light );
   /* shadowy lighting */
-  dim[0] = light->diffuse[0] * shadow->ratio;
-  dim[1] = light->diffuse[1] * shadow->ratio;
-  dim[2] = light->diffuse[2] * shadow->ratio;
+  dim[0] = light->diffuse[0] * shadow->darkness_ratio;
+  dim[1] = light->diffuse[1] * shadow->darkness_ratio;
+  dim[2] = light->diffuse[2] * shadow->darkness_ratio;
   dim[3] = 1.0;
-  blk[0] = light->specular[0] * shadow->ratio;
-  blk[1] = light->specular[1] * shadow->ratio;
-  blk[2] = light->specular[2] * shadow->ratio;
+  blk[0] = light->specular[0] * shadow->darkness_ratio;
+  blk[1] = light->specular[1] * shadow->darkness_ratio;
+  blk[2] = light->specular[2] * shadow->darkness_ratio;
   blk[3] = 1.0;
   glLightfv( light->id, GL_DIFFUSE, dim );
   glLightfv( light->id, GL_SPECULAR, blk );
@@ -167,12 +168,15 @@ static void _rkglShadowPut(rkglShadow *shadow, rkglCamera *cam, rkglLight *light
 
 static void _rkglShadowXformMap(rkglShadow *shadow, rkglCamera *cam)
 {
+  GLdouble viewframe[16];
+
+  rkglGetViewframe( viewframe );
   glMatrixMode( GL_TEXTURE );
   glLoadIdentity();
   glTranslated( 0.5, 0.5, 0.5 );
   glScaled( 0.5, 0.5, 0.5 );
   glMultMatrixd( shadow->_lightview );
-  rkglMultInvMatrixd( cam->viewframe );
+  rkglMultInvMatrixd( viewframe );
 }
 
 static void _rkglShadowSunnyside(rkglShadow *shadow, rkglCamera *cam, rkglLight *light, void (* scene)(void))
@@ -205,9 +209,9 @@ void rkglShadowDraw(rkglShadow *shadow, rkglCamera *cam, rkglLight *light, void 
 #ifdef __ROKI_GL_USE_GLEW
 /* shadow map using GLSL */
 
-GLuint rkglShadowInitGLSL(rkglShadow *shadow, int width, int height, double radius, double ratio, double blur)
+GLuint rkglShadowInitGLSL(rkglShadow *shadow, int width, int height, double radius, double darkness_ratio, double blur)
 {
-  _rkglShadowInit( shadow, width, height, radius, ratio, blur );
+  _rkglShadowInit( shadow, width, height, radius, darkness_ratio, blur );
 
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE );
   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL );
@@ -225,7 +229,7 @@ static void _rkglShadowPutGLSL(rkglShadow *shadow, rkglCamera *cam, rkglLight *l
   glEnable( GL_TEXTURE_2D );
   glUseProgram( shadow->shader_program );
   rkglShaderSetShadowMap( shadow->shader_program, 0 );
-  rkglShaderSetShadowRatio( shadow->shader_program, shadow->ratio );
+  rkglShaderSetShadowDarknessRatio( shadow->shader_program, shadow->darkness_ratio );
   rkglShaderSetShadowBlur( shadow->shader_program, shadow->blur );
   scene();
   glDisable( GL_TEXTURE_2D );

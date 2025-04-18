@@ -19,11 +19,6 @@ void display(void)
   glutSwapBuffers();
 }
 
-void reshape(int w, int h)
-{
-  rkglCameraFitFrustumToViewport( &cam, w, h, 5.0, 5.0, 40.0 );
-}
-
 /* 1024x1024 texture only available with framebuffer */
 #define TEXWIDTH  1024
 #define TEXHEIGHT 1024
@@ -37,9 +32,9 @@ void init(void)
   zBox3D box3d;
   zVec3D c1, c2;
 
-  rkglSetDefaultCallbackParam( &cam, 5.0, 5, 40, 1.0, 5.0 );
+  rkglSetDefaultCamera( &cam, 30.0, 1, 40 );
   rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
-  rkglCameraSetViewframe( &cam, 10, 0, 4, 0, -30, 0 );
+  rkglCameraSetViewframe( &cam, 15, 0, 6, 0, -30, 0 );
   rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
   rkglLightMove( &light, 3, 6, 20 );
   rkglShadowInit( &shadow, TEXWIDTH, TEXHEIGHT, 6.0, 0.2, 0 );
@@ -87,7 +82,7 @@ int main(int argc, char *argv[])
 
   glutDisplayFunc( display );
   glutVisibilityFunc( rkglVisFuncGLUT );
-  glutReshapeFunc( reshape );
+  glutReshapeFunc( rkglReshapeFuncGLUT );
   glutKeyboardFunc( rkglKeyFuncGLUT );
   glutSpecialFunc( rkglSpecialFuncGLUT );
   glutMouseFunc( rkglMouseFuncGLUT );

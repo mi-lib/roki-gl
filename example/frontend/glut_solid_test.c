@@ -55,7 +55,7 @@ void display(void)
 
   zOpticalInfoCreateSimple( &oi, 0.2, 0.4, 0.9, NULL );
   rkglClear();
-  rkglCameraLoadViewframe( &cam );
+  rkglCameraPut( &cam );
   rkglLightPut( &light );
   glPushMatrix();
 
@@ -79,8 +79,7 @@ void display(void)
 
 void init()
 {
-  rkglSetDefaultCallbackParam( &cam, 1.0, 1, 20, 1.0, 5.0 );
-
+  rkglSetDefaultCamera( &cam, 30.0, 1, 20 );
   rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
   rkglCameraSetViewframe( &cam, 10, 0, 0, 0, 0, 0 );
 

@@ -8,28 +8,7 @@
 #include <roki_gl/rkgl_shape.h>
 #include <zeo/zeo_bv3d.h>
 
-/* translate coordinates. */
-void rkglTranslate(zVec3D *v)
-{
-  glTranslated( v->e[zX], v->e[zY], v->e[zZ] );
-}
-
-/* transform coordinates. */
-void rkglXform(zFrame3D *f)
-{
-  GLdouble m[16];
-
-  zMat3DCol( zFrame3DAtt(f), 0, (zVec3D*)&m[0] );
-  zMat3DCol( zFrame3DAtt(f), 1, (zVec3D*)&m[4] );
-  zMat3DCol( zFrame3DAtt(f), 2, (zVec3D*)&m[8] );
-  zVec3DCopy( zFrame3DPos(f), (zVec3D*)&m[12] );
-  m[3]=m[7]=m[11]=0.0; m[15]=1.0;
-  glMultMatrixd( m );
-}
-
-/* 3D object drawing */
-
-/* put a 3D point. */
+/* a 3D point. */
 void rkglPoint(zVec3D *p)
 {
   glBegin( GL_POINTS );
@@ -37,7 +16,7 @@ void rkglPoint(zVec3D *p)
   glEnd();
 }
 
-/* put a 3D edge. */
+/* a 3D edge. */
 void rkglEdge(zEdge3D *e)
 {
   glBegin( GL_LINES );
@@ -46,7 +25,7 @@ void rkglEdge(zEdge3D *e)
   glEnd();
 }
 
-/* put a 3D triangle face. */
+/* a 3D triangle face. */
 void rkglTriFace(zTri3D *t)
 {
   glBegin( GL_TRIANGLES );
@@ -61,7 +40,7 @@ void rkglTriFace(zTri3D *t)
   glEnd();
 }
 
-/* put a 3D triangle wireframe. */
+/* a 3D triangle wireframe. */
 void rkglTriWireframe(zTri3D *t)
 {
   glBegin( GL_LINE_LOOP );
@@ -71,7 +50,7 @@ void rkglTriWireframe(zTri3D *t)
   glEnd();
 }
 
-/* put a 3D triangle with texture. */
+/* a 3D triangle with texture. */
 void rkglTriTexture(zTri3D *t, zTri2D *f)
 {
   glBegin( GL_TRIANGLES );
@@ -82,7 +61,7 @@ void rkglTriTexture(zTri3D *t, zTri2D *f)
   glEnd();
 }
 
-/* put a 3D triangle with bump map. */
+/* a 3D triangle with bump map. */
 void rkglTriBump(zTri3D *t, zTri2D *f, zVec3D *lp)
 {
   GLdouble m[16];
@@ -102,7 +81,7 @@ void rkglTriBump(zTri3D *t, zTri2D *f, zVec3D *lp)
   glEnd();
 }
 
-/* put a 3D polygons. */
+/* a 3D polygons. */
 void rkglPolygon(zVec3D v[], int n, ...)
 {
   zVec3D v0, v1, v2, norm;

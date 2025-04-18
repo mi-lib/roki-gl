@@ -19,7 +19,7 @@ void draw_scene(void)
 
 void display(void)
 {
-  rkglCameraLoadViewframe( &cam );
+  rkglCameraPut( &cam );
   rkglLightPut( &light );
   rkglClear();
   draw_scene();
@@ -99,12 +99,6 @@ void keyboard(unsigned char key, int x, int y)
   int i;
 
   switch( key ){
-  case 'u': rkglCameraLockonAndSetPanTiltRoll( &cam, 5, 0, 0 ); break;
-  case 'U': rkglCameraLockonAndSetPanTiltRoll( &cam,-5, 0, 0 ); break;
-  case 'i': rkglCameraLockonAndSetPanTiltRoll( &cam, 0, 5, 0 ); break;
-  case 'I': rkglCameraLockonAndSetPanTiltRoll( &cam, 0,-5, 0 ); break;
-  case 'o': rkglCameraLockonAndSetPanTiltRoll( &cam, 0, 0, 5 ); break;
-  case 'O': rkglCameraLockonAndSetPanTiltRoll( &cam, 0, 0,-5 ); break;
   case 'g': move_link( zDeg2Rad(5) ); break;
   case 'h': move_link(-zDeg2Rad(5) ); break;
   case 'q': case 'Q': case '\033':
@@ -121,6 +115,7 @@ void init(void)
 {
   int i;
 
+  rkglSetDefaultCamera( &cam, 30.0, 1.0, 20.0 );
   rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
   rkglCameraSetViewframe( &cam, 1, 1, 1, 45, -30, 0 );
 
@@ -145,6 +140,7 @@ int main(int argc, char *argv[])
   glutMouseFunc( mouse );
   glutReshapeFunc( resize );
   glutKeyboardFunc( keyboard );
+  glutSpecialFunc( rkglSpecialFuncGLUT );
   glutIdleFunc( rkglIdleFuncGLUT );
   init();
   glutMainLoop();

@@ -78,7 +78,7 @@ void draw(void)
 void display(void)
 {
   glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, fb_id );
-  rkglCameraLoadViewframe( &cam );
+  rkglCameraPut( &cam );
   rkglLightPut( &light );
   glPushMatrix();
   rkglClear();
@@ -98,7 +98,7 @@ void display(void)
 
   rkglTextureBindUnit( 0, tex_id );
 
-  rkglCameraLoadViewframe( &cam );
+  rkglCameraPut( &cam );
   rkglLightPut( &light );
   glPushMatrix();
   rkglClear();
@@ -111,12 +111,6 @@ void display(void)
   glPopMatrix();
 
   glutSwapBuffers();
-}
-
-void resize(int w, int h)
-{
-  rkglCameraSetViewport( &cam, 0, 0, w, h );
-  rkglCameraScaleFrustumHeight( &cam, 1.0/160, 2, 30 );
 }
 
 void keyboard(unsigned char key, int x, int y)
@@ -143,10 +137,9 @@ void init(void)
   zCyl3D cylinder;
   zCone3D cone;
 
-  rkglSetDefaultCallbackParam( &cam, 0, 0, 0, 0, 0 );
-
+  rkglSetDefaultCamera( &cam, 30, 1, 100 );
   rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
-  rkglCameraSetViewframe( &cam, 6, 0, 3, 0, -30, 0 );
+  rkglCameraLookAt( &cam, 15, 0, 5, 0, 0, 0, 0, 0, 1 );
   glLineWidth( 2 );
 
   glEnable( GL_LIGHTING );
@@ -216,7 +209,7 @@ int main(int argc, char *argv[])
 
   glutDisplayFunc( display );
   glutIdleFunc( rkglIdleFuncGLUT );
-  glutReshapeFunc( resize );
+  glutReshapeFunc( rkglReshapeFuncGLUT );
   glutKeyboardFunc( keyboard );
   glutMouseFunc( rkglMouseFuncGLUT );
   glutMotionFunc( rkglMouseDragFuncGLUT );

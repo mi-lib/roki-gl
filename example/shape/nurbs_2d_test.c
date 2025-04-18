@@ -38,7 +38,7 @@ void draw_scene(void)
 
 void display(void)
 {
-  rkglCameraLoadViewframe( &cam );
+  rkglCameraPut( &cam );
   rkglLightPut( &light );
   rkglClear();
   draw_scene();
@@ -130,19 +130,12 @@ void motion(int x, int y)
   }
 }
 
-void reshape(int w, int h)
-{
-  rkglCameraSetViewport( &cam, 0, 0, w, h );
-  rkglCameraSetPerspective( &cam, 45.0, (GLdouble)w/(GLdouble)h, 0.5, 10.0 );
-}
-
 void init(void)
 {
   int i;
 
   zRandInit();
-  rkglSetDefaultCallbackParam( &cam, 0, 0, 0, 0, 0 );
-
+  rkglSetDefaultCamera( &cam, 45, 0.5, 100 );
   rkglCameraSetBackground( &cam, 0.0, 0.0, 0.0 );
   rkglCameraLookAt( &cam, 5, 0, 1, 0, 0, 0, 0, 0, 1 );
 
@@ -166,10 +159,10 @@ int main(int argc, char **argv)
   rkglWindowCreateGLUT( 0, 0, 960, 680, argv[0] );
 
   glutDisplayFunc( display );
-  glutReshapeFunc( reshape );
   glutMouseFunc( mouse );
   glutMotionFunc( motion );
   glutKeyboardFunc( keyboard );
+  glutReshapeFunc( rkglReshapeFuncGLUT );
   glutIdleFunc( rkglIdleFuncGLUT );
   init();
   glutMainLoop();

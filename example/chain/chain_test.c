@@ -10,7 +10,7 @@ int clone_id = -1;
 
 void display(void)
 {
-  rkglCameraLoadViewframe( &cam );
+  rkglCameraPut( &cam );
   rkglLightPut( &light );
 
   glPushMatrix();
@@ -42,12 +42,6 @@ void keyboard(unsigned char key, int x, int y)
 
   zOpticalInfoCreateSimple( &oi_alt, 1.0, 0.0, 0.0, NULL );
   switch( key ){
-  case 'u': rkglCameraLockonAndSetPanTiltRoll( &cam, 5, 0, 0 ); break;
-  case 'U': rkglCameraLockonAndSetPanTiltRoll( &cam,-5, 0, 0 ); break;
-  case 'i': rkglCameraLockonAndSetPanTiltRoll( &cam, 0, 5, 0 ); break;
-  case 'I': rkglCameraLockonAndSetPanTiltRoll( &cam, 0,-5, 0 ); break;
-  case 'o': rkglCameraLockonAndSetPanTiltRoll( &cam, 0, 0, 5 ); break;
-  case 'O': rkglCameraLockonAndSetPanTiltRoll( &cam, 0, 0,-5 ); break;
   case 'c':
     if( clone_id >= 0 ){
       glDeleteLists( clone_id, 1 );
@@ -122,6 +116,12 @@ void init(void)
 {
   rkglChainAttr attr;
 
+#if 0
+  rkglSetDefaultCallbackParam( &cam, 1.0, 1.0, 20.0, 1.0, 1.0 );
+#else
+  rkglSetDefaultCamera( &cam, 30.0, 1.0, 20.0 );
+#endif
+
   rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
   rkglCameraSetViewframe( &cam, 1.0, 1.0, 1.0, 45, -30, 0 );
 
@@ -142,6 +142,7 @@ int main(int argc, char *argv[])
   glutDisplayFunc( display );
   glutReshapeFunc( resize );
   glutKeyboardFunc( keyboard );
+  glutSpecialFunc( rkglSpecialFuncGLUT );
   glutIdleFunc( rkglIdleFuncGLUT );
   init();
   glutMainLoop();

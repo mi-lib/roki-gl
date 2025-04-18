@@ -21,11 +21,6 @@ void display(Window win)
   rkglFlushGLX();
 }
 
-void reshape(int w, int h)
-{
-  rkglCameraFitFrustumToViewport( &cam, w, h, 5.0, 5.0, 40.0 );
-}
-
 #define TEXWIDTH  1024
 #define TEXHEIGHT 1024
 
@@ -39,7 +34,7 @@ void init(void)
   zVec3D c1, c2;
 
   rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
-  rkglCameraSetViewframe( &cam, 10, 0, 4, 0, -30, 0 );
+  rkglCameraSetViewframe( &cam, 15, 0, 6, 0, -30, 0 );
   rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
   rkglLightMove( &light, 3, 6, 20 );
   rkglShadowInit( &shadow, TEXWIDTH, TEXHEIGHT, 10.0, 0.2, 0 );
@@ -89,23 +84,13 @@ GLvoid mainloop(Window win)
   while( 1 ){
     switch( ( event = zxGetEvent() ) ){
     case ButtonPress:
-    case ButtonRelease:
-      rkglMouseFuncGLX( &cam, event, 1.0 );
-      break;
-    case MotionNotify:
-      rkglMouseDragFuncGLX( &cam );
-      break;
-    case KeyPress:
-      switch( zxKeySymbol() ){
-      case XK_q:
-        rkglExitGLX();
-        exit( 0 );
-      }
-      break;
-    case Expose:
-    case ConfigureNotify:
+    case ButtonRelease: rkglMouseFuncGLX( &cam, event ); break;
+    case MotionNotify:  rkglMouseDragFuncGLX( &cam ); break;
+    case KeyPress:      if( rkglKeyPressFuncGLX( &cam ) < 0 ) exit( 0 ); break;
+    case KeyRelease:    rkglKeyReleaseFuncGLX( &cam ); break;
+    case Expose: case ConfigureNotify:
       zxGetGeometry( win, &reg );
-      rkglReshapeGLX( &cam, reg.width, reg.height, 2.0, 2, 20 );
+      rkglReshapeGLX( &cam, reg.width, reg.height );
       break;
     default: ;
     }
@@ -130,7 +115,6 @@ int main(int argc, char **argv)
   rkglWindowOpenGLX( win );
 
   init();
-  reshape( WIDTH, HEIGHT );
   mainloop( win );
   return 0;
 }

@@ -25,7 +25,7 @@ zOption opt[] = {
   { "pan", NULL, "<pan value>", "set camera pan angle", (char *)"0", false },
   { "tilt", NULL, "<tilt value>", "set camera tilt angle", (char *)"0", false },
   { "roll", NULL, "<roll value>", "set camera roll angle", (char *)"0", false },
-  { "x", NULL, "<value>", "camera position in x axis", (char *)"5", false },
+  { "x", NULL, "<value>", "camera position in x axis", (char *)"2", false },
   { "y", NULL, "<value>", "camera position in y axis", (char *)"0", false },
   { "z", NULL, "<value>", "camera position in z axis", (char *)"0", false },
   { "width", NULL, "<width>", "set window width", (char *)"500", false },
@@ -119,7 +119,7 @@ bool rk_seqLoadSequence(void)
 
 void rk_seqListEntry(void)
 {
-  register int i=0;
+  int i=0;
   zSeqCell *cp;
   void (* kf)(rkChain*,zVec);
 
@@ -136,7 +136,7 @@ void rk_seqListEntry(void)
 
 void rk_seqDraw(void)
 {
-  register int i;
+  int i;
 
   if( env ) glCallList( env );
   for( i=0; i<zArraySize(poselist); i++ )
@@ -152,7 +152,7 @@ void rk_seqDisplay(void)
   } else{
     /* non-shadowed rendering */
     rkglClear();
-    rkglCameraLoadViewframe( &cam );
+    rkglCameraPut( &cam );
     rkglLightPut( &light );
     rk_seqDraw();
   }
@@ -189,6 +189,7 @@ void rk_seqInit(void)
   rkglCameraSetViewframe( &cam,
     atof(opt[OPT_OX].arg), atof(opt[OPT_OY].arg), atof(opt[OPT_OZ].arg),
     atof(opt[OPT_PAN].arg), atof(opt[OPT_TILT].arg), atof(opt[OPT_ROLL].arg) );
+  rkglSetDefaultCamera( &cam, 30.0, 1.0, 200 );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.5, 0.5, 0.5, 0.8, 0.8, 0.8, 0, 0, 0 );
@@ -220,7 +221,7 @@ void rk_seqInit(void)
 
 void rk_seqExit(void)
 {
-  register int i;
+  int i;
 
   free( seqfilebase );
   for( i=0; i<zArraySize(poselist); i++ )
@@ -251,12 +252,10 @@ void rk_seqCapture(void)
 void rk_seqReshape(void)
 {
   zxRegion reg;
-  double x, y;
 
   zxGetGeometry( win, &reg );
   rkglCameraSetViewport( &cam, 0, 0, reg.width, reg.height );
-  y = ( x = 0.1 ) / rkglCameraViewportAspectRatio(&cam);
-  rkglCameraSetFrustum( &cam, -x, x, -y, y, 1, 20 );
+  rkglDefaultCameraSetPerspective();
 }
 
 int rk_seqKeyPress(void)
@@ -277,7 +276,7 @@ int rk_seqEvent(void)
   case Expose:
   case ConfigureNotify: rk_seqReshape();              break;
   case ButtonPress:
-  case ButtonRelease:   rkglMouseFuncGLX( &cam, event, 1.0 ); break;
+  case ButtonRelease:   rkglMouseFuncGLX( &cam, event ); break;
   case MotionNotify:    rkglMouseDragFuncGLX( &cam ); break;
   case KeyPress:        if( rk_seqKeyPress() >= 0 )   break; return -1;
   case KeyRelease:      zxModkeyOff( zxKeySymbol() ); break;

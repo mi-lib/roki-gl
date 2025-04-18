@@ -30,7 +30,7 @@ zOption opt[] = {
   { "pan", NULL, "<pan value>", "set camera pan angle", (char *)"0", false },
   { "tilt", NULL, "<tilt value>", "set camera tilt angle", (char *)"0", false },
   { "roll", NULL, "<roll value>", "set camera roll angle", (char *)"0", false },
-  { "x", NULL, "<value>", "camera position in x axis", (char *)"5", false },
+  { "x", NULL, "<value>", "camera position in x axis", (char *)"2", false },
   { "y", NULL, "<value>", "camera position in y axis", (char *)"0", false },
   { "z", NULL, "<value>", "camera position in z axis", (char *)"0", false },
   { "auto", NULL, NULL, "automatic allocation of camera", NULL, false },
@@ -114,7 +114,7 @@ void rk_penShowConnectivity(void)
 
 void rk_penShowJointDis(void)
 {
-  register int i, j;
+  int i, j;
   double dis[6];
 
   printf( "*** joint displacements ***\n" );
@@ -367,7 +367,7 @@ void scene(void)
 void display(void)
 {
   rkglClear();
-  rkglCameraLoadViewframe( &cam );
+  rkglCameraPut( &cam );
   rkglLightPut( &light );
   scene();
   glutSwapBuffers();
@@ -430,7 +430,7 @@ void rk_penInit(void)
   rkglChainAttr attr;
   zMShape3D envshape;
   zSphere3D bball;
-  double vv_width, vv_near, vv_far;
+  double vv_fovy, vv_near, vv_far;
 
   rkglChainAttrInit( &attr );
   if( opt[OPT_DRAW_WIREFRAME].flag ) attr.disptype = RKGL_WIREFRAME;
@@ -472,7 +472,7 @@ void rk_penInit(void)
       zSphere3DCenter(&bball)->c.x+zSphere3DRadius(&bball)*18, zSphere3DCenter(&bball)->c.y, zSphere3DCenter(&bball)->c.z,
       zSphere3DCenter(&bball)->c.x, zSphere3DCenter(&bball)->c.y, zSphere3DCenter(&bball)->c.z,
       0, 0, 1 );
-    vv_width = zSphere3DRadius(&bball) / 8;
+    vv_fovy = 2 * zRad2Deg( asin( 1.0/18 ) );
     vv_near = zSphere3DRadius(&bball);
     vv_far = 1000*zSphere3DRadius(&bball);
   } else{
@@ -484,10 +484,13 @@ void rk_penInit(void)
       rkglCameraLookAt( &cam,
         atof( opt[OPT_OX].arg ), atof( opt[OPT_OY].arg ), atof( opt[OPT_OZ].arg ),
         0, 0, 0, 0, 0, 1 );
-    vv_width = 0.2;
+    vv_fovy = 30.0;
     vv_near = 1;
     vv_far = 200;
   }
+  rkglSetDefaultCamera( &cam, vv_fovy, vv_near, vv_far );
+  rkglSetKeyDelta( 0.02, 1.0 );
+
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.5, 0.5, 0.5, 0.8, 0.8, 0.8, 0, 0, 0 );
   rkglLightMove( &light, atof(opt[OPT_LX].arg), atof(opt[OPT_LY].arg), atof(opt[OPT_LZ].arg) );
@@ -496,7 +499,6 @@ void rk_penInit(void)
   if( opt[OPT_SMOOTH].flag ) glEnable( GL_LINE_SMOOTH );
   if( opt[OPT_FOG].flag ) glEnable( GL_FOG );
 
-  rkglSetDefaultCallbackParam( &cam, vv_width, vv_near, vv_far, 0.02, 5.0 );
   if( opt[OPT_SHADOW].flag )
     glutDisplayFunc( display_shadow );
   else

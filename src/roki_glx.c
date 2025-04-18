@@ -110,25 +110,26 @@ void rkglWindowAddEventGLX(Window win, long event)
 
 /* default callback functions */
 
-void rkglReshapeGLX(rkglCamera *cam, int w, int h, double width, double near, double far)
+void rkglReshapeGLX(rkglCamera *cam, int w, int h)
 {
-  rkglCameraFitFrustumToViewport( cam, w, h, width, near, far );
+  rkglCameraSetViewport( cam, 0, 0, w, h );
+  rkglCameraSetPerspective( cam, rkgl_default_vv_fovy, rkglCameraViewportAspectRatio(cam), rkgl_default_vv_near, rkgl_default_vv_far );
 }
 
-int rkglKeyFuncGLX(rkglCamera *cam, double dl, double da)
+int rkglKeyPressFuncGLX(rkglCamera *cam)
 {
   KeySym key;
   switch( ( key = zxKeySymbol() ) ){
-  case XK_H: case XK_h: rkglCameraRelMoveLeft(  cam, dl ); break;
-  case XK_L: case XK_l: rkglCameraRelMoveRight( cam, dl ); break;
-  case XK_K: case XK_k: rkglCameraRelMoveUp(    cam, dl ); break;
-  case XK_J: case XK_j: rkglCameraRelMoveDown(  cam, dl ); break;
-  case XK_Z: case XK_z: zxModkeyShiftIsOn() ?
-                        rkglCameraZoomOut( cam, dl ) : rkglCameraZoomIn( cam, dl );  break;
-  case XK_Up:    rkglKeyCameraRotateUp(    cam, da, zxModkeyCtrlIsOn() ); break;
-  case XK_Down:  rkglKeyCameraRotateDown(  cam, da, zxModkeyCtrlIsOn() ); break;
-  case XK_Left:  rkglKeyCameraRotateLeft(  cam, da, zxModkeyCtrlIsOn() ); break;
-  case XK_Right: rkglKeyCameraRotateRight( cam, da, zxModkeyCtrlIsOn() ); break;
+  case XK_H: case XK_h: rkglKeyCameraMoveLeft(  cam ); break;
+  case XK_L: case XK_l: rkglKeyCameraMoveRight( cam ); break;
+  case XK_K: case XK_k: rkglKeyCameraMoveUp(    cam ); break;
+  case XK_J: case XK_j: rkglKeyCameraMoveDown(  cam ); break;
+  case XK_z:            rkglKeyCameraZoomIn(    cam ); break;
+  case XK_Z:            rkglKeyCameraZoomOut(   cam ); break;
+  case XK_Up:           rkglKeyCameraTiltUp(    cam ); break;
+  case XK_Down:         rkglKeyCameraTiltDown(  cam ); break;
+  case XK_Left:         rkglKeyCameraPanLeft(   cam ); break;
+  case XK_Right:        rkglKeyCameraPanRight(  cam ); break;
   case XK_Q: case XK_q: case XK_Escape:
     rkglExitGLX();
     return -1;
@@ -138,12 +139,17 @@ int rkglKeyFuncGLX(rkglCamera *cam, double dl, double da)
   return 0;
 }
 
-void rkglMouseFuncGLX(rkglCamera *cam, int event, double dl)
+int rkglKeyReleaseFuncGLX(rkglCamera *cam)
+{
+  return zxModkeyOff( zxKeySymbol() ) ? 1 : 0;
+}
+
+void rkglMouseFuncGLX(rkglCamera *cam, int event)
 {
   rkglMouseStoreInput( zxMouseButton, event, ButtonPress, zxMouseX, zxMouseY, zxModkey() );
   switch( rkgl_mouse_button ){
-  case Button4: rkglCameraZoomIn( cam, dl ); break;
-  case Button5: rkglCameraZoomOut(  cam, dl ); break;
+  case Button4: rkglKeyCameraZoomIn(  cam ); break;
+  case Button5: rkglKeyCameraZoomOut( cam ); break;
   default: ;
   }
 }
@@ -154,9 +160,9 @@ void rkglMouseDragFuncGLX(rkglCamera *cam)
 
   rkglMouseDragGetIncrementer( cam, zxMouseX, zxMouseY, &dx, &dy );
   switch( rkgl_mouse_button ){
-  case Button1: rkglMouseDragCameraRotate(    cam, dx, dy, ZX_MODKEY_CTRL ); break;
-  case Button3: rkglMouseDragCameraTranslate( cam, dx, dy, ZX_MODKEY_CTRL ); break;
-  case Button2: rkglMouseDragCameraZoom(      cam, dx, dy, ZX_MODKEY_CTRL ); break;
+  case Button1: rkglMouseDragCameraRotate( cam, dx, dy, ZX_MODKEY_CTRL ); break;
+  case Button3: rkglMouseDragCameraTranslate( cam, dx, dy ); break;
+  case Button2: rkglMouseDragCameraZoom( cam, dx, dy ); break;
   default: ;
   }
   rkglMouseStoreXY( zxMouseX, zxMouseY );

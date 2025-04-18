@@ -23,13 +23,6 @@ __BEGIN_DECLS
 #define RKGL_ELLIPS    0x20
 #define RKGL_BB        0x40
 
-/* transformation */
-
-/*! \brief translate coordinates. */
-__ROKI_GL_EXPORT void rkglTranslate(zVec3D *v);
-/*! \brief transform coordinates. */
-__ROKI_GL_EXPORT void rkglXform(zFrame3D *f);
-
 /* 3D object drawing */
 
 #define rkglVertex(v)    glVertex3dv( (v)->e )

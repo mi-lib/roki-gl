@@ -7,7 +7,7 @@
 #ifndef __RKGL_MISC_H__
 #define __RKGL_MISC_H__
 
-#include <zeda/zeda.h>
+#include <zeo/zeo.h>
 #include <roki_gl/roki_gl_export.h>
 
 #ifdef __ROKI_GL_USE_GLEW
@@ -37,6 +37,13 @@ __ROKI_GL_EXPORT void rkglReadBuffer(GLuint type, int x, int  y, int width, int 
 __ROKI_GL_EXPORT void rkglInvTranslated(double m[], double *x, double *y, double *z);
 __ROKI_GL_EXPORT void rkglMultInvMatrixd(double m[]);
 __ROKI_GL_EXPORT void rkglXformInvd(double m[], double p[], double px[]);
+
+/*! \brief translate coordinates. */
+__ROKI_GL_EXPORT void rkglTranslate(zVec3D *v);
+/*! \brief transform coordinates. */
+__ROKI_GL_EXPORT void rkglXform(zFrame3D *f);
+/*! \brief inverse transform coordinates. */
+__ROKI_GL_EXPORT void rkglXformInv(zFrame3D *f);
 
 /* display list */
 

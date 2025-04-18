@@ -9,7 +9,7 @@ double r = 0;
 
 void display(void)
 {
-  rkglCameraLoadViewframe( &cam );
+  rkglCameraPut( &cam );
   rkglLightPut( &light );
 
   glPushMatrix();
@@ -20,34 +20,6 @@ void display(void)
   glutSwapBuffers();
 }
 
-void resize(int w, int h)
-{
-  rkglCameraSetViewport( &cam, 0, 0, w, h );
-  rkglCameraScaleFrustumHeight( &cam, 0.001, 2, 10 );
-}
-
-void keyboard(unsigned char key, int x, int y)
-{
-  switch( key ){
-  case 'u': rkglCameraLockonAndSetPanTiltRoll( &cam, 5, 0, 0 ); break;
-  case 'U': rkglCameraLockonAndSetPanTiltRoll( &cam,-5, 0, 0 ); break;
-  case 'i': rkglCameraLockonAndSetPanTiltRoll( &cam, 0, 5, 0 ); break;
-  case 'I': rkglCameraLockonAndSetPanTiltRoll( &cam, 0,-5, 0 ); break;
-  case 'o': rkglCameraLockonAndSetPanTiltRoll( &cam, 0, 0, 5 ); break;
-  case 'O': rkglCameraLockonAndSetPanTiltRoll( &cam, 0, 0,-5 ); break;
-  case '8': rkglCameraRelMove( &cam, 0.05, 0, 0 ); break;
-  case '*': rkglCameraRelMove( &cam,-0.05, 0, 0 ); break;
-  case '9': rkglCameraRelMove( &cam, 0, 0.05, 0 ); break;
-  case '(': rkglCameraRelMove( &cam, 0,-0.05, 0 ); break;
-  case '0': rkglCameraRelMove( &cam, 0, 0, 0.05 ); break;
-  case ')': rkglCameraRelMove( &cam, 0, 0,-0.05 ); break;
-  case ' ': r += 10; break;
-  case 'q': case 'Q': case '\033':
-    exit( EXIT_SUCCESS );
-  default: ;
-  }
-}
-
 #define R 0.2
 #define H 0.06
 #define D 0.04
@@ -56,7 +28,7 @@ void keyboard(unsigned char key, int x, int y)
 
 void make_mebious(void)
 {
-  register int i;
+  int i;
   double t, t2;
   zVec3D p, r, d;
   zVec3D vert[2*DIV_NUM+2];
@@ -95,10 +67,9 @@ void make_mebious(void)
 
 void init(void)
 {
-  rkglSetDefaultCallbackParam( &cam, 0, 0, 0, 0, 0 );
-
+  rkglSetDefaultCamera( &cam, 30, 1, 100 );
   rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
-  rkglCameraLookAt( &cam, 5, 0, 3, 0, 0, 0, 0, 0, 1 );
+  rkglCameraLookAt( &cam, 2, 0, 1, 0, 0, 0, 0, 0, 1 );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
@@ -114,8 +85,8 @@ int main(int argc, char *argv[])
 
   glutDisplayFunc( display );
   glutIdleFunc( rkglIdleFuncGLUT );
-  glutReshapeFunc( resize );
-  glutKeyboardFunc( keyboard );
+  glutReshapeFunc( rkglReshapeFuncGLUT );
+  glutKeyboardFunc( rkglKeyFuncGLUT );
   glutMouseFunc( rkglMouseFuncGLUT );
   glutMotionFunc( rkglMouseDragFuncGLUT );
   init();

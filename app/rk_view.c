@@ -24,7 +24,7 @@ zOption opt[] = {
   { "pan", NULL, "<pan value>", "set camera pan angle", (char *)"0", false },
   { "tilt", NULL, "<tilt value>", "set camera tilt angle", (char *)"0", false },
   { "roll", NULL, "<roll value>", "set camera roll angle", (char *)"0", false },
-  { "x", NULL, "<value>", "camera position in x axis", (char *)"5", false },
+  { "x", NULL, "<value>", "camera position in x axis", (char *)"2", false },
   { "y", NULL, "<value>", "camera position in y axis", (char *)"0", false },
   { "z", NULL, "<value>", "camera position in z axis", (char *)"0", false },
   { "auto", NULL, NULL, "automatic allocation of camera", NULL, false },
@@ -55,7 +55,6 @@ int model = -1;
 
 /* view volume */
 zSphere3D boundingsphere;
-double vv_width, vv_near, vv_far;
 
 void rk_viewUsage(void)
 {
@@ -186,22 +185,25 @@ void rk_viewReadModel(zStrAddrList *modellist)
 
 void rk_viewResetCamera(void)
 {
+  double vv_fovy, vv_near, vv_far;
+
   if( opt[OPT_AUTO].flag ){
     rkglCameraLookAt( &cam,
       zSphere3DCenter(&boundingsphere)->c.x+zSphere3DRadius(&boundingsphere)*18, zSphere3DCenter(&boundingsphere)->c.y, zSphere3DCenter(&boundingsphere)->c.z,
       zSphere3DCenter(&boundingsphere)->c.x, zSphere3DCenter(&boundingsphere)->c.y, zSphere3DCenter(&boundingsphere)->c.z,
       0, 0, 1 );
-    vv_width = zSphere3DRadius(&boundingsphere) / 8;
+    vv_fovy = 2 * zRad2Deg( asin( 1.0/18 ) );
     vv_near = zSphere3DRadius(&boundingsphere);
     vv_far = 1000*zSphere3DRadius(&boundingsphere);
   } else{
     rkglCameraSetViewframe( &cam,
       atof(opt[OPT_OX].arg), atof(opt[OPT_OY].arg), atof(opt[OPT_OZ].arg),
       atof(opt[OPT_PAN].arg), atof(opt[OPT_TILT].arg), atof(opt[OPT_ROLL].arg) );
-    vv_width = 0.2;
+    vv_fovy = 30.0;
     vv_near = 1;
     vv_far = 200;
   }
+  rkglSetDefaultCamera( &cam, vv_fovy, vv_near, vv_far );
 }
 
 void rk_viewResetLight(void)
@@ -282,7 +284,7 @@ void rk_viewDisplay(void)
   } else{
     /* non-shadowed rendering */
     rkglClear();
-    rkglCameraLoadViewframe( &cam );
+    rkglCameraPut( &cam );
     rkglLightPut( &light );
     rk_viewDraw();
   }
@@ -293,12 +295,10 @@ void rk_viewDisplay(void)
 void rk_viewReshape(void)
 {
   zxRegion reg;
-  double x, y;
 
   zxGetGeometry( win, &reg );
   rkglCameraSetViewport( &cam, 0, 0, reg.width, reg.height );
-  y = ( x = vv_width / 2 ) / rkglCameraViewportAspectRatio(&cam);
-  rkglCameraSetFrustum( &cam, -x, x, -y, y, vv_near, vv_far );
+  rkglDefaultCameraSetPerspective();
 }
 
 void rk_viewCapture(void)
@@ -325,8 +325,7 @@ int rk_viewKeyPress(void)
   case XK_l: /* toggle viewpoint to light/camera */
     if( ( from_light = 1 - from_light ) ){
       rkglCameraLookAt( &cam,
-        atof(opt[OPT_LX].arg), atof(opt[OPT_LY].arg), atof(opt[OPT_LZ].arg),
-        0, 0, 0, -1, 0, 1 );
+        atof(opt[OPT_LX].arg), atof(opt[OPT_LY].arg), atof(opt[OPT_LZ].arg), 0, 0, 0, -1, 0, 1 );
     } else
       rk_viewResetCamera();
     break;
@@ -350,7 +349,7 @@ int rk_viewEvent(void)
   case Expose:
   case ConfigureNotify: rk_viewReshape();             break;
   case ButtonPress:
-  case ButtonRelease:   rkglMouseFuncGLX( &cam, event, 1.0 ); break;
+  case ButtonRelease:   rkglMouseFuncGLX( &cam, event ); break;
   case MotionNotify:    rkglMouseDragFuncGLX( &cam ); break;
   case KeyPress:        if( rk_viewKeyPress() >= 0 )  break; return -1;
   case KeyRelease:      zxModkeyOff( zxKeySymbol() ); break;

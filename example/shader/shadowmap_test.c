@@ -6,12 +6,6 @@ rkglCamera cam;
 rkglLight light;
 rkglShadow shadow;
 
-void resize(int w, int h)
-{
-  rkglCameraSetViewport( &cam, 0, 0, w, h );
-  rkglCameraScaleFrustumHeight( &cam, 1.0/160, 2, 100 );
-}
-
 void draw(void)
 {
   static zVec3D cs0 = { { 0.0, 0.0, 4.0 } };
@@ -59,8 +53,7 @@ void init(void)
   zVec3D pc0, pc1, pc2;
   zOpticalInfo oi, oi2;
 
-  rkglSetDefaultCallbackParam( &cam, 0, 0, 0, 0, 0 );
-
+  rkglSetDefaultCamera( &cam, 90, 1, 100 );
   rkglCameraSetBackground( &cam, 0.5, 1.0, 1.0 );
 
   glEnable( GL_LIGHTING );
@@ -79,7 +72,7 @@ void init(void)
   rkglCheckerBoard( &pc0, &pc1, &pc2, 10, 10, &oi, &oi2 );
   glEndList();
 
-  rkglShadowInitGLSL( &shadow, 256, 256, 10.0, 0.2, 0.2 );
+  rkglShadowInitGLSL( &shadow, 256, 256, 50.0, 0.2, 0.2 );
 }
 
 int main(int argc, char *argv[])
@@ -89,7 +82,7 @@ int main(int argc, char *argv[])
 
   glutDisplayFunc( display );
   glutIdleFunc( rkglIdleFuncGLUT );
-  glutReshapeFunc( resize );
+  glutReshapeFunc( rkglReshapeFuncGLUT );
   glutKeyboardFunc( keyboard );
   glutMouseFunc( rkglMouseFuncGLUT );
   glutMotionFunc( rkglMouseDragFuncGLUT );

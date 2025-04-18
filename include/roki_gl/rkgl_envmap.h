@@ -21,15 +21,15 @@ __ROKI_GL_EXPORT void rkglReflectionRefraction(int width, int height, rkglCamera
 /* shadow mapping */
 
 typedef struct{
-  int width;    /* texture size */
-  int height;   /* texture size */
-  double ratio; /* darkness ratio */
-  double blur;  /* blurring distance of shadow edge */
-  double radius; /* radius of bounding sphere */
-  bool antizfighting; /* flag to enable anti-Z-fighting */
+  int width;             /* texture width */
+  int height;            /* texture height */
+  double darkness_ratio; /* darkness ratio */
+  double blur;           /* blurring distance of shadow edge */
+  double radius;         /* radius of bounding sphere */
+  bool antizfighting;    /* flag to enable anti-Z-fighting */
   /*! @cond */
-  GLuint texid; /* texture name */
-  GLuint fb; /* framebuffer name */
+  GLuint texid;          /* texture name */
+  GLuint fb;             /* framebuffer name */
   GLuint shader_program; /* shader program in GLSL */
   double _lightview[16];
   /*! @endcond */

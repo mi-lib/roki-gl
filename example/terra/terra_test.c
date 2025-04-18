@@ -9,18 +9,15 @@
 rkglCamera cam;
 rkglLight light;
 
-double r = 0;
-
 int terra_id[5];
 byte terra_entry_sw;
 
 void display(void)
 {
-  rkglCameraLoadViewframe( &cam );
+  rkglCameraPut( &cam );
   rkglLightPut( &light );
 
   glPushMatrix();
-  glRotated( r, 0, 1, 0 );
   rkglClear();
   if( terra_entry_sw & ENTRY_POINT ) glCallList( terra_id[0] );
   if( terra_entry_sw & ENTRY_NORM  ) glCallList( terra_id[1] );
@@ -31,12 +28,6 @@ void display(void)
   glutSwapBuffers();
 }
 
-void resize(int w, int h)
-{
-  rkglCameraSetViewport( &cam, 0, 0, w, h );
-  rkglCameraScaleFrustumHeight( &cam, 1.0/160, 1.0, 100 );
-}
-
 void keyboard(unsigned char key, int x, int y)
 {
   switch( key ){
@@ -45,19 +36,6 @@ void keyboard(unsigned char key, int x, int y)
   case 'v': terra_entry_sw ^= ENTRY_VAR;   break;
   case 'm': terra_entry_sw ^= ENTRY_MESH;  break;
   case 'f': terra_entry_sw ^= ENTRY_PATCH; break;
-  case 'u': rkglCameraLockonAndSetPanTiltRoll( &cam, 5, 0, 0 ); break;
-  case 'U': rkglCameraLockonAndSetPanTiltRoll( &cam,-5, 0, 0 ); break;
-  case 'i': rkglCameraLockonAndSetPanTiltRoll( &cam, 0, 5, 0 ); break;
-  case 'I': rkglCameraLockonAndSetPanTiltRoll( &cam, 0,-5, 0 ); break;
-  case 'o': rkglCameraLockonAndSetPanTiltRoll( &cam, 0, 0, 5 ); break;
-  case 'O': rkglCameraLockonAndSetPanTiltRoll( &cam, 0, 0,-5 ); break;
-  case '8': rkglCameraRelMove( &cam, 0.05, 0, 0 ); break;
-  case '*': rkglCameraRelMove( &cam,-0.05, 0, 0 ); break;
-  case '9': rkglCameraRelMove( &cam, 0, 0.05, 0 ); break;
-  case '(': rkglCameraRelMove( &cam, 0,-0.05, 0 ); break;
-  case '0': rkglCameraRelMove( &cam, 0, 0, 0.05 ); break;
-  case ')': rkglCameraRelMove( &cam, 0, 0,-0.05 ); break;
-  case ' ': r += 10; break;
   case 'q': case 'Q': case '\033':
     exit( EXIT_SUCCESS );
   default: ;
@@ -71,9 +49,9 @@ void init(void)
   zOpticalInfo oi1, oi2;
   zRGB rgb1, rgb2;
 
-  rkglSetDefaultCallbackParam( &cam, 0, 0, 0, 0, 0 );
+  rkglSetDefaultCamera( &cam, 30, 1, 200 );
   rkglCameraSetBackground( &cam, 0.3, 0.3, 0.3 );
-  rkglCameraSetViewframe( &cam, 7, 2, 2, 0, -30, 0 );
+  rkglCameraLookAt( &cam, 15, 2, 3, 0, 2, 0, 0, 0, 1 );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
@@ -119,11 +97,11 @@ int main(int argc, char *argv[])
   rkglWindowCreateGLUT( 0, 0, 640, 480, argv[0] );
 
   glutDisplayFunc( display );
-  glutIdleFunc( rkglIdleFuncGLUT );
-  glutReshapeFunc( resize );
   glutKeyboardFunc( keyboard );
   glutMouseFunc( rkglMouseFuncGLUT );
   glutMotionFunc( rkglMouseDragFuncGLUT );
+  glutReshapeFunc( rkglReshapeFuncGLUT );
+  glutIdleFunc( rkglIdleFuncGLUT );
   init();
   glutMainLoop();
   return 0;

@@ -37,7 +37,7 @@ zOption opt[] = {
   { "pan", NULL, "<pan value>", "set camera pan angle", (char *)"0", false },
   { "tilt", NULL, "<tilt value>", "set camera tilt angle", (char *)"0", false },
   { "roll", NULL, "<roll value>", "set camera roll angle", (char *)"0", false },
-  { "x", NULL, "<value>", "camera position in x axis", (char *)"5", false },
+  { "x", NULL, "<value>", "camera position in x axis", (char *)"2", false },
   { "y", NULL, "<value>", "camera position in y axis", (char *)"0", false },
   { "z", NULL, "<value>", "camera position in z axis", (char *)"0", false },
   { "winx", NULL, "<winx>", "set window init x position", (char *)"0", false },
@@ -58,7 +58,7 @@ zOption opt[] = {
   { "shadow", NULL, NULL, "enable shadow", NULL, false },
   { "shadowsize", NULL, "<value>", "shadow map size", (char *)"1024", false },
   { "shadowarea", NULL, "<value>", "radius of shadowing area", (char *)"3.0", false },
-  { "shadowblur", NULL, "<value>", "edge blur of shadow", (char *)"0.1", false },
+  { "shadowblur", NULL, "<value>", "edge blur of shadow", (char *)"0.001", false },
   { "k", NULL, NULL, "wait key-in at each step", NULL, false },
   { "capture", NULL, "<suf>", "output image format (suffix)", (char *)"bmp", false },
   { "captureserial", NULL, "<suf>", "output images with serial numbers", (char *)"bmp", false },
@@ -424,14 +424,12 @@ void rkAnimCamOptWrite(zVec3D *v, zVec3D *ptr)
 
 void rkAnimGetCamFrame(void)
 {
-  zFrame3D f;
   zVec3D ptr;
 
-  rkglCameraLoadViewframe( &cam );
-  rkglCameraViewframeToFrame3D( &cam, &f );
+  rkglCameraPut( &cam );
   /* pan, tilt and roll angle */
-  _zMat3DToPTR( zFrame3DAtt(&f), &ptr );
-  rkAnimCamOptWrite( zFrame3DPos(&f), &ptr );
+  _zMat3DToPTR( zFrame3DAtt(&cam.viewframe), &ptr );
+  rkAnimCamOptWrite( zFrame3DPos(&cam.viewframe), &ptr );
 }
 
 /**********************************************************/
@@ -457,8 +455,8 @@ void rkAnimDisplay(void)
   } else{
     /* non-shadowed rendering */
     rkglClear();
-    rkglCameraLoadViewframe( &cam );
     rkglLightPut( &light );
+    rkglCameraPut( &cam );
     rkAnimDraw();
   }
   rkglWindowSwapBuffersGLX( glwin );
@@ -539,11 +537,11 @@ void rkAnimInit(void)
 
   zRGBDecodeStr( &rgb, opt[OPT_BG].arg );
   rkglCameraSetBackground( &cam, rgb.r, rgb.g, rgb.b );
-  rkglCameraSetViewport( &cam, 0, 0,
-    atoi(opt[OPT_WIDTH].arg), atoi(opt[OPT_HEIGHT].arg) );
+  rkglCameraSetViewport( &cam, 0, 0, atoi(opt[OPT_WIDTH].arg), atoi(opt[OPT_HEIGHT].arg) );
   rkglCameraSetViewframe( &cam,
     atof(opt[OPT_OX].arg), atof(opt[OPT_OY].arg), atof(opt[OPT_OZ].arg),
     atof(opt[OPT_PAN].arg), atof(opt[OPT_TILT].arg), atof(opt[OPT_ROLL].arg) );
+  rkglSetDefaultCamera( &cam, 30.0, 1.0, 200 );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.3, 0.3, 0.3, 1.0, 1.0, 1.0, 0, 0, 0 );
@@ -614,16 +612,13 @@ void rkAnimReshape(void)
   zxGetGeometry( glwin, &reg );
   rkglCameraSetViewport( &cam, 0, 0, reg.width, reg.height );
   if( from_light ){
-    double d;
-    rkglInitViewvolume();
-    d = sqrt( zSqr(light.pos[0])+zSqr(light.pos[1])+zSqr(light.pos[2]) );
-    gluPerspective( 2*zRad2Deg(asin(shadow.radius/d)),
-      (GLdouble)shadow.width/(GLdouble)shadow.height,
-      d > shadow.radius ? d-shadow.radius : d*0.9, d+shadow.radius );
+    double d, r;
+    rkglResetViewvolume();
+    d = sqrt( zSqr(light.pos[0]) + zSqr(light.pos[1]) + zSqr(light.pos[2]) );
+    r = atof( opt[OPT_SHADOW_AREA].arg );
+    rkglCameraSetPerspective( &cam, 2*zRad2Deg(asin(r/d)), 1.0, d > r ? d-r : d*0.1, d+r );
   } else{
-    double x, y;
-    y = ( x = 0.1 ) / rkglCameraViewportAspectRatio(&cam);
-    rkglCameraSetFrustum( &cam, -x, x, -y, y, 1, 200 );
+    rkglDefaultCameraSetPerspective();
   }
 }
 
@@ -662,7 +657,7 @@ int rkAnimEvent(void)
   case Expose:
   case ConfigureNotify: rkAnimReshape();              break;
   case ButtonPress:
-  case ButtonRelease:   rkglMouseFuncGLX( &cam, event, 1.0 ); break;
+  case ButtonRelease:   rkglMouseFuncGLX( &cam, event ); break;
   case MotionNotify:    rkglMouseDragFuncGLX( &cam ); break;
   case KeyPress:        if( rkAnimKeyPress() >= 0 )   break; return -1;
   case KeyRelease:      zxModkeyOff( zxKeySymbol() ); break;

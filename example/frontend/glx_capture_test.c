@@ -56,7 +56,7 @@ GLvoid draw(Window win)
 {
   rkglWindowActivateGLX( win );
   rkglClear();
-  rkglCameraLoadViewframe( &cam );
+  rkglCameraPut( &cam );
   rkglLightMove( &light, 10, 0, 8 );
   glPushMatrix();
   glCallList( obj );

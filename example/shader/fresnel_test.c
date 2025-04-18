@@ -18,12 +18,6 @@ GLuint shader_program1;
 zSphere3D sphere;
 zBox3D box;
 
-void resize(int w, int h)
-{
-  rkglCameraSetViewport( &cam, 0, 0, w, h );
-  rkglCameraScaleFrustumHeight( &cam, 1.0/160, 2, 30 );
-}
-
 void draw(void)
 {
   glUseProgram( shader_program0 );
@@ -34,7 +28,7 @@ void draw(void)
 void display(void)
 {
   rkglReflectionRefraction( TEX_WIDTH, TEX_HEIGHT, &cam, &light, draw, zSphere3DCenter(&sphere) );
-  rkglCameraLoadViewframe( &cam );
+  rkglCameraPut( &cam );
   rkglLightPut( &light );
   glPushMatrix();
   rkglClear();
@@ -71,10 +65,9 @@ void init(void)
   zVec3D c, pc0, pc1, pc2;
   zOpticalInfo oi, oi2;
 
-  rkglSetDefaultCallbackParam( &cam, 0, 0, 0, 0, 0 );
-
-  rkglCameraSetBackground( &cam, 0.5, 1.0, 1.0 );
-  rkglCameraSetViewframe( &cam, 6, 0, 6, 0, -30, 0 );
+  rkglSetDefaultCamera( &cam, 45, 0.1, 200 );
+  rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
+  rkglCameraLookAt( &cam, 18, 0, 2, 0, 0, 0, 0, 0, 1 );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 1.0, 1.0, 1.0, 0.5, 0.5, 0.5, 0, 0, 0 );
@@ -175,7 +168,7 @@ int main(int argc, char *argv[])
 
   glutDisplayFunc( display );
   glutIdleFunc( rkglIdleFuncGLUT );
-  glutReshapeFunc( resize );
+  glutReshapeFunc( rkglReshapeFuncGLUT );
   glutKeyboardFunc( keyboard );
   glutMouseFunc( rkglMouseFuncGLUT );
   glutMotionFunc( rkglMouseDragFuncGLUT );
