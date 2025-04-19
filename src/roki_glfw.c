@@ -49,7 +49,7 @@ GLFWwindow *rkglWindowCreateAndOpenGLFW(int x, int y, int width, int height, con
 void rkglReshapeFuncGLFW(GLFWwindow* window, int w, int h)
 {
   rkglCameraSetViewport( rkgl_default_camera, 0, 0, w, h );
-  rkglDefaultCameraSetPerspective();
+  rkglCameraPerspective( rkgl_default_camera );
 }
 
 void rkglCharFuncGLFW(GLFWwindow* window, unsigned int codepoint)

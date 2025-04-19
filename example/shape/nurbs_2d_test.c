@@ -135,9 +135,10 @@ void init(void)
   int i;
 
   zRandInit();
-  rkglSetDefaultCamera( &cam, 45, 0.5, 100 );
   rkglCameraSetBackground( &cam, 0.0, 0.0, 0.0 );
   rkglCameraLookAt( &cam, 5, 0, 1, 0, 0, 0, 0, 0, 1 );
+  rkglCameraFitPerspective( &cam, 45, 0.5, 100 );
+  rkglSetDefaultCamera( &cam );
 
   glEnable( GL_LIGHTING );
   glLightModeli( GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE );

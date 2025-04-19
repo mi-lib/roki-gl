@@ -74,7 +74,7 @@ void init(void)
   rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
   rkglLightMove( &light, 1, 0, 10 );
 
-  rkglSetDefaultCamera( &cam, 0, 0, 0 ); /* parameters are unused. */
+  rkglSetDefaultCamera( &cam );
   rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
   camera_home();
 

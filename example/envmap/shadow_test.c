@@ -32,9 +32,10 @@ void init(void)
   zBox3D box3d;
   zVec3D c1, c2;
 
-  rkglSetDefaultCamera( &cam, 30.0, 1, 40 );
   rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
   rkglCameraSetViewframe( &cam, 15, 0, 6, 0, -30, 0 );
+  rkglCameraFitPerspective( &cam, 30.0, 1, 40 );
+  rkglSetDefaultCamera( &cam );
   rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
   rkglLightMove( &light, 3, 6, 20 );
   rkglShadowInit( &shadow, TEXWIDTH, TEXHEIGHT, 6.0, 0.2, 0 );

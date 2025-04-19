@@ -488,7 +488,8 @@ void rk_penInit(void)
     vv_near = 1;
     vv_far = 200;
   }
-  rkglSetDefaultCamera( &cam, vv_fovy, vv_near, vv_far );
+  rkglCameraFitPerspective( &cam, vv_fovy, vv_near, vv_far );
+  rkglSetDefaultCamera( &cam );
   rkglSetKeyDelta( 0.02, 1.0 );
 
   glEnable( GL_LIGHTING );

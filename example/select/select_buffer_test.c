@@ -78,9 +78,10 @@ void keyboard(unsigned char key, int x, int y)
 
 void init(void)
 {
-  rkglSetDefaultCamera( &cam, 30.0, 1, 20 );
   rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
   rkglCameraLookAt( &cam, 5.0, 0.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 );
+  rkglCameraFitPerspective( &cam, 30.0, 1, 20 );
+  rkglSetDefaultCamera( &cam );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.5, 0.5, 0.5, 1, 1, 1, 0, 0, 0 );

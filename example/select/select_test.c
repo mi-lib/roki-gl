@@ -84,11 +84,12 @@ void init(void)
   GLfloat color[4];
   int i;
 
-  rkglSetDefaultCamera( &cam, 30.0, 1, 100 );
   rkglCameraSetBackground( &cam, 1.0, 1.0, 1.0 );
   rkglCameraLookAt( &cam, 5.0, 4.0, 5.0, 0.4, 0.0, 0.0, 0.0, 1.0, 0.0 );
+  rkglCameraFitPerspective( &cam, 30.0, 1, 100 );
+  rkglSetDefaultCamera( &cam );
 
-  glEnable(GL_LIGHTING);
+  glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
   rkglLightMove( &light, 4.0, 8.0, 6.0 );
 

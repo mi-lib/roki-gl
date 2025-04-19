@@ -33,7 +33,7 @@ int rkglWindowCreateGLUT(int x, int y, int w, int h, const char *title)
 void rkglReshapeFuncGLUT(int w, int h)
 {
   rkglCameraSetViewport( rkgl_default_camera, 0, 0, w, h );
-  rkglDefaultCameraSetPerspective();
+  rkglCameraPerspective( rkgl_default_camera );
 }
 
 void rkglIdleFuncGLUT(void)

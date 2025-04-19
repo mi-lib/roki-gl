@@ -62,9 +62,10 @@ void init(void)
 {
   zVec3D c1, c2;
 
-  rkglSetDefaultCamera( &cam, 90, 1, 100 );
   rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
   rkglCameraSetViewframe( &cam, 10, 0, 0, 0, 0, 0 );
+  rkglCameraFitPerspective( &cam, 90, 1, 100 );
+  rkglSetDefaultCamera( &cam );
   glLineWidth( 2 );
 
   glEnable( GL_LIGHTING );

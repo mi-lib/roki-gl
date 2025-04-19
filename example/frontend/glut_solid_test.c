@@ -79,9 +79,10 @@ void display(void)
 
 void init()
 {
-  rkglSetDefaultCamera( &cam, 30.0, 1, 20 );
   rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
   rkglCameraSetViewframe( &cam, 10, 0, 0, 0, 0, 0 );
+  rkglCameraFitPerspective( &cam, 30.0, 1, 20 );
+  rkglSetDefaultCamera( &cam );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );

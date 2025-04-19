@@ -9,9 +9,10 @@ zTexture bump;
 
 static void init(void)
 {
-  rkglSetDefaultCamera( &cam, 30.0, 1, 100 );
   rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
   rkglCameraLookAt( &cam, 6, 0, 3, 0, 0, 0, 0, 0, 1 );
+  rkglCameraFitPerspective( &cam, 30.0, 1, 100 );
+  rkglSetDefaultCamera( &cam );
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.5, 0.5, 0.5, 1, 1, 1, 0, 0, 0 );
   rkglLightMove( &light, 20, 0, 10 );

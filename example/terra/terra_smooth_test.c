@@ -65,9 +65,10 @@ void keyboard(unsigned char key, int x, int y)
 void init()
 {
   zRandInit();
-  rkglSetDefaultCamera( &cam, 30, 1, 30 );
   rkglCameraSetBackground( &cam, 0.8, 0.8, 0.8 );
   rkglCameraLookAt( &cam, 5, 0, 5, 0, 0, 0, 0, 0, 1 );
+  rkglCameraFitPerspective( &cam, 30, 1, 30 );
+  rkglSetDefaultCamera( &cam );
 
   glEnable( GL_LIGHTING );
   glLightModeli( GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE );

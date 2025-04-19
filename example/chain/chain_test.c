@@ -21,12 +21,6 @@ void display(void)
   glutSwapBuffers();
 }
 
-void resize(int w, int h)
-{
-  rkglCameraSetViewport( &cam, 0, 0, w, h );
-  rkglCameraScaleFrustumHeight( &cam, 1.0/1000, 0.5, 10 );
-}
-
 #define toggle_disptype( gc, type ) do{\
   if( (gc)->attr.disptype & (type) )\
     (gc)->attr.disptype &= ~(type);\
@@ -116,14 +110,10 @@ void init(void)
 {
   rkglChainAttr attr;
 
-#if 0
-  rkglSetDefaultCallbackParam( &cam, 1.0, 1.0, 20.0, 1.0, 1.0 );
-#else
-  rkglSetDefaultCamera( &cam, 30.0, 1.0, 20.0 );
-#endif
-
   rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
   rkglCameraSetViewframe( &cam, 1.0, 1.0, 1.0, 45, -30, 0 );
+  rkglCameraFitPerspective( &cam, 30.0, 1.0, 20.0 );
+  rkglSetDefaultCamera( &cam );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
@@ -140,9 +130,9 @@ int main(int argc, char *argv[])
   rkglWindowCreateGLUT( 0, 0, 480, 480, argv[0] );
 
   glutDisplayFunc( display );
-  glutReshapeFunc( resize );
   glutKeyboardFunc( keyboard );
   glutSpecialFunc( rkglSpecialFuncGLUT );
+  glutReshapeFunc( rkglReshapeFuncGLUT );
   glutIdleFunc( rkglIdleFuncGLUT );
   init();
   glutMainLoop();

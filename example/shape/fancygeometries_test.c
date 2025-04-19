@@ -31,9 +31,10 @@ void init(void)
   GLfloat rgba_red[4] = { 1.0, 0.0, 0.0, 1.0 };
   zOpticalInfo red, white, yellow;
 
-  rkglSetDefaultCamera( &cam, 30, 1, 100 );
   rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
   rkglCameraLookAt( &cam, 20, 0, 5, 0, 0, 0, 0, 0, 1 );
+  rkglCameraFitPerspective( &cam, 30, 1, 100 );
+  rkglSetDefaultCamera( &cam );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );

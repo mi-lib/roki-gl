@@ -91,8 +91,6 @@ static rkglLight light;
 static rkglShadow shadow;
 static void (* shadow_draw_func)(rkglShadow*,rkglCamera*,rkglLight*,void (*)(void));
 
-static bool from_light = false;
-
 static zxWindow win;
 static Window glwin;
 
@@ -538,10 +536,11 @@ void rkAnimInit(void)
   zRGBDecodeStr( &rgb, opt[OPT_BG].arg );
   rkglCameraSetBackground( &cam, rgb.r, rgb.g, rgb.b );
   rkglCameraSetViewport( &cam, 0, 0, atoi(opt[OPT_WIDTH].arg), atoi(opt[OPT_HEIGHT].arg) );
+  rkglCameraFitPerspective( &cam, 30.0, 1.0, 200 );
   rkglCameraSetViewframe( &cam,
     atof(opt[OPT_OX].arg), atof(opt[OPT_OY].arg), atof(opt[OPT_OZ].arg),
     atof(opt[OPT_PAN].arg), atof(opt[OPT_TILT].arg), atof(opt[OPT_ROLL].arg) );
-  rkglSetDefaultCamera( &cam, 30.0, 1.0, 200 );
+  rkglSetDefaultCamera( &cam );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.3, 0.3, 0.3, 1.0, 1.0, 1.0, 0, 0, 0 );
@@ -611,32 +610,13 @@ void rkAnimReshape(void)
   }
   zxGetGeometry( glwin, &reg );
   rkglCameraSetViewport( &cam, 0, 0, reg.width, reg.height );
-  if( from_light ){
-    double d, r;
-    rkglResetViewvolume();
-    d = sqrt( zSqr(light.pos[0]) + zSqr(light.pos[1]) + zSqr(light.pos[2]) );
-    r = atof( opt[OPT_SHADOW_AREA].arg );
-    rkglCameraSetPerspective( &cam, 2*zRad2Deg(asin(r/d)), 1.0, d > r ? d-r : d*0.1, d+r );
-  } else{
-    rkglDefaultCameraSetPerspective();
-  }
+  rkglCameraPerspective( &cam );
 }
 
 int rkAnimKeyPress(void)
 {
   zxModkeyOn( zxKeySymbol() );
   switch( zxKeySymbol() ){
-  case XK_l: case XK_L: /* toggle viewpoint to light/camera */
-    if( ( from_light = 1 - from_light ) ){
-      rkglCameraLookAt( &cam, light.pos[0], light.pos[1], light.pos[2], 0, 0, 0, -1, 0, 1 );
-    } else{
-      rkglCameraSetViewframe( &cam,
-        atof(opt[OPT_OX].arg), atof(opt[OPT_OY].arg), atof(opt[OPT_OZ].arg),
-        atof(opt[OPT_PAN].arg), atof(opt[OPT_TILT].arg), atof(opt[OPT_ROLL].arg) );
-    }
-    rkAnimReshape();
-    rkAnimDisplay();
-    break;
   case XK_p: case XK_P: case XK_space:
     pa.is_running ? liwPActionStop( &pa ) : liwPActionStart( &pa );  break;
   case XK_f: case XK_F: rkAnimForward( 0 );   break;

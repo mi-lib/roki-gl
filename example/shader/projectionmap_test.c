@@ -55,15 +55,15 @@ void init(void)
   zVec3D c, pc0, pc1, pc2;
   zOpticalInfo oi, oi2;
 
-  rkglSetDefaultCamera( &cam, 90, 1, 100 );
-  rkglCameraSetBackground( &cam, 0.5, 1.0, 1.0 );
-
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0, 0, 0 );
   rkglLightMove( &light, 0, 0, 12 );
   rkglLightSetAttenuationConst( &light, 1.0 );
 
+  rkglCameraSetBackground( &cam, 0.5, 1.0, 1.0 );
   rkglCameraLookAt( &cam, light.pos[0], light.pos[1], light.pos[2], 0, 0, 0, -1, 0, 0 );
+  rkglCameraFitPerspective( &cam, 90.0, 1, 100 );
+  rkglSetDefaultCamera( &cam );
 
   room_id = rkglBeginList();
   zOpticalInfoCreateSimple( &oi2, 1.0, 1.0, 1.0, NULL );

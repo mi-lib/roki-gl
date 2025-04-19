@@ -189,7 +189,8 @@ void rk_seqInit(void)
   rkglCameraSetViewframe( &cam,
     atof(opt[OPT_OX].arg), atof(opt[OPT_OY].arg), atof(opt[OPT_OZ].arg),
     atof(opt[OPT_PAN].arg), atof(opt[OPT_TILT].arg), atof(opt[OPT_ROLL].arg) );
-  rkglSetDefaultCamera( &cam, 30.0, 1.0, 200 );
+  rkglCameraFitPerspective( &cam, 30.0, 1.0, 200 );
+  rkglSetDefaultCamera( &cam );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.5, 0.5, 0.5, 0.8, 0.8, 0.8, 0, 0, 0 );
@@ -255,7 +256,7 @@ void rk_seqReshape(void)
 
   zxGetGeometry( win, &reg );
   rkglCameraSetViewport( &cam, 0, 0, reg.width, reg.height );
-  rkglDefaultCameraSetPerspective();
+  rkglCameraPerspective( &cam );
 }
 
 int rk_seqKeyPress(void)

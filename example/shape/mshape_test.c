@@ -24,7 +24,8 @@ void init(void)
 {
   rkglCameraSetBackground( &cam, 0.6, 0.6, 0.6 );
   rkglCameraSetViewframe( &cam, 1, 0, 0.7, 0, -30, 0 );
-  rkglSetDefaultCamera( &cam, 30, 0.1, 10.0 );
+  rkglCameraFitPerspective( &cam, 30, 0.1, 10.0 );
+  rkglSetDefaultCamera( &cam );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.4, 0.4, 0.4, 1, 1, 1, 0, 0, 0 );

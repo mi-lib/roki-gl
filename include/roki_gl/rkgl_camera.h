@@ -8,7 +8,6 @@
 #define __RKGL_CAMERA_H__
 
 #include <roki_gl/rkgl_misc.h>
-#include <zeo/zeo.h>
 
 __BEGIN_DECLS
 
@@ -18,8 +17,13 @@ __BEGIN_DECLS
 ZDEF_STRUCT( __ROKI_GL_EXPORT, rkglCamera ){
   GLclampf background[4];  /*! \brief background color */
   GLint viewport[4];       /*! \brief viewport */
-  GLdouble viewvolume[16]; /*! \brief view volume */
+  double fovy;             /*! \brief field of view in y-direction */
+  double near;             /*! \brief z-near of the viewvolume */
+  double far;              /*! \brief z-far of the viewvolume */
   zFrame3D viewframe;      /*! \brief view frame */
+  /*! \cond */
+  GLdouble _viewvolume[16]; /* view volume */
+  /*! \endcond */
 };
 
 /* background color */
@@ -63,7 +67,7 @@ __ROKI_GL_EXPORT void rkglCameraLoadViewvolume(rkglCamera *c);
 /*! \brief get and store the current viewvolume to a camera. */
 __ROKI_GL_EXPORT void rkglCameraGetViewvolume(rkglCamera *c);
 /*! \brief copy viewvolume of a camera to another. */
-#define rkglCameraCopyViewvolume(src,dest) memcpy( (dest)->viewvolume, (src)->viewvolume, sizeof(GLdouble)*16 )
+__ROKI_GL_EXPORT void rkglCameraCopyViewvolume(rkglCamera *src, rkglCamera *dest);
 
 /*! \brief set viewvolume of a camera that produces a parallel projection. */
 __ROKI_GL_EXPORT void rkglCameraSetOrtho(rkglCamera *c, GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near, GLdouble far);
@@ -83,8 +87,10 @@ __ROKI_GL_EXPORT void rkglCameraScaleOrthoHeight(rkglCamera *c, double scale, GL
 __ROKI_GL_EXPORT void rkglCameraScaleFrustumHeight(rkglCamera *c, double scale, GLdouble near, GLdouble far);
 /*! \brief set viewvolume of a camera that produces perspective projection from field of view and aspect ratio. */
 __ROKI_GL_EXPORT void rkglCameraSetPerspective(rkglCamera *c, GLdouble fovy, GLdouble aspect, GLdouble near, GLdouble far);
-/*! \brief fit viewvolume of a camera that produces perspective projection to viewport. */
-__ROKI_GL_EXPORT void rkglCameraFitFrustumToViewport(rkglCamera *cam, int w, int h, double width, double near, double far);
+/*! \brief set viewvolume of a camera that produes perspective projection from field of view, where aspect ratio is automatically computed from the current viewport. */
+#define rkglCameraFitPerspective(camera,fovy,near,far) rkglCameraSetPerspective( camera, fovy, rkglCameraViewportAspectRatio(camera), near, far )
+
+#define rkglCameraPerspective(camera) rkglCameraFitPerspective( camera, (camera)->fovy, (camera)->near, (camera)->far )
 
 /* camera angle */
 
@@ -125,27 +131,63 @@ __ROKI_GL_EXPORT void rkglCameraGazeAndRotate(rkglCamera *camera, double centerx
 #define rkglCameraPanLeft(camera,a)   rkglCameraRotate( camera, (a), 0, 0, 1 )
 #define rkglCameraPanRight(camera,a)  rkglCameraRotate( camera, (a), 0, 0,-1 )
 
+/* camera */
+
+/*! \brief initialize a camera. */
+__ROKI_GL_EXPORT rkglCamera *rkglCameraInit(rkglCamera *camera);
+
 /*! \brief copy properties of a camera to another. */
 __ROKI_GL_EXPORT rkglCamera *rkglCameraCopy(rkglCamera *src, rkglCamera *dest);
 
 /*! \brief copy properties of the default camera to another. */
 #define rkglCameraCopyDefault(dest) rkglCameraCopy( NULL, dest )
 
-/*
-void rkglCameraFRead(FILE *fp, rkglCamera *cam);
-*/
-
-/* default camera parameters */
+/* default camera */
 
 __ROKI_GL_EXPORT rkglCamera *rkgl_default_camera;
 
-__ROKI_GL_EXPORT double rkgl_default_vv_fovy;
-__ROKI_GL_EXPORT double rkgl_default_vv_near;
-__ROKI_GL_EXPORT double rkgl_default_vv_far;
+#define rkglSetDefaultCamera(camera) ( rkgl_default_camera = (camera) )
 
-__ROKI_GL_EXPORT void rkglSetDefaultCamera(rkglCamera *camera, double fovy, double near, double far);
+#define RKGL_DEFAULT_VV_FOVY  30.0
+#define RKGL_DEFAULT_VV_NEAR   1.0
+#define RKGL_DEFAULT_VV_FAR  200.0
 
-#define rkglDefaultCameraSetPerspective() rkglCameraSetPerspective( rkgl_default_camera, rkgl_default_vv_fovy, rkglCameraViewportAspectRatio(rkgl_default_camera), rkgl_default_vv_near, rkgl_default_vv_far )
+/* parse ZTK format */
+
+#define ZTK_TAG_ROKIGL_CAMERA            "roki-gl::camera"
+
+#define ZTK_KEY_ROKIGL_CAMERA_BACKGROUND "background"
+#define ZTK_KEY_ROKIGL_CAMERA_VIEWPORT   "viewport"
+
+#define ZTK_KEY_ROKIGL_CAMERA_FOVY       "fovy"
+#define ZTK_KEY_ROKIGL_CAMERA_NEAR       "near"
+#define ZTK_KEY_ROKIGL_CAMERA_FAR        "far"
+
+#define ZTK_KEY_ROKIGL_CAMERA_POS        "pos"
+#define ZTK_KEY_ROKIGL_CAMERA_ATT        "att"
+#define ZTK_KEY_ROKIGL_CAMERA_ROT        "rot"
+#define ZTK_KEY_ROKIGL_CAMERA_FRAME      "frame"
+
+/*! \brief read a 3D shape from a ZTK format processor. */
+__ROKI_GL_EXPORT rkglCamera *rkglCameraFromZTK(rkglCamera *camera, ZTK *ztk);
+
+/*! \brief print out a camera to a file. */
+__ROKI_GL_EXPORT void rkglCameraFPrintZTK(FILE *fp, rkglCamera *camera);
+
+/* camera array */
+zArrayClass( rkglCameraArray, rkglCamera );
+
+/*! \brief allocate an array of cameras. */
+__ROKI_GL_EXPORT bool rkglCameraArrayAlloc(rkglCameraArray *cameraarray, int num);
+
+/*! \brief read properties of cameras from a ZTK format processor. */
+__ROKI_GL_EXPORT bool rkglCameraArrayFromZTK(rkglCameraArray *cameraarray, ZTK *ztk);
+/*! \brief print properties of cameras out to a file. */
+__ROKI_GL_EXPORT void rkglCameraArrayFPrintZTK(FILE *fp, rkglCameraArray *cameraarray);
+/*! \brief read multiple cameras from a ZTK format file. */
+__ROKI_GL_EXPORT rkglCameraArray *rkglCameraArrayReadZTK(rkglCameraArray *cameraarray, const char filename[]);
+/*! \brief write multiple cameras to a ZTK format file. */
+__ROKI_GL_EXPORT bool rkglCameraArrayWriteZTK(rkglCameraArray *cameraarray, const char filename[]);
 
 __END_DECLS
 

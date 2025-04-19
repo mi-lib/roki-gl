@@ -49,9 +49,10 @@ void init(void)
   zOpticalInfo oi1, oi2;
   zRGB rgb1, rgb2;
 
-  rkglSetDefaultCamera( &cam, 30, 1, 200 );
   rkglCameraSetBackground( &cam, 0.3, 0.3, 0.3 );
   rkglCameraLookAt( &cam, 15, 2, 3, 0, 2, 0, 0, 0, 1 );
+  rkglCameraFitPerspective( &cam, 30, 1, 200 );
+  rkglSetDefaultCamera( &cam );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );

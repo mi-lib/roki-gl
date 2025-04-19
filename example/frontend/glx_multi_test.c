@@ -75,7 +75,6 @@ void glwin_resize(Window win, int x, int y, int w, int h)
 
 void resize(zxWindow *win)
 {
-  double x, y;
   int w, h;
 
   w = zxWindowWidth(win) / 2 - 40;
@@ -85,12 +84,10 @@ void resize(zxWindow *win)
   draw_button( win );
 
   rkglCameraSetViewport( &cam[0], 0, 0, w, h );
-  y = ( x = 0.5 ) / rkglCameraViewportAspectRatio(&cam[0]);
-  rkglCameraSetFrustum( &cam[0], -x, x, -y, y, 1, 20 );
+  rkglCameraFitPerspective( &cam[0], 60, 1, 20 );
 
   rkglCameraSetViewport( &cam[1], 0, 0, w, h );
-  y = x / rkglCameraViewportAspectRatio(&cam[1]);
-  rkglCameraSetFrustum( &cam[1], -x, x, -y, y, 1, 20 );
+  rkglCameraFitPerspective( &cam[1], 60, 1, 20 );
 }
 
 GLvoid draw(Window win, rkglCamera *cam, rkglLight *light)

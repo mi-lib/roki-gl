@@ -15,7 +15,7 @@ int rkglProject(rkglCamera *c, zVec3D *p, int *x, int *y)
   GLdouble viewframe[16];
 
   rkglGetViewframe( viewframe );
-  ret = gluProject( p->e[zX], p->e[zY], p->e[zZ], viewframe, c->viewvolume, c->viewport, &_x, &_y, &_z );
+  ret = gluProject( p->e[zX], p->e[zY], p->e[zZ], viewframe, c->_viewvolume, c->viewport, &_x, &_y, &_z );
   *x = _x;
   *y = c->viewport[3] - _y;
   return ret;
@@ -27,7 +27,7 @@ int rkglUnproject(rkglCamera *c, int x, int y, double depth, zVec3D *p)
 
   zVec3DZero( p );
   rkglGetViewframe( viewframe );
-  return gluUnProject( x, c->viewport[3]-y, depth, viewframe, c->viewvolume, c->viewport,
+  return gluUnProject( x, c->viewport[3]-y, depth, viewframe, c->_viewvolume, c->viewport,
     &p->e[zX], &p->e[zY], &p->e[zZ] );
 }
 
@@ -80,7 +80,7 @@ int rkglSelect(rkglSelectionBuffer *sb, rkglCamera *cam, void (* scene)(void), i
   glPushMatrix();
   glLoadIdentity();
   gluPickMatrix( x, cam->viewport[3]-y, w, h, cam->viewport );
-  glMultMatrixd( cam->viewvolume );
+  glMultMatrixd( cam->_viewvolume );
   rkglCameraPut( cam );
   scene();
   glMatrixMode( GL_PROJECTION );
