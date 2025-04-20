@@ -43,6 +43,7 @@ GLvoid init(GLsizei width, GLsizei height)
 {
   enter();
 
+  rkglCameraInit( &cam );
   rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
   rkglCameraSetViewport( &cam, 0, 0, width, height );
   rkglCameraFitPerspective( &cam, 45, 3, 10 );

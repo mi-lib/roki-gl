@@ -103,6 +103,7 @@ void display(void)
 
 void init(void)
 {
+  rkglCameraInit( &cam );
   rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
   rkglCameraLookAt( &cam, 12, 0, 5, 0, 0, 0, 0, 0, 1 );
   rkglCameraFitPerspective( &cam, 30.0, 2, 60 );

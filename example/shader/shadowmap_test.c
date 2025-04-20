@@ -53,6 +53,7 @@ void init(void)
   zVec3D pc0, pc1, pc2;
   zOpticalInfo oi, oi2;
 
+  rkglCameraInit( &cam );
   rkglCameraSetBackground( &cam, 0.5, 1.0, 1.0 );
   rkglCameraFitPerspective( &cam, 90, 1, 100 );
   rkglSetDefaultCamera( &cam );

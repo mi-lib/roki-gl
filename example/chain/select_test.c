@@ -92,12 +92,13 @@ void keyboard(unsigned char key, int x, int y)
 
 void init(void)
 {
+  rkglCameraInit( &cam );
   rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
   rkglCameraSetViewframe( &cam, 1, 1, 1, 45, -30, 0 );
   rkglCameraFitPerspective( &cam, 30.0, 1.0, 20.0 );
   rkglSetDefaultCamera( &cam );
 
-  glEnable(GL_LIGHTING);
+  glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
   rkglLightMove( &light, 1, 3, 6 );
 

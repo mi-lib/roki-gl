@@ -183,6 +183,7 @@ void rk_seqInit(void)
   rkglWindowOpenGLX( win );
 
   zRGBDecodeStr( &rgb, opt[OPT_BG].arg );
+  rkglCameraInit( &cam );
   rkglCameraSetBackground( &cam, rgb.r, rgb.g, rgb.b );
   rkglCameraSetViewport( &cam, 0, 0,
     atoi(opt[OPT_WIDTH].arg), atoi(opt[OPT_HEIGHT].arg) );

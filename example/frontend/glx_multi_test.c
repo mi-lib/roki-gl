@@ -46,10 +46,12 @@ GLvoid init(int width, int height)
 {
   obj = enter();
 
+  rkglCameraInit( &cam[0] );
   rkglCameraSetBackground( &cam[0], 0.1, 0.1, 0.1 );
   rkglCameraSetViewport( &cam[0], 0, 0, width, height );
   rkglCameraLookAt( &cam[0], 5, 0, 3, 0, 0, 0, 0, 0, 1 );
 
+  rkglCameraInit( &cam[1] );
   rkglCameraSetBackground( &cam[1], 0.1, 0.1, 0.1 );
   rkglCameraSetViewport( &cam[1], 0, 0, width, height );
   rkglCameraLookAt( &cam[1], 0, 5, 3, 0, 0, 0, 0, 0, 1 );

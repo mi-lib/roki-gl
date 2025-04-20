@@ -110,6 +110,7 @@ void init(void)
 {
   rkglChainAttr attr;
 
+  rkglCameraInit( &cam );
   rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
   rkglCameraSetViewframe( &cam, 1.0, 1.0, 1.0, 45, -30, 0 );
   rkglCameraFitPerspective( &cam, 30.0, 1.0, 20.0 );

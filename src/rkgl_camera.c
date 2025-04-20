@@ -188,6 +188,8 @@ void rkglCameraPut(rkglCamera *camera)
   glMatrixMode( GL_MODELVIEW );
   glLoadMatrixd( alignframe );
   rkglXformInv( &camera->viewframe );
+  if( camera->platform )
+    rkglXformInv( camera->platform );
 }
 
 /* set viewframe of a camera. */
@@ -233,6 +235,7 @@ rkglCamera *rkglCameraInit(rkglCamera *camera)
   zFrame3DIdent( &camera->viewframe );
   rkglResetViewvolume();
   rkglCameraGetViewvolume( camera );
+  rkglCameraSetPlatform( camera, NULL );
   return camera;
 }
 

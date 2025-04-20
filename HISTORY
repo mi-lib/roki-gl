@@ -1,3 +1,5 @@
+2025.04.20. Added rkglCameraSetPlatform, and modified rkglCameraInit and rkglCameraPut. [rkgl_camera, app, example]
+2025.04.20. Added member platform of rkglCamera. [rkgl_camera]
 2025.04.19. Added rkglCameraArrayFromZTK, rkglCameraArrayFPrintZTK, rkglCameraArrayReadZTK, and rkglCameraArrayWriteZTK. [rkgl_camera]
 2025.04.19. Added rkglCameraArray class and rkglCameraArrayAlloc. [rkgl_camera]
 2025.04.19. Added rkglCameraFromZTK and rkglCameraFPrintZTK that enable read/write of camera properties in ZTK format. [rkgl_camera]

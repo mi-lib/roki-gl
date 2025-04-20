@@ -23,6 +23,7 @@ ZDEF_STRUCT( __ROKI_GL_EXPORT, rkglCamera ){
   zFrame3D viewframe;      /*! \brief view frame */
   /*! \cond */
   GLdouble _viewvolume[16]; /* view volume */
+  zFrame3D *platform;      /* frame of a platform */
   /*! \endcond */
 };
 
@@ -141,6 +142,9 @@ __ROKI_GL_EXPORT rkglCamera *rkglCameraCopy(rkglCamera *src, rkglCamera *dest);
 
 /*! \brief copy properties of the default camera to another. */
 #define rkglCameraCopyDefault(dest) rkglCameraCopy( NULL, dest )
+
+/*! \brief set a platform of a camera. */
+#define rkglCameraSetPlatform(camera,_platform) ( (camera)->platform = _platform )
 
 /* default camera */
 

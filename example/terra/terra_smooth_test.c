@@ -62,9 +62,10 @@ void keyboard(unsigned char key, int x, int y)
   }
 }
 
-void init()
+void init(void)
 {
   zRandInit();
+  rkglCameraInit( &cam );
   rkglCameraSetBackground( &cam, 0.8, 0.8, 0.8 );
   rkglCameraLookAt( &cam, 5, 0, 5, 0, 0, 0, 0, 0, 1 );
   rkglCameraFitPerspective( &cam, 30, 1, 30 );

@@ -60,6 +60,7 @@ void init(void)
   rkglLightMove( &light, 0, 0, 12 );
   rkglLightSetAttenuationConst( &light, 1.0 );
 
+  rkglCameraInit( &cam );
   rkglCameraSetBackground( &cam, 0.5, 1.0, 1.0 );
   rkglCameraLookAt( &cam, light.pos[0], light.pos[1], light.pos[2], 0, 0, 0, -1, 0, 0 );
   rkglCameraFitPerspective( &cam, 90.0, 1, 100 );

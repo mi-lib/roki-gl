@@ -29,6 +29,7 @@ void rkglReflectionRefraction(int width, int height, rkglCamera *cam, rkglLight 
   };
   int i;
 
+  rkglCameraSetPlatform( &view, NULL );
   rkglCameraCopyBackground( cam, &view );
   for( i=0; i<6; i++ ){
     rkglClear();

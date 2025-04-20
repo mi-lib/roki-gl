@@ -135,6 +135,7 @@ void init(void)
   int i;
 
   zRandInit();
+  rkglCameraInit( &cam );
   rkglCameraSetBackground( &cam, 0.0, 0.0, 0.0 );
   rkglCameraLookAt( &cam, 5, 0, 1, 0, 0, 0, 0, 0, 1 );
   rkglCameraFitPerspective( &cam, 45, 0.5, 100 );

@@ -78,6 +78,7 @@ void keyboard(unsigned char key, int x, int y)
 void init(void)
 {
   glCullFace( GL_FRONT );
+  rkglCameraInit( &cam );
   rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
   eyex = 6; eyey = 0; eyez = 3;
   centerx = centery = centerz = 0;

@@ -84,6 +84,7 @@ void init(void)
   GLfloat color[4];
   int i;
 
+  rkglCameraInit( &cam );
   rkglCameraSetBackground( &cam, 1.0, 1.0, 1.0 );
   rkglCameraLookAt( &cam, 5.0, 4.0, 5.0, 0.4, 0.0, 0.0, 0.0, 1.0, 0.0 );
   rkglCameraFitPerspective( &cam, 30.0, 1, 100 );

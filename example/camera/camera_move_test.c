@@ -23,10 +23,9 @@ void display(void)
   static int i = 0;
 
   rkglLightPut( &light );
-  rkglCameraPut( &cam );
   if( move )
     move_platform( 0.001 * zPIx2 * i++ );
-  rkglXformInv( &platform );
+  rkglCameraPut( &cam );
   glPushMatrix();
   rkglClear();
   glCallList( obj_id );
@@ -74,8 +73,10 @@ void init(void)
   rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
   rkglLightMove( &light, 1, 0, 10 );
 
-  rkglSetDefaultCamera( &cam );
+  rkglCameraInit( &cam );
+  rkglCameraSetPlatform( &cam, &platform );
   rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
+  rkglSetDefaultCamera( &cam );
   camera_home();
 
   zOpticalInfoCreateSimple( &red, 1.0, 0, 0, NULL );

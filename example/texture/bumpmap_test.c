@@ -130,6 +130,7 @@ void display(void)
 
 void init(double depth)
 {
+  rkglCameraInit( &cam );
   rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
   rkglCameraLookAt( &cam, 15, 0, 3, 0, 0, 0, 0, 0, 1 );
   rkglCameraFitPerspective( &cam, 30.0, 2, 60 );

@@ -54,6 +54,7 @@ int main(int argc, char *argv[])
   glutKeyboardFunc( keyboard );
   glutIdleFunc( rkglIdleFuncGLUT );
   glCullFace( GL_FRONT );
+  rkglCameraInit( &cam );
   rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
   rkglCameraSetViewframe( &cam, 10, 0, 0, 0, 0, 0 );
   rkglCameraFitPerspective( &cam, 30.0, 1, 20 );

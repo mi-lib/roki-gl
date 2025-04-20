@@ -17,9 +17,7 @@ void display(void)
 {
   rkglLightPut( &light );
   rkglLightPut( &spotlight );
-
   rkglCameraPut( &cam );
-
   glPushMatrix();
   rkglClear();
 
@@ -61,6 +59,7 @@ void init(void)
   zCyl3D cylinder;
   zCone3D cone;
 
+  rkglCameraInit( &cam );
   rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
   rkglCameraLookAt( &cam, 15, 0, 5, 0, 0, 0, 0, 0, 1 );
   rkglCameraFitPerspective( &cam, 30, 1, 100 );

@@ -67,6 +67,7 @@ void make_mebious(void)
 
 void init(void)
 {
+  rkglCameraInit( &cam );
   rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
   rkglCameraLookAt( &cam, 2, 0, 1, 0, 0, 0, 0, 0, 1 );
   rkglCameraFitPerspective( &cam, 30, 1, 100 );

@@ -142,6 +142,7 @@ void motion(int x, int y)
 void init(void)
 {
   zRandInit();
+  rkglCameraInit( &cam );
   rkglCameraSetBackground( &cam, 0.0, 0.0, 0.0 );
   rkglCameraLookAt( &cam, 3, 0, 1, 0, 0, 0, 0, 0, 1 );
   rkglCameraFitPerspective( &cam, 45, 1, 20 );
