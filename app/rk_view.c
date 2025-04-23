@@ -89,7 +89,7 @@ int rk_viewReturnDir(char *cwd)
   return 0;
 }
 
-void rk_viewReadPH(zMShape3D *ms, const char *filename, char *sfx)
+void rk_viewReadPH(zMShape3D *ms, const char *filename, const char *sfx)
 {
   zMShape3DInit( ms );
   zArrayAlloc( &ms->optic, zOpticalInfo, 1 );
@@ -124,7 +124,7 @@ void rk_viewReadModel(zStrAddrList *modellist)
   zStrListCell *cp;
   zVec3DList pointlist_all;
   zVec3DData pointdata, normaldata, pointdata_all;
-  char *sfx;
+  const char *sfx;
   double scale;
   zMShape3D ms;
   char dirname[BUFSIZ], filename[BUFSIZ], cwd[BUFSIZ];

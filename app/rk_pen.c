@@ -534,7 +534,7 @@ bool rk_penCommandArgs(int argc, char *argv[])
 /**********************************************************/
 
 struct{
-  char *msg;
+  const char *msg;
   void (* action)(void);
 } menu[] = {
   { "show link list", rk_penShowLinkList },
@@ -580,7 +580,7 @@ int main(int argc, char *argv[])
 
   rkglInitGLUT( &argc, argv );
   rk_penCommandArgs( argc, argv+1 );
-  pthread_create( &mainloop, NULL, (void *)rk_penOperate, (void *)NULL );
+  pthread_create( &mainloop, NULL, (void *(*)(void*))rk_penOperate, (void *)NULL );
   glutMainLoop();
   return 0;
 }

@@ -12,9 +12,9 @@
 __BEGIN_DECLS
 
 /*! \struct rkglCamera
- *! \brief camera class
+ *! \brief camera class.
  */
-ZDEF_STRUCT( __ROKI_GL_EXPORT, rkglCamera ){
+ZDEF_STRUCT( __ROKI_GL_CLASS_EXPORT, rkglCamera ){
   GLclampf background[4];  /*! \brief background color */
   GLint viewport[4];       /*! \brief viewport */
   double fovy;             /*! \brief field of view in y-direction */

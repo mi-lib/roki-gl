@@ -390,9 +390,7 @@ void rkAnimRewind(int sig)
 
 /**********************************************************/
 
-static zVec3D *_zMat3DToPTR(zMat3D *m, zVec3D *angle);
-static void _rkAnimCamOptWrite(char *name, double val);
-zVec3D *_zMat3DToPTR(zMat3D *m, zVec3D *angle)
+static zVec3D *_zMat3DToPTR(zMat3D *m, zVec3D *angle)
 {
   double azim, ca, sa;
 
@@ -404,7 +402,7 @@ zVec3D *_zMat3DToPTR(zMat3D *m, zVec3D *angle)
   return angle;
 }
 
-void _rkAnimCamOptWrite(char *name, double val)
+static void _rkAnimCamOptWrite(const char *name, double val)
 {
   printf( "-%s %s%f ", name, val<0.0?"-- ":"", val );
 }

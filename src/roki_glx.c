@@ -173,7 +173,8 @@ void rkglMouseDragFuncGLX(rkglCamera *cam)
 static void _rkglReadBufferImage(zxImage *img, GLuint type, int bpp, int os1, int os2)
 {
   GLint view[4];
-  int i, j, k;
+  int i;
+  uint j, k;
   ubyte *buf;
 
   glGetIntegerv( GL_VIEWPORT, view );
