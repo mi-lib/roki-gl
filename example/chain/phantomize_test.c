@@ -91,7 +91,7 @@ void resize(GLFWwindow* window, int w, int h)
 
 void init(void)
 {
-  rkglCameraInit( &cam );
+  rkglCameraInit( &g_cam );
   rkglCameraSetBackground( &g_cam, 0.5, 0.5, 0.5 );
   rkglCameraSetViewframe( &g_cam, 1, 1, 1, 45.0, -30.0, 0.0 );
   rkglCameraFitPerspective( &g_cam, 30.0, 1.0, 20.0 );

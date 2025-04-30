@@ -67,7 +67,7 @@ void keyboard(unsigned char key, int x, int y)
 
 void init(void)
 {
-  rkglCameraInit( &cam );
+  rkglCameraInit( &g_cam );
   rkglCameraSetBackground( &g_cam, 0.5, 0.5, 0.5 );
   rkglCameraSetViewframe( &g_cam, 10, 0, 2, 0, -20, 0 );
   rkglCameraFitPerspective( &g_cam, 30.0, 1, 100 );

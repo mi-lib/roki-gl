@@ -1,3 +1,6 @@
+2025.04.30. Debugged phantomize_test, select_framehandle_test, and glfw_test in example. [example]
+2025.04.29. Modified makefile to conform to new specification of zeda-makefile-gen. [all]
+2025.04.29. Modified makefile in example. [example]
 2025.04.24. Added const qualifier to the last argument of rk_viewReadPH, and modified rk_viewReadModel in rk_view. [app]
 2025.04.24. Modified cast of a thread function rk_penOperate for pthread_create in main in rk_pen. [app]
 2025.04.24. Added const qualifier to the member msg of the unnamed struct for rk_penOperate in rk_pen. [app]

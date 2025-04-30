@@ -359,9 +359,9 @@ static const ZTKPrp __ztk_prp_camera_viewframe[] = {
 rkglCamera *rkglCameraFromZTK(rkglCamera *camera, ZTK *ztk)
 {
   rkglCameraInit( camera );
-  if( !ZTKEvalKey( camera, NULL, ztk, __ztk_prp_camera_viewvolume ) ) return NULL;
-  if( !ZTKEvalKey( camera, NULL, ztk, __ztk_prp_camera_viewframe ) ) return NULL;
-  if( !ZTKEvalKey( camera, NULL, ztk, __ztk_prp_camera ) ) return NULL;
+  if( !_ZTKEvalKey( camera, NULL, ztk, __ztk_prp_camera_viewvolume ) ) return NULL;
+  if( !_ZTKEvalKey( camera, NULL, ztk, __ztk_prp_camera_viewframe ) ) return NULL;
+  if( !_ZTKEvalKey( camera, NULL, ztk, __ztk_prp_camera ) ) return NULL;
   rkglCameraPerspective( camera );
   return camera;
 }
@@ -370,9 +370,9 @@ rkglCamera *rkglCameraFromZTK(rkglCamera *camera, ZTK *ztk)
 void rkglCameraFPrintZTK(FILE *fp, rkglCamera *camera)
 {
   if( !camera ) return;
-  ZTKPrpKeyFPrint( fp, camera, __ztk_prp_camera );
-  ZTKPrpKeyFPrint( fp, camera, __ztk_prp_camera_viewvolume );
-  ZTKPrpKeyFPrint( fp, camera, __ztk_prp_camera_viewframe );
+  _ZTKPrpKeyFPrint( fp, camera, __ztk_prp_camera );
+  _ZTKPrpKeyFPrint( fp, camera, __ztk_prp_camera_viewvolume );
+  _ZTKPrpKeyFPrint( fp, camera, __ztk_prp_camera_viewframe );
   fprintf( fp, "\n" );
 }
 
@@ -407,7 +407,7 @@ bool rkglCameraArrayFromZTK(rkglCameraArray *cameraarray, ZTK *ztk)
 
   if( ( num = ZTKCountTag( ztk, ZTK_TAG_ROKIGL_CAMERA ) ) == 0 ) return true;
   if( !rkglCameraArrayAlloc( cameraarray, num ) ) return false;
-  ZTKEvalTag( cameraarray, NULL, ztk, __ztk_prp_cameraarray );
+  _ZTKEvalTag( cameraarray, NULL, ztk, __ztk_prp_cameraarray );
   return true;
 }
 
@@ -415,15 +415,15 @@ bool rkglCameraArrayFromZTK(rkglCameraArray *cameraarray, ZTK *ztk)
 void rkglCameraArrayFPrintZTK(FILE *fp, rkglCameraArray *cameraarray)
 {
   ZTKPrp *prp;
-  size_t size;
+  size_t prpnum;
 
-  if( !( prp = ZTKPrpDup( __ztk_prp_cameraarray ) ) ){
+  prpnum = _ZTKPrpNum( __ztk_prp_cameraarray );
+  if( !( prp = ZTKPrpDup( __ztk_prp_cameraarray, prpnum ) ) ){
     ZALLOCERROR();
     return;
   }
-  size = sizeof(__ztk_prp_cameraarray) / sizeof(ZTKPrp);
-  _ZTKPrpSetNum( prp, size, ZTK_TAG_ROKIGL_CAMERA, zArraySize(cameraarray) );
-  _ZTKPrpTagFPrint( fp, cameraarray, prp, size );
+  ZTKPrpSetNum( prp, prpnum, ZTK_TAG_ROKIGL_CAMERA, zArraySize(cameraarray) );
+  ZTKPrpTagFPrint( fp, cameraarray, prp, prpnum );
   free( prp );
 }
 
