@@ -103,9 +103,7 @@ void init(void)
 
   make_check_texture( &tex[0], 256, 256, 4 );
   rkglTextureReadFile( &tex[1], "../fig/lena_mini.jpg" );
-/*
   rkglTextureSetDecal();
-*/
 }
 
 int main(int argc, char *argv[])

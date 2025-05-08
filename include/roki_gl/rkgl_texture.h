@@ -82,7 +82,7 @@ __ROKI_GL_EXPORT GLint rkglTextureNewUnit(void);
   rkglTextureBind( (t) );\
 } while(0)
 
-/* frame buffer and render buffer for off-screan rendering */
+/* frame buffer and render buffer for off-screen rendering */
 
 __ROKI_GL_EXPORT GLuint rkglFramebufferAttachTexture(GLuint texid);
 __ROKI_GL_EXPORT GLuint rkglFramebufferAttachRenderbuffer(int width, int height);

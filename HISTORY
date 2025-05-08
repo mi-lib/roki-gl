@@ -1,3 +1,4 @@
+2025.05.08. Modified rkglTextureAssign to set default texture environment mode for GL_MODULATE by using rkglTextureSetModulate. [rkgl_texture]
 2025.04.30. Debugged phantomize_test, select_framehandle_test, and glfw_test in example. [example]
 2025.04.29. Modified makefile to conform to new specification of zeda-makefile-gen. [all]
 2025.04.29. Modified makefile in example. [example]

@@ -27,6 +27,7 @@ GLuint rkglTextureAssign(int width, int height, ubyte *buf)
   glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf );
   rkglTextureSetClamp();
   rkglTextureSetFilterLinear();
+  rkglTextureSetModulate();
   glBindTexture( GL_TEXTURE_2D, 0 );
   return id;
 }
