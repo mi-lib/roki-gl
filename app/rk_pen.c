@@ -64,7 +64,8 @@ rkglShadow shadow;
 
 void rk_penUsage(void)
 {
-  eprintf( "Usage: rk_pen <options>\n" );
+  eprintf( "Usage: rk_pen <options> [.ztk/.urdf file]\n" );
+  eprintf( "Usage: rk_pen -help\n" );
   eprintf( "<options>\n" );
   zOptionHelp( opt );
   exit( 0 );
@@ -525,6 +526,7 @@ bool rk_penCommandArgs(int argc, char *argv[])
     opt[OPT_MODELFILE].flag = true;
     opt[OPT_MODELFILE].arg  = modelfile;
   }
+  if( !opt[OPT_MODELFILE].flag )rk_penUsage();
   rkglWindowCreateGLUT( 0, 0, atoi(opt[OPT_WIDTH].arg), atoi(opt[OPT_HEIGHT].arg), RK_PEN_TITLE );
   rk_penInit();
   zStrAddrListDestroy( &arglist );
