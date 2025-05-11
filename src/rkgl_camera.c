@@ -58,39 +58,39 @@ void rkglCameraGetViewvolume(rkglCamera *c)
 void rkglCameraCopyViewvolume(rkglCamera *src, rkglCamera *dest)
 {
   dest->fovy = src->fovy;
-  dest->near = src->near;
-  dest->far = src->far;
+  dest->znear = src->znear;
+  dest->zfar = src->zfar;
   memcpy( dest->_viewvolume, src->_viewvolume, sizeof(GLdouble)*16 );
 }
 
 /* set viewvolume of a camera that produces a parallel projection. */
-void rkglCameraSetOrtho(rkglCamera *c, GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near, GLdouble far)
+void rkglCameraSetOrtho(rkglCamera *c, GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble znear, GLdouble zfar)
 {
   rkglResetViewvolume();
   c->fovy = 0;
-  glOrtho( left, right, bottom, top, ( c->near = near ), ( c->far = far ) );
+  glOrtho( left, right, bottom, top, ( c->znear = znear ), ( c->zfar = zfar ) );
   rkglCameraGetViewvolume( c );
 }
 
 /* set viewvolume of a camera that produces a perspective projection. */
-void rkglCameraSetFrustum(rkglCamera *c, GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near, GLdouble far)
+void rkglCameraSetFrustum(rkglCamera *c, GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble znear, GLdouble zfar)
 {
   rkglResetViewvolume();
-  c->fovy = 2 * atan2( fabs( 0.5 * ( left + right ) ), near );
-  glFrustum( left, right, bottom, top, ( c->near = near ), ( c->far = far ) );
+  c->fovy = 2 * atan2( fabs( 0.5 * ( left + right ) ), znear );
+  glFrustum( left, right, bottom, top, ( c->znear = znear ), ( c->zfar = zfar ) );
   rkglCameraGetViewvolume( c );
 }
 
 /* set viewvolume of a camera that produces a parallel projection centering a specified point. */
-void rkglCameraSetOrthoCenter(rkglCamera *c, GLdouble x, GLdouble y, GLdouble near, GLdouble far)
+void rkglCameraSetOrthoCenter(rkglCamera *c, GLdouble x, GLdouble y, GLdouble znear, GLdouble zfar)
 {
-  rkglCameraSetOrtho( c, -x, x, -y, y, near, far );
+  rkglCameraSetOrtho( c, -x, x, -y, y, znear, zfar );
 }
 
 /* set viewvolume of a camera that produces a perspective projection centering a specified point. */
-void rkglCameraSetFrustumCenter(rkglCamera *c, GLdouble x, GLdouble y, GLdouble near, GLdouble far)
+void rkglCameraSetFrustumCenter(rkglCamera *c, GLdouble x, GLdouble y, GLdouble znear, GLdouble zfar)
 {
-  rkglCameraSetFrustum( c, -x, x, -y, y, near, far );
+  rkglCameraSetFrustum( c, -x, x, -y, y, znear, zfar );
 }
 
 /* compute corner coordinates of viewplane of a camera that fit to width of the current viewport. */
@@ -118,46 +118,46 @@ static void _rkglCameraScaleViewvolumeHeight(rkglCamera *c, double scale, double
 }
 
 /* scale viewvolume of a camera that produces parallel projection as to fit width to that of viewport. */
-void rkglCameraScaleOrthoWidth(rkglCamera *c, double scale, GLdouble near, GLdouble far)
+void rkglCameraScaleOrthoWidth(rkglCamera *c, double scale, GLdouble znear, GLdouble zfar)
 {
   GLdouble x, y;
 
   _rkglCameraScaleViewvolumeWidth( c, scale, &x, &y );
-  rkglCameraSetOrthoCenter( c, x, y, near, far );
+  rkglCameraSetOrthoCenter( c, x, y, znear, zfar );
 }
 
 /* scale viewvolume of a camera that produces perspective projection as to fit width to that of viewport. */
-void rkglCameraScaleFrustumWidth(rkglCamera *c, double scale, GLdouble near, GLdouble far)
+void rkglCameraScaleFrustumWidth(rkglCamera *c, double scale, GLdouble znear, GLdouble zfar)
 {
   GLdouble x, y;
 
   _rkglCameraScaleViewvolumeWidth( c, scale, &x, &y );
-  rkglCameraSetFrustumCenter( c, x, y, near, far );
+  rkglCameraSetFrustumCenter( c, x, y, znear, zfar );
 }
 
 /* scale viewvolume of a camera that produces parallel projection as to fit height to that of viewport. */
-void rkglCameraScaleOrthoHeight(rkglCamera *c, double scale, GLdouble near, GLdouble far)
+void rkglCameraScaleOrthoHeight(rkglCamera *c, double scale, GLdouble znear, GLdouble zfar)
 {
   GLdouble x, y;
 
   _rkglCameraScaleViewvolumeHeight( c, scale, &x, &y );
-  rkglCameraSetOrthoCenter( c, x, y, near, far );
+  rkglCameraSetOrthoCenter( c, x, y, znear, zfar );
 }
 
 /* scale viewvolume of a camera that produces perspective projection as to fit height to that of viewport. */
-void rkglCameraScaleFrustumHeight(rkglCamera *c, double scale, GLdouble near, GLdouble far)
+void rkglCameraScaleFrustumHeight(rkglCamera *c, double scale, GLdouble znear, GLdouble zfar)
 {
   GLdouble x, y;
 
   _rkglCameraScaleViewvolumeHeight( c, scale, &x, &y );
-  rkglCameraSetFrustumCenter( c, x, y, near, far );
+  rkglCameraSetFrustumCenter( c, x, y, znear, zfar );
 }
 
 /* set viewvolume of a camera that produces perspective projection from field of view and aspect ratio. */
-void rkglCameraSetPerspective(rkglCamera *c, GLdouble fovy, GLdouble aspect, GLdouble near, GLdouble far)
+void rkglCameraSetPerspective(rkglCamera *c, GLdouble fovy, GLdouble aspect, GLdouble znear, GLdouble zfar)
 {
   rkglResetViewvolume();
-  gluPerspective( ( c->fovy = fovy ), aspect, ( c->near = near ), ( c->far = far ) );
+  gluPerspective( ( c->fovy = fovy ), aspect, ( c->znear = znear ), ( c->zfar = zfar ) );
   rkglCameraGetViewvolume( c );
 }
 
@@ -230,8 +230,8 @@ rkglCamera *rkglCameraInit(rkglCamera *camera)
   rkglCameraSetBackground( camera, 0, 0, 0 );
   rkglCameraSetViewport( camera, 0, 0, 0, 0 );
   camera->fovy = RKGL_DEFAULT_VV_FOVY;
-  camera->near = RKGL_DEFAULT_VV_NEAR;
-  camera->far  = RKGL_DEFAULT_VV_FAR;
+  camera->znear = RKGL_DEFAULT_VV_NEAR;
+  camera->zfar  = RKGL_DEFAULT_VV_FAR;
   zFrame3DIdent( &camera->viewframe );
   rkglResetViewvolume();
   rkglCameraGetViewvolume( camera );
@@ -283,11 +283,11 @@ static void *_rkglCameraFovyFromZTK(void *obj, int i, void *arg, ZTK *ztk){
   return obj;
 }
 static void *_rkglCameraNearFromZTK(void *obj, int i, void *arg, ZTK *ztk){
-  ((rkglCamera*)obj)->near = ZTKDouble(ztk);
+  ((rkglCamera*)obj)->znear = ZTKDouble(ztk);
   return obj;
 }
 static void *_rkglCameraFarFromZTK(void *obj, int i, void *arg, ZTK *ztk){
-  ((rkglCamera*)obj)->far = ZTKDouble(ztk);
+  ((rkglCamera*)obj)->zfar = ZTKDouble(ztk);
   return obj;
 }
 
@@ -324,11 +324,11 @@ static bool _rkglCameraFovyFPrint(FILE *fp, int i, void *obj){
   return obj;
 }
 static bool _rkglCameraNearFPrint(FILE *fp, int i, void *obj){
-  fprintf( fp, "%g\n", ((rkglCamera*)obj)->near );
+  fprintf( fp, "%g\n", ((rkglCamera*)obj)->znear );
   return obj;
 }
 static bool _rkglCameraFarFPrint(FILE *fp, int i, void *obj){
-  fprintf( fp, "%g\n", ((rkglCamera*)obj)->far );
+  fprintf( fp, "%g\n", ((rkglCamera*)obj)->zfar );
   return obj;
 }
 

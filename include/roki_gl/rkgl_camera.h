@@ -18,8 +18,8 @@ ZDEF_STRUCT( __ROKI_GL_CLASS_EXPORT, rkglCamera ){
   GLclampf background[4];  /*! \brief background color */
   GLint viewport[4];       /*! \brief viewport */
   double fovy;             /*! \brief field of view in y-direction */
-  double near;             /*! \brief z-near of the viewvolume */
-  double far;              /*! \brief z-far of the viewvolume */
+  double znear;             /*! \brief z-near of the viewvolume */
+  double zfar;              /*! \brief z-far of the viewvolume */
   zFrame3D viewframe;      /*! \brief view frame */
   /*! \cond */
   GLdouble _viewvolume[16]; /* view volume */
@@ -71,27 +71,26 @@ __ROKI_GL_EXPORT void rkglCameraGetViewvolume(rkglCamera *c);
 __ROKI_GL_EXPORT void rkglCameraCopyViewvolume(rkglCamera *src, rkglCamera *dest);
 
 /*! \brief set viewvolume of a camera that produces a parallel projection. */
-__ROKI_GL_EXPORT void rkglCameraSetOrtho(rkglCamera *c, GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near, GLdouble far);
+__ROKI_GL_EXPORT void rkglCameraSetOrtho(rkglCamera *c, GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble znear, GLdouble zfar);
 /*! \brief set viewvolume of a camera that produces a perspective projection. */
-__ROKI_GL_EXPORT void rkglCameraSetFrustum(rkglCamera *c, GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near, GLdouble far);
+__ROKI_GL_EXPORT void rkglCameraSetFrustum(rkglCamera *c, GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble znear, GLdouble zfar);
 /*! \brief set viewvolume of a camera that produces a parallel projection centering a specified point. */
-__ROKI_GL_EXPORT void rkglCameraSetOrthoCenter(rkglCamera *c, GLdouble x, GLdouble y, GLdouble near, GLdouble far);
+__ROKI_GL_EXPORT void rkglCameraSetOrthoCenter(rkglCamera *c, GLdouble x, GLdouble y, GLdouble znear, GLdouble zfar);
 /*! \brief set viewvolume of a camera that produces a perspective projection centering a specified point. */
-__ROKI_GL_EXPORT void rkglCameraSetFrustumCenter(rkglCamera *c, GLdouble x, GLdouble y, GLdouble near, GLdouble far);
+__ROKI_GL_EXPORT void rkglCameraSetFrustumCenter(rkglCamera *c, GLdouble x, GLdouble y, GLdouble znear, GLdouble zfar);
 /*! \brief scale viewvolume of a camera that produces parallel projection as to fit width to that of viewport. */
-__ROKI_GL_EXPORT void rkglCameraScaleOrthoWidth(rkglCamera *c, double scale, GLdouble near, GLdouble far);
+__ROKI_GL_EXPORT void rkglCameraScaleOrthoWidth(rkglCamera *c, double scale, GLdouble znear, GLdouble zfar);
 /*! \brief scale viewvolume of a camera that produces perspective projection as to fit width to that of viewport. */
-__ROKI_GL_EXPORT void rkglCameraScaleFrustumWidth(rkglCamera *c, double scale, GLdouble near, GLdouble far);
+__ROKI_GL_EXPORT void rkglCameraScaleFrustumWidth(rkglCamera *c, double scale, GLdouble znear, GLdouble zfar);
 /*! \brief scale viewvolume of a camera that produces parallel projection as to fit height to that of viewport. */
-__ROKI_GL_EXPORT void rkglCameraScaleOrthoHeight(rkglCamera *c, double scale, GLdouble near, GLdouble far);
+__ROKI_GL_EXPORT void rkglCameraScaleOrthoHeight(rkglCamera *c, double scale, GLdouble znear, GLdouble zfar);
 /*! \brief scale viewvolume of a camera that produces perspective projection as to fit height to that of viewport. */
-__ROKI_GL_EXPORT void rkglCameraScaleFrustumHeight(rkglCamera *c, double scale, GLdouble near, GLdouble far);
+__ROKI_GL_EXPORT void rkglCameraScaleFrustumHeight(rkglCamera *c, double scale, GLdouble znear, GLdouble zfar);
 /*! \brief set viewvolume of a camera that produces perspective projection from field of view and aspect ratio. */
-__ROKI_GL_EXPORT void rkglCameraSetPerspective(rkglCamera *c, GLdouble fovy, GLdouble aspect, GLdouble near, GLdouble far);
+__ROKI_GL_EXPORT void rkglCameraSetPerspective(rkglCamera *c, GLdouble fovy, GLdouble aspect, GLdouble znear, GLdouble zfar);
 /*! \brief set viewvolume of a camera that produes perspective projection from field of view, where aspect ratio is automatically computed from the current viewport. */
-#define rkglCameraFitPerspective(camera,fovy,near,far) rkglCameraSetPerspective( camera, fovy, rkglCameraViewportAspectRatio(camera), near, far )
-
-#define rkglCameraPerspective(camera) rkglCameraFitPerspective( camera, (camera)->fovy, (camera)->near, (camera)->far )
+#define rkglCameraFitPerspective(camera,fovy,znear,zfar) rkglCameraSetPerspective( camera, fovy, rkglCameraViewportAspectRatio(camera), znear,zfar )
+#define rkglCameraPerspective(camera) rkglCameraFitPerspective( camera, (camera)->fovy, (camera)->znear, (camera)->zfar )
 
 /* camera angle */
 
