@@ -1,3 +1,4 @@
+2025.05.12. Renamed members near and far of rkglCamera to znear and zfar, respectively, in order to avoid conflicts in MS Visual C++ (thanks to Daishi Kaneta). [rkgl_camera]
 2025.05.11. Removed register qualifiers from terra_smooth_test.c. [example]
 2025.05.10. Debugged rk_pen to show usage if model file is not specified. [app]
 2025.05.08. Modified rkglTextureAssign to set default texture environment mode for GL_MODULATE by using rkglTextureSetModulate. [rkgl_texture]
