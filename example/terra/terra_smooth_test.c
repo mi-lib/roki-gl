@@ -12,7 +12,7 @@ bool show_net = false;
 
 void refresh(void)
 {
-  register int i, j;
+  int i, j;
   zRGB rgb;
 
   rkglDeleteList( id_curve );
