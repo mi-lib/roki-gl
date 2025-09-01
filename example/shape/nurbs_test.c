@@ -28,7 +28,7 @@ void draw_scene(void)
   rkglMaterial( &oi );
   glLoadName( NAME_OTHER );
   glLineWidth( 2.0 );
-  rkglRGBByName( "white" );
+  rkglRGBByStr( "white" );
   rkglNURBS( &nurbs, RKGL_FACE | ( show_wf ? 0 : RKGL_WIREFRAME ) );
   glLoadName( NAME_NURBS );
   if( show_ctl ){

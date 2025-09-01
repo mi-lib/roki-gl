@@ -27,14 +27,14 @@ void display(void)
 void keyboard(unsigned char key, int x, int y)
 {
   switch( key ){
-  case '0': rkglRGBByName( "black" );   break;
-  case 'r': rkglRGBByName( "red" );     break;
-  case 'g': rkglRGBByName( "green" );   break;
-  case 'b': rkglRGBByName( "blue" );    break;
-  case 'y': rkglRGBByName( "yellow" );  break;
-  case 'c': rkglRGBByName( "cyan" );    break;
-  case 'm': rkglRGBByName( "magenta" ); break;
-  case 'w': rkglRGBByName( "white" );   break;
+  case '0': rkglRGBByStr( "black" );   break;
+  case 'r': rkglRGBByStr( "red" );     break;
+  case 'g': rkglRGBByStr( "green" );   break;
+  case 'b': rkglRGBByStr( "blue" );    break;
+  case 'y': rkglRGBByStr( "yellow" );  break;
+  case 'c': rkglRGBByStr( "cyan" );    break;
+  case 'm': rkglRGBByStr( "magenta" ); break;
+  case 'w': rkglRGBByStr( "white" );   break;
   case '-': rkglRGBIntensify(-0.1,-0.1,-0.1 ); break;
   case '+': rkglRGBIntensify( 0.1, 0.1, 0.1 ); break;
   case 'q': case 'Q': case '\033':
@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
   rkglCameraSetViewframe( &cam, 10, 0, 0, 0, 0, 0 );
   rkglCameraFitPerspective( &cam, 30.0, 1, 20 );
   rkglSetDefaultCamera( &cam );
-  rkglRGBByName( "black" );
+  rkglRGBByStr( "black" );
   glutMainLoop();
   return 0;
 }

@@ -1360,12 +1360,14 @@ void rkglFrame(zFrame3D *f, double length)
   bool lighting_is_enabled;
   zVec3D *e1, *e2, p, pf;
   int i;
+  GLfloat current_color[4];
   zRGB color[] = {
     { 1.0, 0.0, 0.0 },
     { 0.0, 1.0, 0.0 },
     { 0.0, 0.0, 1.0 } };
 
   rkglSaveLighting( &lighting_is_enabled );
+  glGetFloatv( GL_CURRENT_COLOR, current_color );
   glBegin( GL_LINES );
   for( i=0; i<3; i++ ){
     rkglRGB( &color[i] );
@@ -1383,6 +1385,7 @@ void rkglFrame(zFrame3D *f, double length)
     rkglVertex( &pf );
   }
   glEnd();
+  glColor3fv( current_color );
   rkglLoadLighting( lighting_is_enabled );
 }
 

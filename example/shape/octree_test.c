@@ -76,7 +76,7 @@ void generate_lists(zVec3DOctree *octree)
   zOpticalInfo oi;
 
   pc_id = rkglBeginList();
-  rkglRGBByName( "white" );
+  rkglRGBByStr( "white" );
   glPointSize( 1.0 );
   rkglOctreePoints( octree );
   glEndList();
@@ -87,7 +87,7 @@ void generate_lists(zVec3DOctree *octree)
   glEndList();
   zOpticalInfoDestroy( &oi );
   pc_normal_id = rkglBeginList();
-  rkglRGBByName( "green" );
+  rkglRGBByStr( "green" );
   glLineWidth( 0.5 );
   rkglOctreeNormal( octree, 0.005 );
   glEndList();

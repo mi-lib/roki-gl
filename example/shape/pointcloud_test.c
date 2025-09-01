@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
   init();
   generate_pc( &pointdata, argc > 1 ? argv[1] : "../model/bunny.ztk" );
   pc_id = rkglBeginList();
-  rkglRGBByName( "white" );
+  rkglRGBByStr( "white" );
   glPointSize( 1.0 );
   rkglPointCloud( &pointdata );
   glEndList();

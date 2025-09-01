@@ -12,6 +12,7 @@ enum{
   OPT_PAN, OPT_TILT, OPT_ROLL,
   OPT_OX, OPT_OY, OPT_OZ, OPT_AUTO,
   OPT_WIDTH, OPT_HEIGHT,
+  OPT_DRAW_NONFACE,
   OPT_DRAW_WIREFRAME,
   OPT_DRAW_BB,
   OPT_DRAW_BONE,
@@ -24,8 +25,7 @@ enum{
   OPT_INVALID
 };
 zOption opt[] = {
-  { "model", NULL, "<.ztk/.urdf file>", "kinematic chain model file", NULL, false },
-  { "env", NULL, "<.ztk file>", "environment shape model file", NULL, false },
+  { "model", NULL, "<.ztk/.urdf file>", "kinematic chain model file", NULL, false },  { "env", NULL, "<.ztk file>", "environment shape model file", NULL, false },
   { "init", NULL, "<.ztk file>", "initial state file", NULL, false },
   { "pan", NULL, "<pan value>", "set camera pan angle", (char *)"0", false },
   { "tilt", NULL, "<tilt value>", "set camera tilt angle", (char *)"0", false },
@@ -36,7 +36,8 @@ zOption opt[] = {
   { "auto", NULL, NULL, "automatic allocation of camera", NULL, false },
   { "width", NULL, "<value>", "window width", (char *)"500", false },
   { "height", NULL, "<value>", "window height", (char *)"500", false },
-  { "wireframe", NULL, NULL, "draw kinematic chain as wireframe model", NULL, false },
+  { "nonface", NULL, NULL, "undraw solid model of the kinematic chain", NULL, false },
+  { "wireframe", NULL, "<color name>", "draw kinematic chain as wireframe model", (char *)"white", false },
   { "bb", NULL, NULL, "draw kinematic chain bounding box", NULL, false },
   { "bone", NULL, "<value>", "draw kinematic chain as bone model with specified radius", (char *)"0.006", false },
   { "coord", NULL, "<value>", "draw cascaded coordinate frameschained of kinematic chain with specified length of arrows of axes", (char *)"0.1", false },
@@ -433,9 +434,9 @@ void rk_penInit(void)
   zSphere3D bball;
   double vv_fovy, vv_near, vv_far;
 
-  zRGBDecodeStr( &rgb, opt[OPT_BG].arg );
   rkglCameraInit( &cam );
-  rkglCameraSetBackground( &cam, rgb.r, rgb.g, rgb.b );
+  zRGBByStr( &rgb, opt[OPT_BG].arg );
+  rkglCameraSetBackgroundRGB( &cam, &rgb );
   rkglCameraSetViewport( &cam, 0, 0, atoi( opt[OPT_WIDTH].arg ), atoi( opt[OPT_HEIGHT].arg ) );
   if( opt[OPT_AUTO].flag && rkChainBoundingBall( &chain, &bball ) ){
     rkglCameraLookAt( &cam,
@@ -471,13 +472,20 @@ void rk_penInit(void)
   if( opt[OPT_FOG].flag ) glEnable( GL_FOG );
 
   rkglChainAttrInit( &attr );
-  if( opt[OPT_DRAW_WIREFRAME].flag ) attr.disptype |= RKGL_WIREFRAME;
-  if( opt[OPT_DRAW_BB].flag )        attr.disptype |= RKGL_BB;
+  if( opt[OPT_DRAW_NONFACE].flag )
+    attr.disptype &= ~RKGL_FACE;
+  if( opt[OPT_DRAW_WIREFRAME].flag ){
+    attr.disptype |= RKGL_WIREFRAME;
+    rkglRGBByStr( opt[OPT_DRAW_WIREFRAME].arg );
+  }
+  if( opt[OPT_DRAW_BB].flag )
+    attr.disptype |= RKGL_BB | RKGL_FACE;
   if( opt[OPT_DRAW_BONE].flag ){
-    attr.disptype = RKGL_STICK;
+    attr.disptype |= RKGL_STICK;
     attr.bone_r = atof( opt[OPT_DRAW_BONE].arg );
   }
-  if( opt[OPT_DRAW_COORD].flag ) attr.disptype |= RKGL_FRAME;
+  if( opt[OPT_DRAW_COORD].flag )
+    attr.disptype |= RKGL_FRAME;
   if( opt[OPT_DRAW_ELLIPS].flag ){
     attr.disptype |= RKGL_ELLIPS;
     attr.ellips_mag = atof( opt[OPT_DRAW_ELLIPS].arg );

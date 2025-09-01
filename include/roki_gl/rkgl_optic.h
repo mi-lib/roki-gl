@@ -19,7 +19,7 @@ __BEGIN_DECLS
 
 __ROKI_GL_EXPORT void rkglRGBIntensify(GLfloat dr, GLfloat dg, GLfloat db);
 
-__ROKI_GL_EXPORT void rkglRGBByName(const char *name);
+__ROKI_GL_EXPORT void rkglRGBByStr(const char *str);
 
 __ROKI_GL_EXPORT void rkglColor24(unsigned int color);
 

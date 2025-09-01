@@ -1,3 +1,6 @@
+2025.09.01. Modified rk_pen to make non-face mode available. [app]
+2025.09.01. Abolished rkglRGBByName, and added rkglRGBByStr. [rkgl_optic]
+2025.09.01. Added rkglCameraSetBackgroundRGB. [rkgl_camera]
 2025.09.01. Modified rk_pen to display links with multiply specified attributes. [app]
 2025.09.01. Modified rkglShape to draw the bounding box lastly. [rkgl_shape]
 2025.09.01. Abolished the member frame_mag of rkglChainAttr, removed the macro RKGL_LINK_DEFAULT_FRAME_MAG, and modified rkglChainAttrInit and _rkglLink in accordance with the new specification of rkglFrame. [rkgl_chain]

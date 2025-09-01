@@ -37,6 +37,9 @@ ZDEF_STRUCT( __ROKI_GL_CLASS_EXPORT, rkglCamera ){
   (camera)->background[3] = 1.0;\
 } while(0)
 
+/*! \brief set background color of a camera by a set of RGB parameters. */
+#define rkglCameraSetBackgroundRGB(camera,rgb) rkglCameraSetBackground( camera, (rgb)->r, (rgb)->g, (rgb)->b )
+
 /*! \brief copy background color of a camera to another. */
 #define rkglCameraCopyBackground(src,dest) memcpy( (dest)->background, (src)->background, sizeof(GLclampf)*4 )
 

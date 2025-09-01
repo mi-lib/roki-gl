@@ -67,7 +67,6 @@ void init(void)
 {
   zBox3D box;
   zOpticalInfo red;
-  GLfloat rgba_white[4] = { 1.0, 1.0, 1.0, 1.0 };
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
@@ -82,8 +81,11 @@ void init(void)
   zOpticalInfoCreateSimple( &red, 1.0, 0, 0, NULL );
   zBox3DCreateAlign( &box, ZVEC3DZERO, 1.0, 0.8, 0.6 );
   obj_id = rkglBeginList();
-  rkglGauge( zX, 6.0, zY, 6.0, 1.0, 0.2, rgba_white );
-  rkglFrame( ZFRAME3DIDENT, 2, 3 );
+  rkglRGBByStr( "white" );
+  glLineWidth( 0.5 );
+  rkglGauge( zX, 6.0, zY, 6.0, 0.2 );
+  glLineWidth( 3.0 );
+  rkglFrame( ZFRAME3DIDENT, 2 );
   rkglMaterial( &red );
   rkglBox( &box, RKGL_FACE | RKGL_WIREFRAME );
   glEndList();

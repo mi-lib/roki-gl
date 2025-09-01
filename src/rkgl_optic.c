@@ -25,31 +25,11 @@ void rkglRGBIntensify(GLfloat dr, GLfloat dg, GLfloat db)
   rkglRGB( &rgb );
 }
 
-void rkglRGBByName(const char *name)
+void rkglRGBByStr(const char *str)
 {
-  struct{
-    const char *name;
-    const GLfloat red;
-    const GLfloat green;
-    const GLfloat blue;
-  } color_table[] = {
-    { "black",   0, 0, 0 },
-    { "red",     1, 0, 0 },
-    { "green",   0, 1, 0 },
-    { "blue",    0, 0, 1 },
-    { "yellow",  1, 1, 0 },
-    { "cyan",    0, 1, 1 },
-    { "magenta", 1, 0, 1 },
-    { "white",   1, 1, 1 },
-    { NULL,      0, 0, 0 },
-  };
-  int i;
+  zRGB rgb;
 
-  for( i=0; color_table[i].name; i++ )
-    if( strcmp( color_table[i].name, name ) == 0 ){
-      glColor3f( color_table[i].red, color_table[i].green, color_table[i].blue );
-      return;
-    }
+  rkglRGB( zRGBByStr( &rgb, str ) );
 }
 
 void rkglColor24(unsigned int color)

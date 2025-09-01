@@ -51,12 +51,12 @@ void init(void)
   glEndList();
   /* gauge & axes */
   g_id = rkglBeginList();
-  rkglRGBByName( "white" );
+  rkglRGBByStr( "white" );
   glLineWidth( 0.5 );
   rkglGauge( zX, 3.01, zY, 4.51, 0.2 );
   glEndList();
   ax_id = rkglBeginList();
-  rkglRGBByName( "cyan" );
+  rkglRGBByStr( "cyan" );
   glLineWidth( 1.0 );
   rkglAxis( zX, 3.5 );
   glEndList();
