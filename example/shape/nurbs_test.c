@@ -27,13 +27,16 @@ void draw_scene(void)
   glPushMatrix();
   rkglMaterial( &oi );
   glLoadName( NAME_OTHER );
-  glLineWidth( 2 );
+  glLineWidth( 2.0 );
+  rkglRGBByName( "white" );
   rkglNURBS( &nurbs, RKGL_FACE | ( show_wf ? 0 : RKGL_WIREFRAME ) );
   glLoadName( NAME_NURBS );
   if( show_ctl ){
     zRGBSet( &rgb, 0.5, 1.0, 0.5 );
-    glLineWidth( 1 );
-    rkglNURBSCP( &nurbs, SIZE_CP, &rgb );
+    rkglRGB( &rgb );
+    glPointSize( SIZE_CP );
+    glLineWidth( 1.0 );
+    rkglNURBSCP( &nurbs );
   }
   glPopMatrix();
 }

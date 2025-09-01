@@ -29,6 +29,7 @@ void display(void)
 
   glPushMatrix();
   rkglClear();
+  rkglRGBByName( "white" );
   rkglMaterial( &red );
   rkglBox( &box, DISPSWITCH );
   rkglMaterial( &yellow );

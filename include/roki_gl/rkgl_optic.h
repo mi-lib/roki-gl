@@ -22,7 +22,6 @@ __ROKI_GL_EXPORT void rkglRGBIntensify(GLfloat dr, GLfloat dg, GLfloat db);
 __ROKI_GL_EXPORT void rkglRGBByName(const char *name);
 
 __ROKI_GL_EXPORT void rkglColor24(unsigned int color);
-#define rkglColorWhite() glColor3f( 1.0, 1.0, 1.0 )
 
 __ROKI_GL_EXPORT void rkglMaterialRGBA(zRGB *rgb, float alpha);
 __ROKI_GL_EXPORT void rkglMaterialWhite(void);

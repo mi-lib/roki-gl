@@ -140,10 +140,14 @@ void rk_viewReadModel(zStrAddrList *modellist)
         ZOPENERROR( cp->data );
         rk_viewUsage();
       }
-      rkglPointCloud( &pointdata, 1 );
+      rkglRGBByName( "white" ); /* for point cloud */
+      glPointSize( 1.0 );
+      rkglPointCloud( &pointdata );
       if( opt[OPT_PCD_NORMAL].flag ){
         zVec3DDataNormalVec_Octree( &pointdata, atof( opt[OPT_PCD_NORMAL].arg ), &normaldata );
-        rkglPointCloudNormal( &pointdata, &normaldata, 1, 0.01 );
+        rkglRGBByName( "green" ); /* for normal vectors */
+        glLineWidth( 0.5 );
+        rkglPointCloudNormal( &pointdata, &normaldata, 0.01 );
         zVec3DDataDestroy( &normaldata );
       }
       if( opt[OPT_AUTO].flag )
@@ -166,6 +170,7 @@ void rk_viewReadModel(zStrAddrList *modellist)
       for( i=0; i<zMShape3DShapeNum(&ms); i++ )
         zPH3DScale( zShape3DPH(zMShape3DShape(&ms,i)), scale );
     }
+    rkglRGBByName( "white" ); /* for wireframe */
     rkglMShape( &ms, opt[OPT_WIREFRAME].flag ? RKGL_WIREFRAME : RKGL_FACE, &light );
     if( opt[OPT_AUTO].flag ){
       zMShape3DVertData( &ms, &pointdata );

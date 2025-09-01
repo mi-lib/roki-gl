@@ -17,6 +17,7 @@ void display(void)
 
   glPushMatrix();
   rkglClear();
+  rkglRGBByName( "white" );
   rkglMaterial( &red );
   rkglSphere( &sphere[0], RKGL_FACE | ( dispswitch ? 0 : RKGL_WIREFRAME ) );
   rkglSphere( &sphere[1], RKGL_FACE | ( dispswitch ? 0 : RKGL_WIREFRAME ) );

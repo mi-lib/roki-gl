@@ -83,7 +83,9 @@ int main(int argc, char *argv[])
   init();
   generate_pc( &pointdata, argc > 1 ? argv[1] : "../model/bunny.ztk" );
   pc_id = rkglBeginList();
-  rkglPointCloud( &pointdata, 1 );
+  rkglRGBByName( "white" );
+  glPointSize( 1.0 );
+  rkglPointCloud( &pointdata );
   glEndList();
   pc_cov_id = rkglBeginList();
   generate_covariance_ellipsoid( &pointdata );

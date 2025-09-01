@@ -130,7 +130,6 @@ static void _rkglBoxWireframe(zVec3D vert[8])
   bool lighting_is_enabled;
 
   rkglSaveLighting( &lighting_is_enabled );
-  rkglColorWhite();
   glBegin( GL_LINE_LOOP );
     rkglVertex( &vert[0] );
     rkglVertex( &vert[1] );
@@ -246,7 +245,6 @@ static void _rkglHemisphereWireframe(zMesh3D *vert, int nl, int ndiv)
   bool lighting_is_enabled;
 
   rkglSaveLighting( &lighting_is_enabled );
-  rkglColorWhite();
   for( i=0; i<=nl; i++ ){
     glBegin( GL_LINE_LOOP );
     for( j=0; j<ndiv; j++ )
@@ -321,7 +319,6 @@ static void _rkglSphereWireframe(zSphere3D *sphere, zMesh3D *vert, int nl)
   zVec3D v;
 
   rkglSaveLighting( &lighting_is_enabled );
-  rkglColorWhite();
   for( i=0; i<zSphere3DDiv(sphere); i++ ){
     glBegin( GL_LINE_LOOP );
     for( j=0; j<nl; j++ ){
@@ -415,7 +412,6 @@ static void _rkglEllipsWireframe(zMesh3D *vert, zMesh3D *norm, int nl, int ndiv)
   bool lighting_is_enabled;
 
   rkglSaveLighting( &lighting_is_enabled );
-  rkglColorWhite();
   for( i=0; i<ndiv; i++ ){
     glBegin( GL_LINE_LOOP );
     for( j=0; j<nl; j++ )
@@ -503,7 +499,6 @@ static void _rkglTubeWireframe(zCyl3D *tube, zMesh3D *vert)
   bool lighting_is_enabled;
 
   rkglSaveLighting( &lighting_is_enabled );
-  rkglColorWhite();
   /* side faces */
   glBegin( GL_LINES );
   for( i=0; i<=zCyl3DDiv(tube); i++ ){
@@ -565,7 +560,6 @@ static void _rkglCylWireframe(zCyl3D *cyl, zMesh3D *vert)
   bool lighting_is_enabled;
 
   rkglSaveLighting( &lighting_is_enabled );
-  rkglColorWhite();
   /* top faces */
   glBegin( GL_LINE_LOOP );
   for( i=zCyl3DDiv(cyl)-1; i>=0; i-- )
@@ -681,7 +675,6 @@ static void _rkglECylWireframe(zECyl3D *ecyl, zMesh3D *vert)
   bool lighting_is_enabled;
 
   rkglSaveLighting( &lighting_is_enabled );
-  rkglColorWhite();
   /* top faces */
   glBegin( GL_LINE_LOOP );
   for( i=zECyl3DDiv(ecyl)-1; i>=0; i-- )
@@ -781,7 +774,6 @@ static void _rkglConeWireframe(zCone3D *cone, zVec3DArray *vert)
   bool lighting_is_enabled;
 
   rkglSaveLighting( &lighting_is_enabled );
-  rkglColorWhite();
   /* bottom faces */
   glBegin( GL_LINE_LOOP );
   for( i=0; i<zCone3DDiv(cone); i++ )
@@ -870,7 +862,6 @@ static void _rkglTorusWireframe(zMesh3D *vert, int div1, int div2)
   bool lighting_is_enabled;
 
   rkglSaveLighting( &lighting_is_enabled );
-  rkglColorWhite();
   for( i=0; i<div1; i++ ){
     glBegin( GL_LINE_LOOP );
     for( j=0; j<div2; j++ )
@@ -942,7 +933,6 @@ static void _rkglNURBSWireframe(zNURBS3D *nurbs, zMesh3D *vert)
   bool lighting_is_enabled;
 
   rkglSaveLighting( &lighting_is_enabled );
-  rkglColorWhite();
   for( i=0; i<=zNURBS3DSlice(nurbs,0); i++ ){
     glBegin( GL_LINE_STRIP );
     for( j=0; j<=zNURBS3DSlice(nurbs,1); j++ )
@@ -977,14 +967,12 @@ void rkglNURBS(zNURBS3D *nurbs, ubyte disptype)
 static void _rkglShapeNURBS(void *nurbs, ubyte disptype){ rkglNURBS( (zNURBS3D *)nurbs, disptype ); }
 
 /* draw a 3D NURBS surface with conrol points. */
-void rkglNURBSCP(zNURBS3D *nurbs, GLfloat size, zRGB *rgb)
+void rkglNURBSCP(zNURBS3D *nurbs)
 {
   int i, j;
   bool lighting_is_enabled;
 
-  glPointSize( size );
   rkglSaveLighting( &lighting_is_enabled );
-  rkglRGB( rgb );
   glPushName( 0 );
   for( i=0; i<zNURBS3DCPNum(nurbs,0); i++ ){
     glLoadName( i );
@@ -1002,13 +990,13 @@ void rkglNURBSCP(zNURBS3D *nurbs, GLfloat size, zRGB *rgb)
   for( i=0; i<zNURBS3DCPNum(nurbs,0); i++ ){
     for( j=0; j<zNURBS3DCPNum(nurbs,1); j++ ){
       if( i > 0 ){
-        glBegin(GL_LINES);
+        glBegin( GL_LINES );
         rkglVertex( zNURBS3DCP(nurbs,i,j) );
         rkglVertex( zNURBS3DCP(nurbs,i-1,j) );
         glEnd();
       }
       if( j > 0 ){
-        glBegin(GL_LINES);
+        glBegin( GL_LINES );
         rkglVertex( zNURBS3DCP(nurbs,i,j) );
         rkglVertex( zNURBS3DCP(nurbs,i,j-1) );
         glEnd();
@@ -1020,7 +1008,7 @@ void rkglNURBSCP(zNURBS3D *nurbs, GLfloat size, zRGB *rgb)
 }
 
 /* draw a 3D NURBS curve. */
-void rkglNURBSCurve(zNURBS3D *nurbs, zRGB *rgb)
+void rkglNURBSCurve(zNURBS3D *nurbs)
 {
   int i;
   zVec3D vert;
@@ -1028,7 +1016,6 @@ void rkglNURBSCurve(zNURBS3D *nurbs, zRGB *rgb)
   bool lighting_is_enabled;
 
   rkglSaveLighting( &lighting_is_enabled );
-  rkglRGB( rgb );
   glPushName( -1 );
   glBegin( GL_LINE_STRIP );
   for( i=0; i<=zNURBS3D1Slice(nurbs); i++ ){
@@ -1042,14 +1029,12 @@ void rkglNURBSCurve(zNURBS3D *nurbs, zRGB *rgb)
 }
 
 /* draw a 3D NURBS curve with conrol points. */
-void rkglNURBSCurveCP(zNURBS3D *nurbs, GLfloat size, zRGB *rgb)
+void rkglNURBSCurveCP(zNURBS3D *nurbs)
 {
   int i;
   bool lighting_is_enabled;
 
-  glPointSize( size );
   rkglSaveLighting( &lighting_is_enabled );
-  rkglRGB( rgb );
   glPushName( 0 );
   for( i=0; i<zNURBS3D1CPNum(nurbs); i++ ){
     glLoadName( i );
@@ -1061,7 +1046,7 @@ void rkglNURBSCurveCP(zNURBS3D *nurbs, GLfloat size, zRGB *rgb)
   glPushName( -1 );
   for( i=0; i<zNURBS3D1CPNum(nurbs); i++ ){
     if( i > 0 ){
-      glBegin(GL_LINES);
+      glBegin( GL_LINES );
       rkglVertex( zNURBS3D1CP(nurbs,i) );
       rkglVertex( zNURBS3D1CP(nurbs,i-1) );
       glEnd();
@@ -1084,7 +1069,6 @@ void rkglPH(zPH3D *ph, ubyte disptype)
   if( disptype & RKGL_WIREFRAME ){
     bool lighting_is_enabled;
     rkglSaveLighting( &lighting_is_enabled );
-    rkglColorWhite();
     for( i=0; i<zPH3DFaceNum(ph); i++ )
       rkglTriWireframe( zPH3DFace(ph,i) );
     rkglLoadLighting( lighting_is_enabled );
@@ -1173,6 +1157,11 @@ void rkglShape(zShape3D *s, zOpticalInfo *oi_alt, ubyte disptype, rkglLight *lig
   } else
   if( zShape3DOptic(s) )
     rkglMaterial( zShape3DOptic(s) );
+  for( i=0; shapelist[i].typestr; i++ )
+    if( strcmp( s->com->typestr, shapelist[i].typestr ) == 0 ){
+      shapelist[i].draw( s->body, disptype );
+      break;
+    }
   if( disptype & RKGL_BB ){
     zBox3D box;
     zVec3DData data;
@@ -1181,11 +1170,6 @@ void rkglShape(zShape3D *s, zOpticalInfo *oi_alt, ubyte disptype, rkglLight *lig
     zVec3DDataDestroy( &data );
     rkglBox( &box, disptype );
   }
-  for( i=0; shapelist[i].typestr; i++ )
-    if( strcmp( s->com->typestr, shapelist[i].typestr ) == 0 ){
-      shapelist[i].draw( s->body, disptype );
-      break;
-    }
 }
 
 /* entry a 3D shape to the display list. */
@@ -1221,15 +1205,13 @@ int rkglEntryMShape(zMShape3D *s, ubyte disptype, rkglLight *light)
 }
 
 /* draw 3D pointcloud. */
-void rkglPointCloud(zVec3DData *data, short size)
+void rkglPointCloud(zVec3DData *data)
 {
   zVec3D *v;
   bool lighting_is_enabled;
 
   rkglSaveLighting( &lighting_is_enabled );
-  glPointSize( size );
   glBegin( GL_POINTS );
-  rkglRGB( ZRGBWHITE );
   zVec3DDataRewind( data );
   while( ( v = zVec3DDataFetch( data ) ) ){
     rkglVertex( v );
@@ -1239,9 +1221,8 @@ void rkglPointCloud(zVec3DData *data, short size)
 }
 
 /* draw 3D pointcloud with estimated normal vectors. */
-void rkglPointCloudNormal(zVec3DData *pointdata, zVec3DData *normaldata, short size, double length)
+void rkglPointCloudNormal(zVec3DData *pointdata, zVec3DData *normaldata, double length)
 {
-  zRGB green = { 0.0, 1.0, 0.0 };
   zVec3D *v, *n, p;
   bool lighting_is_enabled;
 
@@ -1249,8 +1230,6 @@ void rkglPointCloudNormal(zVec3DData *pointdata, zVec3DData *normaldata, short s
   zVec3DDataRewind( pointdata );
   zVec3DDataRewind( normaldata );
   glBegin( GL_LINES );
-  rkglRGB( &green );
-  glPointSize( 1 );
   while( ( v = zVec3DDataFetch( pointdata ) ) && ( n = zVec3DDataFetch( normaldata ) ) ){
     rkglVertex( v );
     zVec3DCat( v, length, n, &p );
@@ -1294,6 +1273,37 @@ void rkglOctree(zVec3DOctree *octree)
   _rkglOctant( &octree->root );
 }
 
+/* draw points in a 3D octant of an octree. */
+static void _rkglOctantPoints(zVec3DOctant *octant)
+{
+  bool have_suboctant = false;
+  zVec3DListCell *cp;
+  int i;
+
+  for( i=0; i<8; i++ ){
+    if( octant->suboctant[i] ){
+      have_suboctant = true;
+      _rkglOctantPoints( octant->suboctant[i] );
+    }
+  }
+  if( !have_suboctant ){
+    zListForEach( &octant->points, cp )
+      rkglVertex( &cp->data );
+  }
+}
+
+/* draw points in an octree. */
+void rkglOctreePoints(zVec3DOctree *octree)
+{
+  bool lighting_is_enabled;
+
+  rkglSaveLighting( &lighting_is_enabled );
+  glBegin( GL_POINTS );
+  _rkglOctantPoints( &octree->root );
+  glEnd();
+  rkglLoadLighting( lighting_is_enabled );
+}
+
 /* draw normal vectors of a 3D octant of an octree. */
 static void _rkglOctantNormal(zVec3DOctant *octant, double length)
 {
@@ -1317,13 +1327,10 @@ static void _rkglOctantNormal(zVec3DOctant *octant, double length)
 /* draw normal vectors of an octree. */
 void rkglOctreeNormal(zVec3DOctree *octree, double length)
 {
-  zRGB green = { 0.0, 1.0, 0.0 };
   bool lighting_is_enabled;
 
   rkglSaveLighting( &lighting_is_enabled );
   glBegin( GL_LINES );
-  rkglRGB( &green );
-  glPointSize( 1 );
   _rkglOctantNormal( &octree->root, length );
   glEnd();
   rkglLoadLighting( lighting_is_enabled );
@@ -1348,7 +1355,7 @@ void rkglArrow(zVec3D *bot, zVec3D *vec, double mag)
 }
 
 /* draw a 3D coordinate frame. */
-void rkglFrame(zFrame3D *f, double l, double w)
+void rkglFrame(zFrame3D *f, double length)
 {
   bool lighting_is_enabled;
   zVec3D *e1, *e2, p, pf;
@@ -1359,20 +1366,19 @@ void rkglFrame(zFrame3D *f, double l, double w)
     { 0.0, 0.0, 1.0 } };
 
   rkglSaveLighting( &lighting_is_enabled );
-  glLineWidth( w );
   glBegin( GL_LINES );
   for( i=0; i<3; i++ ){
     rkglRGB( &color[i] );
     e1 = zFrame3DVec(f, zX+i     );
     e2 = zFrame3DVec(f,(zX+i+1)%3);
-    zVec3DCat( zFrame3DPos(f), l, e1, &p );
+    zVec3DCat( zFrame3DPos(f), length, e1, &p );
     rkglVertex( zFrame3DPos(f) );
     rkglVertex( &p );
-    zVec3DCat( &p,-0.1*l, e1, &pf );
-    zVec3DCatDRC( &pf, 0.05*l, e2 );
+    zVec3DCat( &p,-RKGL_FRAME_HEAD_LENGTH_RATIO*length, e1, &pf );
+    zVec3DCatDRC( &pf, RKGL_FRAME_HEAD_APATURE_RATIO*length, e2 );
     rkglVertex( &p );
     rkglVertex( &pf );
-    zVec3DCatDRC( &pf,-0.10*l, e2 );
+    zVec3DCatDRC( &pf,-2*RKGL_FRAME_HEAD_APATURE_RATIO*length, e2 );
     rkglVertex( &p );
     rkglVertex( &pf );
   }
@@ -1381,25 +1387,23 @@ void rkglFrame(zFrame3D *f, double l, double w)
 }
 
 /* draw a 3D coordinate axis. */
-void rkglAxis(zAxis axis, double d, double w, GLfloat color[])
+void rkglAxis(zAxis axis, double length)
 {
   zEdge3D edge;
   zVec3D e1, e2;
   bool lighting_is_enabled;
 
   rkglSaveLighting( &lighting_is_enabled );
-  glLineWidth( w );
-  zVec3DZero( &e1 ); e1.e[(int)axis] = d;
-  zVec3DZero( &e2 ); e2.e[(int)axis] =-d;
+  zVec3DZero( &e1 ); e1.e[(int)axis] = length;
+  zVec3DZero( &e2 ); e2.e[(int)axis] =-length;
   zEdge3DCreate( &edge, &e1, &e2 );
 
-  glColor3fv( color );
   rkglEdge( &edge );
   rkglLoadLighting( lighting_is_enabled );
 }
 
 /* draw 3D wireframe gauges. */
-void rkglGauge(zAxis axis1, double d1, zAxis axis2, double d2, double w, double step, GLfloat color[])
+void rkglGauge(zAxis axis1, double span1, zAxis axis2, double span2, double step)
 {
   zEdge3D edge;
   zVec3D e1, e2;
@@ -1411,19 +1415,17 @@ void rkglGauge(zAxis axis1, double d1, zAxis axis2, double d2, double w, double 
   zEdge3DCreate( &edge, &e1, &e2 );
 
   rkglSaveLighting( &lighting_is_enabled );
-  glLineWidth( w );
-  glColor3fv( color );
-  zEdge3DVert(&edge,0)->e[(int)axis2] = d2;
-  zEdge3DVert(&edge,1)->e[(int)axis2] =-d2;
-  for( d=-d1; d<=d1; d+=step ){
+  zEdge3DVert(&edge,0)->e[(int)axis2] = span2;
+  zEdge3DVert(&edge,1)->e[(int)axis2] =-span2;
+  for( d=-span1; d<=span1; d+=step ){
     zEdge3DVert(&edge,0)->e[(int)axis1] = d;
     zEdge3DVert(&edge,1)->e[(int)axis1] = d;
     zEdge3DCalcVec( &edge );
     rkglEdge( &edge );
   }
-  zEdge3DVert(&edge,0)->e[(int)axis1] = d1;
-  zEdge3DVert(&edge,1)->e[(int)axis1] =-d1;
-  for( d=-d2; d<=d2; d+=step ){
+  zEdge3DVert(&edge,0)->e[(int)axis1] = span1;
+  zEdge3DVert(&edge,1)->e[(int)axis1] =-span1;
+  for( d=-span2; d<=span2; d+=step ){
     zEdge3DVert(&edge,0)->e[(int)axis2] = d;
     zEdge3DVert(&edge,1)->e[(int)axis2] = d;
     zEdge3DCalcVec( &edge );
@@ -1438,7 +1440,6 @@ void rkglCheckerBoard(zVec3D *pc0, zVec3D *pc1, zVec3D *pc2, int div1, int div2,
   int i, j;
   zVec3D d1, d2, d11, d12, d21, d22, n, v[4];
 
-  glEnable( GL_LIGHTING );
   zVec3DSub( pc1, pc0, &d1 );
   zVec3DSub( pc2, pc0, &d2 );
   zVec3DOuterProd( &d1, &d2, &n );

@@ -75,12 +75,12 @@ __ROKI_GL_EXPORT void rkglTorus(zVec3D *c, zVec3D *n, double r1, double r2, int 
 /*! \brief draw a 3D NURBS surface. */
 __ROKI_GL_EXPORT void rkglNURBS(zNURBS3D *nurbs, ubyte disptype);
 /*! \brief draw a 3D NURBS surface with conrol points. */
-__ROKI_GL_EXPORT void rkglNURBSCP(zNURBS3D *nurbs, GLfloat size, zRGB *rgb);
+__ROKI_GL_EXPORT void rkglNURBSCP(zNURBS3D *nurbs);
 
 /*! \brief draw a 3D NURBS curve. */
-__ROKI_GL_EXPORT void rkglNURBSCurve(zNURBS3D *nurbs, zRGB *rgb);
+__ROKI_GL_EXPORT void rkglNURBSCurve(zNURBS3D *nurbs);
 /*! \brief draw a 3D NURBS curve with conrol points. */
-__ROKI_GL_EXPORT void rkglNURBSCurveCP(zNURBS3D *nurbs, GLfloat size, zRGB *rgb);
+__ROKI_GL_EXPORT void rkglNURBSCurveCP(zNURBS3D *nurbs);
 
 /* polyhedron */
 
@@ -106,9 +106,9 @@ __ROKI_GL_EXPORT int rkglEntryMShape(zMShape3D *s, ubyte disptype, rkglLight *li
 /* point cloud */
 
 /*! \brief draw 3D pointcloud. */
-__ROKI_GL_EXPORT void rkglPointCloud(zVec3DData *data, short size);
+__ROKI_GL_EXPORT void rkglPointCloud(zVec3DData *data);
 /*! \brief draw 3D pointcloud with estimated normal vectors. */
-__ROKI_GL_EXPORT void rkglPointCloudNormal(zVec3DData *pointdata, zVec3DData *normaldata, short size, double length);
+__ROKI_GL_EXPORT void rkglPointCloudNormal(zVec3DData *pointdata, zVec3DData *normaldata, double length);
 
 /*! \brief draw a 3D ellipsoid represented by a barycenter and a variance-covariane matrix. */
 __ROKI_GL_EXPORT void rkglEllipsBaryCov(const zVec3D *center, const zMat3D *cov);
@@ -117,6 +117,8 @@ __ROKI_GL_EXPORT void rkglEllipsBaryCov(const zVec3D *center, const zMat3D *cov)
 
 /*! \brief draw an octree. */
 __ROKI_GL_EXPORT void rkglOctree(zVec3DOctree *octree);
+/*! \brief draw points in an octree. */
+__ROKI_GL_EXPORT void rkglOctreePoints(zVec3DOctree *octree);
 /*! \brief draw normal vectors of an octree. */
 __ROKI_GL_EXPORT void rkglOctreeNormal(zVec3DOctree *octree, double length);
 
@@ -129,13 +131,15 @@ __ROKI_GL_EXPORT void rkglOctreeNormal(zVec3DOctree *octree, double length);
 /*! \brief draw a 3D arrow. */
 __ROKI_GL_EXPORT void rkglArrow(zVec3D *bot, zVec3D *vec, double mag);
 
+#define RKGL_FRAME_HEAD_LENGTH_RATIO  0.1
+#define RKGL_FRAME_HEAD_APATURE_RATIO 0.05
 /*! \brief draw a 3D coordinate frame. */
-__ROKI_GL_EXPORT void rkglFrame(zFrame3D *f, double l, double w);
+__ROKI_GL_EXPORT void rkglFrame(zFrame3D *f, double length);
 
 /*! \brief draw a 3D coordinate axis. */
-__ROKI_GL_EXPORT void rkglAxis(zAxis axis, double d, double w, GLfloat color[]);
+__ROKI_GL_EXPORT void rkglAxis(zAxis axis, double length);
 /*! \brief draw 3D wireframe gauges. */
-__ROKI_GL_EXPORT void rkglGauge(zAxis axis1, double d1, zAxis axis2, double d2, double w, double step, GLfloat color[]);
+__ROKI_GL_EXPORT void rkglGauge(zAxis axis1, double span1, zAxis axis2, double span2, double step);
 /*! \brief draw a 3D checker board. */
 __ROKI_GL_EXPORT void rkglCheckerBoard(zVec3D *pc0, zVec3D *pc1, zVec3D *pc2, int div1, int div2, zOpticalInfo *oi1, zOpticalInfo *oi2);
 

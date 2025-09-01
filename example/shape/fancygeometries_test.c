@@ -27,8 +27,6 @@ void init(void)
 {
   zVec3D pc0, pc1, pc2;
   zVec3D bot, vec;
-  GLfloat rgba_white[4] = { 1.0, 1.0, 1.0, 1.0 };
-  GLfloat rgba_red[4] = { 1.0, 0.0, 0.0, 1.0 };
   zOpticalInfo red, white, yellow;
 
   rkglCameraInit( &cam );
@@ -43,7 +41,7 @@ void init(void)
   rkglFogExp( 0.6, 0.6, 0.6, 0.1 );
 
   /* checkerboard */
-  zOpticalInfoCreateSimple( &red, 1.0, 0, 0, NULL );
+  zOpticalInfoCreateSimple( &red, 1.0, 0.3, 0.6, NULL );
   zOpticalInfoCreateSimple( &white, 1.0, 1.0, 1.0, NULL );
   zVec3DCreate( &pc0, -20.0, -50, -1 );
   zVec3DCreate( &pc1,  10.0, -50, -1 );
@@ -53,17 +51,22 @@ void init(void)
   glEndList();
   /* gauge & axes */
   g_id = rkglBeginList();
-  rkglGauge( zX, 3.01, zY, 4.51, 1.0, 0.2, rgba_white );
+  rkglRGBByName( "white" );
+  glLineWidth( 0.5 );
+  rkglGauge( zX, 3.01, zY, 4.51, 0.2 );
   glEndList();
   ax_id = rkglBeginList();
-  rkglAxis( zX, 3.5, 2.0, rgba_red );
+  rkglRGBByName( "cyan" );
+  glLineWidth( 1.0 );
+  rkglAxis( zX, 3.5 );
   glEndList();
   ay_id = rkglBeginList();
-  rkglAxis( zY, 5.0, 2.0, rgba_red );
+  rkglAxis( zY, 5.0 );
   glEndList();
   /* frame */
   f_id = rkglBeginList();
-  rkglFrame( ZFRAME3DIDENT, 2, 3 );
+  glLineWidth( 3.0 );
+  rkglFrame( ZFRAME3DIDENT, 2 );
   glEndList();
   /* arrow */
   zVec3DCreate( &bot, 0, 0, 0 );

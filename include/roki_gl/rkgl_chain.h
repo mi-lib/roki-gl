@@ -20,7 +20,6 @@ ZDEF_STRUCT( __ROKI_GL_CLASS_EXPORT, rkglChainAttr ){
   double com_r;
   double ellips_mag;
   double frame_l;
-  double frame_mag;
 };
 
 __ROKI_GL_EXPORT void rkglChainAttrInit(rkglChainAttr *attr);
@@ -45,7 +44,6 @@ ZDEF_STRUCT( __ROKI_GL_CLASS_EXPORT, rkglChain ){
 #define RKGL_LINK_DEFAULT_COM_R      0.03
 #define RKGL_LINK_DEFAULT_ELLIPS_MAG 1.0
 #define RKGL_LINK_DEFAULT_FRAME_L    0.1
-#define RKGL_LINK_DEFAULT_FRAME_MAG  0.1
 
 __ROKI_GL_EXPORT bool rkglChainLoad(rkglChain *gc, rkChain *chain, rkglChainAttr *attr, rkglLight *light);
 __ROKI_GL_EXPORT void rkglChainUnload(rkglChain *gc);

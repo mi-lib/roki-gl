@@ -23,15 +23,18 @@ void draw_scene(void)
 
   glPushMatrix();
   glLoadName( NAME_OTHER );
-  rkglFrame( ZFRAME3DIDENT, 1.0, 2 );
+  glLineWidth( 2.0 );
+  rkglFrame( ZFRAME3DIDENT, 1.0 );
   for( i=0; i<NUM_NURBS; i++ ){
-    zRGBSet( &rgb, 1.0 * ( ~i & 1 ) , 1.0 * ( ~i & 2 ), 1.0 * ( ~i & 4 ) );
     glLoadName( NAME_NURBS + i );
+    rkglRGB( zRGBSet( &rgb, 1.0 * ( ~i & 1 ) , 1.0 * ( ~i & 2 ), 1.0 * ( ~i & 4 ) ) );
     glLineWidth( 3 );
-    rkglNURBSCurve( &nurbs[i], &rgb );
-    zRGBSet( &rgb, 0.5, 1.0, 0.5 );
+    rkglNURBSCurve( &nurbs[i] );
+
+    rkglRGB( zRGBSet( &rgb, 0.5, 1.0, 0.5 ) );
     glLineWidth( 1 );
-    rkglNURBSCurveCP( &nurbs[i], SIZE_CP, &rgb );
+    glPointSize( SIZE_CP );
+    rkglNURBSCurveCP( &nurbs[i] );
   }
   glPopMatrix();
 }

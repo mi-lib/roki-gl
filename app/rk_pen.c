@@ -433,38 +433,6 @@ void rk_penInit(void)
   zSphere3D bball;
   double vv_fovy, vv_near, vv_far;
 
-  rkglChainAttrInit( &attr );
-  if( opt[OPT_DRAW_WIREFRAME].flag ) attr.disptype = RKGL_WIREFRAME;
-  if( opt[OPT_DRAW_BB].flag )        attr.disptype = RKGL_BB;
-  if( opt[OPT_DRAW_BONE].flag ){
-    attr.disptype = RKGL_STICK;
-    attr.bone_r = atof( opt[OPT_DRAW_BONE].arg );
-  }
-  if( opt[OPT_DRAW_COORD].flag ) attr.disptype = RKGL_FRAME;
-  if( opt[OPT_DRAW_ELLIPS].flag ){
-    attr.disptype = RKGL_ELLIPS;
-    attr.ellips_mag = atof( opt[OPT_DRAW_ELLIPS].arg );
-  }
-  if( !rk_penReadChainFile( &chain, opt[OPT_MODELFILE].arg ) ||
-      !rkglChainLoad( &gr, &chain, &attr, &light ) )
-    exit( 1 );
-
-  if( opt[OPT_ENVFILE].flag ){
-    if( !rk_penReadMShapeFile( &envshape, opt[OPT_ENVFILE].arg ) ){
-      ZOPENERROR( opt[OPT_ENVFILE].arg );
-      rk_penUsage();
-      exit( 1 );
-    }
-    if( attr.disptype == RKGL_STICK || attr.disptype == RKGL_ELLIPS )
-      attr.disptype = RKGL_FACE;
-    env = rkglEntryMShape( &envshape, attr.disptype, &light );
-    zMShape3DDestroy( &envshape );
-    if( env < 0 ) exit( 1 );
-  }
-  if( opt[OPT_INITFILE].flag &&
-      !rkChainInitReadZTK( &chain, opt[OPT_INITFILE].arg ) )
-    exit( 1 );
-
   zRGBDecodeStr( &rgb, opt[OPT_BG].arg );
   rkglCameraInit( &cam );
   rkglCameraSetBackground( &cam, rgb.r, rgb.g, rgb.b );
@@ -501,6 +469,38 @@ void rk_penInit(void)
   rkglTextureEnable();
   if( opt[OPT_SMOOTH].flag ) glEnable( GL_LINE_SMOOTH );
   if( opt[OPT_FOG].flag ) glEnable( GL_FOG );
+
+  rkglChainAttrInit( &attr );
+  if( opt[OPT_DRAW_WIREFRAME].flag ) attr.disptype |= RKGL_WIREFRAME;
+  if( opt[OPT_DRAW_BB].flag )        attr.disptype |= RKGL_BB;
+  if( opt[OPT_DRAW_BONE].flag ){
+    attr.disptype = RKGL_STICK;
+    attr.bone_r = atof( opt[OPT_DRAW_BONE].arg );
+  }
+  if( opt[OPT_DRAW_COORD].flag ) attr.disptype |= RKGL_FRAME;
+  if( opt[OPT_DRAW_ELLIPS].flag ){
+    attr.disptype |= RKGL_ELLIPS;
+    attr.ellips_mag = atof( opt[OPT_DRAW_ELLIPS].arg );
+  }
+  if( !rk_penReadChainFile( &chain, opt[OPT_MODELFILE].arg ) ||
+      !rkglChainLoad( &gr, &chain, &attr, &light ) )
+    exit( 1 );
+
+  if( opt[OPT_ENVFILE].flag ){
+    if( !rk_penReadMShapeFile( &envshape, opt[OPT_ENVFILE].arg ) ){
+      ZOPENERROR( opt[OPT_ENVFILE].arg );
+      rk_penUsage();
+      exit( 1 );
+    }
+    if( attr.disptype & RKGL_STICK || attr.disptype & RKGL_ELLIPS )
+      attr.disptype = RKGL_FACE;
+    env = rkglEntryMShape( &envshape, attr.disptype, &light );
+    zMShape3DDestroy( &envshape );
+    if( env < 0 ) exit( 1 );
+  }
+  if( opt[OPT_INITFILE].flag &&
+      !rkChainInitReadZTK( &chain, opt[OPT_INITFILE].arg ) )
+    exit( 1 );
 
   if( opt[OPT_SHADOW].flag )
     glutDisplayFunc( display_shadow );

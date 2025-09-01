@@ -14,7 +14,6 @@ void rkglChainAttrInit(rkglChainAttr *attr)
   attr->com_r      = RKGL_LINK_DEFAULT_COM_R;
   attr->ellips_mag = RKGL_LINK_DEFAULT_ELLIPS_MAG;
   attr->frame_l    = RKGL_LINK_DEFAULT_FRAME_L;
-  attr->frame_mag  = RKGL_LINK_DEFAULT_FRAME_MAG;
 }
 
 void rkglChainAttrCopy(rkglChainAttr *src, rkglChainAttr *dest)
@@ -90,7 +89,7 @@ static void _rkglLink(rkLink *link, zOpticalInfo *oi_alt, rkglChainAttr *attr, r
   zShapeListCell *sp;
 
   if( attr->disptype & RKGL_STICK  ) _rkglLinkStick( link, attr );
-  if( attr->disptype & RKGL_FRAME  ) rkglFrame( ZFRAME3DIDENT, attr->frame_l, attr->frame_mag );
+  if( attr->disptype & RKGL_FRAME  ) rkglFrame( ZFRAME3DIDENT, attr->frame_l );
   if( attr->disptype & RKGL_COM    ) _rkglLinkCOM( link, attr );
   if( attr->disptype & RKGL_ELLIPS ) _rkglLinkInertiaEllips( link, attr );
   if( !rkLinkShapeIsEmpty( link ) && attr->disptype & ( RKGL_FACE | RKGL_WIREFRAME | RKGL_BB ) )

@@ -3,8 +3,10 @@
 rkglCamera cam;
 rkglLight light;
 
+int pc_id; /* display list of point cloud */
 int pc_octree_id; /* display list of octree of point cloud */
 int pc_normal_id; /* display list of normal vectors of point cloud */
+bool show_pointcloud = true;
 bool show_octree = true;
 bool show_normal = false;
 
@@ -15,10 +17,12 @@ void display(void)
 
   glPushMatrix();
   rkglClear();
-  if( show_octree )
-    glCallList( pc_octree_id );
   if( show_normal )
     glCallList( pc_normal_id );
+  if( show_pointcloud )
+    glCallList( pc_id );
+  if( show_octree )
+    glCallList( pc_octree_id );
   glPopMatrix();
   glutSwapBuffers();
 }
@@ -26,6 +30,7 @@ void display(void)
 void keyboard(unsigned char key, int x, int y)
 {
   switch( key ){
+  case 'p': show_pointcloud = 1 - show_pointcloud; break;
   case 'n': show_normal = 1 - show_normal; break;
   case 'o': show_octree = 1 - show_octree; break;
   case 'q': case 'Q': case '\033':
@@ -66,6 +71,28 @@ void generate_octree(zVec3DOctree *octree, char *filename, double resolution)
   zVec3DDataDestroy( &pointdata );
 }
 
+void generate_lists(zVec3DOctree *octree)
+{
+  zOpticalInfo oi;
+
+  pc_id = rkglBeginList();
+  rkglRGBByName( "white" );
+  glPointSize( 1.0 );
+  rkglOctreePoints( octree );
+  glEndList();
+  zOpticalInfoCreate( &oi, 0.5, 0.5, 0.5, 0.0, 1.0, 1.0, 0, 0, 0, 0, 0, 0.5, NULL );
+  pc_octree_id = rkglBeginList();
+  rkglMaterial( &oi );
+  rkglOctree( octree );
+  glEndList();
+  zOpticalInfoDestroy( &oi );
+  pc_normal_id = rkglBeginList();
+  rkglRGBByName( "green" );
+  glLineWidth( 0.5 );
+  rkglOctreeNormal( octree, 0.005 );
+  glEndList();
+}
+
 int main(int argc, char *argv[])
 {
   zVec3DOctree octree;
@@ -81,13 +108,9 @@ int main(int argc, char *argv[])
   glutMotionFunc( rkglMouseDragFuncGLUT );
   init();
   generate_octree( &octree, argc > 1 ? argv[1] : "../model/bunny.ztk", 0.002 );
+  generate_lists( &octree );
+  zVec3DOctreeDestroy( &octree );
 
-  pc_octree_id = rkglBeginList();
-  rkglOctree( &octree );
-  glEndList();
-  pc_normal_id = rkglBeginList();
-  rkglOctreeNormal( &octree, 0.005 );
-  glEndList();
   glutMainLoop();
   return 0;
 }
