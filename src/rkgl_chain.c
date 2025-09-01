@@ -8,12 +8,14 @@
 
 void rkglChainAttrInit(rkglChainAttr *attr)
 {
-  attr->disptype   = RKGL_FACE;
-  attr->bone_r     = RKGL_LINK_DEFAULT_BONE_R;
-  attr->link_com_r = RKGL_LINK_DEFAULT_LINK_COM_R;
-  attr->com_r      = RKGL_LINK_DEFAULT_COM_R;
-  attr->ellips_mag = RKGL_LINK_DEFAULT_ELLIPS_MAG;
-  attr->frame_l    = RKGL_LINK_DEFAULT_FRAME_L;
+  attr->disptype            = RKGL_FACE;
+  attr->wireframe_linewidth = RKGL_LINK_DEFAULT_WIREFRAME_LINEWIDTH;
+  attr->bone_radius         = RKGL_LINK_DEFAULT_BONE_RADIUS;
+  attr->link_com_radius     = RKGL_LINK_DEFAULT_LINK_COM_RADIUS;
+  attr->com_radius          = RKGL_LINK_DEFAULT_COM_RADIUS;
+  attr->ellips_scale        = RKGL_LINK_DEFAULT_ELLIPS_SCALE;
+  attr->frame_length        = RKGL_LINK_DEFAULT_FRAME_LENGTH;
+  attr->frame_linewidth     = RKGL_LINK_DEFAULT_FRAME_LINEWIDTH;
 }
 
 void rkglChainAttrCopy(rkglChainAttr *src, rkglChainAttr *dest)
@@ -38,21 +40,21 @@ static void _rkglLinkStick(rkLink *link, rkglChainAttr *attr)
   zOpticalInfoCreateSimple( &oi, 1.0, 1.0, 1.0, NULL );
   rkglMaterialOpticalInfo( &oi );
   if( rkLinkJoint(link)->com == &rk_joint_revol ){
-    zVec3DCreate( &z1, 0, 0,-attr->bone_r * 4 );
-    zVec3DCreate( &z2, 0, 0, attr->bone_r * 4 );
-    zCyl3DCreate( &jc, &z1, &z2, attr->bone_r*2, 0 );
+    zVec3DCreate( &z1, 0, 0,-attr->bone_radius * 4 );
+    zVec3DCreate( &z2, 0, 0, attr->bone_radius * 4 );
+    zCyl3DCreate( &jc, &z1, &z2, attr->bone_radius*2, 0 );
     rkglCyl( &jc, RKGL_FACE );
   } else
   if( rkLinkJoint(link)->com == &rk_joint_prism ){
-    zBox3DCreateAlign( &jb, ZVEC3DZERO, attr->bone_r*4, attr->bone_r*4, attr->bone_r*8 );
+    zBox3DCreateAlign( &jb, ZVEC3DZERO, attr->bone_radius*4, attr->bone_radius*4, attr->bone_radius*8 );
     rkglBox( &jb, RKGL_FACE );
   } else
   if( rkLinkJoint(link)->com == &rk_joint_spher ){
-    zSphere3DCreate( &js, ZVEC3DZERO, attr->bone_r*3, 0 );
+    zSphere3DCreate( &js, ZVEC3DZERO, attr->bone_radius*3, 0 );
     rkglSphere( &js, RKGL_FACE );
   }
   for( child=rkLinkChild(link); child; child=rkLinkSibl(child) ){
-    zCyl3DCreate( &bone, ZVEC3DZERO, rkLinkAdjPos(child), attr->bone_r, 0 );
+    zCyl3DCreate( &bone, ZVEC3DZERO, rkLinkAdjPos(child), attr->bone_radius, 0 );
     rkglCyl( &bone, RKGL_FACE );
   }
 }
@@ -64,7 +66,7 @@ static void _rkglLinkCOM(rkLink *link, rkglChainAttr *attr)
 
   zOpticalInfoCreateSimple( &oi, 0.4, 0.7, 1.0, NULL );
   rkglMaterialOpticalInfo( &oi );
-  zSphere3DCreate( &com, rkLinkCOM(link), attr->link_com_r, 0 );
+  zSphere3DCreate( &com, rkLinkCOM(link), attr->link_com_radius, 0 );
   rkglSphere( &com, RKGL_FACE );
   zOpticalInfoCreateSimple( &oi, 1.0, 1.0, 1.0, NULL );
   rkglMaterialOpticalInfo( &oi );
@@ -78,9 +80,9 @@ static void _rkglLinkInertiaEllips(rkLink *l, rkglChainAttr *attr)
   zOpticalInfoCreateSimple( &oi, 1.0, 0.8, 0.4, NULL );
   rkglMaterialOpticalInfo( &oi );
   rkLinkInertiaEllips( l, &e );
-  zEllips3DRadius(&e,0) *= attr->ellips_mag;
-  zEllips3DRadius(&e,1) *= attr->ellips_mag;
-  zEllips3DRadius(&e,2) *= attr->ellips_mag;
+  zEllips3DRadius(&e,0) *= attr->ellips_scale;
+  zEllips3DRadius(&e,1) *= attr->ellips_scale;
+  zEllips3DRadius(&e,2) *= attr->ellips_scale;
   rkglEllips( &e, RKGL_FACE );
 }
 
@@ -89,9 +91,13 @@ static void _rkglLink(rkLink *link, zOpticalInfo *oi_alt, rkglChainAttr *attr, r
   zShapeListCell *sp;
 
   if( attr->disptype & RKGL_STICK  ) _rkglLinkStick( link, attr );
-  if( attr->disptype & RKGL_FRAME  ) rkglFrame( ZFRAME3DIDENT, attr->frame_l );
+  if( attr->disptype & RKGL_FRAME  ){
+    glLineWidth( attr->frame_linewidth );
+    rkglFrame( ZFRAME3DIDENT, attr->frame_length );
+  }
   if( attr->disptype & RKGL_COM    ) _rkglLinkCOM( link, attr );
   if( attr->disptype & RKGL_ELLIPS ) _rkglLinkInertiaEllips( link, attr );
+  glLineWidth( attr->wireframe_linewidth );
   if( !rkLinkShapeIsEmpty( link ) && attr->disptype & ( RKGL_FACE | RKGL_WIREFRAME | RKGL_BB ) )
     zListForEach( rkLinkShapeList(link), sp )
       rkglShape( zShapeListCellShape(sp), oi_alt, attr->disptype, light );
@@ -239,7 +245,7 @@ void rkglChainDrawCOM(rkglChain *gc)
 
   zOpticalInfoCreateSimple( &oi, 0.0, 0.0, 1.0, NULL );
   rkglMaterialOpticalInfo( &oi );
-  zSphere3DCreate( &com, rkChainWldCOM(gc->chain), gc->attr.com_r, 0 );
+  zSphere3DCreate( &com, rkChainWldCOM(gc->chain), gc->attr.com_radius, 0 );
   rkglSphere( &com, RKGL_FACE );
 }
 

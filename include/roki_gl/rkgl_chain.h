@@ -15,11 +15,13 @@ __BEGIN_DECLS
 
 ZDEF_STRUCT( __ROKI_GL_CLASS_EXPORT, rkglChainAttr ){
   ubyte disptype;
-  double bone_r;
-  double link_com_r;
-  double com_r;
-  double ellips_mag;
-  double frame_l;
+  double wireframe_linewidth;
+  double bone_radius;
+  double link_com_radius;
+  double com_radius;
+  double ellips_scale;
+  double frame_length;
+  double frame_linewidth;
 };
 
 __ROKI_GL_EXPORT void rkglChainAttrInit(rkglChainAttr *attr);
@@ -39,11 +41,13 @@ ZDEF_STRUCT( __ROKI_GL_CLASS_EXPORT, rkglChain ){
   rkglChainAttr attr; /* display attribute */
 };
 
-#define RKGL_LINK_DEFAULT_BONE_R     0.006
-#define RKGL_LINK_DEFAULT_LINK_COM_R 0.012
-#define RKGL_LINK_DEFAULT_COM_R      0.03
-#define RKGL_LINK_DEFAULT_ELLIPS_MAG 1.0
-#define RKGL_LINK_DEFAULT_FRAME_L    0.1
+#define RKGL_LINK_DEFAULT_WIREFRAME_LINEWIDTH 0.5
+#define RKGL_LINK_DEFAULT_BONE_RADIUS         0.006
+#define RKGL_LINK_DEFAULT_LINK_COM_RADIUS     0.012
+#define RKGL_LINK_DEFAULT_COM_RADIUS          0.03
+#define RKGL_LINK_DEFAULT_ELLIPS_SCALE        1.0
+#define RKGL_LINK_DEFAULT_FRAME_LENGTH        0.1
+#define RKGL_LINK_DEFAULT_FRAME_LINEWIDTH     1.5
 
 __ROKI_GL_EXPORT bool rkglChainLoad(rkglChain *gc, rkChain *chain, rkglChainAttr *attr, rkglLight *light);
 __ROKI_GL_EXPORT void rkglChainUnload(rkglChain *gc);

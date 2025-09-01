@@ -1,3 +1,8 @@
+2025.09.01. Modified rkglChainAttrInit and _rkglLink. [rkgl_chain]
+2025.09.01. Renamed RKGL_LINK_DEFAULT_BONE_R, RKGL_LINK_DEFAULT_LINK_COM_R, RKGL_LINK_DEFAULT_COM_R, RKGL_LINK_DEFAULT_ELLIPS_MAG, and RKGL_LINK_DEFAULT_FRAME_L to RKGL_LINK_DEFAULT_BONE_RADIUS, RKGL_LINK_DEFAULT_LINK_COM_RADIUS, RKGL_LINK_DEFAULT_COM_RADIUS, RKGL_LINK_DEFAULT_ELLIPS_SCALE, and RKGL_LINK_DEFAULT_FRAME_LENGTH, respectively. [rkgl_chain, app]
+2025.09.01. Defined RKGL_LINK_DEFAULT_WIREFRAME_LINEWIDTH and RKGL_LINK_DEFAULT_FRAME_LINEWIDTH. [rkgl_chain]
+2025.09.01. Renamed members bone_r, link_com_r, com_r, ellips_mag, and frame_l of rkglChainAttr class to bone_radius, link_com_radius, com_radius, ellips_scale, and frame_length, respectively. [rkgl_chain]
+2025.09.01. Added members wireframe_linewidth and frame_linewidth to rkglChainAttr class. [rkgl_chain]
 2025.09.01. Modified rk_pen to make non-face mode available. [app]
 2025.09.01. Abolished rkglRGBByName, and added rkglRGBByStr. [rkgl_optic]
 2025.09.01. Added rkglCameraSetBackgroundRGB. [rkgl_camera]

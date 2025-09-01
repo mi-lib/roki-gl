@@ -252,16 +252,16 @@ void rkAnimCreateChainAttr(rkglChainAttr *attr)
   if( opt[OPT_DRAW_BB].flag )        attr->disptype = RKGL_BB;
   if( opt[OPT_DRAW_BONE].flag ){
     attr->disptype = RKGL_STICK;
-    attr->bone_r = atof( opt[OPT_DRAW_BONE].arg );
+    attr->bone_radius = atof( opt[OPT_DRAW_BONE].arg );
   }
   if( opt[OPT_DRAW_COORD].flag ) attr->disptype = RKGL_FRAME;
   if( opt[OPT_DRAW_COM].flag ){
     attr->disptype = RKGL_COM;
-    attr->com_r = atof( opt[OPT_DRAW_COM].arg );
+    attr->com_radius = atof( opt[OPT_DRAW_COM].arg );
   }
   if( opt[OPT_DRAW_ELLIPS].flag ){
     attr->disptype = RKGL_ELLIPS;
-    attr->ellips_mag = atof( opt[OPT_DRAW_ELLIPS].arg );
+    attr->ellips_scale = atof( opt[OPT_DRAW_ELLIPS].arg );
   }
 }
 

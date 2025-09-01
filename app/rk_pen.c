@@ -482,13 +482,13 @@ void rk_penInit(void)
     attr.disptype |= RKGL_BB | RKGL_FACE;
   if( opt[OPT_DRAW_BONE].flag ){
     attr.disptype |= RKGL_STICK;
-    attr.bone_r = atof( opt[OPT_DRAW_BONE].arg );
+    attr.bone_radius = atof( opt[OPT_DRAW_BONE].arg );
   }
   if( opt[OPT_DRAW_COORD].flag )
     attr.disptype |= RKGL_FRAME;
   if( opt[OPT_DRAW_ELLIPS].flag ){
     attr.disptype |= RKGL_ELLIPS;
-    attr.ellips_mag = atof( opt[OPT_DRAW_ELLIPS].arg );
+    attr.ellips_scale = atof( opt[OPT_DRAW_ELLIPS].arg );
   }
   if( !rk_penReadChainFile( &chain, opt[OPT_MODELFILE].arg ) ||
       !rkglChainLoad( &gr, &chain, &attr, &light ) )
