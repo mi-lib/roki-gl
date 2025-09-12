@@ -459,7 +459,7 @@ static int _rkglTubeVertNorm(zCyl3D *tube, zVec3D *axis, zMesh3D *vert, zVec3DAr
     return -1;
   }
   zVec3DDivDRC( axis, l );
-  zVec3DOrthoNormal( axis, &s );
+  zVec3DOrthonormal( axis, &s );
   zVec3DMulDRC( &s, zCyl3DRadius(tube) ); /* one radial vector */
   for( i=0; i<=zCyl3DDiv(tube); i++ ){
     zVec3DMul( axis, -2*zPI*i/zCyl3DDiv(tube), &aa );
@@ -729,7 +729,7 @@ static int _rkglConeVertNorm(zCone3D *cone, zVec3D *axis, zVec3DArray *vert, zVe
   }
   zVec3DDivDRC( axis, l );
   /* one radial vector */
-  zVec3DOrthoNormal( axis, &s );
+  zVec3DOrthonormal( axis, &s );
   zVec3DMulDRC( &s, zCone3DRadius(cone) );
   /* creation of vertices */
   for( i=0; i<=zCone3DDiv(cone); i++ ){
@@ -823,7 +823,7 @@ static int _rkglTorusVertNorm(zVec3D *c, zVec3D *n, double r1, double r2, int di
   rm = 0.5 * ( r1 + r2 );
   r  = 0.5 * ( r2 - r1 );
   zVec3DNormalize( n, &d );
-  zVec3DOrthoNormal( &d, &s );
+  zVec3DOrthonormal( &d, &s );
   for( i=0; i<=div1; i++ ){
     zVec3DMul( &d, 2*zPI*i/div1, &aa1 );
     zVec3DRot( &s, &aa1, &tmp );
