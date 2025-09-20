@@ -168,7 +168,7 @@ void rk_viewReadModel(zStrAddrList *modellist)
     if( opt[OPT_SCALE].flag ){
       scale = atof( opt[OPT_SCALE].arg );
       for( i=0; i<zMShape3DShapeNum(&ms); i++ )
-        zPH3DScale( zShape3DPH(zMShape3DShape(&ms,i)), scale );
+        zPH3DScaleDRC( zShape3DPH(zMShape3DShape(&ms,i)), scale );
     }
     rkglRGBByStr( "white" ); /* for wireframe */
     rkglMShape( &ms, opt[OPT_WIREFRAME].flag ? RKGL_WIREFRAME : RKGL_FACE, &light );

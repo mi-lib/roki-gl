@@ -1,3 +1,5 @@
+2025.09.20. Reflected new specification of zPH3DScaleDRC. [app]
+2025.09.20. Reflected renaming of zPH3DVertArray and zPH3DFaceArray. [rkgl_shape]
 2025.09.13. Debugged automatic adjustment of view volume in rk_pen. [app]
 2025.09.13. Reflected renaming of zVec3DOrthonormal. [rkgl_shape]
 2025.09.01. Modified rkglChainAttrInit and _rkglLink. [rkgl_chain]

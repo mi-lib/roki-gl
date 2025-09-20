@@ -1165,7 +1165,7 @@ void rkglShape(zShape3D *s, zOpticalInfo *oi_alt, ubyte disptype, rkglLight *lig
   if( disptype & RKGL_BB ){
     zBox3D box;
     zVec3DData data;
-    zVec3DDataAssignArray( &data, &zShape3DPH(s)->vert );
+    zVec3DDataAssignArray( &data, zPH3DVertArray(zShape3DPH(s)) );
     zVec3DDataOBB( &data, &box );
     zVec3DDataDestroy( &data );
     rkglBox( &box, disptype );
