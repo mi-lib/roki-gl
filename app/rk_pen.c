@@ -280,8 +280,7 @@ void rk_penSetRootFrame(void)
   zFrame3DPrint( rkChainLinkOrgFrame(&chain,0) );
   rk_penPos( &p[0], &p[1], &p[2] );
   rk_penZYX( &a[0], &a[1], &a[2] );
-  zFrame3DFromZYX( rkChainLinkOrgFrame(&chain,0),
-    p[0], p[1], p[2], a[0], a[1], a[2] );
+  zFrame3DFromPosZYX( rkChainLinkOrgFrame(&chain,0), p[0], p[1], p[2], a[0], a[1], a[2] );
   rkChainUpdateFK( &chain );
 }
 

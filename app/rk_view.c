@@ -92,8 +92,8 @@ int rk_viewReturnDir(char *cwd)
 void rk_viewReadPH(zMShape3D *ms, const char *filename, const char *sfx)
 {
   zMShape3DInit( ms );
-  zArrayAlloc( &ms->optic, zOpticalInfo, 1 );
-  zArrayAlloc( &ms->shape, zShape3D, 1 );
+  zMShape3DAllocOpticArray( ms, 1 );
+  zMShape3DAllocShapeArray( ms, 1 );
   if( zMShape3DOpticNum(ms) != 1 || zMShape3DShapeNum(ms) != 1 ){
     ZALLOCERROR();
     exit( EXIT_FAILURE );

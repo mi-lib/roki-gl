@@ -195,7 +195,7 @@ void rkglCameraPut(rkglCamera *camera)
 /* set viewframe of a camera. */
 void rkglCameraSetViewframe(rkglCamera *camera, double x, double y, double z, double pan, double tilt, double roll)
 {
-  zFrame3DFromZYX( &camera->viewframe, x, y, z, zDeg2Rad(pan), zDeg2Rad(tilt), zDeg2Rad(roll) );
+  zFrame3DFromPosZYX( &camera->viewframe, x, y, z, zDeg2Rad(pan), zDeg2Rad(tilt), zDeg2Rad(roll) );
 }
 
 /* translate viewframe of a camera. */
