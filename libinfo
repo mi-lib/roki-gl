@@ -1,6 +1,6 @@
 PROJNAME=roki-gl
-VERSION=1.14.14
-DEPENDENCY="zeda=1.11.8;zm=1.12.12;zeo=1.19.8;roki=2.12.6"
+VERSION=1.14.15
+DEPENDENCY="zeda=1.11.19;zm=1.12.12;zeo=1.19.12;roki=2.12.6"
 
 ifeq ($(CONFIG_USE_GLX),y)
 	DEPENDENCY:=$(DEPENDENCY)";zx11=1.5.5"

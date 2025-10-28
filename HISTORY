@@ -1,3 +1,4 @@
+2025.10.28. Reflected new specification of zVec3DData. [app]
 2025.10.08. Applied zMShape3DAllocOpticArray and zMShape3DAllocShapeArray to rk_view. [app]
 2025.10.08. Reflected renaming of zFrame3DFromPosZYX. [rkgl_camera, app]
 2025.09.20. Reflected new specification of zPH3DScaleDRC. [app]

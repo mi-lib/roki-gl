@@ -151,7 +151,7 @@ void rk_viewReadModel(zStrAddrList *modellist)
         zVec3DDataDestroy( &normaldata );
       }
       if( opt[OPT_AUTO].flag )
-        zVec3DListAppendArray( &pointlist_all, &pointdata.data.array );
+        zVec3DListAppendArray( &pointlist_all, pointdata.data.array );
       else
         zVec3DDataDestroy( &pointdata );
       continue;
@@ -174,7 +174,7 @@ void rk_viewReadModel(zStrAddrList *modellist)
     rkglMShape( &ms, opt[OPT_WIREFRAME].flag ? RKGL_WIREFRAME : RKGL_FACE, &light );
     if( opt[OPT_AUTO].flag ){
       zMShape3DVertData( &ms, &pointdata );
-      zListAppend( &pointlist_all, &pointdata.data.list );
+      zListAppend( &pointlist_all, pointdata.data.list );
     }
     zMShape3DDestroy( &ms );
   }
