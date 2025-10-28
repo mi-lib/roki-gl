@@ -112,8 +112,8 @@ void rkglPolygon(zVec3D v[], int n, ...)
   glEnd();
 }
 
-/* draw a face of a 3D box. */
-static void _rkglBoxFace(zVec3D vert[8])
+/* draw a face of a 3D box (legacy). */
+static void _rkglBoxFaceLegacy(zVec3D vert[8])
 {
   glShadeModel( GL_FLAT );
   rkglPolygon( vert, 4, 0, 1, 2, 3 );
@@ -122,6 +122,33 @@ static void _rkglBoxFace(zVec3D vert[8])
   rkglPolygon( vert, 4, 1, 5, 6, 2 );
   rkglPolygon( vert, 4, 0, 4, 5, 1 );
   rkglPolygon( vert, 4, 2, 6, 7, 3 );
+}
+
+/* draw a face of a 3D box. */
+static void _rkglBoxFace(zVec3D vert[8])
+{
+  int i;
+  zPH3D ph;
+
+  if( !zPH3DAlloc( &ph, 8, 12 ) ) return;
+  for( i=0; i<8; i++ )
+    zVec3DCopy( &vert[i], zPH3DVert(&ph,i) );
+  zTri3DCreate( zPH3DFace(&ph,0),  zPH3DVert(&ph,0), zPH3DVert(&ph,1), zPH3DVert(&ph,2) );
+  zTri3DCreate( zPH3DFace(&ph,1),  zPH3DVert(&ph,0), zPH3DVert(&ph,2), zPH3DVert(&ph,3) );
+  zTri3DCreate( zPH3DFace(&ph,2),  zPH3DVert(&ph,0), zPH3DVert(&ph,4), zPH3DVert(&ph,5) );
+  zTri3DCreate( zPH3DFace(&ph,3),  zPH3DVert(&ph,0), zPH3DVert(&ph,5), zPH3DVert(&ph,1) );
+  zTri3DCreate( zPH3DFace(&ph,4),  zPH3DVert(&ph,1), zPH3DVert(&ph,5), zPH3DVert(&ph,6) );
+  zTri3DCreate( zPH3DFace(&ph,5),  zPH3DVert(&ph,1), zPH3DVert(&ph,6), zPH3DVert(&ph,2) );
+  zTri3DCreate( zPH3DFace(&ph,6),  zPH3DVert(&ph,2), zPH3DVert(&ph,6), zPH3DVert(&ph,7) );
+  zTri3DCreate( zPH3DFace(&ph,7),  zPH3DVert(&ph,2), zPH3DVert(&ph,7), zPH3DVert(&ph,3) );
+  zTri3DCreate( zPH3DFace(&ph,8),  zPH3DVert(&ph,0), zPH3DVert(&ph,3), zPH3DVert(&ph,7) );
+  zTri3DCreate( zPH3DFace(&ph,9),  zPH3DVert(&ph,0), zPH3DVert(&ph,7), zPH3DVert(&ph,4) );
+  zTri3DCreate( zPH3DFace(&ph,10), zPH3DVert(&ph,7), zPH3DVert(&ph,6), zPH3DVert(&ph,5) );
+  zTri3DCreate( zPH3DFace(&ph,11), zPH3DVert(&ph,7), zPH3DVert(&ph,5), zPH3DVert(&ph,4) );
+  glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+  for( i=0; i<zPH3DFaceNum(&ph); i++ )
+    rkglTriFace( zPH3DFace(&ph,i) );
+  zPH3DDestroy(&ph);
 }
 
 /* draw a wireframe of a 3D box. */
