@@ -42,8 +42,6 @@ __ROKI_GL_EXPORT void rkglTriWireframe(zTri3D *t);
 __ROKI_GL_EXPORT void rkglTriTexture(zTri3D *t, zTri2D *f);
 /*! \brief put a 3D triangle with bump map. */
 __ROKI_GL_EXPORT void rkglTriBump(zTri3D *t, zTri2D *f, zVec3D *lp);
-/*! \brief put a 3D polygons. */
-__ROKI_GL_EXPORT void rkglPolygon(zVec3D v[], int n, ...);
 
 /* primitive shapes */
 

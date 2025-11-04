@@ -81,34 +81,21 @@ void rkglTriBump(zTri3D *t, zTri2D *f, zVec3D *lp)
   glEnd();
 }
 
-/* a 3D polygons. */
-void rkglPolygon(zVec3D v[], int n, ...)
+/* a 3D quadrangle. */
+static void _rkglQuad(zVec3D vert[], int i1, int i2, int i3, int i4)
 {
-  zVec3D v0, v1, v2, norm;
-  va_list args;
-  int i;
+  zVec3D e1, e2, norm;
 
-  if( n < 3 ){
-    ZRUNERROR( "cannot create polygon from less than three vertices" );
-    return;
-  }
-  /* normal vector */
-  va_start( args, n );
-    zVec3DCopy( &v[(int)va_arg( args, int )], &v0 );
-    zVec3DCopy( &v[(int)va_arg( args, int )], &v1 );
-    zVec3DCopy( &v[(int)va_arg( args, int )], &v2 );
-  va_end( args );
-  zVec3DSubDRC( &v1, &v0 );
-  zVec3DSubDRC( &v2, &v0 );
-  zVec3DOuterProd( &v1, &v2, &norm );
+  zVec3DSub( &vert[i2], &vert[i1], &e1 );
+  zVec3DSub( &vert[i4], &vert[i1], &e2 );
+  zVec3DOuterProd( &e1, &e2, &norm );
   zVec3DNormalizeDRC( &norm );
-  glBegin( GL_POLYGON );
+  glBegin( GL_TRIANGLE_STRIP );
     rkglNormal( &norm );
-    /* vertices */
-    va_start( args, n );
-    for( i=0; i<n; i++ )
-      rkglVertex( &v[(int)va_arg( args, int )] );
-    va_end( args );
+    rkglVertex( &vert[i1] );
+    rkglVertex( &vert[i2] );
+    rkglVertex( &vert[i4] );
+    rkglVertex( &vert[i3] );
   glEnd();
 }
 
@@ -116,12 +103,12 @@ void rkglPolygon(zVec3D v[], int n, ...)
 static void _rkglBoxFace(zVec3D vert[8])
 {
   glShadeModel( GL_FLAT );
-  rkglPolygon( vert, 4, 0, 1, 2, 3 );
-  rkglPolygon( vert, 4, 7, 6, 5, 4 );
-  rkglPolygon( vert, 4, 0, 3, 7, 4 );
-  rkglPolygon( vert, 4, 1, 5, 6, 2 );
-  rkglPolygon( vert, 4, 0, 4, 5, 1 );
-  rkglPolygon( vert, 4, 2, 6, 7, 3 );
+  _rkglQuad( vert, 0, 1, 2, 3 );
+  _rkglQuad( vert, 7, 6, 5, 4 );
+  _rkglQuad( vert, 0, 3, 7, 4 );
+  _rkglQuad( vert, 1, 5, 6, 2 );
+  _rkglQuad( vert, 0, 4, 5, 1 );
+  _rkglQuad( vert, 2, 6, 7, 3 );
 }
 
 /* draw a wireframe of a 3D box. */

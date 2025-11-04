@@ -11,6 +11,7 @@ enum{
   OPT_PAN, OPT_TILT, OPT_ROLL, OPT_OX, OPT_OY, OPT_OZ, OPT_AUTO,
   OPT_WIDTH, OPT_HEIGHT,
   OPT_SCALE,
+  OPT_NONFACE,
   OPT_WIREFRAME,
   OPT_BG,
   OPT_LX, OPT_LY, OPT_LZ,
@@ -31,7 +32,8 @@ zOption opt[] = {
   { "width", NULL, "<width>", "set window width", (char *)"500", false },
   { "height", NULL, "<height>", "set window height", (char *)"500", false },
   { "scale", NULL, "<scale>", "set scale factor", (char *)"1.0", false },
-  { "wireframe", NULL, NULL, "draw objects as wireframe models", NULL, false },
+  { "nonface", NULL, NULL, "undraw solid model of the kinematic chain", NULL, false },
+  { "wireframe", NULL, "<color name>", "draw wireframes of objects", (char *)"white", false },
   { "bg", NULL, "<RGB#hex>", "set background color", (char *)"#010101", false },
   { "lx", NULL, "<value>", "light position in x axis", (char *)"3", false },
   { "ly", NULL, "<value>", "light position in y axis", (char *)"0", false },
@@ -127,6 +129,7 @@ void rk_viewReadModel(zStrAddrList *modellist)
   const char *sfx;
   double scale;
   zMShape3D ms;
+  ubyte disptype;
   char dirname[BUFSIZ], filename[BUFSIZ], cwd[BUFSIZ];
   int i;
 
@@ -170,8 +173,12 @@ void rk_viewReadModel(zStrAddrList *modellist)
       for( i=0; i<zMShape3DShapeNum(&ms); i++ )
         zPH3DScaleDRC( zShape3DPH(zMShape3DShape(&ms,i)), scale );
     }
-    rkglRGBByStr( "white" ); /* for wireframe */
-    rkglMShape( &ms, opt[OPT_WIREFRAME].flag ? RKGL_WIREFRAME : RKGL_FACE, &light );
+    disptype = opt[OPT_NONFACE].flag ? 0 : RKGL_FACE;
+    if( opt[OPT_WIREFRAME].flag ){
+      disptype |= RKGL_WIREFRAME;
+      rkglRGBByStr( opt[OPT_WIREFRAME].arg );
+    }
+    rkglMShape( &ms, disptype, &light );
     if( opt[OPT_AUTO].flag ){
       zMShape3DVertData( &ms, &pointdata );
       zListAppend( &pointlist_all, pointdata.data.list );
@@ -214,20 +221,25 @@ void rk_viewResetCamera(void)
 
 void rk_viewResetLight(void)
 {
-  double x, y, z;
+  glEnable( GL_LIGHTING );
+  rkglLightCreate( &light, 0.5, 0.5, 0.5, 0.8, 0.8, 0.8, 0, 0, 0 );
+  rkglShadowInit( &shadow, 512, 512, 1.5, 0.2, 0.1 );
+}
+
+void rk_viewPutLight(void)
+{
+  double x, y, z, ratio;
 
   x = atof(opt[OPT_LX].arg);
   y = atof(opt[OPT_LY].arg);
   z = atof(opt[OPT_LZ].arg);
-  glEnable( GL_LIGHTING );
-  rkglLightCreate( &light, 0.5, 0.5, 0.5, 0.8, 0.8, 0.8, 0, 0, 0 );
   if( opt[OPT_AUTO].flag ){
-    if( !opt[OPT_LX].flag ) x = 0;
-    if( !opt[OPT_LY].flag ) y = 0;
-    if( !opt[OPT_LZ].flag ) z = zSphere3DRadius(&boundingsphere)*3;
+    ratio = zSphere3DRadius(&boundingsphere) * 10 / sqrt( x*x + y*y + z*z );
+    x *= ratio;
+    y *= ratio;
+    z *= ratio;
   }
   rkglLightMove( &light, x, y, z );
-  rkglShadowInit( &shadow, 512, 512, 1.5, 0.2, 0.1 );
 }
 
 void rk_viewInit(void)
@@ -264,6 +276,7 @@ bool rk_viewCommandArgs(int argc, char *argv[])
   rk_viewInit();
   rk_viewResetLight();
   rk_viewReadModel( &modellist );
+  rk_viewPutLight();
   rk_viewResetCamera();
   zStrAddrListDestroy( &modellist );
   return true;
