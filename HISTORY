@@ -1,3 +1,4 @@
+2025.12.26. Replaced -i option of xargs in example/makefile to -I (thanks to Naoki Wakisaka). [example]
 2025.11.18. Modified rk_anim to display links with multiply specified attributes including non-face mode. [app]
 2025.11.04. Debugged non-face rendering mode and colored wireframe mode of rk_view. [app]
 2025.11.04. Debugged automatic light locating of rk_view. [app]
