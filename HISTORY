@@ -1,3 +1,6 @@
+2026.02.20. Added C++ methods of rkglLight. [rkgl_optic]
+2026.02.20. Added rkglCameraReadRGBBuffer and rkglCameraReadDepthBuffer. [rkgl_camera]
+2026.02.20. Added C++ methods of rkglCamera. [rkgl_camera]
 2025.12.26. Replaced -i option of xargs in example/makefile to -I (thanks to Naoki Wakisaka). [example]
 2025.11.18. Modified rk_anim to display links with multiply specified attributes including non-face mode. [app]
 2025.11.04. Debugged non-face rendering mode and colored wireframe mode of rk_view. [app]

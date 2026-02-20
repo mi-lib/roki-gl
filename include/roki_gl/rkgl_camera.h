@@ -25,6 +25,69 @@ ZDEF_STRUCT( __ROKI_GL_CLASS_EXPORT, rkglCamera ){
   GLdouble _viewvolume[16]; /* view volume */
   zFrame3D *platform;      /* frame of a platform */
   /*! \endcond */
+#ifdef __cplusplus
+  // background
+  void setBackground(double red, double green, double blue);
+  void setBackground(zRGB *rgb);
+  void setBackground(zRGB &rgb);
+  void copyBackground(rkglCamera *dest);
+  void copyBackground(rkglCamera &dest);
+  // viewport
+  void setViewport(GLint x, GLint y, GLsizei w, GLsizei h);
+  void loadViewport();
+  void getViewport();
+  void copyViewport(rkglCamera *dest);
+  void copyViewport(rkglCamera &dest);
+  double viewportOX();
+  double viewportOY();
+  double viewportWidth();
+  double viewportHeight();
+  double viewportAspectRatio();
+  ubyte *readRGBBuffer(ubyte *buf);
+  ubyte *readDepthBuffer(ubyte *buf);
+  // viewvolume
+  void loadViewvolume();
+  void getViewvolume();
+  void copyViewvolume(rkglCamera *dest);
+  void copyViewvolume(rkglCamera &dest);
+  void setOrtho(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble znear, GLdouble zfar);
+  void setFrustum(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble znear, GLdouble zfar);
+  void setOrthoCenter(GLdouble x, GLdouble y, GLdouble znear, GLdouble zfar);
+  void setFrustumCenter(GLdouble x, GLdouble y, GLdouble znear, GLdouble zfar);
+  void scaleOrthoWidth(double scale, GLdouble znear, GLdouble zfar);
+  void scaleFrustumWidth(double scale, GLdouble znear, GLdouble zfar);
+  void scaleOrthoHeight(double scale, GLdouble znear, GLdouble zfar);
+  void scaleFrustumHeight(double scale, GLdouble znear, GLdouble zfar);
+  void setPerspective(GLdouble fovy, GLdouble aspect, GLdouble znear, GLdouble zfar);
+  void fitPerspective(GLdouble fovy, GLdouble znear, GLdouble zfar);
+  void perspective();
+  // camera angle
+  void copyViewframe(rkglCamera *dest);
+  void copyViewframe(rkglCamera &dest);
+  zVec3D *getViewVec(zVec3D *v);
+  void put();
+  void setViewframe(double x, double y, double z, double pan, double tilt, double roll);
+  void translate(double x, double y, double z);
+  void rotate(double angle, double x, double y, double z);
+  void lookat(double eyex, double eyey, double eyez, double centerx, double centery, double centerz, double upx, double upy, double upz);
+  void gazeAndRotate(double centerx, double centery, double centerz, double distance, double pan, double tilt, double roll);
+  void moveLeft(double d);
+  void moveRight(double d);
+  void moveUp(double d);
+  void moveDown(double d);
+  void zoomIn(double d);
+  void zoomOut(double d);
+  void tiltUp(double a);
+  void tiltDown(double a);
+  void panLeft(double a);
+  void panRight(double a);
+  // general operations
+  rkglCamera *init();
+  rkglCamera *copy(rkglCamera *dest);
+  rkglCamera *copy(rkglCamera &dest);
+  zFrame3D *setPlatform(zFrame3D *new_platform);
+  zFrame3D *setPlatform(zFrame3D &new_platform);
+#endif /* __cplusplus */
 };
 
 /* background color */
@@ -60,6 +123,11 @@ __ROKI_GL_EXPORT void rkglCameraGetViewport(rkglCamera *c);
 #define rkglCameraViewportWidth(c)       ( (double)(c)->viewport[2] )
 #define rkglCameraViewportHeight(c)      ( (double)(c)->viewport[3] )
 #define rkglCameraViewportAspectRatio(c) ( rkglCameraViewportWidth(c) / rkglCameraViewportHeight(c) )
+
+/*! \brief read RGB buffer of the current viewport of a camera. */
+__ROKI_GL_EXPORT ubyte *rkglCameraReadRGBBuffer(rkglCamera *c, ubyte *buf);
+/*! \brief read depth buffer of the current viewport of a camera. */
+__ROKI_GL_EXPORT ubyte *rkglCameraReadDepthBuffer(rkglCamera *c, ubyte *buf);
 
 /* viewvolume */
 
@@ -106,7 +174,7 @@ __ROKI_GL_EXPORT void rkglGetViewframe(GLdouble viewframe[16]);
 #define rkglCameraCopyViewframe(src,dest) zFrame3DCopy( &(src)->viewframe, &(dest)->viewframe )
 
 /*! \brief get view vector of a camera. */
-#define rkglCameraGetViewVec(camera,v) zVec3DCopy( zMat3DVec(zFrame3DAtt(&(cam)->viewframe),zX), v )
+#define rkglCameraGetViewVec(camera,v) zVec3DCopy( zMat3DVec(zFrame3DAtt(&(camera)->viewframe),zX), v )
 
 /*! \brief put a camera on the current render. */
 __ROKI_GL_EXPORT void rkglCameraPut(rkglCamera *camera);
@@ -196,5 +264,69 @@ __ROKI_GL_EXPORT rkglCameraArray *rkglCameraArrayReadZTK(rkglCameraArray *camera
 __ROKI_GL_EXPORT bool rkglCameraArrayWriteZTK(rkglCameraArray *cameraarray, const char filename[]);
 
 __END_DECLS
+
+#ifdef __cplusplus
+// background
+inline void rkglCamera::setBackground(double red, double green, double blue){ rkglCameraSetBackground( this, red, green, blue ); }
+inline void rkglCamera::setBackground(zRGB *rgb){ rkglCameraSetBackgroundRGB( this, rgb ); }
+inline void rkglCamera::setBackground(zRGB &rgb){ rkglCameraSetBackgroundRGB( this, &rgb ); }
+inline void rkglCamera::copyBackground(rkglCamera *dest){ rkglCameraCopyBackground( this, dest ); }
+inline void rkglCamera::copyBackground(rkglCamera &dest){ rkglCameraCopyBackground( this, &dest ); }
+// viewport
+inline void rkglCamera::setViewport(GLint x, GLint y, GLsizei w, GLsizei h){ rkglCameraSetViewport( this, x, y, w, h ); }
+inline void rkglCamera::loadViewport(){ rkglCameraLoadViewport( this ); }
+inline void rkglCamera::getViewport(){ rkglCameraGetViewport( this ); }
+inline void rkglCamera::copyViewport(rkglCamera *dest){ rkglCameraCopyViewport( this, dest ); }
+inline void rkglCamera::copyViewport(rkglCamera &dest){ rkglCameraCopyViewport( this, &dest ); }
+inline double rkglCamera::viewportOX(){ return rkglCameraViewportOX( this ); }
+inline double rkglCamera::viewportOY(){ return rkglCameraViewportOY( this ); }
+inline double rkglCamera::viewportWidth(){ return rkglCameraViewportWidth( this ); }
+inline double rkglCamera::viewportHeight(){ return rkglCameraViewportHeight( this ); }
+inline double rkglCamera::viewportAspectRatio(){ return rkglCameraViewportAspectRatio( this ); }
+inline ubyte *rkglCamera::readRGBBuffer(ubyte *buf){ return rkglCameraReadRGBBuffer( this, buf ); }
+inline ubyte *rkglCamera::readDepthBuffer(ubyte *buf){ return rkglCameraReadDepthBuffer( this, buf ); }
+// viewvolume
+inline void rkglCamera::loadViewvolume(){ rkglCameraLoadViewvolume( this ); }
+inline void rkglCamera::getViewvolume(){ rkglCameraGetViewvolume( this ); }
+inline void rkglCamera::copyViewvolume(rkglCamera *dest){ rkglCameraCopyViewvolume( this, dest ); }
+inline void rkglCamera::copyViewvolume(rkglCamera &dest){ rkglCameraCopyViewvolume( this, &dest ); }
+inline void rkglCamera::setOrtho(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble znear, GLdouble zfar){ rkglCameraSetOrtho( this, left, right, bottom, top, znear, zfar ); }
+inline void rkglCamera::setFrustum(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble znear, GLdouble zfar){ rkglCameraSetFrustum( this, left, right, bottom, top, znear, zfar ); }
+inline void rkglCamera::setOrthoCenter(GLdouble x, GLdouble y, GLdouble znear, GLdouble zfar){ rkglCameraSetOrthoCenter( this, x, y, znear, zfar ); }
+inline void rkglCamera::setFrustumCenter(GLdouble x, GLdouble y, GLdouble znear, GLdouble zfar){ rkglCameraSetFrustumCenter( this, x, y, znear, zfar ); }
+inline void rkglCamera::scaleOrthoWidth(double scale, GLdouble znear, GLdouble zfar){ rkglCameraScaleOrthoWidth( this, scale, znear, zfar ); }
+inline void rkglCamera::scaleFrustumWidth(double scale, GLdouble znear, GLdouble zfar){ rkglCameraScaleFrustumWidth( this, scale, znear, zfar ); }
+inline void rkglCamera::scaleOrthoHeight(double scale, GLdouble znear, GLdouble zfar){ rkglCameraScaleOrthoHeight( this, scale, znear, zfar ); }
+inline void rkglCamera::scaleFrustumHeight(double scale, GLdouble znear, GLdouble zfar){ rkglCameraScaleFrustumHeight( this, scale, znear, zfar ); }
+inline void rkglCamera::setPerspective(GLdouble fovy, GLdouble aspect, GLdouble znear, GLdouble zfar){ rkglCameraSetPerspective( this, fovy, aspect, znear, zfar ); }
+inline void rkglCamera::fitPerspective(GLdouble fovy, GLdouble znear, GLdouble zfar){ rkglCameraFitPerspective( this, fovy, znear, zfar ); }
+inline void rkglCamera::perspective(){ rkglCameraPerspective( this ); }
+// camera angle
+inline void rkglCamera::copyViewframe(rkglCamera *dest){ rkglCameraCopyViewframe( this, dest ); }
+inline void rkglCamera::copyViewframe(rkglCamera &dest){ rkglCameraCopyViewframe( this, &dest ); }
+inline zVec3D *rkglCamera::getViewVec(zVec3D *v){ return rkglCameraGetViewVec( this, v ); }
+inline void rkglCamera::put(){ rkglCameraPut( this ); }
+inline void rkglCamera::setViewframe(double x, double y, double z, double pan, double tilt, double roll){ rkglCameraSetViewframe( this, x, y, z, pan, tilt, roll ); }
+inline void rkglCamera::translate(double x, double y, double z){ rkglCameraTranslate( this, x, y, z ); }
+inline void rkglCamera::rotate(double angle, double x, double y, double z){ rkglCameraRotate( this, angle, x, y, z ); }
+inline void rkglCamera::lookat(double eyex, double eyey, double eyez, double centerx, double centery, double centerz, double upx, double upy, double upz){ rkglCameraLookAt( this, eyex, eyey, eyez, centerx, centery, centerz, upx, upy, upz ); }
+inline void rkglCamera::gazeAndRotate(double centerx, double centery, double centerz, double distance, double pan, double tilt, double roll){ rkglCameraGazeAndRotate( this, centerx, centery, centerz, distance, pan, tilt, roll ); }
+inline void rkglCamera::moveLeft(double d){ rkglCameraMoveLeft( this, d ); }
+inline void rkglCamera::moveRight(double d){ rkglCameraMoveRight( this, d ); }
+inline void rkglCamera::moveUp(double d){ rkglCameraMoveUp( this, d ); }
+inline void rkglCamera::moveDown(double d){ rkglCameraMoveDown( this, d ); }
+inline void rkglCamera::zoomIn(double d){ rkglCameraZoomIn( this, d ); }
+inline void rkglCamera::zoomOut(double d){ rkglCameraZoomOut( this,d ); }
+inline void rkglCamera::tiltUp(double a){ rkglCameraTiltUp( this, a ); }
+inline void rkglCamera::tiltDown(double a){ rkglCameraTiltDown( this, a ); }
+inline void rkglCamera::panLeft(double a){ rkglCameraPanLeft( this, a ); }
+inline void rkglCamera::panRight(double a){ rkglCameraPanRight( this, a ); }
+// general operations
+inline rkglCamera *rkglCamera::init(){ return rkglCameraInit( this ); }
+inline rkglCamera *rkglCamera::copy(rkglCamera *dest){ return rkglCameraCopy( this, dest ); }
+inline rkglCamera *rkglCamera::copy(rkglCamera &dest){ return rkglCameraCopy( this, &dest ); }
+inline zFrame3D *rkglCamera::setPlatform(zFrame3D *new_platform){ return rkglCameraSetPlatform( this, new_platform ); }
+inline zFrame3D *rkglCamera::setPlatform(zFrame3D &new_platform){ return rkglCameraSetPlatform( this, &new_platform ); }
+#endif /* __cplusplus */
 
 #endif /* __RKGL_CAMERA_H__ */

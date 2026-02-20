@@ -32,6 +32,20 @@ void rkglCameraGetViewport(rkglCamera *c)
   glGetIntegerv( GL_VIEWPORT, c->viewport );
 }
 
+/* read RGB buffer of the current viewport of a camera. */
+ubyte *rkglCameraReadRGBBuffer(rkglCamera *c, ubyte *buf)
+{
+  rkglReadBuffer( GL_RGB, c->viewport[0], c->viewport[1], c->viewport[2], c->viewport[3], buf );
+  return buf;
+}
+
+/* read depth buffer of the current viewport of a camera. */
+ubyte *rkglCameraReadDepthBuffer(rkglCamera *c, ubyte *buf)
+{
+  rkglReadBuffer( GL_DEPTH_COMPONENT, c->viewport[0], c->viewport[1], c->viewport[2], c->viewport[3], buf );
+  return buf;
+}
+
 /* view volume */
 
 /* reset viewvolume of the current render. */
