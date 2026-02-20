@@ -1,3 +1,4 @@
+2026.02.20. Added rkglCameraViewportSize and a C++ method viewportSize of rkglCamera. [rkgl_camera]
 2026.02.20. Added C++ methods of rkglLight. [rkgl_optic]
 2026.02.20. Added rkglCameraReadRGBBuffer and rkglCameraReadDepthBuffer. [rkgl_camera]
 2026.02.20. Added C++ methods of rkglCamera. [rkgl_camera]

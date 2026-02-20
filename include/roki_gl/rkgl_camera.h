@@ -42,6 +42,7 @@ ZDEF_STRUCT( __ROKI_GL_CLASS_EXPORT, rkglCamera ){
   double viewportOY();
   double viewportWidth();
   double viewportHeight();
+  int viewportSize();
   double viewportAspectRatio();
   ubyte *readRGBBuffer(ubyte *buf);
   ubyte *readDepthBuffer(ubyte *buf);
@@ -122,6 +123,7 @@ __ROKI_GL_EXPORT void rkglCameraGetViewport(rkglCamera *c);
 #define rkglCameraViewportOY(c)          ( (double)(c)->viewport[1] )
 #define rkglCameraViewportWidth(c)       ( (double)(c)->viewport[2] )
 #define rkglCameraViewportHeight(c)      ( (double)(c)->viewport[3] )
+#define rkglCameraViewportSize(c)        ( (c)->viewport[2] * (c)->viewport[3] )
 #define rkglCameraViewportAspectRatio(c) ( rkglCameraViewportWidth(c) / rkglCameraViewportHeight(c) )
 
 /*! \brief read RGB buffer of the current viewport of a camera. */
@@ -282,6 +284,7 @@ inline double rkglCamera::viewportOX(){ return rkglCameraViewportOX( this ); }
 inline double rkglCamera::viewportOY(){ return rkglCameraViewportOY( this ); }
 inline double rkglCamera::viewportWidth(){ return rkglCameraViewportWidth( this ); }
 inline double rkglCamera::viewportHeight(){ return rkglCameraViewportHeight( this ); }
+inline int rkglCamera::viewportSize(){ return rkglCameraViewportSize( this ); }
 inline double rkglCamera::viewportAspectRatio(){ return rkglCameraViewportAspectRatio( this ); }
 inline ubyte *rkglCamera::readRGBBuffer(ubyte *buf){ return rkglCameraReadRGBBuffer( this, buf ); }
 inline ubyte *rkglCamera::readDepthBuffer(ubyte *buf){ return rkglCameraReadDepthBuffer( this, buf ); }
