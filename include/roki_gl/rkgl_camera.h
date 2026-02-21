@@ -24,7 +24,7 @@ ZDEF_STRUCT( __ROKI_GL_CLASS_EXPORT, rkglCamera ){
   /*! \cond */
   GLdouble _viewvolume[16]; /* view volume */
   zFrame3D *platform;       /* frame of a platform */
-  ubyte *depthbuffer;       /* depth buffer */
+  ubyte *_depthbuffer;       /* depth buffer */
   /*! \endcond */
 #ifdef __cplusplus
   rkglCamera();
@@ -48,9 +48,10 @@ ZDEF_STRUCT( __ROKI_GL_CLASS_EXPORT, rkglCamera ){
   int viewportSize();
   double viewportAspectRatio();
   ubyte *readRGBBuffer(ubyte *buf);
-  bool allocDepthBuffer();
-  void freeDepthBuffer();
-  ubyte *readDepthBuffer();
+  ubyte *readDepthBuffer(ubyte *buf);
+  bool allocInternalDepthBuffer();
+  void freeInternalDepthBuffer();
+  ubyte *readInternalDepthBuffer();
   // viewvolume
   void loadViewvolume();
   void getViewvolume();
@@ -134,13 +135,15 @@ __ROKI_GL_EXPORT void rkglCameraGetViewport(rkglCamera *c);
 
 /*! \brief read RGB buffer of the current viewport of a camera. */
 __ROKI_GL_EXPORT ubyte *rkglCameraReadRGBBuffer(rkglCamera *c, ubyte *buf);
-
-/* allocate depth buffer for the current viewport of a camera. */
-__ROKI_GL_EXPORT bool rkglCameraAllocDepthBuffer(rkglCamera *camera);
-/* free depth buffer for viewport of a camera. */
-__ROKI_GL_EXPORT void rkglCameraFreeDepthBuffer(rkglCamera *camera);
 /*! \brief read depth buffer of the current viewport of a camera. */
-__ROKI_GL_EXPORT ubyte *rkglCameraReadDepthBuffer(rkglCamera *camera);
+__ROKI_GL_EXPORT ubyte *rkglCameraReadDepthBuffer(rkglCamera *camera, ubyte *buf);
+
+/* allocate internal depth buffer for the current viewport of a camera. */
+__ROKI_GL_EXPORT bool rkglCameraAllocInternalDepthBuffer(rkglCamera *camera);
+/* free internal depth buffer for viewport of a camera. */
+__ROKI_GL_EXPORT void rkglCameraFreeInternalDepthBuffer(rkglCamera *camera);
+/*! \brief read internal depth buffer of the current viewport of a camera. */
+__ROKI_GL_EXPORT ubyte *rkglCameraReadInternalDepthBuffer(rkglCamera *camera);
 
 /* viewvolume */
 
@@ -303,11 +306,10 @@ inline double rkglCamera::viewportHeight(){ return rkglCameraViewportHeight( thi
 inline int rkglCamera::viewportSize(){ return rkglCameraViewportSize( this ); }
 inline double rkglCamera::viewportAspectRatio(){ return rkglCameraViewportAspectRatio( this ); }
 inline ubyte *rkglCamera::readRGBBuffer(ubyte *buf){ return rkglCameraReadRGBBuffer( this, buf ); }
-inline bool rkglCamera::allocDepthBuffer(){ return rkglCameraAllocDepthBuffer( this ); }
-inline void rkglCamera::freeDepthBuffer(){ rkglCameraFreeDepthBuffer( this ); }
-inline ubyte *rkglCamera::readDepthBuffer(){
-  if( !this->depthbuffer ) rkglCameraAllocDepthBuffer( this );
-  return rkglCameraReadDepthBuffer( this ); }
+inline ubyte *rkglCamera::readDepthBuffer(ubyte *buf){ return rkglCameraReadDepthBuffer( this, buf ); }
+inline bool rkglCamera::allocInternalDepthBuffer(){ return rkglCameraAllocInternalDepthBuffer( this ); }
+inline void rkglCamera::freeInternalDepthBuffer(){ rkglCameraFreeInternalDepthBuffer( this ); }
+inline ubyte *rkglCamera::readInternalDepthBuffer(){ return rkglCameraReadInternalDepthBuffer( this ); }
 // viewvolume
 inline void rkglCamera::loadViewvolume(){ rkglCameraLoadViewvolume( this ); }
 inline void rkglCamera::getViewvolume(){ rkglCameraGetViewvolume( this ); }

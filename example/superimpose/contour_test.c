@@ -16,7 +16,7 @@ void display(GLFWwindow* window)
   rkglCameraPut( &cam );
   glPushMatrix();
   rkglBox( &box[boxflag], RKGL_FACE );
-  rkglCameraReadDepthBuffer( &cam );
+  rkglCameraReadInternalDepthBuffer( &cam );
 
   rkglClear();
   rkglLightPut( &light );

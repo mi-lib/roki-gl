@@ -12,6 +12,7 @@ void rkglContour(rkglCamera *camera)
   bool lighting_is_enabled;
   int width, height, i, j, pos;
 
+  if( !camera->_depthbuffer ) return;
   rkglSaveLighting( &lighting_is_enabled );
   /* set projection matrix to see viewport */
   glMatrixMode( GL_PROJECTION );
@@ -28,10 +29,10 @@ void rkglContour(rkglCamera *camera)
   for( i=1; i<height; i++ )
     for( j=1; j<width; j++ ){
       pos = i*camera->viewport[2]+j;
-      if( ( camera->depthbuffer[pos-1] == 0xff && camera->depthbuffer[pos] != 0xff ) ||
-          ( camera->depthbuffer[pos] != 0xff && camera->depthbuffer[pos+1] == 0xff ) ||
-          ( camera->depthbuffer[pos-camera->viewport[2]] == 0xff && camera->depthbuffer[pos] != 0xff ) ||
-          ( camera->depthbuffer[pos] != 0xff && camera->depthbuffer[pos+camera->viewport[2]] == 0xff ) )
+      if( ( camera->_depthbuffer[pos-1] == 0xff && camera->_depthbuffer[pos] != 0xff ) ||
+          ( camera->_depthbuffer[pos] != 0xff && camera->_depthbuffer[pos+1] == 0xff ) ||
+          ( camera->_depthbuffer[pos-camera->viewport[2]] == 0xff && camera->_depthbuffer[pos] != 0xff ) ||
+          ( camera->_depthbuffer[pos] != 0xff && camera->_depthbuffer[pos+camera->viewport[2]] == 0xff ) )
         glVertex2i( j, i );
     }
   glEnd();

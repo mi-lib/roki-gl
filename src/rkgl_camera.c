@@ -39,31 +39,37 @@ ubyte *rkglCameraReadRGBBuffer(rkglCamera *c, ubyte *buf)
   return buf;
 }
 
-/* allocate depth buffer for the current viewport of a camera. */
-bool rkglCameraAllocDepthBuffer(rkglCamera *camera)
+/* read depth buffer of the current viewport of a camera. */
+ubyte *rkglCameraReadDepthBuffer(rkglCamera *camera, ubyte *buf)
 {
-  if( camera->depthbuffer ) free( camera->depthbuffer );
-  if( !( camera->depthbuffer = zAlloc( ubyte, rkglCameraViewportSize(camera) )) ){
+  rkglReadBuffer( GL_DEPTH_COMPONENT, camera->viewport[0], camera->viewport[1], camera->viewport[2], camera->viewport[3], buf );
+  return buf;
+}
+
+/* allocate internal depth buffer for the current viewport of a camera. */
+bool rkglCameraAllocInternalDepthBuffer(rkglCamera *camera)
+{
+  if( camera->_depthbuffer ) free( camera->_depthbuffer );
+  if( !( camera->_depthbuffer = zAlloc( ubyte, rkglCameraViewportSize(camera) )) ){
     ZALLOCERROR();
     return false;
   }
   return true;
 }
 
-/* free depth buffer for viewport of a camera. */
-void rkglCameraFreeDepthBuffer(rkglCamera *camera)
+/* free internal depth buffer for viewport of a camera. */
+void rkglCameraFreeInternalDepthBuffer(rkglCamera *camera)
 {
-  if( camera->depthbuffer )
-    free( camera->depthbuffer );
+  if( camera->_depthbuffer )
+    free( camera->_depthbuffer );
 }
 
-/* read depth buffer of the current viewport of a camera. */
-ubyte *rkglCameraReadDepthBuffer(rkglCamera *camera)
+/* read internal depth buffer of the current viewport of a camera. */
+ubyte *rkglCameraReadInternalDepthBuffer(rkglCamera *camera)
 {
-  if( !camera->depthbuffer )
-    if( !rkglCameraAllocDepthBuffer( camera ) ) return NULL;
-  rkglReadBuffer( GL_DEPTH_COMPONENT, camera->viewport[0], camera->viewport[1], camera->viewport[2], camera->viewport[3], camera->depthbuffer );
-  return camera->depthbuffer;
+  if( !camera->_depthbuffer )
+    if( !rkglCameraAllocInternalDepthBuffer( camera ) ) return NULL;
+  return rkglCameraReadDepthBuffer( camera, camera->_depthbuffer );
 }
 
 /* view volume */
@@ -270,14 +276,14 @@ rkglCamera *rkglCameraInit(rkglCamera *camera)
   rkglResetViewvolume();
   rkglCameraGetViewvolume( camera );
   rkglCameraSetPlatform( camera, NULL );
-  camera->depthbuffer = NULL;
+  camera->_depthbuffer = NULL;
   return camera;
 }
 
 /* destroy a camera. */
 void rkglCameraDestroy(rkglCamera *camera)
 {
-  rkglCameraFreeDepthBuffer( camera );
+  rkglCameraFreeInternalDepthBuffer( camera );
   rkglCameraInit( camera );
 }
 
