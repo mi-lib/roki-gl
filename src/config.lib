@@ -2,6 +2,7 @@ OBJ=rkgl_misc.o rkgl_camera.o rkgl_input.o\
 	rkgl_optic.o\
 	rkgl_texture.o\
 	rkgl_select.o\
+	rkgl_superimpose.o\
 	rkgl_shape.o rkgl_chain.o rkgl_terra.o\
 	rkgl_framehandle.o\
 	rkgl_envmap.o\

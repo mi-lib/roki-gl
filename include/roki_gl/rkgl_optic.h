@@ -28,9 +28,10 @@ __ROKI_GL_EXPORT void rkglMaterialWhite(void);
 __ROKI_GL_EXPORT void rkglMaterialOpticalInfo(zOpticalInfo *oi);
 __ROKI_GL_EXPORT void rkglMaterial(zOpticalInfo *oi);
 
-/* lighting */
-
-typedef struct{
+/*! \struct rkglLight
+ *! \brief light source class.
+ */
+ZDEF_STRUCT( __ROKI_GL_CLASS_EXPORT, rkglLight ){
   GLenum id;
   GLfloat pos[4];
   GLfloat ambient[4];
@@ -57,7 +58,7 @@ typedef struct{
   void put();
   void move(GLfloat x, GLfloat y, GLfloat z);
 #endif /* __cplusplus */
-} rkglLight;
+};
 
 __ROKI_GL_EXPORT int rkglLightNum(void);
 

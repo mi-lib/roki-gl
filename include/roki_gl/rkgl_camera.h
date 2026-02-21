@@ -15,17 +15,20 @@ __BEGIN_DECLS
  *! \brief camera class.
  */
 ZDEF_STRUCT( __ROKI_GL_CLASS_EXPORT, rkglCamera ){
-  GLclampf background[4];  /*! \brief background color */
-  GLint viewport[4];       /*! \brief viewport */
-  double fovy;             /*! \brief field of view in y-direction */
+  GLclampf background[4];   /*! \brief background color */
+  GLint viewport[4];        /*! \brief viewport */
+  double fovy;              /*! \brief field of view in y-direction */
   double znear;             /*! \brief z-near of the viewvolume */
   double zfar;              /*! \brief z-far of the viewvolume */
-  zFrame3D viewframe;      /*! \brief view frame */
+  zFrame3D viewframe;       /*! \brief view frame */
   /*! \cond */
   GLdouble _viewvolume[16]; /* view volume */
-  zFrame3D *platform;      /* frame of a platform */
+  zFrame3D *platform;       /* frame of a platform */
+  ubyte *depthbuffer;       /* depth buffer */
   /*! \endcond */
 #ifdef __cplusplus
+  rkglCamera();
+  ~rkglCamera();
   // background
   void setBackground(double red, double green, double blue);
   void setBackground(zRGB *rgb);
@@ -45,7 +48,9 @@ ZDEF_STRUCT( __ROKI_GL_CLASS_EXPORT, rkglCamera ){
   int viewportSize();
   double viewportAspectRatio();
   ubyte *readRGBBuffer(ubyte *buf);
-  ubyte *readDepthBuffer(ubyte *buf);
+  bool allocDepthBuffer();
+  void freeDepthBuffer();
+  ubyte *readDepthBuffer();
   // viewvolume
   void loadViewvolume();
   void getViewvolume();
@@ -84,6 +89,7 @@ ZDEF_STRUCT( __ROKI_GL_CLASS_EXPORT, rkglCamera ){
   void panRight(double a);
   // general operations
   rkglCamera *init();
+  void destroy();
   rkglCamera *copy(rkglCamera *dest);
   rkglCamera *copy(rkglCamera &dest);
   zFrame3D *setPlatform(zFrame3D *new_platform);
@@ -128,8 +134,13 @@ __ROKI_GL_EXPORT void rkglCameraGetViewport(rkglCamera *c);
 
 /*! \brief read RGB buffer of the current viewport of a camera. */
 __ROKI_GL_EXPORT ubyte *rkglCameraReadRGBBuffer(rkglCamera *c, ubyte *buf);
+
+/* allocate depth buffer for the current viewport of a camera. */
+__ROKI_GL_EXPORT bool rkglCameraAllocDepthBuffer(rkglCamera *camera);
+/* free depth buffer for viewport of a camera. */
+__ROKI_GL_EXPORT void rkglCameraFreeDepthBuffer(rkglCamera *camera);
 /*! \brief read depth buffer of the current viewport of a camera. */
-__ROKI_GL_EXPORT ubyte *rkglCameraReadDepthBuffer(rkglCamera *c, ubyte *buf);
+__ROKI_GL_EXPORT ubyte *rkglCameraReadDepthBuffer(rkglCamera *camera);
 
 /* viewvolume */
 
@@ -209,6 +220,9 @@ __ROKI_GL_EXPORT void rkglCameraGazeAndRotate(rkglCamera *camera, double centerx
 /*! \brief initialize a camera. */
 __ROKI_GL_EXPORT rkglCamera *rkglCameraInit(rkglCamera *camera);
 
+/*! \brief destroy a camera. */
+__ROKI_GL_EXPORT void rkglCameraDestroy(rkglCamera *camera);
+
 /*! \brief copy properties of a camera to another. */
 __ROKI_GL_EXPORT rkglCamera *rkglCameraCopy(rkglCamera *src, rkglCamera *dest);
 
@@ -268,6 +282,8 @@ __ROKI_GL_EXPORT bool rkglCameraArrayWriteZTK(rkglCameraArray *cameraarray, cons
 __END_DECLS
 
 #ifdef __cplusplus
+inline rkglCamera::rkglCamera(){ rkglCameraInit( this ); }
+inline rkglCamera::~rkglCamera(){ rkglCameraDestroy( this ); }
 // background
 inline void rkglCamera::setBackground(double red, double green, double blue){ rkglCameraSetBackground( this, red, green, blue ); }
 inline void rkglCamera::setBackground(zRGB *rgb){ rkglCameraSetBackgroundRGB( this, rgb ); }
@@ -287,7 +303,11 @@ inline double rkglCamera::viewportHeight(){ return rkglCameraViewportHeight( thi
 inline int rkglCamera::viewportSize(){ return rkglCameraViewportSize( this ); }
 inline double rkglCamera::viewportAspectRatio(){ return rkglCameraViewportAspectRatio( this ); }
 inline ubyte *rkglCamera::readRGBBuffer(ubyte *buf){ return rkglCameraReadRGBBuffer( this, buf ); }
-inline ubyte *rkglCamera::readDepthBuffer(ubyte *buf){ return rkglCameraReadDepthBuffer( this, buf ); }
+inline bool rkglCamera::allocDepthBuffer(){ return rkglCameraAllocDepthBuffer( this ); }
+inline void rkglCamera::freeDepthBuffer(){ rkglCameraFreeDepthBuffer( this ); }
+inline ubyte *rkglCamera::readDepthBuffer(){
+  if( !this->depthbuffer ) rkglCameraAllocDepthBuffer( this );
+  return rkglCameraReadDepthBuffer( this ); }
 // viewvolume
 inline void rkglCamera::loadViewvolume(){ rkglCameraLoadViewvolume( this ); }
 inline void rkglCamera::getViewvolume(){ rkglCameraGetViewvolume( this ); }
@@ -326,6 +346,7 @@ inline void rkglCamera::panLeft(double a){ rkglCameraPanLeft( this, a ); }
 inline void rkglCamera::panRight(double a){ rkglCameraPanRight( this, a ); }
 // general operations
 inline rkglCamera *rkglCamera::init(){ return rkglCameraInit( this ); }
+inline void rkglCamera::destroy(){ rkglCameraDestroy( this ); }
 inline rkglCamera *rkglCamera::copy(rkglCamera *dest){ return rkglCameraCopy( this, dest ); }
 inline rkglCamera *rkglCamera::copy(rkglCamera &dest){ return rkglCameraCopy( this, &dest ); }
 inline zFrame3D *rkglCamera::setPlatform(zFrame3D *new_platform){ return rkglCameraSetPlatform( this, new_platform ); }

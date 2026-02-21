@@ -23,6 +23,7 @@
 #define __ROKI_GL_H__
 
 #include <roki_gl/rkgl_input.h>
+#include <roki_gl/rkgl_superimpose.h>
 #include <roki_gl/rkgl_chain.h>
 #include <roki_gl/rkgl_terra.h>
 #include <roki_gl/rkgl_framehandle.h>
