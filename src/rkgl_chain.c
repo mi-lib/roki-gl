@@ -88,7 +88,7 @@ static void _rkglLinkInertiaEllips(rkLink *l, rkglChainAttr *attr)
 
 static void _rkglLink(rkLink *link, zOpticalInfo *oi_alt, rkglChainAttr *attr, rkglLight *light)
 {
-  zShapeListCell *sp;
+  zShape3DListCell *sp;
 
   if( attr->disptype & RKGL_STICK  ) _rkglLinkStick( link, attr );
   if( attr->disptype & RKGL_FRAME  ){
@@ -100,7 +100,7 @@ static void _rkglLink(rkLink *link, zOpticalInfo *oi_alt, rkglChainAttr *attr, r
   glLineWidth( attr->wireframe_linewidth );
   if( !rkLinkShapeIsEmpty( link ) && attr->disptype & ( RKGL_FACE | RKGL_WIREFRAME | RKGL_BB ) )
     zListForEach( rkLinkShapeList(link), sp )
-      rkglShape( zShapeListCellShape(sp), oi_alt, attr->disptype, light );
+      rkglShape( zShape3DListCellShape(sp), oi_alt, attr->disptype, light );
 }
 
 static int _rkglEntryLink(rkLink *link, zOpticalInfo *oi_alt, rkglChainAttr *attr, rkglLight *light)
@@ -195,7 +195,7 @@ static void _rkglChainDrawLink(rkglChain *gc, int id)
 
 static void _rkglChainPhantomizeLink(rkglChain *gc, int id, double alpha, rkglLight *light)
 {
-  zShapeListCell *sp;
+  zShape3DListCell *sp;
   zOpticalInfo oi;
   rkLink *link;
 
@@ -205,9 +205,9 @@ static void _rkglChainPhantomizeLink(rkglChain *gc, int id, double alpha, rkglLi
   rkglXform( rkLinkWldFrame(link) );
   zListForEach( rkLinkShapeList(link), sp ){
     zOpticalInfoCopy( gc->linkinfo[id]._optic_alt ?
-      gc->linkinfo[id]._optic_alt : zShape3DOptic(zShapeListCellShape(sp)), &oi );
+      gc->linkinfo[id]._optic_alt : zShape3DOptic(zShape3DListCellShape(sp)), &oi );
     oi.alpha = alpha;
-    rkglShape( zShapeListCellShape(sp), &oi, RKGL_FACE, light );
+    rkglShape( zShape3DListCellShape(sp), &oi, RKGL_FACE, light );
   }
   glPopMatrix();
 }
