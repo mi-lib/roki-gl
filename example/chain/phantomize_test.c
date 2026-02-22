@@ -118,7 +118,7 @@ void terminate(void)
 
 int main(int argc, char *argv[])
 {
-  GLFWwindow* window;
+  GLFWwindow *window;
   const int width = 640, height = 480;
 
   if( rkglInitGLFW( &argc, argv ) < 0 )
@@ -128,12 +128,7 @@ int main(int argc, char *argv[])
     return 1;
 
   glfwSetWindowSizeCallback( window, resize );
-  glfwSetCharCallback( window, rkglCharFuncGLFW );
-  glfwSetKeyCallback( window, rkglKeyFuncGLFW );
-  glfwSetMouseButtonCallback( window, rkglMouseFuncGLFW );
   glfwSetScrollCallback( window, mouse_wheel );
-  glfwSetCursorPosCallback( window, rkglMouseDragFuncGLFW );
-
   init();
   resize( window, width, height );
   glfwSwapInterval( 1 );

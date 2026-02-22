@@ -47,7 +47,7 @@ void init(void)
 
 int main(int argc, char *argv[])
 {
-  GLFWwindow* window;
+  GLFWwindow *window;
   int width, height;
 
   if( rkglInitGLFW( &argc, argv ) < 0 )
@@ -57,13 +57,6 @@ int main(int argc, char *argv[])
   height = 480;
   if( !( window = rkglWindowCreateAndOpenGLFW( 0, 0, width, height, argv[0] ) ) )
     return 1;
-
-  glfwSetWindowSizeCallback( window, rkglReshapeFuncGLFW );
-  glfwSetCharCallback( window, rkglCharFuncGLFW );
-  glfwSetKeyCallback( window, rkglKeyFuncGLFW );
-  glfwSetMouseButtonCallback( window, rkglMouseFuncGLFW );
-  glfwSetScrollCallback( window, rkglMouseWheelFuncGLFW );
-  glfwSetCursorPosCallback( window, rkglMouseDragFuncGLFW );
 
   init();
   rkglReshapeFuncGLFW( window, width, height );

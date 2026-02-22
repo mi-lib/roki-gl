@@ -18,12 +18,13 @@ int rkglInitGLFW(int *argc, char **argv)
   return 0;
 }
 
-void rkglWindowOpenGLFW(GLFWwindow* window, int x, int y)
+void rkglWindowOpenGLFW(GLFWwindow *window, int x, int y)
 {
   /* Create window by calling glfwCreateWindow() before calling this function. */
   glfwSetWindowPos( window, x, y );
   glfwShowWindow( window );
   glfwMakeContextCurrent( window );
+  rkglSetDefaultFuncGLFW( window );
 
 #ifdef __ROKI_GL_USE_GLEW
   rkglInitGLEW();
@@ -126,4 +127,15 @@ void rkglVisFuncGLFW(GLFWwindow* window)
   /* glfw doesn't have a function corresponding to glutIdleFunc() & callback */
   if( glfwGetWindowAttrib( window, GLFW_VISIBLE ) == GLFW_TRUE )
     glfwPostEmptyEvent();
+}
+
+/* set all callback functions for default functions. */
+void rkglSetDefaultFuncGLFW(GLFWwindow *window)
+{
+  glfwSetWindowSizeCallback( window, rkglReshapeFuncGLFW );
+  glfwSetCharCallback( window, rkglCharFuncGLFW );
+  glfwSetKeyCallback( window, rkglKeyFuncGLFW );
+  glfwSetMouseButtonCallback( window, rkglMouseFuncGLFW );
+  glfwSetScrollCallback( window, rkglMouseWheelFuncGLFW );
+  glfwSetCursorPosCallback( window, rkglMouseDragFuncGLFW );
 }

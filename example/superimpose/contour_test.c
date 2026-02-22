@@ -79,14 +79,7 @@ int main(int argc, char *argv[])
   height = 480;
   if( !( window = rkglWindowCreateAndOpenGLFW( 0, 0, width, height, argv[0] ) ) )
     return 1;
-
-  glfwSetWindowSizeCallback( window, rkglReshapeFuncGLFW );
   glfwSetCharCallback( window, charfunc );
-  glfwSetKeyCallback( window, rkglKeyFuncGLFW );
-  glfwSetMouseButtonCallback( window, rkglMouseFuncGLFW );
-  glfwSetScrollCallback( window, rkglMouseWheelFuncGLFW );
-  glfwSetCursorPosCallback( window, rkglMouseDragFuncGLFW );
-
   init();
   rkglReshapeFuncGLFW( window, width, height );
   glfwSwapInterval( 1 );

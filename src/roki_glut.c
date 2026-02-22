@@ -25,6 +25,7 @@ int rkglWindowCreateGLUT(int x, int y, int w, int h, const char *title)
   rkglInitGLEW();
 #endif /* __ROKI_GL_USE_GLEW */
   rkglEnableDefault();
+  rkglSetDefaultFuncGLUT(); /* notice: GLUT supposes that only one window is opened. */
   return id;
 }
 
@@ -98,4 +99,16 @@ void rkglMouseDragFuncGLUT(int x, int y)
 void rkglVisFuncGLUT(int visible)
 {
   glutIdleFunc( visible == GLUT_VISIBLE ? rkglIdleFuncGLUT : NULL );
+}
+
+/* set all callback functions for default functions. */
+void rkglSetDefaultFuncGLUT(void)
+{
+  glutReshapeFunc( rkglReshapeFuncGLUT );
+  glutIdleFunc( rkglIdleFuncGLUT );
+  glutKeyboardFunc( rkglKeyFuncGLUT );
+  glutSpecialFunc( rkglSpecialFuncGLUT );
+  glutMouseFunc( rkglMouseFuncGLUT );
+  glutMotionFunc( rkglMouseDragFuncGLUT );
+  glutVisibilityFunc( rkglVisFuncGLUT );
 }

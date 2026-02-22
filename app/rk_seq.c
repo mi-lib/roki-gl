@@ -175,7 +175,7 @@ void rk_seqInit(void)
 {
   zRGB rgb;
   rkglChainAttr attr;
-  zMShape3D envshape;
+  zMultiShape3D envshape;
 
   win = rkglWindowCreateGLX( NULL, 0, 0, atoi(opt[OPT_WIDTH].arg), atoi(opt[OPT_HEIGHT].arg), RK_SEQ_TITLE );
   rkglWindowKeyEnableGLX( win );
@@ -207,13 +207,13 @@ void rk_seqInit(void)
     exit( 1 );
   }
   if( opt[OPT_ENVFILE].flag ){
-    if( !zMShape3DReadZTK( &envshape, opt[OPT_ENVFILE].arg ) ){
+    if( !zMultiShape3DReadZTK( &envshape, opt[OPT_ENVFILE].arg ) ){
       ZOPENERROR( opt[OPT_ENVFILE].arg );
       rk_seqUsage();
       exit( 1 );
     }
-    env = rkglEntryMShape( &envshape, attr.disptype, &light );
-    zMShape3DDestroy( &envshape );
+    env = rkglEntryMultiShape( &envshape, attr.disptype, &light );
+    zMultiShape3DDestroy( &envshape );
     if( env < 0 ) exit( 1 );
   }
 

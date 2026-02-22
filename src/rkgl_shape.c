@@ -1172,21 +1172,21 @@ int rkglEntryShape(zShape3D *s, zOpticalInfo *oi_alt, ubyte disptype, rkglLight 
 }
 
 /* draw multiple 3D shapes. */
-void rkglMShape(zMShape3D *s, ubyte disptype, rkglLight *light)
+void rkglMultiShape(zMultiShape3D *s, ubyte disptype, rkglLight *light)
 {
   int i;
 
-  for( i=0; i<zMShape3DShapeNum(s); i++ )
-    rkglShape( zMShape3DShape(s,i), NULL, disptype, light );
+  for( i=0; i<zMultiShape3DShapeNum(s); i++ )
+    rkglShape( zMultiShape3DShape(s,i), NULL, disptype, light );
 }
 
 /* entry multiple 3D shapes to the display list. */
-int rkglEntryMShape(zMShape3D *s, ubyte disptype, rkglLight *light)
+int rkglEntryMultiShape(zMultiShape3D *s, ubyte disptype, rkglLight *light)
 {
   int result;
 
   result = rkglBeginList();
-  rkglMShape( s, disptype, light );
+  rkglMultiShape( s, disptype, light );
   glEndList();
   return result;
 }

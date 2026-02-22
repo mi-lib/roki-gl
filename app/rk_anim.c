@@ -148,12 +148,12 @@ rkChain *rkAnimReadChainFile(rkChain *chain, char *pathname)
   return chain;
 }
 
-zMShape3D *rkAnimReadMShapeFile(zMShape3D *ms, char *pathname)
+zMultiShape3D *rkAnimReadMultiShapeFile(zMultiShape3D *ms, char *pathname)
 {
   char dirname[BUFSIZ], filename[BUFSIZ], cwd[BUFSIZ];
 
   rkAnimChangeDir( pathname, dirname, filename, cwd, BUFSIZ );
-  ms = zMShape3DReadZTK( ms, filename );
+  ms = zMultiShape3DReadZTK( ms, filename );
   rkAnimReturnDir( cwd );
   return ms;
 }
@@ -480,7 +480,7 @@ void rkAnimLoadEnv(void)
 {
   rkglChainAttr attr;
   rkChain chain_env;
-  zMShape3D ms_env;
+  zMultiShape3D ms_env;
 
   rkglChainAttrInit( &attr );
   if( opt[OPT_DRAW_NONFACE].flag )   attr.disptype &= ~RKGL_FACE;
@@ -496,9 +496,9 @@ void rkAnimLoadEnv(void)
     glEndList();
     rkChainDestroy( &chain_env );
   } else
-  if( rkAnimReadMShapeFile( &ms_env, opt[OPT_ENVFILE].arg ) ){
-    env = rkglEntryMShape( &ms_env, attr.disptype, &light );
-    zMShape3DDestroy( &ms_env );
+  if( rkAnimReadMultiShapeFile( &ms_env, opt[OPT_ENVFILE].arg ) ){
+    env = rkglEntryMultiShape( &ms_env, attr.disptype, &light );
+    zMultiShape3DDestroy( &ms_env );
   } else{
     ZOPENERROR( opt[OPT_ENVFILE].arg );
     exit( 1 );

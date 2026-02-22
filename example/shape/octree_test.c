@@ -55,14 +55,14 @@ void init(void)
 
 void generate_octree(zVec3DOctree *octree, char *filename, double resolution)
 {
-  zMShape3D ms;
+  zMultiShape3D ms;
   zVec3DData pointdata;
   zAABox3D aabb;
 
-  if( !zMShape3DReadZTK( &ms, filename ) )
+  if( !zMultiShape3DReadZTK( &ms, filename ) )
     exit( EXIT_FAILURE );
-  zMShape3DVertData( &ms, &pointdata );
-  zMShape3DDestroy( &ms );
+  zMultiShape3DVertData( &ms, &pointdata );
+  zMultiShape3DDestroy( &ms );
 
   zVec3DDataAABB( &pointdata, &aabb, NULL );
   zVec3DOctreeInitAuto( octree, &aabb, resolution );
@@ -99,18 +99,12 @@ int main(int argc, char *argv[])
 
   rkglInitGLUT( &argc, argv );
   rkglWindowCreateGLUT( 0, 0, 640, 640, argv[0] );
-
   glutDisplayFunc( display );
-  glutIdleFunc( rkglIdleFuncGLUT );
-  glutReshapeFunc( rkglReshapeFuncGLUT );
   glutKeyboardFunc( keyboard );
-  glutMouseFunc( rkglMouseFuncGLUT );
-  glutMotionFunc( rkglMouseDragFuncGLUT );
   init();
   generate_octree( &octree, argc > 1 ? argv[1] : "../model/bunny.ztk", 0.002 );
   generate_lists( &octree );
   zVec3DOctreeDestroy( &octree );
-
   glutMainLoop();
   return 0;
 }

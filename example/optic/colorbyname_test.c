@@ -48,11 +48,8 @@ int main(int argc, char *argv[])
 {
   rkglInitGLUT( &argc, argv );
   rkglWindowCreateGLUT( 0, 0, 320, 240, argv[0] );
-
   glutDisplayFunc( display );
-  glutReshapeFunc( rkglReshapeFuncGLUT );
   glutKeyboardFunc( keyboard );
-  glutIdleFunc( rkglIdleFuncGLUT );
   glCullFace( GL_FRONT );
   rkglCameraInit( &cam );
   rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );

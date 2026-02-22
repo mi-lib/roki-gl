@@ -134,10 +134,8 @@ int main(int argc, char *argv[])
 
   glutDisplayFunc( display );
   glutMouseFunc( mouse );
+  glutMotionFunc( NULL );
   glutKeyboardFunc( keyboard );
-  glutSpecialFunc( rkglSpecialFuncGLUT );
-  glutReshapeFunc( rkglReshapeFuncGLUT );
-  glutIdleFunc( rkglIdleFuncGLUT );
   init();
   glutMainLoop();
   return 0;

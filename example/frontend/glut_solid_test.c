@@ -99,13 +99,7 @@ int main(int argc, char *argv[])
   rkglWindowCreateGLUT( 0, 0, 500, 500, argv[0] );
 
   glutDisplayFunc( display );
-  glutVisibilityFunc( rkglVisFuncGLUT );
-  glutIdleFunc( rkglIdleFuncGLUT );
-  glutReshapeFunc( rkglReshapeFuncGLUT );
   glutKeyboardFunc( keyfunc );
-  glutSpecialFunc( rkglSpecialFuncGLUT );
-  glutMouseFunc( rkglMouseFuncGLUT );
-  glutMotionFunc( rkglMouseDragFuncGLUT );
   init();
 
   printf( "a: cube\n" );

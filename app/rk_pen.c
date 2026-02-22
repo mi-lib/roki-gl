@@ -415,12 +415,12 @@ rkChain *rk_penReadChainFile(rkChain *chain, char *pathname)
   return chain;
 }
 
-zMShape3D *rk_penReadMShapeFile(zMShape3D *ms, char *pathname)
+zMultiShape3D *rk_penReadMultiShapeFile(zMultiShape3D *ms, char *pathname)
 {
   char dirname[BUFSIZ], filename[BUFSIZ], cwd[BUFSIZ];
 
   rk_penChangeDir( pathname, dirname, filename, cwd, BUFSIZ );
-  ms = zMShape3DReadZTK( ms, filename );
+  ms = zMultiShape3DReadZTK( ms, filename );
   rk_penReturnDir( cwd );
   return ms;
 }
@@ -429,7 +429,7 @@ void rk_penInit(void)
 {
   zRGB rgb;
   rkglChainAttr attr;
-  zMShape3D envshape;
+  zMultiShape3D envshape;
   zSphere3D bball;
   double vv_fovy, vv_near, vv_far;
 
@@ -465,15 +465,15 @@ void rk_penInit(void)
     exit( 1 );
 
   if( opt[OPT_ENVFILE].flag ){
-    if( !rk_penReadMShapeFile( &envshape, opt[OPT_ENVFILE].arg ) ){
+    if( !rk_penReadMultiShapeFile( &envshape, opt[OPT_ENVFILE].arg ) ){
       ZOPENERROR( opt[OPT_ENVFILE].arg );
       rk_penUsage();
       exit( 1 );
     }
     if( attr.disptype & RKGL_STICK || attr.disptype & RKGL_ELLIPS )
       attr.disptype = RKGL_FACE;
-    env = rkglEntryMShape( &envshape, attr.disptype, &light );
-    zMShape3DDestroy( &envshape );
+    env = rkglEntryMultiShape( &envshape, attr.disptype, &light );
+    zMultiShape3DDestroy( &envshape );
     if( env < 0 ) exit( 1 );
   }
   if( opt[OPT_INITFILE].flag &&
@@ -513,11 +513,6 @@ void rk_penInit(void)
     glutDisplayFunc( display_shadow );
   else
     glutDisplayFunc( display );
-  glutReshapeFunc( rkglReshapeFuncGLUT );
-  glutKeyboardFunc( rkglKeyFuncGLUT );
-  glutSpecialFunc( rkglSpecialFuncGLUT );
-  glutMouseFunc( rkglMouseFuncGLUT );
-  glutMotionFunc( rkglMouseDragFuncGLUT );
 }
 
 bool rk_penCommandArgs(int argc, char *argv[])

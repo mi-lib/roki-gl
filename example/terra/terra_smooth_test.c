@@ -86,9 +86,6 @@ int main(int argc, char *argv[])
   rkglWindowCreateGLUT( 0, 0, 500, 500, argv[0] );
 
   glutDisplayFunc( display );
-  glutReshapeFunc( rkglReshapeFuncGLUT );
-  glutMouseFunc( rkglMouseFuncGLUT );
-  glutMotionFunc( rkglMouseDragFuncGLUT );
   glutKeyboardFunc( keyboard );
   init();
   glutMainLoop();

@@ -97,9 +97,9 @@ __ROKI_GL_EXPORT void rkglShape(zShape3D *s, zOpticalInfo *oi_alt, ubyte disptyp
 __ROKI_GL_EXPORT int rkglEntryShape(zShape3D *s, zOpticalInfo *oi_alt, ubyte disptype, rkglLight *light);
 
 /*! \brief draw multiple 3D shapes. */
-__ROKI_GL_EXPORT void rkglMShape(zMShape3D *s, ubyte disptype, rkglLight *light);
+__ROKI_GL_EXPORT void rkglMultiShape(zMultiShape3D *s, ubyte disptype, rkglLight *light);
 /*! \brief entry multiple 3D shapes to the display list. */
-__ROKI_GL_EXPORT int rkglEntryMShape(zMShape3D *s, ubyte disptype, rkglLight *light);
+__ROKI_GL_EXPORT int rkglEntryMultiShape(zMultiShape3D *s, ubyte disptype, rkglLight *light);
 
 /* point cloud */
 

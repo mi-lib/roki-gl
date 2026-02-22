@@ -91,30 +91,30 @@ int rk_viewReturnDir(char *cwd)
   return 0;
 }
 
-void rk_viewReadPH(zMShape3D *ms, const char *filename, const char *sfx)
+void rk_viewReadPH(zMultiShape3D *ms, const char *filename, const char *sfx)
 {
-  zMShape3DInit( ms );
-  zMShape3DAllocOpticArray( ms, 1 );
-  zMShape3DAllocShapeArray( ms, 1 );
-  if( zMShape3DOpticNum(ms) != 1 || zMShape3DShapeNum(ms) != 1 ){
+  zMultiShape3DInit( ms );
+  zMultiShape3DAllocOpticArray( ms, 1 );
+  zMultiShape3DAllocShapeArray( ms, 1 );
+  if( zMultiShape3DOpticNum(ms) != 1 || zMultiShape3DShapeNum(ms) != 1 ){
     ZALLOCERROR();
     exit( EXIT_FAILURE );
   }
-  zOpticalInfoInit( zMShape3DOptic(ms,0) );
+  zOpticalInfoInit( zMultiShape3DOptic(ms,0) );
   if( strcmp( sfx, "dae" ) == 0 || strcmp( sfx, "DAE" ) == 0 ){
-    if( !zShape3DReadFileDAE( zMShape3DShape(ms,0), filename ) ) exit( EXIT_FAILURE );
+    if( !zShape3DReadFileDAE( zMultiShape3DShape(ms,0), filename ) ) exit( EXIT_FAILURE );
     return;
   }
   if( strcmp( sfx, "stl" ) == 0 || strcmp( sfx, "STL" ) == 0 ){
-    if( !zShape3DReadFileSTL( zMShape3DShape(ms,0), filename ) ) exit( EXIT_FAILURE );
+    if( !zShape3DReadFileSTL( zMultiShape3DShape(ms,0), filename ) ) exit( EXIT_FAILURE );
     return;
   }
   if( strcmp( sfx, "obj" ) == 0 || strcmp( sfx, "OBJ" ) == 0 ){
-    if( !zShape3DReadFileOBJ( zMShape3DShape(ms,0), filename ) ) exit( EXIT_FAILURE );
+    if( !zShape3DReadFileOBJ( zMultiShape3DShape(ms,0), filename ) ) exit( EXIT_FAILURE );
     return;
   }
   if( strcmp( sfx, "ply" ) == 0 || strcmp( sfx, "PLY" ) == 0 ){
-    if( !zShape3DReadFilePLY( zMShape3DShape(ms,0), filename ) ) exit( EXIT_FAILURE );
+    if( !zShape3DReadFilePLY( zMultiShape3DShape(ms,0), filename ) ) exit( EXIT_FAILURE );
     return;
   }
   ZRUNERROR( "unknown format %s", sfx );
@@ -128,7 +128,7 @@ void rk_viewReadModel(zStrAddrList *modellist)
   zVec3DData pointdata, normaldata, pointdata_all;
   const char *sfx;
   double scale;
-  zMShape3D ms;
+  zMultiShape3D ms;
   ubyte disptype;
   char dirname[BUFSIZ], filename[BUFSIZ], cwd[BUFSIZ];
   int i;
@@ -160,7 +160,7 @@ void rk_viewReadModel(zStrAddrList *modellist)
       continue;
     }
     if( strcmp( sfx, "ztk" ) == 0 ){
-      if( !zMShape3DReadZTK( &ms, filename ) ){
+      if( !zMultiShape3DReadZTK( &ms, filename ) ){
         ZOPENERROR( cp->data );
         rk_viewUsage();
       }
@@ -170,20 +170,20 @@ void rk_viewReadModel(zStrAddrList *modellist)
 
     if( opt[OPT_SCALE].flag ){
       scale = atof( opt[OPT_SCALE].arg );
-      for( i=0; i<zMShape3DShapeNum(&ms); i++ )
-        zPH3DScaleDRC( zShape3DPH(zMShape3DShape(&ms,i)), scale );
+      for( i=0; i<zMultiShape3DShapeNum(&ms); i++ )
+        zPH3DScaleDRC( zShape3DPH(zMultiShape3DShape(&ms,i)), scale );
     }
     disptype = opt[OPT_NONFACE].flag ? 0 : RKGL_FACE;
     if( opt[OPT_WIREFRAME].flag ){
       disptype |= RKGL_WIREFRAME;
       rkglRGBByStr( opt[OPT_WIREFRAME].arg );
     }
-    rkglMShape( &ms, disptype, &light );
+    rkglMultiShape( &ms, disptype, &light );
     if( opt[OPT_AUTO].flag ){
-      zMShape3DVertData( &ms, &pointdata );
+      zMultiShape3DVertData( &ms, &pointdata );
       zListAppend( &pointlist_all, pointdata.data.list );
     }
-    zMShape3DDestroy( &ms );
+    zMultiShape3DDestroy( &ms );
   }
   glEndList();
   if( opt[OPT_AUTO].flag ){

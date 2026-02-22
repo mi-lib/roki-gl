@@ -93,12 +93,10 @@ int main(int argc, char *argv[])
 {
   rkglInitGLUT( &argc, argv );
   rkglWindowCreateGLUT( 0, 0, 320, 320, argv[0] );
-
   glutDisplayFunc( display );
   glutMouseFunc( mouse );
-  glutReshapeFunc( rkglReshapeFuncGLUT );
+  glutMotionFunc( NULL );
   glutKeyboardFunc( keyboard );
-  glutIdleFunc( rkglIdleFuncGLUT );
   init();
   glutMainLoop();
   return 0;

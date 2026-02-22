@@ -47,12 +47,12 @@ void init(void)
 
 void generate_pc(zVec3DData *pointdata, char *filename)
 {
-  zMShape3D ms;
+  zMultiShape3D ms;
 
-  if( !zMShape3DReadZTK( &ms, filename ) )
+  if( !zMultiShape3DReadZTK( &ms, filename ) )
     exit( EXIT_FAILURE );
-  zMShape3DVertData( &ms, pointdata );
-  zMShape3DDestroy( &ms );
+  zMultiShape3DVertData( &ms, pointdata );
+  zMultiShape3DDestroy( &ms );
 }
 
 void generate_covariance_ellipsoid(zVec3DData *pointdata)
@@ -73,13 +73,8 @@ int main(int argc, char *argv[])
 
   rkglInitGLUT( &argc, argv );
   rkglWindowCreateGLUT( 0, 0, 640, 640, argv[0] );
-
   glutDisplayFunc( display );
-  glutIdleFunc( rkglIdleFuncGLUT );
-  glutReshapeFunc( rkglReshapeFuncGLUT );
   glutKeyboardFunc( keyboard );
-  glutMouseFunc( rkglMouseFuncGLUT );
-  glutMotionFunc( rkglMouseDragFuncGLUT );
   init();
   generate_pc( &pointdata, argc > 1 ? argv[1] : "../model/bunny.ztk" );
   pc_id = rkglBeginList();

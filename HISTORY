@@ -1,3 +1,8 @@
+2026.02.22. Added rkglSetDefaultFuncGLFW, and modified rkglWindowOpenGLFW to use it. [roki_glfw]
+2026.02.22. Discarded an unused function prototype rkglSpecialFuncGLFW. [roki_glfw]
+2026.02.22. Added rkglSetDefaultFuncGLUT, and modified rkglWindowCreateGLUT to use it. [roki_glut]
+2026.02.21. Renamed rkglMShape and rkglEntryMShape to rkglMultiShape and rkglEntryMultiShape, respectively. [rkgl_shape, app]
+2026.02.21. Reflected renaming of zMultiShape3D. [rkgl_shape]
 2026.02.21. Added C++ method readInternalDepthBuffer of rkglCamera. [rkgl_camera]
 2026.02.21. Added rkglCameraReadInternalDepthBuffer. [rkgl_camera]
 2026.02.21. Modified rkglContour to skip operation when the internal depth buffer is not ready. [rkgl_superimpose]

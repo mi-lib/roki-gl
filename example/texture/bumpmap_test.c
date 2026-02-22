@@ -152,12 +152,6 @@ int main(int argc, char *argv[])
   rkglWindowCreateGLUT( 0, 0, 640, 480, argv[0] );
 
   glutDisplayFunc( display );
-  glutVisibilityFunc( rkglVisFuncGLUT );
-  glutReshapeFunc( rkglReshapeFuncGLUT );
-  glutKeyboardFunc( rkglKeyFuncGLUT );
-  glutSpecialFunc( rkglSpecialFuncGLUT );
-  glutMouseFunc( rkglMouseFuncGLUT );
-  glutMotionFunc( rkglMouseDragFuncGLUT );
   init( argc > 1 ? atof( argv[1] ) : 1.0 );
   glutMainLoop();
   return 0;

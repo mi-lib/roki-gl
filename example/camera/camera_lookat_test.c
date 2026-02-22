@@ -89,11 +89,11 @@ int main(int argc, char *argv[])
 {
   rkglInitGLUT( &argc, argv );
   rkglWindowCreateGLUT( 0, 0, 320, 240, argv[0] );
-
   glutDisplayFunc( display );
   glutReshapeFunc( resize );
   glutKeyboardFunc( keyboard );
-  glutIdleFunc( rkglIdleFuncGLUT );
+  glutMouseFunc( NULL );
+  glutMotionFunc( NULL );
   init();
   glutMainLoop();
   return 0;

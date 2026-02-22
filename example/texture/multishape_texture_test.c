@@ -3,7 +3,7 @@
 rkglCamera cam;
 rkglLight light;
 
-zMShape3D ms;
+zMultiShape3D ms;
 
 void display(void)
 {
@@ -11,7 +11,7 @@ void display(void)
   rkglCameraPut( &cam );
   rkglLightPut( &light );
   glPushMatrix();
-  rkglMShape( &ms, RKGL_FACE, &light );
+  rkglMultiShape( &ms, RKGL_FACE, &light );
   glPopMatrix();
   glutSwapBuffers();
 }
@@ -30,21 +30,14 @@ void init(void)
 
   /* following calls are mandatory. */
   rkglTextureEnable();
-  zMShape3DReadZTK( &ms, "lena_cube.ztk" );
+  zMultiShape3DReadZTK( &ms, "lena_cube.ztk" );
 }
 
 int main(int argc, char *argv[])
 {
   rkglInitGLUT( &argc, argv );
   rkglWindowCreateGLUT( 0, 0, 640, 480, argv[0] );
-
   glutDisplayFunc( display );
-  glutVisibilityFunc( rkglVisFuncGLUT );
-  glutReshapeFunc( rkglReshapeFuncGLUT );
-  glutKeyboardFunc( rkglKeyFuncGLUT );
-  glutSpecialFunc( rkglSpecialFuncGLUT );
-  glutMouseFunc( rkglMouseFuncGLUT );
-  glutMotionFunc( rkglMouseDragFuncGLUT );
   init();
   glutMainLoop();
   return 0;
