@@ -8,24 +8,30 @@
 
 /* reflection and refraction mapping */
 
+#ifdef __cplusplus
+#define _vec3D_(x,y,z) { x, y, z }
+#else
+#define _vec3D_(x,y,z) { { x, y, z } }
+#endif /* __cplusplus */
+
 void rkglReflectionRefraction(int width, int height, rkglCamera *cam, rkglLight *light, void (* draw)(void), zVec3D *center)
 {
   rkglCamera view;
   static const zVec3D viewvec[] = {
-    { { 1.0, 0.0, 0.0 } },
-    { {-1.0, 0.0, 0.0 } },
-    { { 0.0, 1.0, 0.0 } },
-    { { 0.0,-1.0, 0.0 } },
-    { { 0.0, 0.0, 1.0 } },
-    { { 0.0, 0.0,-1.0 } },
+    _vec3D_( 1.0, 0.0, 0.0 ),
+    _vec3D_(-1.0, 0.0, 0.0 ),
+    _vec3D_( 0.0, 1.0, 0.0 ),
+    _vec3D_( 0.0,-1.0, 0.0 ),
+    _vec3D_( 0.0, 0.0, 1.0 ),
+    _vec3D_( 0.0, 0.0,-1.0 ),
   };
   static const zVec3D upvec[] = {
-    { { 0.0,-1.0, 0.0 } },
-    { { 0.0,-1.0, 0.0 } },
-    { { 0.0, 0.0, 1.0 } },
-    { { 0.0, 0.0,-1.0 } },
-    { { 0.0,-1.0, 0.0 } },
-    { { 0.0,-1.0, 0.0 } },
+    _vec3D_( 0.0,-1.0, 0.0 ),
+    _vec3D_( 0.0,-1.0, 0.0 ),
+    _vec3D_( 0.0, 0.0, 1.0 ),
+    _vec3D_( 0.0, 0.0,-1.0 ),
+    _vec3D_( 0.0,-1.0, 0.0 ),
+    _vec3D_( 0.0,-1.0, 0.0 ),
   };
   int i;
 
@@ -49,6 +55,8 @@ void rkglReflectionRefraction(int width, int height, rkglCamera *cam, rkglLight 
   rkglCameraLoadViewport( cam );
   rkglCameraLoadViewvolume( cam );
 }
+
+#undef _vec3D_
 
 /* shadow mapping */
 

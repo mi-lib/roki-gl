@@ -1,3 +1,4 @@
+2026.02.25. Modified rkglReflectionRefraction to reflect new specitication of zVec3D for C++. [rkgl_envmap]
 2026.02.22. Reflected renaming of zShape3DList and zShape3DListCell. [rkgl_chain]
 2026.02.22. Added rkglSetDefaultFuncGLFW, and modified rkglWindowOpenGLFW to use it. [roki_glfw]
 2026.02.22. Discarded an unused function prototype rkglSpecialFuncGLFW. [roki_glfw]
