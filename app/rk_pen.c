@@ -12,6 +12,8 @@ enum{
   OPT_PAN, OPT_TILT, OPT_ROLL,
   OPT_OX, OPT_OY, OPT_OZ, OPT_AUTO,
   OPT_WIDTH, OPT_HEIGHT,
+  OPT_FOVY, OPT_ZNEAR, OPT_ZFAR,
+  OPT_ORTHO,
   OPT_DRAW_NONFACE,
   OPT_DRAW_WIREFRAME,
   OPT_DRAW_BB,
@@ -36,6 +38,10 @@ zOption opt[] = {
   { "auto", NULL, NULL, "automatic allocation of camera", NULL, false },
   { "width", NULL, "<value>", "window width", (char *)"500", false },
   { "height", NULL, "<value>", "window height", (char *)"500", false },
+  { "fovy", NULL, "<value>", "field of view in y-direction [deg]", (char *)"30", false },
+  { "znear", NULL, "<value>", "near-side distance to viewvolume", (char *)"1", false },
+  { "zfar", NULL, "<value>", "far-side distance of viewvolume", (char *)"200", false },
+  { "ortho", NULL, "<value>", "orthographic parallel projection with scale factor", (char *)"0.002", false },
   { "nonface", NULL, NULL, "undraw solid model of the kinematic chain", NULL, false },
   { "wireframe", NULL, "<color name>", "draw kinematic chain as wireframe model", (char *)"white", false },
   { "bb", NULL, NULL, "draw kinematic chain bounding box", NULL, false },
@@ -380,6 +386,13 @@ void display_shadow(void)
   glutSwapBuffers();
 }
 
+void reshape_ortho(int w, int h)
+{
+  rkglCameraSetViewport( &cam, 0, 0, w, h );
+  rkglCameraSetViewvolumeXYToScaleHeight( &cam, atof( opt[OPT_ORTHO].arg ) );
+  rkglCameraPutViewvolume( &cam );
+}
+
 int rk_penChangeDir(char *pathname, char *dirname, char *filename, char *cwd, size_t size)
 {
   if( !getcwd( cwd, size ) ){
@@ -425,60 +438,34 @@ zMultiShape3D *rk_penReadMultiShapeFile(zMultiShape3D *ms, char *pathname)
   return ms;
 }
 
-void rk_penInit(void)
+void rk_penInitDrawingAttr(rkglChainAttr *attr)
 {
-  zRGB rgb;
-  rkglChainAttr attr;
-  zMultiShape3D envshape;
-  zSphere3D bball;
-  double vv_fovy, vv_near, vv_far;
-
-  glEnable( GL_LIGHTING );
-  rkglLightCreate( &light, 0.5, 0.5, 0.5, 0.8, 0.8, 0.8, 0, 0, 0 );
-  rkglLightMove( &light, atof(opt[OPT_LX].arg), atof(opt[OPT_LY].arg), atof(opt[OPT_LZ].arg) );
-  rkglShadowInit( &shadow, 1024, 1024, 2, 0.2, 0.1 );
-  rkglTextureEnable();
-  if( opt[OPT_SMOOTH].flag ) glEnable( GL_LINE_SMOOTH );
-  if( opt[OPT_FOG].flag ) glEnable( GL_FOG );
-
-  rkglChainAttrInit( &attr );
+  rkglChainAttrInit( attr );
   if( opt[OPT_DRAW_NONFACE].flag )
-    attr.disptype &= ~RKGL_FACE;
+    attr->disptype &= ~RKGL_FACE;
   if( opt[OPT_DRAW_WIREFRAME].flag ){
-    attr.disptype |= RKGL_WIREFRAME;
+    attr->disptype |= RKGL_WIREFRAME;
     rkglRGBByStr( opt[OPT_DRAW_WIREFRAME].arg );
   }
   if( opt[OPT_DRAW_BB].flag )
-    attr.disptype |= RKGL_BB | RKGL_FACE;
+    attr->disptype |= RKGL_BB | RKGL_FACE;
   if( opt[OPT_DRAW_BONE].flag ){
-    attr.disptype |= RKGL_STICK;
-    attr.bone_radius = atof( opt[OPT_DRAW_BONE].arg );
+    attr->disptype |= RKGL_STICK;
+    attr->bone_radius = atof( opt[OPT_DRAW_BONE].arg );
   }
   if( opt[OPT_DRAW_COORD].flag )
-    attr.disptype |= RKGL_FRAME;
+    attr->disptype |= RKGL_FRAME;
   if( opt[OPT_DRAW_ELLIPS].flag ){
-    attr.disptype |= RKGL_ELLIPS;
-    attr.ellips_scale = atof( opt[OPT_DRAW_ELLIPS].arg );
+    attr->disptype |= RKGL_ELLIPS;
+    attr->ellips_scale = atof( opt[OPT_DRAW_ELLIPS].arg );
   }
-  if( !rk_penReadChainFile( &chain, opt[OPT_MODELFILE].arg ) ||
-      !rkglChainLoad( &gr, &chain, &attr, &light ) )
-    exit( 1 );
+}
 
-  if( opt[OPT_ENVFILE].flag ){
-    if( !rk_penReadMultiShapeFile( &envshape, opt[OPT_ENVFILE].arg ) ){
-      ZOPENERROR( opt[OPT_ENVFILE].arg );
-      rk_penUsage();
-      exit( 1 );
-    }
-    if( attr.disptype & RKGL_STICK || attr.disptype & RKGL_ELLIPS )
-      attr.disptype = RKGL_FACE;
-    env = rkglEntryMultiShape( &envshape, attr.disptype, &light );
-    zMultiShape3DDestroy( &envshape );
-    if( env < 0 ) exit( 1 );
-  }
-  if( opt[OPT_INITFILE].flag &&
-      !rkChainInitReadZTK( &chain, opt[OPT_INITFILE].arg ) )
-    exit( 1 );
+void rk_penInitCamera(void)
+{
+  zRGB rgb;
+  zSphere3D bball;
+  double vv_fovy, vv_near, vv_far;
 
   rkglCameraInit( &cam );
   zRGBByStr( &rgb, opt[OPT_BG].arg );
@@ -496,19 +483,60 @@ void rk_penInit(void)
     if( opt[OPT_PAN].flag || opt[OPT_TILT].flag || opt[OPT_ROLL].flag )
       rkglCameraSetViewframe( &cam,
         atof( opt[OPT_OX].arg ), atof( opt[OPT_OY].arg ), atof( opt[OPT_OZ].arg ),
-        atof( opt[OPT_PAN].arg ),  atof( opt[OPT_TILT].arg ), atof( opt[OPT_ROLL].arg ) );
+        atof( opt[OPT_PAN].arg ), atof( opt[OPT_TILT].arg ), atof( opt[OPT_ROLL].arg ) );
     else
       rkglCameraLookAt( &cam,
         atof( opt[OPT_OX].arg ), atof( opt[OPT_OY].arg ), atof( opt[OPT_OZ].arg ),
         0, 0, 0, 0, 0, 1 );
-    vv_fovy = 30.0;
-    vv_near = 1;
-    vv_far = 200;
+    vv_fovy = atof( opt[OPT_FOVY].arg );
+    vv_near = atof( opt[OPT_ZNEAR].arg );
+    vv_far  = atof( opt[OPT_ZFAR].arg );
   }
   rkglCameraSetViewvolumeZFovy( &cam, vv_near, vv_far, vv_fovy );
+  if( opt[OPT_ORTHO].flag ){
+    rkglCameraSetOrtho( &cam );
+    glutReshapeFunc( reshape_ortho );
+  } else{
+    rkglCameraSetFrustum( &cam );
+  }
   rkglSetDefaultCamera( &cam );
-  rkglSetKeyDelta( 0.02, 1.0 );
+}
 
+void rk_penInit(void)
+{
+  rkglChainAttr attr;
+  zMultiShape3D envshape;
+
+  glEnable( GL_LIGHTING );
+  rkglLightCreate( &light, 0.5, 0.5, 0.5, 0.8, 0.8, 0.8, 0, 0, 0 );
+  rkglLightMove( &light, atof(opt[OPT_LX].arg), atof(opt[OPT_LY].arg), atof(opt[OPT_LZ].arg) );
+  rkglShadowInit( &shadow, 1024, 1024, 2, 0.2, 0.1 );
+  rkglTextureEnable();
+  if( opt[OPT_SMOOTH].flag ) glEnable( GL_LINE_SMOOTH );
+  if( opt[OPT_FOG].flag ) glEnable( GL_FOG );
+
+  rk_penInitDrawingAttr( &attr );
+  if( !rk_penReadChainFile( &chain, opt[OPT_MODELFILE].arg ) ||
+      !rkglChainLoad( &gr, &chain, &attr, &light ) )
+    exit( 1 );
+  if( opt[OPT_ENVFILE].flag ){
+    if( !rk_penReadMultiShapeFile( &envshape, opt[OPT_ENVFILE].arg ) ){
+      ZOPENERROR( opt[OPT_ENVFILE].arg );
+      rk_penUsage();
+      exit( 1 );
+    }
+    if( attr.disptype & RKGL_STICK || attr.disptype & RKGL_ELLIPS )
+      attr.disptype = RKGL_FACE;
+    env = rkglEntryMultiShape( &envshape, attr.disptype, &light );
+    zMultiShape3DDestroy( &envshape );
+    if( env < 0 ) exit( 1 );
+  }
+  if( opt[OPT_INITFILE].flag &&
+      !rkChainInitReadZTK( &chain, opt[OPT_INITFILE].arg ) )
+    exit( 1 );
+
+  rk_penInitCamera();
+  rkglSetKeyDelta( 0.02, 1.0 );
   if( opt[OPT_SHADOW].flag )
     glutDisplayFunc( display_shadow );
   else

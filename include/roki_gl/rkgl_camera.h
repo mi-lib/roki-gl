@@ -29,7 +29,7 @@ ZDEF_STRUCT( __ROKI_GL_CLASS_EXPORT, rkglCamera ){
   GLdouble _viewvolume[16]; /* viewvolume */
   GLvoid (* _viewvolume_f)(GLdouble,GLdouble,GLdouble,GLdouble,GLdouble,GLdouble); /* glOrtho/glFrustum */
   zFrame3D *platform;       /* frame of a platform */
-  ubyte *_depthbuffer;       /* depth buffer */
+  ubyte *_depthbuffer;      /* depth buffer */
   /*! \endcond */
 #ifdef __cplusplus
   rkglCamera();
@@ -194,14 +194,17 @@ __ROKI_GL_EXPORT void rkglCameraPutViewvolume(rkglCamera *camera);
 /*! \brief set viewvolume method of a camera for glFrustum. */
 #define rkglCameraSetFrustum(camera) ( (camera)->_viewvolume_f = glFrustum )
 
-/* set viewvolume of a camera that produces a parallel projection. */
-__ROKI_GL_EXPORT void rkglCameraSetViewvolumeOrthoXY(rkglCamera *camera, GLdouble left, GLdouble right, GLdouble bottom, GLdouble top);
-/* set viewvolume of a camera that produces a perspective projection. */
-__ROKI_GL_EXPORT void rkglCameraSetViewvolumeFrustumXY(rkglCamera *camera, GLdouble left, GLdouble right, GLdouble bottom, GLdouble top);
+/*! \brief set viewvolume of a camera centering a specified point. */
+__ROKI_GL_EXPORT void rkglCameraSetViewvolumeXYCenter(rkglCamera *camera, GLdouble x, GLdouble y);
 /* compute corner coordinates of viewplane of a camera by scaling its width to that of viewport. */
 __ROKI_GL_EXPORT void rkglCameraSetViewvolumeXYToScaleWidth(rkglCamera *camera, double scale);
 /* compute corner coordinates of viewplane of a camera by scaling its height to that of viewport. */
 __ROKI_GL_EXPORT void rkglCameraSetViewvolumeXYToScaleHeight(rkglCamera *camera, double scale);
+
+/* set viewvolume of a camera that produces a parallel projection. */
+__ROKI_GL_EXPORT void rkglCameraSetViewvolumeOrthoXY(rkglCamera *camera, GLdouble left, GLdouble right, GLdouble bottom, GLdouble top);
+/* set viewvolume of a camera that produces a perspective projection. */
+__ROKI_GL_EXPORT void rkglCameraSetViewvolumeFrustumXY(rkglCamera *camera, GLdouble left, GLdouble right, GLdouble bottom, GLdouble top);
 /* set viewvolume of a camera that produces perspective projection from field of view and aspect ratio. */
 __ROKI_GL_EXPORT void rkglCameraSetViewvolumeXYPerspective(rkglCamera *camera, GLdouble aspect);
 
