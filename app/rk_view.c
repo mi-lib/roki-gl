@@ -215,7 +215,7 @@ void rk_viewResetCamera(void)
     vv_near = 1;
     vv_far = 200;
   }
-  rkglCameraFitPerspective( &cam, vv_fovy, vv_near, vv_far );
+  rkglCameraSetViewvolumeZFovy( &cam, vv_near, vv_far, vv_fovy );
   rkglSetDefaultCamera( &cam );
 }
 
@@ -318,7 +318,8 @@ void rk_viewReshape(void)
 
   zxGetGeometry( win, &reg );
   rkglCameraSetViewport( &cam, 0, 0, reg.width, reg.height );
-  rkglCameraPerspective( &cam );
+  rkglCameraAdjustViewvolumePerspective( &cam );
+  rkglCameraPutViewvolume( &cam );
 }
 
 void rk_viewCapture(void)

@@ -36,7 +36,8 @@ void draw(rkglCamera *c, double r)
   int i, j;
 
   rkglCameraLoadViewport( c );
-  rkglCameraScaleFrustumHeight( c, 1.0/320, 1.0, 30.0 );
+  rkglCameraAdjustViewvolumePerspective( c );
+  rkglCameraPutViewvolume( c );
   glMatrixMode( GL_MODELVIEW );
   glLoadIdentity();
   gluLookAt( 3.0, 4.0, 5.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0 );
@@ -72,8 +73,10 @@ void resize(int w, int h)
   glScissor( 0, 0, w, h );
   glClearColor( 1, 1, 1, 1 );
   rkglClear();
+
   rkglCameraSetBackground( &cam1, 0.2, 0, 0 );
   rkglCameraSetViewport( &cam1, 10,    10, w-20, h/2-15 );
+
   rkglCameraSetBackground( &cam2, 0, 0.2, 0 );
   rkglCameraSetViewport( &cam2, 10, h/2+5, w-20, h/2-15 );
 }
@@ -89,6 +92,10 @@ void keyboard(unsigned char key, int x, int y)
 void init(void)
 {
   glCullFace( GL_FRONT );
+  rkglCameraInit( &cam1 );
+  rkglCameraSetViewvolumeZFovy( &cam1, 1, 30, 30 );
+  rkglCameraInit( &cam2 );
+  rkglCameraSetViewvolumeZFovy( &cam1, 2, 30, 30 );
 }
 
 int main(int argc, char *argv[])

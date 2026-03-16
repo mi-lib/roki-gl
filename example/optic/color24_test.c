@@ -60,7 +60,7 @@ void init(void)
   rkglCameraInit( &cam );
   rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
   rkglCameraSetViewframe( &cam, 6, 0, 0, 0, 0, 0 );
-  rkglCameraFitPerspective( &cam, 90.0, 1, 100 );
+  rkglCameraSetViewvolumeZFovy( &cam, 1, 100.0, 90.0 );
   rkglSetDefaultCamera( &cam );
 }
 

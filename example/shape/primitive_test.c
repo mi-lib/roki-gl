@@ -65,8 +65,8 @@ void init(void)
 
   rkglCameraInit( &cam );
   rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
-  rkglCameraSetViewframe( &cam, 10, 0, 0, 0, 0, 0 );
-  rkglCameraFitPerspective( &cam, 90, 1, 100 );
+  rkglCameraSetViewframe( &cam, 20, 0, 0, 0, 0, 0 );
+  rkglCameraSetViewvolumeZFovy( &cam, 1, 100, 45.0 );
   rkglSetDefaultCamera( &cam );
   glLineWidth( 2 );
 

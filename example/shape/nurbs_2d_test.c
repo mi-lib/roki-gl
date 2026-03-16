@@ -141,7 +141,7 @@ void init(void)
   rkglCameraInit( &cam );
   rkglCameraSetBackground( &cam, 0.0, 0.0, 0.0 );
   rkglCameraLookAt( &cam, 5, 0, 1, 0, 0, 0, 0, 0, 1 );
-  rkglCameraFitPerspective( &cam, 45, 0.5, 100 );
+  rkglCameraSetViewvolumeZFovy( &cam, 0.5, 100.0, 45.0 );
   rkglSetDefaultCamera( &cam );
 
   glEnable( GL_LIGHTING );

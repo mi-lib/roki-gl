@@ -49,11 +49,13 @@ GLvoid init(int width, int height)
   rkglCameraInit( &cam[0] );
   rkglCameraSetBackground( &cam[0], 0.1, 0.1, 0.1 );
   rkglCameraSetViewport( &cam[0], 0, 0, width, height );
+  rkglCameraSetViewvolumeZFovy( &cam[0], 1, 20, 60 );
   rkglCameraLookAt( &cam[0], 5, 0, 3, 0, 0, 0, 0, 0, 1 );
 
   rkglCameraInit( &cam[1] );
   rkglCameraSetBackground( &cam[1], 0.1, 0.1, 0.1 );
   rkglCameraSetViewport( &cam[1], 0, 0, width, height );
+  rkglCameraSetViewvolumeZFovy( &cam[1], 1, 20, 60 );
   rkglCameraLookAt( &cam[1], 0, 5, 3, 0, 0, 0, 0, 0, 1 );
 
   glEnable( GL_LIGHTING );
@@ -86,10 +88,12 @@ void resize(zxWindow *win)
   draw_button( win );
 
   rkglCameraSetViewport( &cam[0], 0, 0, w, h );
-  rkglCameraFitPerspective( &cam[0], 60, 1, 20 );
+  rkglCameraAdjustViewvolumePerspective( &cam[0] );
+  rkglCameraPutViewvolume( &cam[0] );
 
   rkglCameraSetViewport( &cam[1], 0, 0, w, h );
-  rkglCameraFitPerspective( &cam[1], 60, 1, 20 );
+  rkglCameraAdjustViewvolumePerspective( &cam[1] );
+  rkglCameraPutViewvolume( &cam[1] );
 }
 
 GLvoid draw(Window win, rkglCamera *cam, rkglLight *light)

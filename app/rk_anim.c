@@ -543,7 +543,7 @@ void rkAnimInit(void)
   rkglCameraInit( &cam );
   rkglCameraSetBackground( &cam, rgb.r, rgb.g, rgb.b );
   rkglCameraSetViewport( &cam, 0, 0, atoi(opt[OPT_WIDTH].arg), atoi(opt[OPT_HEIGHT].arg) );
-  rkglCameraFitPerspective( &cam, 30.0, 1.0, 200 );
+  rkglCameraSetViewvolumeZFovy( &cam, 1.0, 200, 30.0 );
   rkglCameraSetViewframe( &cam,
     atof(opt[OPT_OX].arg), atof(opt[OPT_OY].arg), atof(opt[OPT_OZ].arg),
     atof(opt[OPT_PAN].arg), atof(opt[OPT_TILT].arg), atof(opt[OPT_ROLL].arg) );
@@ -617,7 +617,8 @@ void rkAnimReshape(void)
   }
   zxGetGeometry( glwin, &reg );
   rkglCameraSetViewport( &cam, 0, 0, reg.width, reg.height );
-  rkglCameraPerspective( &cam );
+  rkglCameraAdjustViewvolumePerspective( &cam );
+  rkglCameraPutViewvolume( &cam );
 }
 
 int rkAnimKeyPress(void)

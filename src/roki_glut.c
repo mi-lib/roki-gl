@@ -34,7 +34,8 @@ int rkglWindowCreateGLUT(int x, int y, int w, int h, const char *title)
 void rkglReshapeFuncGLUT(int w, int h)
 {
   rkglCameraSetViewport( rkgl_default_camera, 0, 0, w, h );
-  rkglCameraPerspective( rkgl_default_camera );
+  rkglCameraAdjustViewvolumePerspective( rkgl_default_camera );
+  rkglCameraPutViewvolume( rkgl_default_camera );
 }
 
 void rkglIdleFuncGLUT(void)

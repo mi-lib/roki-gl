@@ -36,7 +36,8 @@ void display(void)
 void resize(int w, int h)
 {
   rkglCameraSetViewport( &cam, 0, 0, w, h );
-  rkglCameraScaleFrustumHeight( &cam, 1.0/320, 1, 30 );
+  rkglCameraAdjustViewvolumePerspective( &cam );
+  rkglCameraPutViewvolume( &cam );
 }
 
 void keyboard(unsigned char key, int x, int y)
@@ -75,6 +76,7 @@ void init(void)
   rkglCameraInit( &cam );
   rkglCameraSetPlatform( &cam, &platform );
   rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
+  rkglCameraSetViewvolumeZFovy( &cam, 1, 30, 30 );
   rkglSetDefaultCamera( &cam );
   camera_home();
 

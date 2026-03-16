@@ -54,7 +54,8 @@ void display(void)
 void resize(int w, int h)
 {
   rkglCameraSetViewport( &cam, 0, 0, w, h );
-  rkglCameraScaleFrustumHeight( &cam, 1.0/160, 1, 30 );
+  rkglCameraAdjustViewvolumePerspective( &cam );
+  rkglCameraPutViewvolume( &cam );
 }
 
 void keyboard(unsigned char key, int x, int y)
@@ -80,7 +81,8 @@ void init(void)
   glCullFace( GL_FRONT );
   rkglCameraInit( &cam );
   rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
-  eyex = 6; eyey = 0; eyez = 3;
+  rkglCameraSetViewvolumeZFovy( &cam, 1, 30, 30 );
+  eyex = 10; eyey = 0; eyez = 3;
   centerx = centery = centerz = 0;
   rkglCameraLookAt( &cam, eyex, eyey, eyez, centerx, centery, centerz, 0, 0, 1 );
 }

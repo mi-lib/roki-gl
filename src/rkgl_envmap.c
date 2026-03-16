@@ -40,7 +40,8 @@ void rkglReflectionRefraction(int width, int height, rkglCamera *cam, rkglLight 
   for( i=0; i<6; i++ ){
     rkglClear();
     rkglCameraSetViewport( &view, 0, 0, width, height );
-    rkglCameraSetPerspective( &view, 90.0, 1.0, 0.1, 20.0 );
+    rkglCameraSetViewvolumeZFovy( &view, 0.1, 100.0, 90.0 );
+    rkglCameraSetViewvolumeXYPerspective( &view, 1.0 );
     rkglCameraLookAt( &view,
       center->c.x, center->c.y, center->c.z,
       center->c.x+viewvec[i].c.x, center->c.y+viewvec[i].c.y, center->c.z+viewvec[i].c.z,

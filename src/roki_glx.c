@@ -113,7 +113,8 @@ void rkglWindowAddEventGLX(Window win, long event)
 void rkglReshapeGLX(rkglCamera *cam, int w, int h)
 {
   rkglCameraSetViewport( cam, 0, 0, w, h );
-  rkglCameraPerspective( cam );
+  rkglCameraAdjustViewvolumePerspective( cam );
+  rkglCameraPutViewvolume( cam );
 }
 
 int rkglKeyPressFuncGLX(rkglCamera *cam)

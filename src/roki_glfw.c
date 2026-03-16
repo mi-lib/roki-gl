@@ -50,7 +50,8 @@ GLFWwindow *rkglWindowCreateAndOpenGLFW(int x, int y, int width, int height, con
 void rkglReshapeFuncGLFW(GLFWwindow* window, int w, int h)
 {
   rkglCameraSetViewport( rkgl_default_camera, 0, 0, w, h );
-  rkglCameraPerspective( rkgl_default_camera );
+  rkglCameraAdjustViewvolumePerspective( rkgl_default_camera );
+  rkglCameraPutViewvolume( rkgl_default_camera );
 }
 
 void rkglCharFuncGLFW(GLFWwindow* window, unsigned int codepoint)

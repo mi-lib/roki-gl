@@ -76,17 +76,19 @@ void create_phantom_all(void)
 
 void mouse_wheel(GLFWwindow* window, double xoffset, double yoffset)
 {
-  if ( yoffset < 0 ) {
-    g_scale -= 0.0001; rkglCameraScaleOrthoHeight( &g_cam, g_scale, g_znear, g_zfar );
-  } else if ( yoffset > 0 ) {
-    g_scale += 0.0001; rkglCameraScaleOrthoHeight( &g_cam, g_scale, g_znear, g_zfar );
+  if( yoffset != 0 ){
+    g_scale += yoffset > 0 ? 0.0001 : -0.0001;
+    rkglCameraSetViewvolumeZ( &g_cam, g_znear, g_zfar );
+    rkglCameraSetViewvolumeXYToScaleHeight( &g_cam, g_scale );
+    rkglCameraPutViewvolume( &g_cam );
   }
 }
 
 void resize(GLFWwindow* window, int w, int h)
 {
   rkglCameraSetViewport( &g_cam, 0, 0, w, h );
-  rkglCameraScaleOrthoHeight( &g_cam, g_scale, g_znear, g_zfar );
+  rkglCameraSetViewvolumeXYToScaleHeight( &g_cam, g_scale );
+  rkglCameraPutViewvolume( &g_cam );
 }
 
 void init(void)
@@ -94,7 +96,8 @@ void init(void)
   rkglCameraInit( &g_cam );
   rkglCameraSetBackground( &g_cam, 0.5, 0.5, 0.5 );
   rkglCameraSetViewframe( &g_cam, 1, 1, 1, 45.0, -30.0, 0.0 );
-  rkglCameraFitPerspective( &g_cam, 30.0, 1.0, 20.0 );
+  rkglCameraSetViewvolumeZFovy( &g_cam, 1, 20, 30 );
+  rkglCameraSetOrtho( &g_cam );
   rkglSetDefaultCamera( &g_cam );
 
   glEnable( GL_LIGHTING );
