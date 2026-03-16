@@ -1,5 +1,3 @@
-2026.03.17. Added some options of rk_pen to specify viewvolume. [app]
-2026.03.17. Renamed _rkglCameraSetViewvolumeXYCenter to rkglCameraSetViewvolumeXYCenter, and made it public. [rkgl_camera]
 2026.03.16. Added fovy, znear, zfar, and ortho flags to rk_pen. [app]
 2026.03.16. Added methods putViewvolume, setViewvolumeXY, setViewvolumeZ, setViewvolumeFovy, setViewvolumeZFovy, setViewvolumeOrthoXY, setViewvolumeFrustumXY, setViewvolumeXYToScaleWidth, setViewvolumeXYToScaleHeight, setViewvolumeXYPerspective, and adjustViewvolumePerspective of rkglCamera for C++. [rkgl_camera]
 2026.03.16. Redefined methods setOrtho and setFrustum of rkglCamera for C++. [rkgl_camera]
