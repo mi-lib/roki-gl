@@ -10,7 +10,9 @@
 enum{
   OPT_MODELFILE=0, OPT_ENVFILE, OPT_INITFILE,
   OPT_PAN, OPT_TILT, OPT_ROLL,
-  OPT_OX, OPT_OY, OPT_OZ, OPT_AUTO,
+  OPT_OX, OPT_OY, OPT_OZ,
+  OPT_FX, OPT_FY, OPT_FZ,
+  OPT_AUTO,
   OPT_WIDTH, OPT_HEIGHT,
   OPT_FOVY, OPT_ZNEAR, OPT_ZFAR,
   OPT_ORTHO,
@@ -32,9 +34,12 @@ zOption opt[] = {
   { "pan", NULL, "<pan value>", "set camera pan angle", (char *)"0", false },
   { "tilt", NULL, "<tilt value>", "set camera tilt angle", (char *)"0", false },
   { "roll", NULL, "<roll value>", "set camera roll angle", (char *)"0", false },
-  { "x", NULL, "<value>", "camera position in x axis", (char *)"2", false },
-  { "y", NULL, "<value>", "camera position in y axis", (char *)"0", false },
-  { "z", NULL, "<value>", "camera position in z axis", (char *)"0", false },
+  { "x", NULL, "<value>", "camera position in x-axis", (char *)"2", false },
+  { "y", NULL, "<value>", "camera position in y-axis", (char *)"0", false },
+  { "z", NULL, "<value>", "camera position in z-axis", (char *)"0", false },
+  { "fx", NULL, "<value>", "focal position in x-axis", (char *)"0", false },
+  { "fy", NULL, "<value>", "focal position in y-axis", (char *)"0", false },
+  { "fz", NULL, "<value>", "focal position in z-axis", (char *)"0", false },
   { "auto", NULL, NULL, "automatic allocation of camera", NULL, false },
   { "width", NULL, "<value>", "window width", (char *)"500", false },
   { "height", NULL, "<value>", "window height", (char *)"500", false },
@@ -49,9 +54,9 @@ zOption opt[] = {
   { "coord", NULL, "<value>", "draw cascaded coordinate frameschained of kinematic chain with specified length of arrows of axes", (char *)"0.1", false },
   { "ellips", NULL, "<value>", "draw kinematic chain as inertial ellipsoid model with specified magnitude", (char *)"1.0", false },
   { "bg", NULL, "<RGB#hex>", "set background color", (char *)"#505050", false },
-  { "lx", NULL, "<value>", "light position in x axis", (char *)"3", false },
-  { "ly", NULL, "<value>", "light position in y axis", (char *)"0", false },
-  { "lz", NULL, "<value>", "light position in z axis", (char *)"3", false },
+  { "lx", NULL, "<value>", "light position in x-axis", (char *)"10", false },
+  { "ly", NULL, "<value>", "light position in y-axis", (char *)"0", false },
+  { "lz", NULL, "<value>", "light position in z-axis", (char *)"30", false },
   { "smooth", NULL, NULL, "enable antialias", NULL, false },
   { "fog", NULL, NULL, "enable fog", NULL, false },
   { "shadow", NULL, NULL, "enable shadow", NULL, false },
@@ -487,7 +492,8 @@ void rk_penInitCamera(void)
     else
       rkglCameraLookAt( &cam,
         atof( opt[OPT_OX].arg ), atof( opt[OPT_OY].arg ), atof( opt[OPT_OZ].arg ),
-        0, 0, 0, 0, 0, 1 );
+        atof( opt[OPT_FX].arg ), atof( opt[OPT_FY].arg ), atof( opt[OPT_FZ].arg ),
+        0, 0, 1 );
     vv_fovy = atof( opt[OPT_FOVY].arg );
     vv_near = atof( opt[OPT_ZNEAR].arg );
     vv_far  = atof( opt[OPT_ZFAR].arg );

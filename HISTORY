@@ -1,4 +1,5 @@
-2026.03.16. Added fovy, znear, zfar, and ortho flags to rk_pen. [app]
+2026.03.17. Added fx, fy, and fz options to rk_pen to specify focal point. [app]
+2026.03.16. Added fovy, znear, zfar, and ortho options to rk_pen. [app]
 2026.03.16. Added methods putViewvolume, setViewvolumeXY, setViewvolumeZ, setViewvolumeFovy, setViewvolumeZFovy, setViewvolumeOrthoXY, setViewvolumeFrustumXY, setViewvolumeXYToScaleWidth, setViewvolumeXYToScaleHeight, setViewvolumeXYPerspective, and adjustViewvolumePerspective of rkglCamera for C++. [rkgl_camera]
 2026.03.16. Redefined methods setOrtho and setFrustum of rkglCamera for C++. [rkgl_camera]
 2026.03.16. Abolished methods setOrthoCenter, setFrustumCenter, scaleOrthoWidth, scaleFrustumWidth, scaleOrthoHeight, scaleFrustumHeight, setPerspective, fitPerspective, and perspective of rkglCamera for C++. [rkgl_camera]
