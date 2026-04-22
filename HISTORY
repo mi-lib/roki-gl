@@ -1,3 +1,5 @@
+2026.04.22. Applied renaming of zListAppendZ to zListSpliceAndMoveZ. [app]
+2026.04.22. Applied renaming of zListClass to ZEDA_DEF_LIST_CLASS. [app]
 2026.03.17. Added fx, fy, and fz options to rk_pen to specify focal point. [app]
 2026.03.16. Added fovy, znear, zfar, and ortho options to rk_pen. [app]
 2026.03.16. Added methods putViewvolume, setViewvolumeXY, setViewvolumeZ, setViewvolumeFovy, setViewvolumeZFovy, setViewvolumeOrthoXY, setViewvolumeFrustumXY, setViewvolumeXYToScaleWidth, setViewvolumeXYToScaleHeight, setViewvolumeXYPerspective, and adjustViewvolumePerspective of rkglCamera for C++. [rkgl_camera]

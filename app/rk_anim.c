@@ -107,7 +107,7 @@ typedef struct{
   void (* kf)(rkChain*,zVec);
   double t_now;
 } rkAnimSet;
-zListClass( rkAnimCellList, rkAnimCell, rkAnimSet );
+ZEDA_DEF_LIST_CLASS( rkAnimCellList, rkAnimCell, rkAnimSet );
 
 static rkAnimCellList anim_cell_list;
 

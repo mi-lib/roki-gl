@@ -181,7 +181,7 @@ void rk_viewReadModel(zStrAddrList *modellist)
     rkglMultiShape( &ms, disptype, &light );
     if( opt[OPT_AUTO].flag ){
       zMultiShape3DVertData( &ms, &pointdata );
-      zListAppend( &pointlist_all, pointdata.data.list );
+      zListSpliceAndMoveZ( &pointlist_all, pointdata.data.list );
     }
     zMultiShape3DDestroy( &ms );
   }
