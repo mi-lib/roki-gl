@@ -300,7 +300,7 @@ __ROKI_GL_EXPORT rkglCamera *rkglCameraFromZTK(rkglCamera *camera, ZTK *ztk);
 __ROKI_GL_EXPORT void rkglCameraFPrintZTK(FILE *fp, rkglCamera *camera);
 
 /* camera array */
-zArrayClass( rkglCameraArray, rkglCamera );
+ZEDA_DEF_ARRAY_CLASS( rkglCameraArray, rkglCamera );
 
 /*! \brief allocate an array of cameras. */
 __ROKI_GL_EXPORT bool rkglCameraArrayAlloc(rkglCameraArray *cameraarray, int num);

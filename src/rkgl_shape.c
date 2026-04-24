@@ -171,7 +171,7 @@ void rkglBox(zBox3D *box, ubyte disptype)
 }
 static void _rkglShapeBox(void *box, ubyte disptype){ rkglBox( (zBox3D *)box, disptype ); }
 
-zArray2Class( zMesh3D, zVec3D );
+ZEDA_DEF_ARRAY2_CLASS( zMesh3D, zVec3D );
 #define zMesh3DAlloc(mesh,row,col) zArray2Alloc( mesh, zVec3D, row, col )
 
 static int _rkglHemisphereVertNorm(zSphere3D *sphere, zVec3D *dir, zMesh3D *vert, zMesh3D *norm)
