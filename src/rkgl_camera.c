@@ -330,29 +330,29 @@ static void *_rkglCameraFrameFromZTK(void *obj, int i, void *arg, ZTK *ztk){
   return obj;
 }
 
-static bool _rkglCameraBackgroundFPrint(FILE *fp, int i, void *obj){
+static bool _rkglCameraBackgroundFPrint(FILE *fp, int i, const void *obj){
   fprintf( fp, "%g, %g, %g\n", ((rkglCamera*)obj)->background[0], ((rkglCamera*)obj)->background[1], ((rkglCamera*)obj)->background[2] );
   return true;
 }
-static bool _rkglCameraViewportFPrint(FILE *fp, int i, void *obj){
+static bool _rkglCameraViewportFPrint(FILE *fp, int i, const void *obj){
   fprintf( fp, "%d, %d, %d, %d\n", ((rkglCamera*)obj)->viewport[0], ((rkglCamera*)obj)->viewport[1], ((rkglCamera*)obj)->viewport[2], ((rkglCamera*)obj)->viewport[3] );
   return true;
 }
 
-static bool _rkglCameraFovyFPrint(FILE *fp, int i, void *obj){
+static bool _rkglCameraFovyFPrint(FILE *fp, int i, const void *obj){
   fprintf( fp, "%g\n", ((rkglCamera*)obj)->fovy );
   return obj;
 }
-static bool _rkglCameraNearFPrint(FILE *fp, int i, void *obj){
+static bool _rkglCameraNearFPrint(FILE *fp, int i, const void *obj){
   fprintf( fp, "%g\n", ((rkglCamera*)obj)->znear );
   return obj;
 }
-static bool _rkglCameraFarFPrint(FILE *fp, int i, void *obj){
+static bool _rkglCameraFarFPrint(FILE *fp, int i, const void *obj){
   fprintf( fp, "%g\n", ((rkglCamera*)obj)->zfar );
   return obj;
 }
 
-static bool _rkglCameraFrameFPrint(FILE *fp, int i, void *obj){
+static bool _rkglCameraFrameFPrint(FILE *fp, int i, const void *obj){
   zFrame3DFPrint( fp, &((rkglCamera*)obj)->viewframe );
   return true;
 }
@@ -386,7 +386,7 @@ rkglCamera *rkglCameraFromZTK(rkglCamera *camera, ZTK *ztk)
 }
 
 /* print out a camera to a file. */
-void rkglCameraFPrintZTK(FILE *fp, rkglCamera *camera)
+void rkglCameraFPrintZTK(FILE *fp, const rkglCamera *camera)
 {
   if( !camera ) return;
   _ZTKPrpKeyFPrint( fp, camera, __ztk_prp_camera );
@@ -409,7 +409,7 @@ static void *_rkglCameraArrayCameraFromZTK(void *obj, int i, void *arg, ZTK *ztk
   return rkglCameraFromZTK( zArrayElemNC((rkglCameraArray*)obj,i), ztk );
 }
 
-static bool _rkglCameraArrayCameraFPrintZTK(FILE *fp, int i, void *obj)
+static bool _rkglCameraArrayCameraFPrintZTK(FILE *fp, int i, const void *obj)
 {
   rkglCameraFPrintZTK( fp, zArrayElemNC((rkglCameraArray*)obj,i) );
   return true;
@@ -431,7 +431,7 @@ bool rkglCameraArrayFromZTK(rkglCameraArray *cameraarray, ZTK *ztk)
 }
 
 /* print properties of cameras out to a file. */
-void rkglCameraArrayFPrintZTK(FILE *fp, rkglCameraArray *cameraarray)
+void rkglCameraArrayFPrintZTK(FILE *fp, const rkglCameraArray *cameraarray)
 {
   ZTKPrp *prp;
   size_t prpnum;
@@ -459,7 +459,7 @@ rkglCameraArray *rkglCameraArrayReadZTK(rkglCameraArray *cameraarray, const char
 }
 
 /* write multiple cameras to a ZTK format file. */
-bool rkglCameraArrayWriteZTK(rkglCameraArray *cameraarray, const char filename[])
+bool rkglCameraArrayWriteZTK(const rkglCameraArray *cameraarray, const char filename[])
 {
   FILE *fp;
 

@@ -11,8 +11,6 @@
 #include <roki_gl/rkgl_select.h>
 #include <roki/rk_chain.h>
 
-__BEGIN_DECLS
-
 ZDEF_STRUCT( __ROKI_GL_CLASS_EXPORT, rkglChainAttr ){
   ubyte disptype;
   double wireframe_linewidth;
@@ -24,8 +22,12 @@ ZDEF_STRUCT( __ROKI_GL_CLASS_EXPORT, rkglChainAttr ){
   double frame_linewidth;
 };
 
+__BEGIN_DECLS
+
 __ROKI_GL_EXPORT void rkglChainAttrInit(rkglChainAttr *attr);
 __ROKI_GL_EXPORT void rkglChainAttrCopy(rkglChainAttr *src, rkglChainAttr *dest);
+
+__END_DECLS
 
 ZDEF_STRUCT( __ROKI_GL_CLASS_EXPORT, rkglLinkInfo ){
   bool visible;
@@ -40,6 +42,8 @@ ZDEF_STRUCT( __ROKI_GL_CLASS_EXPORT, rkglChain ){
   rkglLinkInfo *linkinfo;
   rkglChainAttr attr; /* display attribute */
 };
+
+__BEGIN_DECLS
 
 #define RKGL_LINK_DEFAULT_WIREFRAME_LINEWIDTH 0.5
 #define RKGL_LINK_DEFAULT_BONE_RADIUS         0.006

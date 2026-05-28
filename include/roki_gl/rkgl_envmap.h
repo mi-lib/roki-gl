@@ -18,9 +18,12 @@ __BEGIN_DECLS
 
 __ROKI_GL_EXPORT void rkglReflectionRefraction(int width, int height, rkglCamera *cam, rkglLight *light, void (* draw)(void), zVec3D *center);
 
-/* shadow mapping */
+__END_DECLS
 
-typedef struct{
+/*! \struct rkglShadow
+ * \brief parameters for shadow mapping.
+ */
+ZDEF_STRUCT( __ROKI_GL_CLASS_EXPORT, rkglShadow ){
   int width;             /* texture width */
   int height;            /* texture height */
   double darkness_ratio; /* darkness ratio */
@@ -33,7 +36,9 @@ typedef struct{
   GLuint shader_program; /* shader program in GLSL */
   double _lightview[16];
   /*! @endcond */
-} rkglShadow;
+};
+
+__BEGIN_DECLS
 
 __ROKI_GL_EXPORT GLuint rkglShadowInit(rkglShadow *shadow, int width, int height, double radius, double ratio, double blur);
 __ROKI_GL_EXPORT void rkglShadowDraw(rkglShadow *shadow, rkglCamera *cam, rkglLight *light, void (* scene)(void));
