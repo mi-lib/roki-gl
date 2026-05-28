@@ -54,7 +54,7 @@ static int _rkglFrameHandleCreatePart(zFrame3D *frame, zAxis axis, double l, dou
   return id;
 }
 
-void rkglFrameHandleCreate(rkglFrameHandle *handle, int name, double l, double mag)
+void rkglFrameHandleCreate(rkglFrameHandle *handle, uint name, double l, double mag)
 {
   int i;
 

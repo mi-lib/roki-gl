@@ -9,8 +9,6 @@
 
 #include <roki_gl/rkgl_misc.h>
 
-__BEGIN_DECLS
-
 /*! \struct rkglCamera
  *! \brief camera class.
  */
@@ -104,6 +102,8 @@ ZDEF_STRUCT( __ROKI_GL_CLASS_EXPORT, rkglCamera ){
   zFrame3D *setPlatform(zFrame3D &new_platform);
 #endif /* __cplusplus */
 };
+
+__BEGIN_DECLS
 
 /* background color */
 
@@ -297,10 +297,14 @@ __ROKI_GL_EXPORT rkglCamera *rkgl_default_camera;
 __ROKI_GL_EXPORT rkglCamera *rkglCameraFromZTK(rkglCamera *camera, ZTK *ztk);
 
 /*! \brief print out a camera to a file. */
-__ROKI_GL_EXPORT void rkglCameraFPrintZTK(FILE *fp, rkglCamera *camera);
+__ROKI_GL_EXPORT void rkglCameraFPrintZTK(FILE *fp, const rkglCamera *camera);
+
+__END_DECLS
 
 /* camera array */
 ZEDA_DEF_ARRAY_CLASS( rkglCameraArray, rkglCamera );
+
+__BEGIN_DECLS
 
 /*! \brief allocate an array of cameras. */
 __ROKI_GL_EXPORT bool rkglCameraArrayAlloc(rkglCameraArray *cameraarray, int num);
@@ -308,11 +312,11 @@ __ROKI_GL_EXPORT bool rkglCameraArrayAlloc(rkglCameraArray *cameraarray, int num
 /*! \brief read properties of cameras from a ZTK format processor. */
 __ROKI_GL_EXPORT bool rkglCameraArrayFromZTK(rkglCameraArray *cameraarray, ZTK *ztk);
 /*! \brief print properties of cameras out to a file. */
-__ROKI_GL_EXPORT void rkglCameraArrayFPrintZTK(FILE *fp, rkglCameraArray *cameraarray);
+__ROKI_GL_EXPORT void rkglCameraArrayFPrintZTK(FILE *fp, const rkglCameraArray *cameraarray);
 /*! \brief read multiple cameras from a ZTK format file. */
 __ROKI_GL_EXPORT rkglCameraArray *rkglCameraArrayReadZTK(rkglCameraArray *cameraarray, const char filename[]);
 /*! \brief write multiple cameras to a ZTK format file. */
-__ROKI_GL_EXPORT bool rkglCameraArrayWriteZTK(rkglCameraArray *cameraarray, const char filename[]);
+__ROKI_GL_EXPORT bool rkglCameraArrayWriteZTK(const rkglCameraArray *cameraarray, const char filename[]);
 
 __END_DECLS
 

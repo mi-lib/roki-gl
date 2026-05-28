@@ -1,3 +1,8 @@
+2026.05.28. Modified types of an argument name of rkglFrameHandleCreate from int to uint. [rkgl_framehandle]
+2026.05.28. Added methods of rkglFrameHandle for C++. [rkgl_framehandle]
+2026.05.28. Applied ZDEF_STRUCT. [rkgl_envmap, rkgl_framehandle]
+2026.05.28. Applied new specification of print functions for ZTK. [rkgl_camera]
+2026.05.28. Relocated __BEGIN_DECLS and __END_DECLS. [rkgl_camera, rkgl_light, rkgl_envmap, rkgl_select, rkgl_chain, rkgl_framehandle]
 2026.04.24. Applied renaming of zArrayClass and zArray2Class to ZEDA_DEF_ARRAY_CLASS and ZEDA_DEF_ARRAY2_CLASS. [rkgl_camera, rkgl_shape]
 2026.04.22. Applied renaming of zListAppendZ to zListSpliceAndMoveZ. [app]
 2026.04.22. Applied renaming of zListClass to ZEDA_DEF_LIST_CLASS. [app]

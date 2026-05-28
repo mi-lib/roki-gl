@@ -386,7 +386,7 @@ rkglCamera *rkglCameraFromZTK(rkglCamera *camera, ZTK *ztk)
 }
 
 /* print out a camera to a file. */
-void rkglCameraFPrintZTK(FILE *fp, rkglCamera *camera)
+void rkglCameraFPrintZTK(FILE *fp, const rkglCamera *camera)
 {
   if( !camera ) return;
   _ZTKPrpKeyFPrint( fp, camera, __ztk_prp_camera );
@@ -431,7 +431,7 @@ bool rkglCameraArrayFromZTK(rkglCameraArray *cameraarray, ZTK *ztk)
 }
 
 /* print properties of cameras out to a file. */
-void rkglCameraArrayFPrintZTK(FILE *fp, rkglCameraArray *cameraarray)
+void rkglCameraArrayFPrintZTK(FILE *fp, const rkglCameraArray *cameraarray)
 {
   ZTKPrp *prp;
   size_t prpnum;
@@ -459,7 +459,7 @@ rkglCameraArray *rkglCameraArrayReadZTK(rkglCameraArray *cameraarray, const char
 }
 
 /* write multiple cameras to a ZTK format file. */
-bool rkglCameraArrayWriteZTK(rkglCameraArray *cameraarray, const char filename[])
+bool rkglCameraArrayWriteZTK(const rkglCameraArray *cameraarray, const char filename[])
 {
   FILE *fp;
 
