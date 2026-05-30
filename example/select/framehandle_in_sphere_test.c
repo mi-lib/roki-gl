@@ -7,7 +7,7 @@ ZDEF_STRUCT( __ZEO_CLASS_EXPORT, zRotIpCPCell ){
   double w;  /*!< weight */
 };
 
-zArrayClass( zRotIpCPArray, zRotIpCPCell );
+ZEDA_DEF_ARRAY_CLASS( zRotIpCPArray, zRotIpCPCell );
 
 ZDEF_STRUCT( __ZEO_CLASS_EXPORT, zRotIp ){
   zBSplineParam param; /*!< \brief B-spline parameter */
@@ -179,7 +179,7 @@ static const double g_CP_SIZE = 10.0;
 
 /* rotation curve drawing */
 
-zArray2Class( zMesh3D, zVec3D ); /* imitatational definition from rkgl_hape.c */
+ZEDA_DEF_ARRAY2_CLASS( zMesh3D, zVec3D ); /* imitatational definition from rkgl_hape.c */
 #define zMesh3DAlloc(mesh,row,col) zArray2Alloc( mesh, zVec3D, row, col )
 
 zVec3D* getDrawPoint(zMat3D* mat, zVec3D* start_draw_unitvec, zVec3D* center, double radius, zVec3D* out_drawp)
@@ -346,7 +346,7 @@ void draw_scene(void)
 
 void display(GLFWwindow* window)
 {
-  rkglCALoad( &g_cam );
+  rkglCameraPut( &g_cam );
   rkglLightPut( &g_light );
   rkglClear();
   draw_scene();
@@ -471,35 +471,45 @@ void motion(GLFWwindow* window, double x, double y)
 
 void mouse_wheel(GLFWwindow* window, double xoffset, double yoffset)
 {
-  if ( yoffset < 0 ) {
-    g_scale -= 0.0001; rkglOrthoScaleH( &g_cam, g_scale, g_znear, g_zfar );
-  } else if ( yoffset > 0 ) {
-    g_scale += 0.0001; rkglOrthoScaleH( &g_cam, g_scale, g_znear, g_zfar );
+  if( yoffset != 0 ){
+    g_scale += yoffset > 0 ? 0.0001 : -0.0001;
+    rkglCameraSetViewvolumeZ( &g_cam, g_znear, g_zfar );
+    rkglCameraSetViewvolumeXYToScaleHeight( &g_cam, g_scale );
+    rkglCameraPutViewvolume( &g_cam );
   }
 }
 
 void resize(GLFWwindow* window, int w, int h)
 {
-  rkglVPCreate( &g_cam, 0, 0, w, h );
-  rkglOrthoScaleH( &g_cam, g_scale, g_znear, g_zfar );
+  rkglCameraSetViewport( &g_cam, 0, 0, w, h );
+  rkglCameraSetViewvolumeXYToScaleHeight( &g_cam, g_scale );
+  rkglCameraPutViewvolume( &g_cam );
 }
 
 void keyboard(GLFWwindow* window, unsigned int key)
 {
   double ds = zRotIpKnotOneSlice( &g_main->rot_curve.rotip );
   switch( key ){
-  case 'u': rkglCALockonPTR( &g_cam, 5, 0, 0 ); break;
-  case 'U': rkglCALockonPTR( &g_cam,-5, 0, 0 ); break;
-  case 'i': rkglCALockonPTR( &g_cam, 0, 5, 0 ); break;
-  case 'I': rkglCALockonPTR( &g_cam, 0,-5, 0 ); break;
-  case 'o': rkglCALockonPTR( &g_cam, 0, 0, 5 ); break;
-  case 'O': rkglCALockonPTR( &g_cam, 0, 0,-5 ); break;
-  case '8': g_scale += 0.001; rkglOrthoScaleH( &g_cam, g_scale, g_znear, g_zfar ); break;
-  case '*': g_scale -= 0.001; rkglOrthoScaleH( &g_cam, g_scale, g_znear, g_zfar ); break;
-  case '9': rkglCARelMove( &g_cam, 0, 0.05, 0 ); break;
-  case '(': rkglCARelMove( &g_cam, 0,-0.05, 0 ); break;
-  case '0': rkglCARelMove( &g_cam, 0, 0, 0.05 ); break;
-  case ')': rkglCARelMove( &g_cam, 0, 0,-0.05 ); break;
+  case 'u': rkglCameraPanLeft(  &g_cam, 5 ); break;
+  case 'U': rkglCameraPanRight( &g_cam, 5 ); break;
+  case 'i': rkglCameraTiltUp(   &g_cam, 5 ); break;
+  case 'I': rkglCameraTiltDown( &g_cam, 5 ); break;
+  case '8':
+    g_scale += 0.001;
+    rkglCameraSetViewvolumeZ( &g_cam, g_znear, g_zfar );
+    rkglCameraSetViewvolumeXYToScaleHeight( &g_cam, g_scale );
+    rkglCameraPutViewvolume( &g_cam );
+    break;
+  case '*':
+    g_scale -= 0.001;
+    rkglCameraSetViewvolumeZ( &g_cam, g_znear, g_zfar );
+    rkglCameraSetViewvolumeXYToScaleHeight( &g_cam, g_scale );
+    rkglCameraPutViewvolume( &g_cam );
+    break;
+  case '9': rkglCameraMoveLeft(  &g_cam, 0.05 ); break;
+  case '(': rkglCameraMoveRight( &g_cam, 0.05 ); break;
+  case '0': rkglCameraMoveUp(    &g_cam, 0.05 ); break;
+  case ')': rkglCameraMoveDown(  &g_cam, 0.05 ); break;
   case 'f': update_framehandle_att( g_main->feedrate_s + ds); break; /* forward */
   case 'b': update_framehandle_att( g_main->feedrate_s - ds); break; /* backward */
   case 'w': g_dispswitch = 1 - g_dispswitch; break;
@@ -513,9 +523,14 @@ void keyboard(GLFWwindow* window, unsigned int key)
 
 void init(void)
 {
-  rkglSetDefaultCallbackParam( &g_cam, 0, 0, 0, 0, 0 );
-  rkglBGSet( &g_cam, 0.5, 0.5, 0.5 );
-  rkglCASet( &g_cam, 5, 0, 2, 0, -20, 0 );
+  rkglCameraInit( &g_cam );
+  rkglCameraSetBackground( &g_cam, 0.5, 0.5, 0.5 );
+  rkglCameraSetViewframe( &g_cam, 1, 1, 1, 45.0, -30.0, 0.0 );
+  /* rkglCASet( &g_cam, 5, 0, 2, 0, -20, 0 ); */
+  rkglCameraSetViewvolumeZFovy( &g_cam, 1, 20, 30 );
+  rkglCameraSetOrtho( &g_cam );
+  rkglSetDefaultCamera( &g_cam );
+
   glEnable( GL_LIGHTING );
   rkglLightCreate( &g_light, 0.4, 0.4, 0.4, 1, 1, 1, 0, 0, 0 );
   rkglLightMove( &g_light, 8, 0, 8 );
