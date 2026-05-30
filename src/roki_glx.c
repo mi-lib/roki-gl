@@ -110,25 +110,27 @@ void rkglWindowAddEventGLX(Window win, long event)
 
 /* default callback functions */
 
-void rkglReshapeGLX(rkglCamera *cam, int w, int h, double width, double near, double far)
+void rkglReshapeGLX(rkglCamera *cam, int w, int h)
 {
-  rkglFrustumFit2VP( cam, w, h, width, near, far );
+  rkglCameraSetViewport( cam, 0, 0, w, h );
+  rkglCameraAdjustViewvolumePerspective( cam );
+  rkglCameraPutViewvolume( cam );
 }
 
-int rkglKeyFuncGLX(rkglCamera *cam, double dl, double da)
+int rkglKeyPressFuncGLX(rkglCamera *cam)
 {
   KeySym key;
   switch( ( key = zxKeySymbol() ) ){
-  case XK_H: case XK_h: rkglCARelMoveLeft(  cam, dl ); break;
-  case XK_L: case XK_l: rkglCARelMoveRight( cam, dl ); break;
-  case XK_K: case XK_k: rkglCARelMoveUp(    cam, dl ); break;
-  case XK_J: case XK_j: rkglCARelMoveDown(  cam, dl ); break;
-  case XK_Z: case XK_z: zxModkeyShiftIsOn() ?
-                        rkglCAZoomOut( cam, dl ) : rkglCAZoomIn( cam, dl );  break;
-  case XK_Up:    rkglKeyCARotateUp(    cam, da, zxModkeyCtrlIsOn() ); break;
-  case XK_Down:  rkglKeyCARotateDown(  cam, da, zxModkeyCtrlIsOn() ); break;
-  case XK_Left:  rkglKeyCARotateLeft(  cam, da, zxModkeyCtrlIsOn() ); break;
-  case XK_Right: rkglKeyCARotateRight( cam, da, zxModkeyCtrlIsOn() ); break;
+  case XK_H: case XK_h: rkglKeyCameraMoveLeft(  cam ); break;
+  case XK_L: case XK_l: rkglKeyCameraMoveRight( cam ); break;
+  case XK_K: case XK_k: rkglKeyCameraMoveUp(    cam ); break;
+  case XK_J: case XK_j: rkglKeyCameraMoveDown(  cam ); break;
+  case XK_z:            rkglKeyCameraZoomIn(    cam ); break;
+  case XK_Z:            rkglKeyCameraZoomOut(   cam ); break;
+  case XK_Up:           rkglKeyCameraTiltUp(    cam ); break;
+  case XK_Down:         rkglKeyCameraTiltDown(  cam ); break;
+  case XK_Left:         rkglKeyCameraPanLeft(   cam ); break;
+  case XK_Right:        rkglKeyCameraPanRight(  cam ); break;
   case XK_Q: case XK_q: case XK_Escape:
     rkglExitGLX();
     return -1;
@@ -138,12 +140,17 @@ int rkglKeyFuncGLX(rkglCamera *cam, double dl, double da)
   return 0;
 }
 
-void rkglMouseFuncGLX(rkglCamera *cam, int event, double dl)
+int rkglKeyReleaseFuncGLX(rkglCamera *cam)
+{
+  return zxModkeyOff( zxKeySymbol() ) ? 1 : 0;
+}
+
+void rkglMouseFuncGLX(rkglCamera *cam, int event)
 {
   rkglMouseStoreInput( zxMouseButton, event, ButtonPress, zxMouseX, zxMouseY, zxModkey() );
   switch( rkgl_mouse_button ){
-  case Button4: rkglCAZoomIn( cam, dl ); break;
-  case Button5: rkglCAZoomOut(  cam, dl ); break;
+  case Button4: rkglKeyCameraZoomIn(  cam ); break;
+  case Button5: rkglKeyCameraZoomOut( cam ); break;
   default: ;
   }
 }
@@ -154,9 +161,9 @@ void rkglMouseDragFuncGLX(rkglCamera *cam)
 
   rkglMouseDragGetIncrementer( cam, zxMouseX, zxMouseY, &dx, &dy );
   switch( rkgl_mouse_button ){
-  case Button1: rkglMouseDragCARotate(    cam, dx, dy, ZX_MODKEY_CTRL ); break;
-  case Button3: rkglMouseDragCATranslate( cam, dx, dy, ZX_MODKEY_CTRL ); break;
-  case Button2: rkglMouseDragCAZoom(      cam, dx, dy, ZX_MODKEY_CTRL ); break;
+  case Button1: rkglMouseDragCameraRotate( cam, dx, dy, ZX_MODKEY_CTRL ); break;
+  case Button3: rkglMouseDragCameraTranslate( cam, dx, dy ); break;
+  case Button2: rkglMouseDragCameraZoom( cam, dx, dy ); break;
   default: ;
   }
   rkglMouseStoreXY( zxMouseX, zxMouseY );
@@ -167,19 +174,18 @@ void rkglMouseDragFuncGLX(rkglCamera *cam)
 static void _rkglReadBufferImage(zxImage *img, GLuint type, int bpp, int os1, int os2)
 {
   GLint view[4];
-  uint i, j, k;
-  zxPixelManip pm;
+  int i;
+  uint j, k;
   ubyte *buf;
 
   glGetIntegerv( GL_VIEWPORT, view );
   buf = (ubyte *)malloc( sizeof(ubyte) * view[2] * view[3] * bpp );
   rkglReadBuffer( type, view[0], view[1], view[2], view[3], buf );
   zxImageAllocDefault( img, view[2], view[3] );
-  zxPixelManipSetDefault( &pm );
   for( i=img->height-1; i>=0; i-- )
     for( j=0; j<img->width; j++ ){
       k = bpp * ( i * img->width + j );
-      zxImageCellFromRGB( img, &pm, j, img->height-i-1, buf[k], buf[k+os1], buf[k+os2] );
+      zxImageCellFromRGB( img, j, img->height-i-1, buf[k], buf[k+os1], buf[k+os2] );
     }
   free( buf );
 }

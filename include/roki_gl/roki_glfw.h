@@ -21,11 +21,13 @@ __ROKI_GL_EXPORT GLFWwindow *rkglWindowCreateAndOpenGLFW(int x, int y, int width
 __ROKI_GL_EXPORT void rkglReshapeFuncGLFW(GLFWwindow* window, int w, int h);
 __ROKI_GL_EXPORT void rkglCharFuncGLFW(GLFWwindow* window, unsigned int codepoint);
 __ROKI_GL_EXPORT void rkglKeyFuncGLFW(GLFWwindow *window, int key, int scancode, int action, int mods);
-__ROKI_GL_EXPORT void rkglSpecialFuncGLFW(GLFWwindow* window, int key, int x, int y);
 __ROKI_GL_EXPORT void rkglMouseFuncGLFW(GLFWwindow* window, int button, int state, int mods);
 __ROKI_GL_EXPORT void rkglMouseWheelFuncGLFW(GLFWwindow* window, double xoffset, double yoffset);
 __ROKI_GL_EXPORT void rkglMouseDragFuncGLFW(GLFWwindow* window, double x, double y);
 __ROKI_GL_EXPORT void rkglVisFuncGLFW(GLFWwindow* window);
+
+/*! \brief set all callback functions for default functions. */
+__ROKI_GL_EXPORT void rkglSetDefaultFuncGLFW(GLFWwindow *window);
 
 __END_DECLS
 

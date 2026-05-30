@@ -3,18 +3,15 @@
 int ax_id, ay_id, g_id, f_id, a_id;
 int checker_id;
 
-double r = 0;
-
 rkglCamera cam;
 rkglLight light;
 
 void display(void)
 {
-  rkglCALoad( &cam );
+  rkglCameraPut( &cam );
   rkglLightPut( &light );
 
   glPushMatrix();
-  glRotated( r, 0, 0, 1 );
   rkglClear();
   glCallList( checker_id );
   glCallList( g_id );
@@ -26,55 +23,25 @@ void display(void)
   glutSwapBuffers();
 }
 
-void resize(int w, int h)
-{
-  rkglVPCreate( &cam, 0, 0, w, h );
-  rkglFrustumScaleH( &cam, 1.0/160, 1, 100 );
-}
-
-void keyboard(unsigned char key, int x, int y)
-{
-  switch( key ){
-  case 'u': rkglCALockonPTR( &cam, 5, 0, 0 );  break;
-  case 'U': rkglCALockonPTR( &cam,-5, 0, 0 );  break;
-  case 'i': rkglCALockonPTR( &cam, 0, 5, 0 );  break;
-  case 'I': rkglCALockonPTR( &cam, 0,-5, 0 );  break;
-  case 'o': rkglCALockonPTR( &cam, 0, 0, 5 );  break;
-  case 'O': rkglCALockonPTR( &cam, 0, 0,-5 );  break;
-  case '8': rkglCARelMove( &cam, 0.05, 0, 0 ); break;
-  case '*': rkglCARelMove( &cam,-0.05, 0, 0 ); break;
-  case '9': rkglCARelMove( &cam, 0, 0.05, 0 ); break;
-  case '(': rkglCARelMove( &cam, 0,-0.05, 0 ); break;
-  case '0': rkglCARelMove( &cam, 0, 0, 0.05 ); break;
-  case ')': rkglCARelMove( &cam, 0, 0,-0.05 ); break;
-  case ' ': r += 10; break;
-  case 'q': case 'Q': case '\033':
-    exit( EXIT_SUCCESS );
-  default: ;
-  }
-}
-
 void init(void)
 {
   zVec3D pc0, pc1, pc2;
   zVec3D bot, vec;
-  GLfloat rgba_white[4] = { 1.0, 1.0, 1.0, 1.0 };
-  GLfloat rgba_red[4] = { 1.0, 0.0, 0.0, 1.0 };
   zOpticalInfo red, white, yellow;
 
-  rkglSetDefaultCallbackParam( &cam, 0, 0, 0, 0, 0 );
-
-  rkglBGSet( &cam, 0.5, 0.5, 0.5 );
-  rkglCASet( &cam, 4, 0, 2.4, 0, -30, 0 );
+  rkglCameraInit( &cam );
+  rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
+  rkglCameraLookAt( &cam, 20, 0, 5, 0, 0, 0, 0, 0, 1 );
+  rkglCameraSetViewvolumeZFovy( &cam, 1, 100, 30.0 );
+  rkglSetDefaultCamera( &cam );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
   rkglLightMove( &light, 1, 3, 6 );
-  rkglLightSetAttenuationQuad( &light, 2.0 );
-  rkglFogExp( 0.5, 0.5, 0.5, 0.1 );
+  rkglFogExp( 0.6, 0.6, 0.6, 0.1 );
 
   /* checkerboard */
-  zOpticalInfoCreateSimple( &red, 1.0, 0, 0, NULL );
+  zOpticalInfoCreateSimple( &red, 1.0, 0.3, 0.6, NULL );
   zOpticalInfoCreateSimple( &white, 1.0, 1.0, 1.0, NULL );
   zVec3DCreate( &pc0, -20.0, -50, -1 );
   zVec3DCreate( &pc1,  10.0, -50, -1 );
@@ -84,17 +51,22 @@ void init(void)
   glEndList();
   /* gauge & axes */
   g_id = rkglBeginList();
-  rkglGauge( zX, 3.01, zY, 4.51, 1.0, 0.2, rgba_white );
+  rkglRGBByStr( "white" );
+  glLineWidth( 0.5 );
+  rkglGauge( zX, 3.01, zY, 4.51, 0.2 );
   glEndList();
   ax_id = rkglBeginList();
-  rkglAxis( zX, 3.5, 2.0, rgba_red );
+  rkglRGBByStr( "cyan" );
+  glLineWidth( 1.0 );
+  rkglAxis( zX, 3.5 );
   glEndList();
   ay_id = rkglBeginList();
-  rkglAxis( zY, 5.0, 2.0, rgba_red );
+  rkglAxis( zY, 5.0 );
   glEndList();
   /* frame */
   f_id = rkglBeginList();
-  rkglFrame( ZFRAME3DIDENT, 2, 3 );
+  glLineWidth( 3.0 );
+  rkglFrame( ZFRAME3DIDENT, 2 );
   glEndList();
   /* arrow */
   zVec3DCreate( &bot, 0, 0, 0 );
@@ -110,13 +82,7 @@ int main(int argc, char *argv[])
 {
   rkglInitGLUT( &argc, argv );
   rkglWindowCreateGLUT( 0, 0, 640, 480, argv[0] );
-
   glutDisplayFunc( display );
-  glutIdleFunc( rkglIdleFuncGLUT );
-  glutReshapeFunc( resize );
-  glutKeyboardFunc( keyboard );
-  glutMouseFunc( rkglMouseFuncGLUT );
-  glutMotionFunc( rkglMouseDragFuncGLUT );
   init();
   glutMainLoop();
   return 0;

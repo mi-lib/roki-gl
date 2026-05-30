@@ -10,8 +10,13 @@
 enum{
   OPT_MODELFILE=0, OPT_ENVFILE, OPT_INITFILE,
   OPT_PAN, OPT_TILT, OPT_ROLL,
-  OPT_OX, OPT_OY, OPT_OZ, OPT_AUTO,
+  OPT_OX, OPT_OY, OPT_OZ,
+  OPT_FX, OPT_FY, OPT_FZ,
+  OPT_AUTO,
   OPT_WIDTH, OPT_HEIGHT,
+  OPT_FOVY, OPT_ZNEAR, OPT_ZFAR,
+  OPT_ORTHO,
+  OPT_DRAW_NONFACE,
   OPT_DRAW_WIREFRAME,
   OPT_DRAW_BB,
   OPT_DRAW_BONE,
@@ -24,27 +29,34 @@ enum{
   OPT_INVALID
 };
 zOption opt[] = {
-  { "model", NULL, "<.ztk file>", "kinematic chain model file", NULL, false },
-  { "env", NULL, "<.ztk file>", "environment shape model file", NULL, false },
+  { "model", NULL, "<.ztk/.urdf file>", "kinematic chain model file", NULL, false },  { "env", NULL, "<.ztk file>", "environment shape model file", NULL, false },
   { "init", NULL, "<.ztk file>", "initial state file", NULL, false },
   { "pan", NULL, "<pan value>", "set camera pan angle", (char *)"0", false },
   { "tilt", NULL, "<tilt value>", "set camera tilt angle", (char *)"0", false },
   { "roll", NULL, "<roll value>", "set camera roll angle", (char *)"0", false },
-  { "x", NULL, "<value>", "camera position in x axis", (char *)"5", false },
-  { "y", NULL, "<value>", "camera position in y axis", (char *)"0", false },
-  { "z", NULL, "<value>", "camera position in z axis", (char *)"0", false },
+  { "x", NULL, "<value>", "camera position in x-axis", (char *)"2", false },
+  { "y", NULL, "<value>", "camera position in y-axis", (char *)"0", false },
+  { "z", NULL, "<value>", "camera position in z-axis", (char *)"0", false },
+  { "fx", NULL, "<value>", "focal position in x-axis", (char *)"0", false },
+  { "fy", NULL, "<value>", "focal position in y-axis", (char *)"0", false },
+  { "fz", NULL, "<value>", "focal position in z-axis", (char *)"0", false },
   { "auto", NULL, NULL, "automatic allocation of camera", NULL, false },
   { "width", NULL, "<value>", "window width", (char *)"500", false },
   { "height", NULL, "<value>", "window height", (char *)"500", false },
-  { "wireframe", NULL, NULL, "draw kinematic chain as wireframe model", NULL, false },
+  { "fovy", NULL, "<value>", "field of view in y-direction [deg]", (char *)"30", false },
+  { "znear", NULL, "<value>", "near-side distance to viewvolume", (char *)"1", false },
+  { "zfar", NULL, "<value>", "far-side distance of viewvolume", (char *)"200", false },
+  { "ortho", NULL, "<value>", "orthographic parallel projection with scale factor", (char *)"0.002", false },
+  { "nonface", NULL, NULL, "undraw solid model of the kinematic chain", NULL, false },
+  { "wireframe", NULL, "<color name>", "draw kinematic chain as wireframe model", (char *)"white", false },
   { "bb", NULL, NULL, "draw kinematic chain bounding box", NULL, false },
   { "bone", NULL, "<value>", "draw kinematic chain as bone model with specified radius", (char *)"0.006", false },
   { "coord", NULL, "<value>", "draw cascaded coordinate frameschained of kinematic chain with specified length of arrows of axes", (char *)"0.1", false },
   { "ellips", NULL, "<value>", "draw kinematic chain as inertial ellipsoid model with specified magnitude", (char *)"1.0", false },
   { "bg", NULL, "<RGB#hex>", "set background color", (char *)"#505050", false },
-  { "lx", NULL, "<value>", "light position in x axis", (char *)"3", false },
-  { "ly", NULL, "<value>", "light position in y axis", (char *)"0", false },
-  { "lz", NULL, "<value>", "light position in z axis", (char *)"3", false },
+  { "lx", NULL, "<value>", "light position in x-axis", (char *)"10", false },
+  { "ly", NULL, "<value>", "light position in y-axis", (char *)"0", false },
+  { "lz", NULL, "<value>", "light position in z-axis", (char *)"30", false },
   { "smooth", NULL, NULL, "enable antialias", NULL, false },
   { "fog", NULL, NULL, "enable fog", NULL, false },
   { "shadow", NULL, NULL, "enable shadow", NULL, false },
@@ -64,7 +76,8 @@ rkglShadow shadow;
 
 void rk_penUsage(void)
 {
-  eprintf( "Usage: rk_pen <options>\n" );
+  eprintf( "Usage: rk_pen <options> [.ztk/.urdf file]\n" );
+  eprintf( "Usage: rk_pen -help\n" );
   eprintf( "<options>\n" );
   zOptionHelp( opt );
   exit( 0 );
@@ -114,7 +127,7 @@ void rk_penShowConnectivity(void)
 
 void rk_penShowJointDis(void)
 {
-  register int i, j;
+  int i, j;
   double dis[6];
 
   printf( "*** joint displacements ***\n" );
@@ -278,8 +291,7 @@ void rk_penSetRootFrame(void)
   zFrame3DPrint( rkChainLinkOrgFrame(&chain,0) );
   rk_penPos( &p[0], &p[1], &p[2] );
   rk_penZYX( &a[0], &a[1], &a[2] );
-  zFrame3DFromZYX( rkChainLinkOrgFrame(&chain,0),
-    p[0], p[1], p[2], a[0], a[1], a[2] );
+  zFrame3DFromPosZYX( rkChainLinkOrgFrame(&chain,0), p[0], p[1], p[2], a[0], a[1], a[2] );
   rkChainUpdateFK( &chain );
 }
 
@@ -367,7 +379,7 @@ void scene(void)
 void display(void)
 {
   rkglClear();
-  rkglCALoad( &cam );
+  rkglCameraPut( &cam );
   rkglLightPut( &light );
   scene();
   glutSwapBuffers();
@@ -377,6 +389,13 @@ void display_shadow(void)
 {
   rkglShadowDraw( &shadow, &cam, &light, scene );
   glutSwapBuffers();
+}
+
+void reshape_ortho(int w, int h)
+{
+  rkglCameraSetViewport( &cam, 0, 0, w, h );
+  rkglCameraSetViewvolumeXYToScaleHeight( &cam, atof( opt[OPT_ORTHO].arg ) );
+  rkglCameraPutViewvolume( &cam );
 }
 
 int rk_penChangeDir(char *pathname, char *dirname, char *filename, char *cwd, size_t size)
@@ -404,90 +423,96 @@ int rk_penReturnDir(char *cwd)
   return 0;
 }
 
-rkChain *rk_penChainReadZTK(rkChain *chain, char *pathname)
+rkChain *rk_penReadChainFile(rkChain *chain, char *pathname)
 {
   char dirname[BUFSIZ], filename[BUFSIZ], cwd[BUFSIZ];
 
   rk_penChangeDir( pathname, dirname, filename, cwd, BUFSIZ );
-  chain = rkChainReadZTK( chain, filename );
+  chain = rkChainReadFile( chain, filename );
   rk_penReturnDir( cwd );
   return chain;
 }
 
-zMShape3D *rk_penMShapeReadZTK(zMShape3D *ms, char *pathname)
+zMultiShape3D *rk_penReadMultiShapeFile(zMultiShape3D *ms, char *pathname)
 {
   char dirname[BUFSIZ], filename[BUFSIZ], cwd[BUFSIZ];
 
   rk_penChangeDir( pathname, dirname, filename, cwd, BUFSIZ );
-  ms = zMShape3DReadZTK( ms, filename );
+  ms = zMultiShape3DReadZTK( ms, filename );
   rk_penReturnDir( cwd );
   return ms;
 }
 
-void rk_penInit(void)
+void rk_penInitDrawingAttr(rkglChainAttr *attr)
+{
+  rkglChainAttrInit( attr );
+  if( opt[OPT_DRAW_NONFACE].flag )
+    attr->disptype &= ~RKGL_FACE;
+  if( opt[OPT_DRAW_WIREFRAME].flag ){
+    attr->disptype |= RKGL_WIREFRAME;
+    rkglRGBByStr( opt[OPT_DRAW_WIREFRAME].arg );
+  }
+  if( opt[OPT_DRAW_BB].flag )
+    attr->disptype |= RKGL_BB | RKGL_FACE;
+  if( opt[OPT_DRAW_BONE].flag ){
+    attr->disptype |= RKGL_STICK;
+    attr->bone_radius = atof( opt[OPT_DRAW_BONE].arg );
+  }
+  if( opt[OPT_DRAW_COORD].flag )
+    attr->disptype |= RKGL_FRAME;
+  if( opt[OPT_DRAW_ELLIPS].flag ){
+    attr->disptype |= RKGL_ELLIPS;
+    attr->ellips_scale = atof( opt[OPT_DRAW_ELLIPS].arg );
+  }
+}
+
+void rk_penInitCamera(void)
 {
   zRGB rgb;
-  rkglChainAttr attr;
-  zMShape3D envshape;
   zSphere3D bball;
-  double vv_width, vv_near, vv_far;
+  double vv_fovy, vv_near, vv_far;
 
-  rkglChainAttrInit( &attr );
-  if( opt[OPT_DRAW_WIREFRAME].flag ) attr.disptype = RKGL_WIREFRAME;
-  if( opt[OPT_DRAW_BB].flag )        attr.disptype = RKGL_BB;
-  if( opt[OPT_DRAW_BONE].flag ){
-    attr.disptype = RKGL_STICK;
-    attr.bone_r = atof( opt[OPT_DRAW_BONE].arg );
-  }
-  if( opt[OPT_DRAW_COORD].flag ) attr.disptype = RKGL_FRAME;
-  if( opt[OPT_DRAW_ELLIPS].flag ){
-    attr.disptype = RKGL_ELLIPS;
-    attr.ellips_mag = atof( opt[OPT_DRAW_ELLIPS].arg );
-  }
-  if( !rk_penChainReadZTK( &chain, opt[OPT_MODELFILE].arg ) ||
-      !rkglChainLoad( &gr, &chain, &attr, &light ) )
-    exit( 1 );
-
-  if( opt[OPT_ENVFILE].flag ){
-    if( !rk_penMShapeReadZTK( &envshape, opt[OPT_ENVFILE].arg ) ){
-      ZOPENERROR( opt[OPT_ENVFILE].arg );
-      rk_penUsage();
-      exit( 1 );
-    }
-    if( attr.disptype == RKGL_STICK || attr.disptype == RKGL_ELLIPS )
-      attr.disptype = RKGL_FACE;
-    env = rkglEntryMShape( &envshape, attr.disptype, &light );
-    zMShape3DDestroy( &envshape );
-    if( env < 0 ) exit( 1 );
-  }
-  if( opt[OPT_INITFILE].flag &&
-      !rkChainInitReadZTK( &chain, opt[OPT_INITFILE].arg ) )
-    exit( 1 );
-
-  zRGBDec( &rgb, opt[OPT_BG].arg );
-  rkglBGSet( &cam, rgb.r, rgb.g, rgb.b );
-  rkglVPCreate( &cam, 0, 0, atoi( opt[OPT_WIDTH].arg ), atoi( opt[OPT_HEIGHT].arg ) );
+  rkglCameraInit( &cam );
+  zRGBByStr( &rgb, opt[OPT_BG].arg );
+  rkglCameraSetBackgroundRGB( &cam, &rgb );
+  rkglCameraSetViewport( &cam, 0, 0, atoi( opt[OPT_WIDTH].arg ), atoi( opt[OPT_HEIGHT].arg ) );
   if( opt[OPT_AUTO].flag && rkChainBoundingBall( &chain, &bball ) ){
-    rkglCALookAt( &cam,
+    rkglCameraLookAt( &cam,
       zSphere3DCenter(&bball)->c.x+zSphere3DRadius(&bball)*18, zSphere3DCenter(&bball)->c.y, zSphere3DCenter(&bball)->c.z,
       zSphere3DCenter(&bball)->c.x, zSphere3DCenter(&bball)->c.y, zSphere3DCenter(&bball)->c.z,
       0, 0, 1 );
-    vv_width = zSphere3DRadius(&bball) / 8;
+    vv_fovy = 2 * zRad2Deg( asin( 1.0/18 ) );
     vv_near = zSphere3DRadius(&bball);
     vv_far = 1000*zSphere3DRadius(&bball);
   } else{
     if( opt[OPT_PAN].flag || opt[OPT_TILT].flag || opt[OPT_ROLL].flag )
-      rkglCASet( &cam,
+      rkglCameraSetViewframe( &cam,
         atof( opt[OPT_OX].arg ), atof( opt[OPT_OY].arg ), atof( opt[OPT_OZ].arg ),
-        atof( opt[OPT_PAN].arg ),  atof( opt[OPT_TILT].arg ), atof( opt[OPT_ROLL].arg ) );
+        atof( opt[OPT_PAN].arg ), atof( opt[OPT_TILT].arg ), atof( opt[OPT_ROLL].arg ) );
     else
-      rkglCALookAt( &cam,
+      rkglCameraLookAt( &cam,
         atof( opt[OPT_OX].arg ), atof( opt[OPT_OY].arg ), atof( opt[OPT_OZ].arg ),
-        0, 0, 0, 0, 0, 1 );
-    vv_width = 0.2;
-    vv_near = 1;
-    vv_far = 200;
+        atof( opt[OPT_FX].arg ), atof( opt[OPT_FY].arg ), atof( opt[OPT_FZ].arg ),
+        0, 0, 1 );
+    vv_fovy = atof( opt[OPT_FOVY].arg );
+    vv_near = atof( opt[OPT_ZNEAR].arg );
+    vv_far  = atof( opt[OPT_ZFAR].arg );
   }
+  rkglCameraSetViewvolumeZFovy( &cam, vv_near, vv_far, vv_fovy );
+  if( opt[OPT_ORTHO].flag ){
+    rkglCameraSetOrtho( &cam );
+    glutReshapeFunc( reshape_ortho );
+  } else{
+    rkglCameraSetFrustum( &cam );
+  }
+  rkglSetDefaultCamera( &cam );
+}
+
+void rk_penInit(void)
+{
+  rkglChainAttr attr;
+  zMultiShape3D envshape;
+
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.5, 0.5, 0.5, 0.8, 0.8, 0.8, 0, 0, 0 );
   rkglLightMove( &light, atof(opt[OPT_LX].arg), atof(opt[OPT_LY].arg), atof(opt[OPT_LZ].arg) );
@@ -496,16 +521,32 @@ void rk_penInit(void)
   if( opt[OPT_SMOOTH].flag ) glEnable( GL_LINE_SMOOTH );
   if( opt[OPT_FOG].flag ) glEnable( GL_FOG );
 
-  rkglSetDefaultCallbackParam( &cam, vv_width, vv_near, vv_far, 0.02, 5.0 );
+  rk_penInitDrawingAttr( &attr );
+  if( !rk_penReadChainFile( &chain, opt[OPT_MODELFILE].arg ) ||
+      !rkglChainLoad( &gr, &chain, &attr, &light ) )
+    exit( 1 );
+  if( opt[OPT_ENVFILE].flag ){
+    if( !rk_penReadMultiShapeFile( &envshape, opt[OPT_ENVFILE].arg ) ){
+      ZOPENERROR( opt[OPT_ENVFILE].arg );
+      rk_penUsage();
+      exit( 1 );
+    }
+    if( attr.disptype & RKGL_STICK || attr.disptype & RKGL_ELLIPS )
+      attr.disptype = RKGL_FACE;
+    env = rkglEntryMultiShape( &envshape, attr.disptype, &light );
+    zMultiShape3DDestroy( &envshape );
+    if( env < 0 ) exit( 1 );
+  }
+  if( opt[OPT_INITFILE].flag &&
+      !rkChainInitReadZTK( &chain, opt[OPT_INITFILE].arg ) )
+    exit( 1 );
+
+  rk_penInitCamera();
+  rkglSetKeyDelta( 0.02, 1.0 );
   if( opt[OPT_SHADOW].flag )
     glutDisplayFunc( display_shadow );
   else
     glutDisplayFunc( display );
-  glutReshapeFunc( rkglReshapeFuncGLUT );
-  glutKeyboardFunc( rkglKeyFuncGLUT );
-  glutSpecialFunc( rkglSpecialFuncGLUT );
-  glutMouseFunc( rkglMouseFuncGLUT );
-  glutMotionFunc( rkglMouseDragFuncGLUT );
 }
 
 bool rk_penCommandArgs(int argc, char *argv[])
@@ -521,6 +562,7 @@ bool rk_penCommandArgs(int argc, char *argv[])
     opt[OPT_MODELFILE].flag = true;
     opt[OPT_MODELFILE].arg  = modelfile;
   }
+  if( !opt[OPT_MODELFILE].flag )rk_penUsage();
   rkglWindowCreateGLUT( 0, 0, atoi(opt[OPT_WIDTH].arg), atoi(opt[OPT_HEIGHT].arg), RK_PEN_TITLE );
   rk_penInit();
   zStrAddrListDestroy( &arglist );
@@ -530,7 +572,7 @@ bool rk_penCommandArgs(int argc, char *argv[])
 /**********************************************************/
 
 struct{
-  char *msg;
+  const char *msg;
   void (* action)(void);
 } menu[] = {
   { "show link list", rk_penShowLinkList },
@@ -576,7 +618,7 @@ int main(int argc, char *argv[])
 
   rkglInitGLUT( &argc, argv );
   rk_penCommandArgs( argc, argv+1 );
-  pthread_create( &mainloop, NULL, (void *)rk_penOperate, (void *)NULL );
+  pthread_create( &mainloop, NULL, (void *(*)(void*))rk_penOperate, (void *)NULL );
   glutMainLoop();
   return 0;
 }

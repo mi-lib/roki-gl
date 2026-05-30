@@ -18,14 +18,14 @@ enum{
   OPT_INVALID
 };
 zOption opt[] = {
-  { "model", NULL, "<.ztk file>", "kinematic chain model file", NULL, false },
+  { "model", NULL, "<.ztk/.urdf file>", "kinematic chain model file", NULL, false },
   { "zvs", NULL, "<.zvs file>", "joint displacement sequence file", NULL, false },
   { "zkcs", NULL, "<.zkcs file>", "full configuration sequence file", NULL, false },
   { "env", NULL, "<.ztk file>", "environment shape model file", NULL, false },
   { "pan", NULL, "<pan value>", "set camera pan angle", (char *)"0", false },
   { "tilt", NULL, "<tilt value>", "set camera tilt angle", (char *)"0", false },
   { "roll", NULL, "<roll value>", "set camera roll angle", (char *)"0", false },
-  { "x", NULL, "<value>", "camera position in x axis", (char *)"5", false },
+  { "x", NULL, "<value>", "camera position in x axis", (char *)"2", false },
   { "y", NULL, "<value>", "camera position in y axis", (char *)"0", false },
   { "z", NULL, "<value>", "camera position in z axis", (char *)"0", false },
   { "width", NULL, "<width>", "set window width", (char *)"500", false },
@@ -119,7 +119,7 @@ bool rk_seqLoadSequence(void)
 
 void rk_seqListEntry(void)
 {
-  register int i=0;
+  int i=0;
   zSeqCell *cp;
   void (* kf)(rkChain*,zVec);
 
@@ -136,7 +136,7 @@ void rk_seqListEntry(void)
 
 void rk_seqDraw(void)
 {
-  register int i;
+  int i;
 
   if( env ) glCallList( env );
   for( i=0; i<zArraySize(poselist); i++ )
@@ -152,7 +152,7 @@ void rk_seqDisplay(void)
   } else{
     /* non-shadowed rendering */
     rkglClear();
-    rkglCALoad( &cam );
+    rkglCameraPut( &cam );
     rkglLightPut( &light );
     rk_seqDraw();
   }
@@ -175,20 +175,23 @@ void rk_seqInit(void)
 {
   zRGB rgb;
   rkglChainAttr attr;
-  zMShape3D envshape;
+  zMultiShape3D envshape;
 
   win = rkglWindowCreateGLX( NULL, 0, 0, atoi(opt[OPT_WIDTH].arg), atoi(opt[OPT_HEIGHT].arg), RK_SEQ_TITLE );
   rkglWindowKeyEnableGLX( win );
   rkglWindowMouseEnableGLX( win );
   rkglWindowOpenGLX( win );
 
-  zRGBDec( &rgb, opt[OPT_BG].arg );
-  rkglBGSet( &cam, rgb.r, rgb.g, rgb.b );
-  rkglVPCreate( &cam, 0, 0,
+  zRGBDecodeStr( &rgb, opt[OPT_BG].arg );
+  rkglCameraInit( &cam );
+  rkglCameraSetBackground( &cam, rgb.r, rgb.g, rgb.b );
+  rkglCameraSetViewport( &cam, 0, 0,
     atoi(opt[OPT_WIDTH].arg), atoi(opt[OPT_HEIGHT].arg) );
-  rkglCASet( &cam,
+  rkglCameraSetViewframe( &cam,
     atof(opt[OPT_OX].arg), atof(opt[OPT_OY].arg), atof(opt[OPT_OZ].arg),
     atof(opt[OPT_PAN].arg), atof(opt[OPT_TILT].arg), atof(opt[OPT_ROLL].arg) );
+  rkglCameraSetViewvolumeZFovy( &cam, 1.0, 200, 30.0 );
+  rkglSetDefaultCamera( &cam );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.5, 0.5, 0.5, 0.8, 0.8, 0.8, 0, 0, 0 );
@@ -197,20 +200,20 @@ void rk_seqInit(void)
   rkglTextureEnable();
 
   rkglChainAttrInit( &attr );
-  if( !rkChainReadZTK( &chain, opt[OPT_MODELFILE].arg ) ||
+  if( !rkChainReadFile( &chain, opt[OPT_MODELFILE].arg ) ||
       !rkglChainLoad( &gc, &chain, &attr, &light ) ){
     ZOPENERROR( opt[OPT_MODELFILE].arg );
     rk_seqUsage();
     exit( 1 );
   }
   if( opt[OPT_ENVFILE].flag ){
-    if( !zMShape3DReadZTK( &envshape, opt[OPT_ENVFILE].arg ) ){
+    if( !zMultiShape3DReadZTK( &envshape, opt[OPT_ENVFILE].arg ) ){
       ZOPENERROR( opt[OPT_ENVFILE].arg );
       rk_seqUsage();
       exit( 1 );
     }
-    env = rkglEntryMShape( &envshape, attr.disptype, &light );
-    zMShape3DDestroy( &envshape );
+    env = rkglEntryMultiShape( &envshape, attr.disptype, &light );
+    zMultiShape3DDestroy( &envshape );
     if( env < 0 ) exit( 1 );
   }
 
@@ -220,7 +223,7 @@ void rk_seqInit(void)
 
 void rk_seqExit(void)
 {
-  register int i;
+  int i;
 
   free( seqfilebase );
   for( i=0; i<zArraySize(poselist); i++ )
@@ -251,13 +254,11 @@ void rk_seqCapture(void)
 void rk_seqReshape(void)
 {
   zxRegion reg;
-  double x, y;
 
   zxGetGeometry( win, &reg );
-  rkglVPCreate( &cam, 0, 0, reg.width, reg.height );
-  x = 0.1;
-  y = x / rkglVPAspect(&cam);
-  rkglFrustum( &cam, -x, x, -y, y, 1, 20 );
+  rkglCameraSetViewport( &cam, 0, 0, reg.width, reg.height );
+  rkglCameraAdjustViewvolumePerspective( &cam );
+  rkglCameraPutViewvolume( &cam );
 }
 
 int rk_seqKeyPress(void)
@@ -278,10 +279,10 @@ int rk_seqEvent(void)
   case Expose:
   case ConfigureNotify: rk_seqReshape();              break;
   case ButtonPress:
-  case ButtonRelease:   rkglMouseFuncGLX( &cam, event, 1.0 ); break;
+  case ButtonRelease:   rkglMouseFuncGLX( &cam, event ); break;
   case MotionNotify:    rkglMouseDragFuncGLX( &cam ); break;
   case KeyPress:        if( rk_seqKeyPress() >= 0 )   break; return -1;
-  case KeyRelease: zxModkeyOff( zxKeySymbol() );      break;
+  case KeyRelease:      zxModkeyOff( zxKeySymbol() ); break;
   default: ;
   }
   return 0;

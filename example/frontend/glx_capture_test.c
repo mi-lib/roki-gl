@@ -43,10 +43,11 @@ GLvoid init(GLsizei width, GLsizei height)
 {
   enter();
 
-  rkglBGSet( &cam, 0.5, 0.5, 0.5 );
-  rkglVPCreate( &cam, 0, 0, width, height );
-  rkglFrustumScaleH( &cam, 1.0/180, 3, 10 );
-  rkglCALookAt( &cam, 5,-3, 3, 0, 0, 0, 0, 0, 1 );
+  rkglCameraInit( &cam );
+  rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
+  rkglCameraSetViewport( &cam, 0, 0, width, height );
+  rkglCameraSetViewvolumeZFovy( &cam, 3, 10, 45 );
+  rkglCameraLookAt( &cam, 5,-3, 3, 0, 0, 0, 0, 0, 1 );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.4, 0.4, 0.4, 0.8, 0.8, 0.8, 0, 0, 0 );
@@ -56,7 +57,7 @@ GLvoid draw(Window win)
 {
   rkglWindowActivateGLX( win );
   rkglClear();
-  rkglCALoad( &cam );
+  rkglCameraPut( &cam );
   rkglLightMove( &light, 10, 0, 8 );
   glPushMatrix();
   glCallList( obj );

@@ -76,7 +76,7 @@ void draw(void)
 void display(void)
 {
   glBindTexture( GL_TEXTURE_2D, tex_id );
-  rkglCALoad( &cam );
+  rkglCameraPut( &cam );
   rkglLightPut( &light );
   glPushMatrix();
   rkglClear();
@@ -97,7 +97,7 @@ void display(void)
 
   rkglTextureBindUnit( 0, tex_id );
 
-  rkglCALoad( &cam );
+  rkglCameraPut( &cam );
   rkglLightPut( &light );
   glPushMatrix();
   rkglClear();
@@ -112,27 +112,9 @@ void display(void)
   glutSwapBuffers();
 }
 
-void resize(int w, int h)
-{
-  rkglVPCreate( &cam, 0, 0, w, h );
-  rkglFrustumScaleH( &cam, 1.0/160, 2, 30 );
-}
-
 void keyboard(unsigned char key, int x, int y)
 {
   switch( key ){
-  case 'u': rkglCALockonPTR( &cam, 5, 0, 0 ); break;
-  case 'U': rkglCALockonPTR( &cam,-5, 0, 0 ); break;
-  case 'i': rkglCALockonPTR( &cam, 0, 5, 0 ); break;
-  case 'I': rkglCALockonPTR( &cam, 0,-5, 0 ); break;
-  case 'o': rkglCALockonPTR( &cam, 0, 0, 5 ); break;
-  case 'O': rkglCALockonPTR( &cam, 0, 0,-5 ); break;
-  case '8': rkglCARelMove( &cam, 0.05, 0, 0 ); break;
-  case '*': rkglCARelMove( &cam,-0.05, 0, 0 ); break;
-  case '9': rkglCARelMove( &cam, 0, 0.05, 0 ); break;
-  case '(': rkglCARelMove( &cam, 0,-0.05, 0 ); break;
-  case '0': rkglCARelMove( &cam, 0, 0, 0.05 ); break;
-  case ')': rkglCARelMove( &cam, 0, 0,-0.05 ); break;
   case 'w': dispswitch = 1 - dispswitch; break;
   case 'q': case 'Q': case '\033':
     glDeleteTextures( 1, &tex_id );
@@ -152,10 +134,11 @@ void init(void)
   zCyl3D cylinder;
   zCone3D cone;
 
-  rkglSetDefaultCallbackParam( &cam, 0, 0, 0, 0, 0 );
-
-  rkglBGSet( &cam, 0.5, 0.5, 0.5 );
-  rkglCASet( &cam, 6, 0, 3, 0, -30, 0 );
+  rkglCameraInit( &cam );
+  rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
+  rkglCameraLookAt( &cam, 15, 0, 5, 0, 0, 0, 0, 0, 1 );
+  rkglCameraSetViewvolumeZFovy( &cam, 1, 100, 30.0 );
+  rkglSetDefaultCamera( &cam );
   glLineWidth( 2 );
 
   glEnable( GL_LIGHTING );
@@ -214,13 +197,8 @@ int main(int argc, char *argv[])
 {
   rkglInitGLUT( &argc, argv );
   rkglWindowCreateGLUT( 0, 0, TEX_WIDTH, TEX_HEIGHT, argv[0] );
-
   glutDisplayFunc( display );
-  glutIdleFunc( rkglIdleFuncGLUT );
-  glutReshapeFunc( resize );
   glutKeyboardFunc( keyboard );
-  glutMouseFunc( rkglMouseFuncGLUT );
-  glutMotionFunc( rkglMouseDragFuncGLUT );
   shader_program[0] = rkglShaderCreatePhong();
   shader_program[1] = rkglShaderCreateTexture();
   glUseProgram( shader_program[1] );

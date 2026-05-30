@@ -25,6 +25,7 @@ int rkglWindowCreateGLUT(int x, int y, int w, int h, const char *title)
   rkglInitGLEW();
 #endif /* __ROKI_GL_USE_GLEW */
   rkglEnableDefault();
+  rkglSetDefaultFuncGLUT(); /* notice: GLUT supposes that only one window is opened. */
   return id;
 }
 
@@ -32,7 +33,9 @@ int rkglWindowCreateGLUT(int x, int y, int w, int h, const char *title)
 
 void rkglReshapeFuncGLUT(int w, int h)
 {
-  rkglFrustumFit2VP( rkgl_default_cam, w, h, rkgl_default_vv_width, rkgl_default_vv_near, rkgl_default_vv_far );
+  rkglCameraSetViewport( rkgl_default_camera, 0, 0, w, h );
+  rkglCameraAdjustViewvolumePerspective( rkgl_default_camera );
+  rkglCameraPutViewvolume( rkgl_default_camera );
 }
 
 void rkglIdleFuncGLUT(void)
@@ -43,12 +46,12 @@ void rkglIdleFuncGLUT(void)
 void rkglKeyFuncGLUT(unsigned char key, int x, int y)
 {
   switch( key ){
-  case 'h': rkglCARelMoveLeft(  rkgl_default_cam, rkgl_default_key_delta_trans ); break;
-  case 'l': rkglCARelMoveRight( rkgl_default_cam, rkgl_default_key_delta_trans ); break;
-  case 'k': rkglCARelMoveUp(    rkgl_default_cam, rkgl_default_key_delta_trans ); break;
-  case 'j': rkglCARelMoveDown(  rkgl_default_cam, rkgl_default_key_delta_trans ); break;
-  case 'z': rkglCAZoomIn(       rkgl_default_cam, rkgl_default_key_delta_trans ); break;
-  case 'Z': rkglCAZoomOut(      rkgl_default_cam, rkgl_default_key_delta_trans ); break;
+  case 'h': rkglKeyDefaultCameraMoveLeft();  break;
+  case 'l': rkglKeyDefaultCameraMoveRight(); break;
+  case 'k': rkglKeyDefaultCameraMoveUp();    break;
+  case 'j': rkglKeyDefaultCameraMoveDown();  break;
+  case 'z': rkglKeyDefaultCameraZoomIn();    break;
+  case 'Z': rkglKeyDefaultCameraZoomOut();   break;
   case 'q': case 'Q': case '\033':
     raise( SIGTERM );
     exit( EXIT_SUCCESS );
@@ -59,14 +62,11 @@ void rkglKeyFuncGLUT(unsigned char key, int x, int y)
 
 void rkglSpecialFuncGLUT(int key, int x, int y)
 {
-  int c;
-
-  c = glutGetModifiers() & GLUT_ACTIVE_CTRL;
   switch( key ){
-  case GLUT_KEY_UP:    rkglKeyCARotateUp(   rkgl_default_cam, rkgl_default_key_delta_angle, c ); break;
-  case GLUT_KEY_DOWN:  rkglKeyCARotateDown( rkgl_default_cam, rkgl_default_key_delta_angle, c ); break;
-  case GLUT_KEY_LEFT:  rkglKeyCARotateLeft(  rkgl_default_cam, rkgl_default_key_delta_angle, c ); break;
-  case GLUT_KEY_RIGHT: rkglKeyCARotateRight( rkgl_default_cam, rkgl_default_key_delta_angle, c ); break;
+  case GLUT_KEY_UP:    rkglKeyDefaultCameraTiltUp();   break;
+  case GLUT_KEY_DOWN:  rkglKeyDefaultCameraTiltDown(); break;
+  case GLUT_KEY_LEFT:  rkglKeyDefaultCameraPanLeft();  break;
+  case GLUT_KEY_RIGHT: rkglKeyDefaultCameraPanRight(); break;
   default: ;
   }
   glutPostRedisplay();
@@ -76,8 +76,8 @@ void rkglMouseFuncGLUT(int button, int event, int x, int y)
 {
   rkglMouseStoreInput( button, event, GLUT_DOWN, x, y, glutGetModifiers() );
   switch( rkgl_mouse_button ){
-  case GLUT_WHEEL_UP:   rkglCAZoomIn(  rkgl_default_cam, rkgl_default_key_delta_trans ); break;
-  case GLUT_WHEEL_DOWN: rkglCAZoomOut( rkgl_default_cam, rkgl_default_key_delta_trans ); break;
+  case GLUT_WHEEL_UP:   rkglKeyDefaultCameraZoomIn();  break;
+  case GLUT_WHEEL_DOWN: rkglKeyDefaultCameraZoomOut(); break;
   default: ;
   }
 }
@@ -86,11 +86,11 @@ void rkglMouseDragFuncGLUT(int x, int y)
 {
   double dx, dy;
 
-  rkglMouseDragGetIncrementer( rkgl_default_cam, x, y, &dx, &dy );
+  rkglMouseDragGetIncrementer( rkgl_default_camera, x, y, &dx, &dy );
   switch( rkgl_mouse_button ){
-  case GLUT_LEFT_BUTTON:   rkglMouseDragCARotate(    rkgl_default_cam, dx, dy, GLUT_ACTIVE_CTRL ); break;
-  case GLUT_RIGHT_BUTTON:  rkglMouseDragCATranslate( rkgl_default_cam, dx, dy, GLUT_ACTIVE_CTRL ); break;
-  case GLUT_MIDDLE_BUTTON: rkglMouseDragCAZoom(      rkgl_default_cam, dx, dy, GLUT_ACTIVE_CTRL ); break;
+  case GLUT_LEFT_BUTTON:   rkglMouseDragDefaultCameraRotate( dx, dy, GLUT_ACTIVE_CTRL ); break;
+  case GLUT_RIGHT_BUTTON:  rkglMouseDragDefaultCameraTranslate( dx, dy ); break;
+  case GLUT_MIDDLE_BUTTON: rkglMouseDragDefaultCameraZoom( dx, dy ); break;
   default: ;
   }
   rkglMouseStoreXY( x, y );
@@ -100,4 +100,16 @@ void rkglMouseDragFuncGLUT(int x, int y)
 void rkglVisFuncGLUT(int visible)
 {
   glutIdleFunc( visible == GLUT_VISIBLE ? rkglIdleFuncGLUT : NULL );
+}
+
+/* set all callback functions for default functions. */
+void rkglSetDefaultFuncGLUT(void)
+{
+  glutReshapeFunc( rkglReshapeFuncGLUT );
+  glutIdleFunc( rkglIdleFuncGLUT );
+  glutKeyboardFunc( rkglKeyFuncGLUT );
+  glutSpecialFunc( rkglSpecialFuncGLUT );
+  glutMouseFunc( rkglMouseFuncGLUT );
+  glutMotionFunc( rkglMouseDragFuncGLUT );
+  glutVisibilityFunc( rkglVisFuncGLUT );
 }

@@ -44,9 +44,10 @@ __ROKI_GL_EXPORT void rkglWindowAddEventGLX(Window win, long event);
 
 /* default callback functions */
 
-__ROKI_GL_EXPORT void rkglReshapeGLX(rkglCamera *cam, int w, int h, double vvwidth, double vvnear, double vvfar);
-__ROKI_GL_EXPORT int rkglKeyFuncGLX(rkglCamera *cam, double dl, double da);
-__ROKI_GL_EXPORT void rkglMouseFuncGLX(rkglCamera *cam, int event, double dl);
+__ROKI_GL_EXPORT void rkglReshapeGLX(rkglCamera *cam, int w, int h);
+__ROKI_GL_EXPORT int rkglKeyPressFuncGLX(rkglCamera *cam);
+__ROKI_GL_EXPORT int rkglKeyReleaseFuncGLX(rkglCamera *cam);
+__ROKI_GL_EXPORT void rkglMouseFuncGLX(rkglCamera *cam, int event);
 __ROKI_GL_EXPORT void rkglMouseDragFuncGLX(rkglCamera *cam);
 
 /* buffer-to-image conversion */

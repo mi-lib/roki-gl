@@ -55,7 +55,7 @@ void display(void)
 
   zOpticalInfoCreateSimple( &oi, 0.2, 0.4, 0.9, NULL );
   rkglClear();
-  rkglCALoad( &cam );
+  rkglCameraPut( &cam );
   rkglLightPut( &light );
   glPushMatrix();
 
@@ -77,12 +77,13 @@ void display(void)
   glutSwapBuffers();
 }
 
-void init()
+void init(void)
 {
-  rkglSetDefaultCallbackParam( &cam, 1.0, 1, 20, 1.0, 5.0 );
-
-  rkglBGSet( &cam, 0.5, 0.5, 0.5 );
-  rkglCASet( &cam, 10, 0, 0, 0, 0, 0 );
+  rkglCameraInit( &cam );
+  rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
+  rkglCameraSetViewframe( &cam, 10, 0, 0, 0, 0, 0 );
+  rkglCameraSetViewvolumeZFovy( &cam, 1, 20.0, 30.0 );
+  rkglSetDefaultCamera( &cam );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
@@ -98,13 +99,7 @@ int main(int argc, char *argv[])
   rkglWindowCreateGLUT( 0, 0, 500, 500, argv[0] );
 
   glutDisplayFunc( display );
-  glutVisibilityFunc( rkglVisFuncGLUT );
-  glutIdleFunc( rkglIdleFuncGLUT );
-  glutReshapeFunc( rkglReshapeFuncGLUT );
   glutKeyboardFunc( keyfunc );
-  glutSpecialFunc( rkglSpecialFuncGLUT );
-  glutMouseFunc( rkglMouseFuncGLUT );
-  glutMotionFunc( rkglMouseDragFuncGLUT );
   init();
 
   printf( "a: cube\n" );

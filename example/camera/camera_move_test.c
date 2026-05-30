@@ -1,0 +1,108 @@
+#include <roki_gl/roki_glut.h>
+
+rkglCamera cam;
+rkglLight light;
+GLint obj_id;
+bool move = false;
+
+zFrame3D platform;
+
+void camera_home(void)
+{
+  rkglCameraSetViewframe( &cam, 6, 0, 0, 0, 0, 0 );
+}
+
+void move_platform(double angle)
+{
+  platform.pos.c.z = 1.0 * sin( angle );
+  zMat3DRotYawDRC( &platform.att, 0.00001 * angle );
+}
+
+void display(void)
+{
+  static int i = 0;
+
+  rkglLightPut( &light );
+  if( move )
+    move_platform( 0.001 * zPIx2 * i++ );
+  rkglCameraPut( &cam );
+  glPushMatrix();
+  rkglClear();
+  glCallList( obj_id );
+  glPopMatrix();
+  glutSwapBuffers();
+}
+
+void resize(int w, int h)
+{
+  rkglCameraSetViewport( &cam, 0, 0, w, h );
+  rkglCameraAdjustViewvolumePerspective( &cam );
+  rkglCameraPutViewvolume( &cam );
+}
+
+void keyboard(unsigned char key, int x, int y)
+{
+  switch( key ){
+  case 'a': camera_home(); break;
+  case 'h': rkglCameraMoveLeft(  &cam, 0.1 ); break;
+  case 'j': rkglCameraMoveDown(  &cam, 0.1 ); break;
+  case 'k': rkglCameraMoveUp(    &cam, 0.1 ); break;
+  case 'l': rkglCameraMoveRight( &cam, 0.1 ); break;
+  case 'z': rkglCameraZoomIn(    &cam, 0.1 ); break;
+  case 'Z': rkglCameraZoomOut(   &cam, 0.1 ); break;
+  case 'y': rkglCameraRotate(    &cam, 2.0, 0, 0, 1 ); break;
+  case 'Y': rkglCameraRotate(    &cam,-2.0, 0, 0, 1 ); break;
+  case 'p': rkglCameraRotate(    &cam, 2.0, 0, 1, 0 ); break;
+  case 'P': rkglCameraRotate(    &cam,-2.0, 0, 1, 0 ); break;
+  case 'r': rkglCameraRotate(    &cam, 2.0, 1, 0, 0 ); break;
+  case 'R': rkglCameraRotate(    &cam,-2.0, 1, 0, 0 ); break;
+  case 'g': rkglCameraLookAt(    &cam, 6, 2, 1, 0, 0, 0, 0, 0, 1 ); break;
+  case 'm': move = 1 - move; break;
+  case 'q': case 'Q': case '\033':
+    exit( EXIT_SUCCESS );
+  default: ;
+  }
+}
+
+void init(void)
+{
+  zBox3D box;
+  zOpticalInfo red;
+
+  glEnable( GL_LIGHTING );
+  rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
+  rkglLightMove( &light, 1, 0, 10 );
+
+  rkglCameraInit( &cam );
+  rkglCameraSetPlatform( &cam, &platform );
+  rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
+  rkglCameraSetViewvolumeZFovy( &cam, 1, 30, 30 );
+  rkglSetDefaultCamera( &cam );
+  camera_home();
+
+  zOpticalInfoCreateSimple( &red, 1.0, 0, 0, NULL );
+  zBox3DCreateAlign( &box, ZVEC3DZERO, 1.0, 0.8, 0.6 );
+  obj_id = rkglBeginList();
+  rkglRGBByStr( "white" );
+  glLineWidth( 0.5 );
+  rkglGauge( zX, 6.0, zY, 6.0, 0.2 );
+  glLineWidth( 3.0 );
+  rkglFrame( ZFRAME3DIDENT, 2 );
+  rkglMaterial( &red );
+  rkglBox( &box, RKGL_FACE | RKGL_WIREFRAME );
+  glEndList();
+
+  zFrame3DIdent( &platform );
+}
+
+int main(int argc, char *argv[])
+{
+  rkglInitGLUT( &argc, argv );
+  rkglWindowCreateGLUT( 0, 0, 640, 480, argv[0] );
+  glutDisplayFunc( display );
+  glutReshapeFunc( resize );
+  glutKeyboardFunc( keyboard );
+  init();
+  glutMainLoop();
+  return 0;
+}

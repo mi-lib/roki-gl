@@ -12,7 +12,7 @@ bool show_net = false;
 
 void refresh(void)
 {
-  register int i, j;
+  int i, j;
   zRGB rgb;
 
   rkglDeleteList( id_curve );
@@ -34,19 +34,13 @@ void refresh(void)
 
 void display(void)
 {
-  rkglCALoad( &cam );
+  rkglCameraPut( &cam );
   rkglLightPut( &light );
   rkglClear();
   glCallList( id_curve );
   if( show_net )
     glCallList( id_cp );
   glutSwapBuffers();
-}
-
-void reshape(int w, int h)
-{
-  rkglVPCreate( &cam, 0, 0, w, h );
-  rkglPerspective( &cam, 30.0, (GLdouble)w/(GLdouble)h, 1.0, 30.0 );
 }
 
 void keyboard(unsigned char key, int x, int y)
@@ -68,13 +62,14 @@ void keyboard(unsigned char key, int x, int y)
   }
 }
 
-void init()
+void init(void)
 {
   zRandInit();
-  rkglSetDefaultCallbackParam( &cam, 0, 0, 0, 0, 0 );
-
-  rkglBGSet( &cam, 0.8, 0.8, 0.8 );
-  rkglCALookAt( &cam, 5, 0, 5, 0, 0, 0, 0, 0, 1 );
+  rkglCameraInit( &cam );
+  rkglCameraSetBackground( &cam, 0.8, 0.8, 0.8 );
+  rkglCameraLookAt( &cam, 5, 0, 5, 0, 0, 0, 0, 0, 1 );
+  rkglCameraSetViewvolumeZFovy( &cam, 1, 30, 30.0 );
+  rkglSetDefaultCamera( &cam );
 
   glEnable( GL_LIGHTING );
   glLightModeli( GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE );
@@ -91,9 +86,6 @@ int main(int argc, char *argv[])
   rkglWindowCreateGLUT( 0, 0, 500, 500, argv[0] );
 
   glutDisplayFunc( display );
-  glutReshapeFunc( reshape );
-  glutMouseFunc( rkglMouseFuncGLUT );
-  glutMotionFunc( rkglMouseDragFuncGLUT );
   glutKeyboardFunc( keyboard );
   init();
   glutMainLoop();

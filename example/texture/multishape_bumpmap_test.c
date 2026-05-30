@@ -4,30 +4,32 @@
 rkglCamera cam;
 rkglLight light;
 
-zMShape3D ms;
+zMultiShape3D ms;
 zTexture bump;
 
 static void init(void)
 {
-  rkglSetDefaultCallbackParam( &cam, 2.0, 1, 100, 1.0, 5.0 );
-  rkglBGSet( &cam, 0.5, 0.5, 0.5 );
-  rkglCASet( &cam, 3, 0, 3, 0, -45, 0 );
+  rkglCameraInit( &cam );
+  rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
+  rkglCameraLookAt( &cam, 6, 0, 3, 0, 0, 0, 0, 0, 1 );
+  rkglCameraSetViewvolumeZFovy( &cam, 1, 100, 30.0 );
+  rkglSetDefaultCamera( &cam );
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.5, 0.5, 0.5, 1, 1, 1, 0, 0, 0 );
   rkglLightMove( &light, 20, 0, 10 );
 
   rkglTextureBumpEnable();
-  zMShape3DReadZTK( &ms, "bump_test.ztk" );
+  zMultiShape3DReadZTK( &ms, "bump_test.ztk" );
   glDisable( GL_CULL_FACE );
 }
 
 void display(void)
 {
   rkglClear();
-  rkglCALoad( &cam );
+  rkglCameraPut( &cam );
   rkglLightPut( &light );
   glPushMatrix();
-  rkglMShape( &ms, RKGL_FACE, &light );
+  rkglMultiShape( &ms, RKGL_FACE, &light );
   glPopMatrix();
   glutSwapBuffers();
 }
@@ -38,12 +40,6 @@ int main(int argc, char *argv[])
   rkglWindowCreateGLUT( 0, 0, 640, 480, argv[0] );
 
   glutDisplayFunc( display );
-  glutVisibilityFunc( rkglVisFuncGLUT );
-  glutReshapeFunc( rkglReshapeFuncGLUT );
-  glutMouseFunc( rkglMouseFuncGLUT );
-  glutMotionFunc( rkglMouseDragFuncGLUT );
-  glutKeyboardFunc( rkglKeyFuncGLUT );
-  glutSpecialFunc( rkglSpecialFuncGLUT );
   init();
   glutMainLoop();
   return 0;

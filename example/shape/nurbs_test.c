@@ -27,20 +27,23 @@ void draw_scene(void)
   glPushMatrix();
   rkglMaterial( &oi );
   glLoadName( NAME_OTHER );
-  glLineWidth( 2 );
+  glLineWidth( 2.0 );
+  rkglRGBByStr( "white" );
   rkglNURBS( &nurbs, RKGL_FACE | ( show_wf ? 0 : RKGL_WIREFRAME ) );
   glLoadName( NAME_NURBS );
   if( show_ctl ){
     zRGBSet( &rgb, 0.5, 1.0, 0.5 );
-    glLineWidth( 1 );
-    rkglNURBSCP( &nurbs, SIZE_CP, &rgb );
+    rkglRGB( &rgb );
+    glPointSize( SIZE_CP );
+    glLineWidth( 1.0 );
+    rkglNURBSCP( &nurbs );
   }
   glPopMatrix();
 }
 
 void display(void)
 {
-  rkglCALoad( &cam );
+  rkglCameraPut( &cam );
   rkglLightPut( &light );
   rkglClear();
   draw_scene();
@@ -102,12 +105,6 @@ void find_cp(rkglSelectionBuffer *sb)
   }
 }
 
-void reshape(int w, int h)
-{
-  rkglVPCreate( &cam, 0, 0, w, h );
-  rkglPerspective( &cam, 45.0, (GLdouble)w/(GLdouble)h, 1.0, 10.0 );
-}
-
 void mouse(int button, int state, int x, int y)
 {
   rkglSelectionInit( &sb );
@@ -148,10 +145,11 @@ void motion(int x, int y)
 void init(void)
 {
   zRandInit();
-  rkglSetDefaultCallbackParam( &cam, 0, 0, 0, 0, 0 );
-
-  rkglBGSet( &cam, 0.0, 0.0, 0.0 );
-  rkglCALookAt( &cam, 3, 0, 1, 0, 0, 0, 0, 0, 1 );
+  rkglCameraInit( &cam );
+  rkglCameraSetBackground( &cam, 0.0, 0.0, 0.0 );
+  rkglCameraLookAt( &cam, 3, 0, 1, 0, 0, 0, 0, 0, 1 );
+  rkglCameraSetViewvolumeZFovy( &cam, 1, 20, 45.0 );
+  rkglSetDefaultCamera( &cam );
 
   glEnable( GL_LIGHTING );
   glLightModeli( GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE );
@@ -161,7 +159,7 @@ void init(void)
   rkglLightMove( &light, 0, 0, 10 );
 
   zNURBS3DAlloc( &nurbs, 6, 6, 3, 3 );
-  zNURBS3DSetSliceNum( &nurbs, 50, 50 );
+  zNURBS3DSetSlice( &nurbs, 50, 50 );
   init_surface();
 }
 
@@ -169,10 +167,7 @@ int main(int argc, char **argv)
 {
   rkglInitGLUT( &argc, argv );
   rkglWindowCreateGLUT( 0, 0, 640, 480, argv[0] );
-
   glutDisplayFunc( display );
-  glutIdleFunc( rkglIdleFuncGLUT );
-  glutReshapeFunc( reshape );
   glutMouseFunc( mouse );
   glutMotionFunc( motion );
   glutKeyboardFunc( keyboard );

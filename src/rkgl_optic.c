@@ -8,16 +8,33 @@
 
 /* color material */
 
-void rkglColor24(unsigned color)
+static GLfloat _rkglRGBIntensifyElem(GLfloat orgcolor, GLfloat d)
 {
-  GLubyte red, green, blue;
+  return zLimit( orgcolor + d, 0.0, 1.0 );
+}
 
-  red   = ( color & 0xff );
-  color >>= 8;
-  green = ( color & 0xff );
-  color >>= 8;
-  blue  = ( color & 0xff );
-  glColor3ub( red, green, blue );
+void rkglRGBIntensify(GLfloat dr, GLfloat dg, GLfloat db)
+{
+  GLfloat color[4];
+  zRGB rgb;
+
+  glGetFloatv( GL_CURRENT_COLOR, color );
+  rgb.r = _rkglRGBIntensifyElem( color[0], dr );
+  rgb.g = _rkglRGBIntensifyElem( color[1], dg );
+  rgb.b = _rkglRGBIntensifyElem( color[2], db );
+  rkglRGB( &rgb );
+}
+
+void rkglRGBByStr(const char *str)
+{
+  zRGB rgb;
+
+  rkglRGB( zRGBByStr( &rgb, str ) );
+}
+
+void rkglColor24(unsigned int color)
+{
+  glColor3ub( ( color & 0xff0000 ) >> 16, ( color & 0xff00 ) >> 8, ( color & 0xff ) );
 }
 
 void rkglMaterialRGBA(zRGB *rgb, float alpha)

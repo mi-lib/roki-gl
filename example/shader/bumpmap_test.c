@@ -88,7 +88,7 @@ void draw(void)
 void display(void)
 {
   rkglClear();
-  rkglCALoad( &cam );
+  rkglCameraPut( &cam );
   rkglLightPut( &light );
   glPushMatrix();
   draw();
@@ -98,10 +98,11 @@ void display(void)
 
 void init(double depth)
 {
-  rkglSetDefaultCallbackParam( &cam, 2.0, 2, 60, 1.0, 5.0 );
-
-  rkglBGSet( &cam, 0.5, 0.5, 0.5 );
-  rkglCASet( &cam, 10, 0, 5, 0, -30, 0 );
+  rkglCameraInit( &cam );
+  rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
+  rkglCameraLookAt( &cam, 12, 0, 5, 0, 0, 0, 0, 0, 1 );
+  rkglCameraSetViewvolumeZFovy( &cam, 2, 60, 30.0 );
+  rkglSetDefaultCamera( &cam );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
@@ -120,14 +121,7 @@ int main(int argc, char *argv[])
 {
   rkglInitGLUT( &argc, argv );
   rkglWindowCreateGLUT( 0, 0, 640, 480, argv[0] );
-
   glutDisplayFunc( display );
-  glutVisibilityFunc( rkglVisFuncGLUT );
-  glutReshapeFunc( rkglReshapeFuncGLUT );
-  glutKeyboardFunc( rkglKeyFuncGLUT );
-  glutSpecialFunc( rkglSpecialFuncGLUT );
-  glutMouseFunc( rkglMouseFuncGLUT );
-  glutMotionFunc( rkglMouseDragFuncGLUT );
   init( argc > 1 ? atof( argv[1] ) : 1.0 );
   glutMainLoop();
   return 0;

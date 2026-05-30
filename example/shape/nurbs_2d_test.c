@@ -23,22 +23,25 @@ void draw_scene(void)
 
   glPushMatrix();
   glLoadName( NAME_OTHER );
-  rkglFrame( ZFRAME3DIDENT, 1.0, 2 );
+  glLineWidth( 2.0 );
+  rkglFrame( ZFRAME3DIDENT, 1.0 );
   for( i=0; i<NUM_NURBS; i++ ){
-    zRGBSet( &rgb, 1.0 * ( ~i & 1 ) , 1.0 * ( ~i & 2 ), 1.0 * ( ~i & 4 ) );
     glLoadName( NAME_NURBS + i );
+    rkglRGB( zRGBSet( &rgb, 1.0 * ( ~i & 1 ) , 1.0 * ( ~i & 2 ), 1.0 * ( ~i & 4 ) ) );
     glLineWidth( 3 );
-    rkglNURBSCurve( &nurbs[i], &rgb );
-    zRGBSet( &rgb, 0.5, 1.0, 0.5 );
+    rkglNURBSCurve( &nurbs[i] );
+
+    rkglRGB( zRGBSet( &rgb, 0.5, 1.0, 0.5 ) );
     glLineWidth( 1 );
-    rkglNURBSCurveCP( &nurbs[i], SIZE_CP, &rgb );
+    glPointSize( SIZE_CP );
+    rkglNURBSCurveCP( &nurbs[i] );
   }
   glPopMatrix();
 }
 
 void display(void)
 {
-  rkglCALoad( &cam );
+  rkglCameraPut( &cam );
   rkglLightPut( &light );
   rkglClear();
   draw_scene();
@@ -130,21 +133,16 @@ void motion(int x, int y)
   }
 }
 
-void reshape(int w, int h)
-{
-  rkglVPCreate( &cam, 0, 0, w, h );
-  rkglPerspective( &cam, 45.0, (GLdouble)w/(GLdouble)h, 0.5, 10.0 );
-}
-
 void init(void)
 {
   int i;
 
   zRandInit();
-  rkglSetDefaultCallbackParam( &cam, 0, 0, 0, 0, 0 );
-
-  rkglBGSet( &cam, 0.0, 0.0, 0.0 );
-  rkglCALookAt( &cam, 5, 0, 1, 0, 0, 0, 0, 0, 1 );
+  rkglCameraInit( &cam );
+  rkglCameraSetBackground( &cam, 0.0, 0.0, 0.0 );
+  rkglCameraLookAt( &cam, 5, 0, 1, 0, 0, 0, 0, 0, 1 );
+  rkglCameraSetViewvolumeZFovy( &cam, 0.5, 100.0, 45.0 );
+  rkglSetDefaultCamera( &cam );
 
   glEnable( GL_LIGHTING );
   glLightModeli( GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE );
@@ -155,7 +153,7 @@ void init(void)
 
   for( i=0; i<NUM_NURBS; i++ ){
     zNURBS3D1Alloc( &nurbs[i], NUM_CP, 3 );
-    zNURBS3D1SetSliceNum( &nurbs[i], 50 );
+    zNURBS3D1SetSlice( &nurbs[i], 50 );
   }
   init_curve();
 }
@@ -164,13 +162,10 @@ int main(int argc, char **argv)
 {
   rkglInitGLUT( &argc, argv );
   rkglWindowCreateGLUT( 0, 0, 960, 680, argv[0] );
-
   glutDisplayFunc( display );
-  glutReshapeFunc( reshape );
   glutMouseFunc( mouse );
   glutMotionFunc( motion );
   glutKeyboardFunc( keyboard );
-  glutIdleFunc( rkglIdleFuncGLUT );
   init();
   glutMainLoop();
   return 0;

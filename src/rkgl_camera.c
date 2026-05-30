@@ -8,315 +8,466 @@
 
 /* viewport */
 
-void rkglVPLoad(rkglCamera *c)
+/* set viewport of a camera. */
+void rkglCameraSetViewport(rkglCamera *camera, GLint x, GLint y, GLsizei w, GLsizei h)
 {
-  glViewport( c->vp[0], c->vp[1], c->vp[2], c->vp[3] );
-  glScissor( c->vp[0], c->vp[1], c->vp[2], c->vp[3] );
-  glClearColor( c->bg[0], c->bg[1], c->bg[2], c->bg[3] );
+  camera->viewport[0] = x; /* x */
+  camera->viewport[1] = y; /* y */
+  camera->viewport[2] = w; /* width */
+  camera->viewport[3] = h; /* height */
+  rkglCameraLoadViewport( camera );
 }
 
-void rkglVPCreate(rkglCamera *c, GLint x, GLint y, GLsizei w, GLsizei h)
+/* load viewport of a camera to the current render. */
+void rkglCameraLoadViewport(rkglCamera *camera)
 {
-  c->vp[0] = x; /* x */
-  c->vp[1] = y; /* y */
-  c->vp[2] = w; /* width */
-  c->vp[3] = h; /* height */
-  rkglVPLoad( c );
+  glViewport( camera->viewport[0], camera->viewport[1], camera->viewport[2], camera->viewport[3] );
+  glScissor( camera->viewport[0], camera->viewport[1], camera->viewport[2], camera->viewport[3] );
+  glClearColor( camera->background[0], camera->background[1], camera->background[2], camera->background[3] );
 }
 
-void rkglVPGet(rkglCamera *c)
+/* get and store the current viewport to a camera. */
+void rkglCameraGetViewport(rkglCamera *camera)
 {
-  glGetIntegerv( GL_VIEWPORT, c->vp );
+  glGetIntegerv( GL_VIEWPORT, camera->viewport );
+}
+
+/* read RGB buffer of the current viewport of a camera. */
+ubyte *rkglCameraReadRGBBuffer(rkglCamera *camera, ubyte *buf)
+{
+  rkglReadBuffer( GL_RGB, camera->viewport[0], camera->viewport[1], camera->viewport[2], camera->viewport[3], buf );
+  return buf;
+}
+
+/* read depth buffer of the current viewport of a camera. */
+ubyte *rkglCameraReadDepthBuffer(rkglCamera *camera, ubyte *buf)
+{
+  rkglReadBuffer( GL_DEPTH_COMPONENT, camera->viewport[0], camera->viewport[1], camera->viewport[2], camera->viewport[3], buf );
+  return buf;
+}
+
+/* allocate internal depth buffer for the current viewport of a camera. */
+bool rkglCameraAllocInternalDepthBuffer(rkglCamera *camera)
+{
+  if( camera->_depthbuffer ) free( camera->_depthbuffer );
+  if( !( camera->_depthbuffer = zAlloc( ubyte, rkglCameraViewportSize(camera) )) ){
+    ZALLOCERROR();
+    return false;
+  }
+  return true;
+}
+
+/* free internal depth buffer for viewport of a camera. */
+void rkglCameraFreeInternalDepthBuffer(rkglCamera *camera)
+{
+  if( camera->_depthbuffer )
+    free( camera->_depthbuffer );
+}
+
+/* read internal depth buffer of the current viewport of a camera. */
+ubyte *rkglCameraReadInternalDepthBuffer(rkglCamera *camera)
+{
+  if( !camera->_depthbuffer )
+    if( !rkglCameraAllocInternalDepthBuffer( camera ) ) return NULL;
+  return rkglCameraReadDepthBuffer( camera, camera->_depthbuffer );
 }
 
 /* view volume */
 
-void rkglVVLoad(rkglCamera *c)
-{
-  glMatrixMode( GL_PROJECTION );
-  glLoadMatrixd( c->vv );
-}
-
-void rkglVVGet(rkglCamera *c)
-{
-  glGetDoublev( GL_PROJECTION_MATRIX, c->vv );
-}
-
-void rkglVVInit(void)
+/* reset viewvolume of the current render. */
+void rkglResetViewvolume(void)
 {
   glMatrixMode( GL_PROJECTION );
   glLoadIdentity();
 }
 
-void rkglOrtho(rkglCamera *c, GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near, GLdouble far)
+/* load viewvolume of a camera to the current render. */
+void rkglCameraLoadViewvolume(rkglCamera *camera)
 {
-  rkglVVInit();
-  glOrtho( left, right, bottom, top, near, far );
-  rkglVVGet( c );
+  glMatrixMode( GL_PROJECTION );
+  glLoadMatrixd( camera->_viewvolume );
 }
 
-void rkglFrustum(rkglCamera *c, GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near, GLdouble far)
+/* get and store the current viewvolume to a camera. */
+void rkglCameraGetViewvolume(rkglCamera *camera)
 {
-  rkglVVInit();
-  glFrustum( left, right, bottom, top, near, far );
-  rkglVVGet( c );
+  glGetDoublev( GL_PROJECTION_MATRIX, camera->_viewvolume );
 }
 
-void rkglOrthoCenter(rkglCamera *c, GLdouble x, GLdouble y, GLdouble near, GLdouble far)
+/* copy viewvolume of a camera to another. */
+void rkglCameraCopyViewvolume(rkglCamera *src, rkglCamera *dest)
 {
-  rkglOrtho( c, -x, x, -y, y, near, far );
+  dest->fovy = src->fovy;
+  dest->znear = src->znear;
+  dest->zfar = src->zfar;
+  memcpy( dest->_viewvolume, src->_viewvolume, sizeof(GLdouble)*16 );
 }
 
-void rkglFrustumCenter(rkglCamera *c, GLdouble x, GLdouble y, GLdouble near, GLdouble far)
+/* put viewvolume of a camera. */
+void rkglCameraPutViewvolume(rkglCamera *camera)
 {
-  rkglFrustum( c, -x, x, -y, y, near, far );
+  rkglResetViewvolume();
+  camera->_viewvolume_f( camera->left, camera->right, camera->bottom, camera->top, camera->znear, camera->zfar );
+  rkglCameraGetViewvolume( camera );
 }
 
-static void _rkglVVFitW2XY(rkglCamera *c, double width, double *x, double *y)
+/* set viewvolume of a camera centering a specified point. */
+void rkglCameraSetViewvolumeXYCenter(rkglCamera *camera, GLdouble x, GLdouble y)
 {
-  *x = 0.5 * width;
-  *y = *x / rkglVPAspect(c);
+  rkglCameraSetViewvolumeXY( camera, -x, x, -y, y );
 }
 
-static void _rkglVVFitH2XY(rkglCamera *c, double height, double *x, double *y)
+/* compute corner coordinates of viewplane of a camera that fit to width of the current viewport. */
+static void _rkglCameraSetViewvolumeXYCenterToFitWidth(rkglCamera *camera, double width)
 {
-  *y = 0.5 * height;
-  *x = *y * rkglVPAspect(c);
+  double x, y;
+  y = ( x = 0.5 * width ) / rkglCameraViewportAspectRatio(camera);
+  rkglCameraSetViewvolumeXYCenter( camera, x, y );
 }
 
-static void _rkglVVScaleW2XY(rkglCamera *c, double scale, double *x, double *y)
-{
-  _rkglVVFitW2XY( c, rkglVPWidth(c) * scale, x, y );
-}
-
-static void _rkglVVScaleH2XY(rkglCamera *c, double scale, double *x, double *y)
-{
-  _rkglVVFitH2XY( c, rkglVPHeight(c) * scale, x, y );
-}
-
-void rkglOrthoScaleW(rkglCamera *c, double scale, GLdouble near, GLdouble far)
-{
-  GLdouble x, y;
-
-  _rkglVVScaleW2XY( c, scale, &x, &y );
-  rkglOrthoCenter( c, x, y, near, far );
-}
-
-void rkglFrustumScaleW(rkglCamera *c, double scale, GLdouble near, GLdouble far)
-{
-  GLdouble x, y;
-
-  _rkglVVScaleW2XY( c, scale, &x, &y );
-  rkglFrustumCenter( c, x, y, near, far );
-}
-
-void rkglOrthoScaleH(rkglCamera *c, double scale, GLdouble near, GLdouble far)
-{
-  GLdouble x, y;
-
-  _rkglVVScaleH2XY( c, scale, &x, &y );
-  rkglOrthoCenter( c, x, y, near, far );
-}
-
-void rkglFrustumScaleH(rkglCamera *c, double scale, GLdouble near, GLdouble far)
-{
-  GLdouble x, y;
-
-  _rkglVVScaleH2XY( c, scale, &x, &y );
-  rkglFrustumCenter( c, x, y, near, far );
-}
-
-void rkglPerspective(rkglCamera *c, GLdouble fovy, GLdouble aspect, GLdouble near, GLdouble far)
-{
-  rkglVVInit();
-  gluPerspective( fovy, aspect, near, far );
-  rkglVVGet( c );
-}
-
-void rkglFrustumFit2VP(rkglCamera *cam, int w, int h, double width, double near, double far)
+/* compute corner coordinates of viewplane of a camera that fit to height of the current viewport. */
+static void _rkglCameraSetViewvolumeXYToFitHeight(rkglCamera *camera, double height)
 {
   double x, y;
 
-  rkglVPCreate( cam, 0, 0, w, h );
-  _rkglVVFitW2XY( cam, width, &x, &y );
-  rkglFrustumCenter( cam, x, y, near, far );
+  x = ( y = 0.5 * height ) * rkglCameraViewportAspectRatio(camera);
+  rkglCameraSetViewvolumeXYCenter( camera, x, y );
+}
+
+/* compute corner coordinates of viewplane of a camera by scaling its width to that of viewport. */
+void rkglCameraSetViewvolumeXYToScaleWidth(rkglCamera *camera, double scale)
+{
+  _rkglCameraSetViewvolumeXYCenterToFitWidth( camera, rkglCameraViewportWidth(camera) * scale );
+}
+
+/* compute corner coordinates of viewplane of a camera by scaling its height to that of viewport. */
+void rkglCameraSetViewvolumeXYToScaleHeight(rkglCamera *camera, double scale)
+{
+  _rkglCameraSetViewvolumeXYToFitHeight( camera, rkglCameraViewportHeight(camera) * scale );
+}
+
+/* set viewvolume of a camera that produces a parallel projection. */
+void rkglCameraSetViewvolumeOrthoXY(rkglCamera *camera, GLdouble left, GLdouble right, GLdouble bottom, GLdouble top)
+{
+  rkglCameraSetViewvolumeFovy( camera, 0 );
+  rkglCameraSetViewvolumeXY( camera, left, right, bottom, top );
+  rkglCameraSetOrtho( camera );
+}
+
+/* set viewvolume of a camera that produces a perspective projection. */
+void rkglCameraSetViewvolumeFrustumXY(rkglCamera *camera, GLdouble left, GLdouble right, GLdouble bottom, GLdouble top)
+{
+  rkglCameraSetViewvolumeFovy( camera, zRad2Deg( 2 * atan2( fabs( 0.5 * ( right - left ) ), camera->znear ) ) );
+  rkglCameraSetViewvolumeXY( camera, left, right, bottom, top );
+  rkglCameraSetFrustum( camera );
+}
+
+/* set viewvolume of a camera that produces perspective projection from field of view and aspect ratio. */
+void rkglCameraSetViewvolumeXYPerspective(rkglCamera *camera, GLdouble aspect)
+{
+  double x, y;
+
+  x = ( y = camera->znear * tan( 0.5 * zDeg2Rad( camera->fovy ) ) ) * aspect;
+  rkglCameraSetViewvolumeXYCenter( camera, x, y );
+  rkglCameraSetFrustum( camera );
 }
 
 /* camera angle */
 
-void rkglCALoad(rkglCamera *c)
-{
-  glMatrixMode( GL_MODELVIEW );
-  glLoadMatrixd( c->ca );
-}
-
-void rkglCAGet(rkglCamera *c)
-{
-  glGetDoublev( GL_MODELVIEW_MATRIX, c->ca );
-}
-
-zFrame3D *rkglCAGetFrame3D(rkglCamera *cam, zFrame3D *f)
-{
-  zMat3D m0;
-
-  zMat3DCreate( zFrame3DAtt(f),
-    cam->ca[0], cam->ca[1], cam->ca[2],
-    cam->ca[4], cam->ca[5], cam->ca[6],
-    cam->ca[8], cam->ca[9], cam->ca[10] );
-  zVec3DCreate( zFrame3DPos(f), -cam->ca[12], -cam->ca[13], -cam->ca[14] );
-  zMulMat3DVec3DDRC( zFrame3DAtt(f), zFrame3DPos(f) );
-  zMat3DCreate( &m0,
-    0, 0, 1,
-    1, 0, 0,
-    0, 1, 0 );
-  zMulMat3DMat3DTDRC( zFrame3DAtt(f), &m0 );
-  return f;
-}
-
-zVec3D *rkglCAGetViewVec(rkglCamera *cam, zVec3D *v)
-{
-  _zVec3DCreate( v, cam->ca[2], cam->ca[6], cam->ca[10] );
-  return v;
-}
-
-void rkglCAInit(void)
+/* set viewframe of a camera. */
+void rkglResetViewframe(void)
 {
   glMatrixMode( GL_MODELVIEW );
   glLoadIdentity();
 }
 
-void rkglCAAlign(rkglCamera *c)
+/* get and store viewframe matrix of the current render to an array of values. */
+void rkglGetViewframe(double viewframe[16])
 {
-  c->ca[2] = c->ca[4] = c->ca[9] = c->ca[15] = 1;
-  c->ca[0] = c->ca[1] = c->ca[3] = c->ca[5] = c->ca[6] = c->ca[7] =
-  c->ca[8] = c->ca[10]= c->ca[11]= c->ca[12]= c->ca[13]= c->ca[14]= 0;
-  rkglCALoad( c );
+  glGetDoublev( GL_MODELVIEW_MATRIX, viewframe );
 }
 
-static void _rkglCAPTR(double pan, double tilt, double roll)
+/* put a camera on the current render. */
+void rkglCameraPut(rkglCamera *camera)
 {
-  glRotated( -tilt, 0.0, 1.0, 0.0 );
-  glRotated( -roll, 1.0, 0.0, 0.0 );
-  glRotated( -pan,  0.0, 0.0, 1.0 );
+  GLdouble alignframe[] = {
+    0, 0, 1, 0,
+    1, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, 0, 1,
+  };
+  glMatrixMode( GL_MODELVIEW );
+  glLoadMatrixd( alignframe );
+  rkglXformInv( &camera->viewframe );
+  if( camera->platform )
+    rkglXformInv( camera->platform );
 }
 
-void rkglCASet(rkglCamera *c, double x, double y, double z, double pan, double tilt, double roll)
+/* set viewframe of a camera. */
+void rkglCameraSetViewframe(rkglCamera *camera, double x, double y, double z, double pan, double tilt, double roll)
 {
-  rkglCAAlign( c );
-  _rkglCAPTR( pan, tilt, roll );
-  glTranslated( -x, -y, -z );
-  rkglCAGet( c );
+  zFrame3DFromPosZYX( &camera->viewframe, x, y, z, zDeg2Rad(pan), zDeg2Rad(tilt), zDeg2Rad(roll) );
 }
 
-void rkglCAPTR(rkglCamera *c, double pan, double tilt, double roll)
+/* translate viewframe of a camera. */
+void rkglCameraTranslate(rkglCamera *camera, double x, double y, double z)
 {
-  double x, y, z;
-
-  rkglInvTranslated( c->ca, &x, &y, &z );
-  rkglCALoad( c );
-  glTranslated( x, y, z );
-  _rkglCAPTR( pan, tilt, roll );
-  glTranslated( -x, -y, -z );
-  rkglCAGet( c );
+  zFrame3DTranslateView( &camera->viewframe, x, y, z );
 }
 
-void rkglCALockonPTR(rkglCamera *c, double pan, double tilt, double roll)
+/* rotate viewframe of a camera. */
+void rkglCameraRotate(rkglCamera *camera, double angle, double x, double y, double z)
 {
-  rkglCALoad( c );
-  _rkglCAPTR( pan, tilt, roll );
-  rkglCAGet( c );
+  zFrame3DRotateView( &camera->viewframe, zDeg2Rad(angle), x, y, z );
 }
 
-void rkglCARotate(rkglCamera *c, double angle, double x, double y, double z)
+/* locate viewframe of a camera as to look at a specified point from another. */
+void rkglCameraLookAt(rkglCamera *camera, double eyex, double eyey, double eyez, double centerx, double centery, double centerz, double upx, double upy, double upz)
 {
-  rkglCAInit();
-  glRotated( angle, x, y, z );
-  glMultMatrixd( c->ca );
-  rkglCAGet( c );
+  zFrame3DLookAtView( &camera->viewframe, eyex, eyey, eyez, centerx, centery, centerz, upx, upy, upz );
 }
 
-void rkglCALockonRotate(rkglCamera *c, double angle, double x, double y, double z)
+/* rotate viewframe of a camera as to look at a specified point at a spcified distance. */
+void rkglCameraGazeAndRotate(rkglCamera *camera, double centerx, double centery, double centerz, double distance, double pan, double tilt, double roll)
 {
-  double ax, ay, az;
-
-  ax = c->ca[0]*x + c->ca[1]*y + c->ca[2]*z;
-  ay = c->ca[4]*x + c->ca[5]*y + c->ca[6]*z;
-  az = c->ca[8]*x + c->ca[9]*y + c->ca[10]*z;
-  rkglCALoad( c );
-  glRotated( angle, ax, ay, az );
-  rkglCAGet( c );
+  zFrame3DGazeAndRotateView( &camera->viewframe, centerx, centery, centerz, distance, zDeg2Rad(pan), zDeg2Rad(tilt), zDeg2Rad(roll) );
 }
-
-void rkglCAMove(rkglCamera *c, double x, double y, double z)
-{
-  rkglCALoad( c );
-  glTranslated( -x, -y, -z );
-  rkglCAGet( c );
-}
-
-void rkglCARelMove(rkglCamera *c, double x, double y, double z)
-{
-  rkglCAInit();
-  glTranslated( -y, -z, -x );
-  glMultMatrixd( c->ca );
-  rkglCAGet( c );
-}
-
-void rkglCALookAt(rkglCamera *c, GLdouble eyex, GLdouble eyey, GLdouble eyez, GLdouble centerx, GLdouble centery, GLdouble centerz, GLdouble upx, GLdouble upy, GLdouble upz)
-{
-  rkglCAInit();
-  gluLookAt( eyex, eyey, eyez, centerx, centery, centerz, upx, upy, upz );
-  rkglCAGet( c );
-}
-
-void rkglCARelMoveLeft(rkglCamera *cam, double d){  rkglCARelMove( cam, 0,-d, 0 ); }
-void rkglCARelMoveRight(rkglCamera *cam, double d){ rkglCARelMove( cam, 0, d, 0 ); }
-void rkglCARelMoveUp(rkglCamera *cam, double d){    rkglCARelMove( cam, 0, 0, d ); }
-void rkglCARelMoveDown(rkglCamera *cam, double d){  rkglCARelMove( cam, 0, 0,-d ); }
-void rkglCAZoomIn(rkglCamera *cam, double d){       rkglCARelMove( cam,-d, 0, 0 ); }
-void rkglCAZoomOut(rkglCamera *cam, double d){      rkglCARelMove( cam, d, 0, 0 ); }
-
-void rkglCATiltUp(rkglCamera *cam, double angle){   rkglCARotate( cam, angle,-1, 0, 0 ); }
-void rkglCATiltDown(rkglCamera *cam, double angle){ rkglCARotate( cam, angle, 1, 0, 0 ); }
-void rkglCAPanLeft(rkglCamera *cam, double angle){  rkglCARotate( cam, angle, 0,-1, 0 ); }
-void rkglCAPanRight(rkglCamera *cam, double angle){ rkglCARotate( cam, angle, 0, 1, 0 ); }
-
-void rkglCAAngleUp(rkglCamera *cam, double angle){    rkglCALockonRotate( cam, angle, 1, 0, 0 ); }
-void rkglCAAngleDown(rkglCamera *cam, double angle){  rkglCALockonRotate( cam, angle,-1, 0, 0 ); }
-void rkglCARoundLeft(rkglCamera *cam, double angle){  rkglCALockonRotate( cam, angle, 0, 1, 0 ); }
-void rkglCARoundRight(rkglCamera *cam, double angle){ rkglCALockonRotate( cam, angle, 0,-1, 0 ); }
 
 /* camera */
 
+/* initialize a camera. */
+rkglCamera *rkglCameraInit(rkglCamera *camera)
+{
+  rkglCameraSetBackground( camera, 0, 0, 0 );
+  rkglCameraSetViewport( camera, 0, 0, 0, 0 );
+  camera->fovy  = RKGL_DEFAULT_VV_FOVY;
+  camera->znear = RKGL_DEFAULT_VV_NEAR;
+  camera->zfar  = RKGL_DEFAULT_VV_FAR;
+  camera->_viewvolume_f = glFrustum;
+  zFrame3DIdent( &camera->viewframe );
+  rkglResetViewvolume();
+  rkglCameraGetViewvolume( camera );
+  rkglCameraSetPlatform( camera, NULL );
+  camera->_depthbuffer = NULL;
+  return camera;
+}
+
+/* destroy a camera. */
+void rkglCameraDestroy(rkglCamera *camera)
+{
+  rkglCameraFreeInternalDepthBuffer( camera );
+  rkglCameraInit( camera );
+}
+
+/* copy properties of a camera to anotoher. */
 rkglCamera *rkglCameraCopy(rkglCamera *src, rkglCamera *dest)
 {
   if( !src )
-    if( !( src = rkgl_default_cam ) ){
+    if( !( src = rkgl_default_camera ) ){
       ZRUNERROR( "default camera not assigned" );
       return NULL;
     }
-  rkglBGCopy( src, dest );
-  rkglVPCopy( src, dest );
-  rkglVVCopy( src, dest );
-  rkglCACopy( src, dest );
+  rkglCameraCopyBackground( src, dest );
+  rkglCameraCopyViewport( src, dest );
+  rkglCameraCopyViewframe( src, dest );
+  rkglCameraCopyViewvolume( src, dest );
   return dest;
 }
 
-/* default camera parameters */
+/* default camera */
 
-rkglCamera *rkgl_default_cam;
-double rkgl_default_vv_width;
-double rkgl_default_vv_near;
-double rkgl_default_vv_far;
-double rkgl_default_key_delta_trans;
-double rkgl_default_key_delta_angle;
+rkglCamera *rkgl_default_camera;
 
-void rkglSetDefaultCallbackParam(rkglCamera *cam, double width, double near, double far, double dl, double da)
+/* parse ZTK format */
+
+static void *_rkglCameraBackgroundFromZTK(void *obj, int i, void *arg, ZTK *ztk){
+  double r, g, b;
+  r = ZTKDouble(ztk);
+  g = ZTKDouble(ztk);
+  b = ZTKDouble(ztk);
+  rkglCameraSetBackground( (rkglCamera*)obj, r, g, b );
+  return obj;
+}
+static void *_rkglCameraViewportFromZTK(void *obj, int i, void *arg, ZTK *ztk){
+  double x, y, w, h;
+  x = ZTKDouble(ztk);
+  y = ZTKDouble(ztk);
+  w = ZTKDouble(ztk);
+  h = ZTKDouble(ztk);
+  rkglCameraSetViewport( (rkglCamera*)obj, x, y, w, h );
+  return obj;
+}
+
+static void *_rkglCameraFovyFromZTK(void *obj, int i, void *arg, ZTK *ztk){
+  ((rkglCamera*)obj)->fovy = ZTKDouble(ztk);
+  return obj;
+}
+static void *_rkglCameraNearFromZTK(void *obj, int i, void *arg, ZTK *ztk){
+  ((rkglCamera*)obj)->znear = ZTKDouble(ztk);
+  return obj;
+}
+static void *_rkglCameraFarFromZTK(void *obj, int i, void *arg, ZTK *ztk){
+  ((rkglCamera*)obj)->zfar = ZTKDouble(ztk);
+  return obj;
+}
+
+static void *_rkglCameraPosFromZTK(void *obj, int i, void *arg, ZTK *ztk){
+  zVec3DFromZTK( zFrame3DPos(&((rkglCamera*)obj)->viewframe), ztk );
+  return obj;
+}
+static void *_rkglCameraAttFromZTK(void *obj, int i, void *arg, ZTK *ztk){
+  zMat3DFromZTK( zFrame3DAtt(&((rkglCamera*)obj)->viewframe), ztk );
+  return obj;
+}
+static void *_rkglCameraRotFromZTK(void *obj, int i, void *arg, ZTK *ztk){
+  zVec3D aa;
+  zAAFromZTK( &aa, ztk );
+  zMat3DRotDRC( zFrame3DAtt(&((rkglCamera*)obj)->viewframe), &aa );
+  return obj;
+}
+static void *_rkglCameraFrameFromZTK(void *obj, int i, void *arg, ZTK *ztk){
+  zFrame3DFromZTK( &((rkglCamera*)obj)->viewframe, ztk );
+  return obj;
+}
+
+static bool _rkglCameraBackgroundFPrint(FILE *fp, int i, void *obj){
+  fprintf( fp, "%g, %g, %g\n", ((rkglCamera*)obj)->background[0], ((rkglCamera*)obj)->background[1], ((rkglCamera*)obj)->background[2] );
+  return true;
+}
+static bool _rkglCameraViewportFPrint(FILE *fp, int i, void *obj){
+  fprintf( fp, "%d, %d, %d, %d\n", ((rkglCamera*)obj)->viewport[0], ((rkglCamera*)obj)->viewport[1], ((rkglCamera*)obj)->viewport[2], ((rkglCamera*)obj)->viewport[3] );
+  return true;
+}
+
+static bool _rkglCameraFovyFPrint(FILE *fp, int i, void *obj){
+  fprintf( fp, "%g\n", ((rkglCamera*)obj)->fovy );
+  return obj;
+}
+static bool _rkglCameraNearFPrint(FILE *fp, int i, void *obj){
+  fprintf( fp, "%g\n", ((rkglCamera*)obj)->znear );
+  return obj;
+}
+static bool _rkglCameraFarFPrint(FILE *fp, int i, void *obj){
+  fprintf( fp, "%g\n", ((rkglCamera*)obj)->zfar );
+  return obj;
+}
+
+static bool _rkglCameraFrameFPrint(FILE *fp, int i, void *obj){
+  zFrame3DFPrint( fp, &((rkglCamera*)obj)->viewframe );
+  return true;
+}
+
+static const ZTKPrp __ztk_prp_camera[] = {
+  { ZTK_KEY_ROKIGL_CAMERA_BACKGROUND, 1, _rkglCameraBackgroundFromZTK, _rkglCameraBackgroundFPrint },
+  { ZTK_KEY_ROKIGL_CAMERA_VIEWPORT,   1, _rkglCameraViewportFromZTK, _rkglCameraViewportFPrint },
+};
+
+static const ZTKPrp __ztk_prp_camera_viewvolume[] = {
+  { ZTK_KEY_ROKIGL_CAMERA_FOVY, 1, _rkglCameraFovyFromZTK, _rkglCameraFovyFPrint },
+  { ZTK_KEY_ROKIGL_CAMERA_NEAR, 1, _rkglCameraNearFromZTK, _rkglCameraNearFPrint },
+  { ZTK_KEY_ROKIGL_CAMERA_FAR,  1, _rkglCameraFarFromZTK, _rkglCameraFarFPrint },
+};
+
+static const ZTKPrp __ztk_prp_camera_viewframe[] = {
+  { ZTK_KEY_ROKIGL_CAMERA_POS,   1, _rkglCameraPosFromZTK, NULL },
+  { ZTK_KEY_ROKIGL_CAMERA_ATT,   1, _rkglCameraAttFromZTK, NULL },
+  { ZTK_KEY_ROKIGL_CAMERA_ROT,  -1, _rkglCameraRotFromZTK, NULL },
+  { ZTK_KEY_ROKIGL_CAMERA_FRAME, 1, _rkglCameraFrameFromZTK, _rkglCameraFrameFPrint },
+};
+
+/* read a 3D shape from a ZTK format processor. */
+rkglCamera *rkglCameraFromZTK(rkglCamera *camera, ZTK *ztk)
 {
-  rkgl_default_cam = cam;
-  rkgl_default_vv_width = width;
-  rkgl_default_vv_near = near;
-  rkgl_default_vv_far = far;
-  rkgl_default_key_delta_trans = dl;
-  rkgl_default_key_delta_angle = da;
+  rkglCameraInit( camera );
+  if( !_ZTKEvalKey( camera, NULL, ztk, __ztk_prp_camera_viewvolume ) ) return NULL;
+  if( !_ZTKEvalKey( camera, NULL, ztk, __ztk_prp_camera_viewframe ) ) return NULL;
+  if( !_ZTKEvalKey( camera, NULL, ztk, __ztk_prp_camera ) ) return NULL;
+  return camera;
+}
+
+/* print out a camera to a file. */
+void rkglCameraFPrintZTK(FILE *fp, rkglCamera *camera)
+{
+  if( !camera ) return;
+  _ZTKPrpKeyFPrint( fp, camera, __ztk_prp_camera );
+  _ZTKPrpKeyFPrint( fp, camera, __ztk_prp_camera_viewvolume );
+  _ZTKPrpKeyFPrint( fp, camera, __ztk_prp_camera_viewframe );
+  fprintf( fp, "\n" );
+}
+
+/* camera array */
+
+/* allocate an array of cameras. */
+bool rkglCameraArrayAlloc(rkglCameraArray *cameraarray, int num)
+{
+  zArrayAlloc( cameraarray, rkglCamera, num );
+  return zArraySize(cameraarray) != 0 ? true : false;
+}
+
+static void *_rkglCameraArrayCameraFromZTK(void *obj, int i, void *arg, ZTK *ztk)
+{
+  return rkglCameraFromZTK( zArrayElemNC((rkglCameraArray*)obj,i), ztk );
+}
+
+static bool _rkglCameraArrayCameraFPrintZTK(FILE *fp, int i, void *obj)
+{
+  rkglCameraFPrintZTK( fp, zArrayElemNC((rkglCameraArray*)obj,i) );
+  return true;
+}
+
+static const ZTKPrp __ztk_prp_cameraarray[] = {
+  { ZTK_TAG_ROKIGL_CAMERA, -1, _rkglCameraArrayCameraFromZTK, _rkglCameraArrayCameraFPrintZTK },
+};
+
+/* read properties of cameras from a ZTK format processor. */
+bool rkglCameraArrayFromZTK(rkglCameraArray *cameraarray, ZTK *ztk)
+{
+  int num;
+
+  if( ( num = ZTKCountTag( ztk, ZTK_TAG_ROKIGL_CAMERA ) ) == 0 ) return true;
+  if( !rkglCameraArrayAlloc( cameraarray, num ) ) return false;
+  _ZTKEvalTag( cameraarray, NULL, ztk, __ztk_prp_cameraarray );
+  return true;
+}
+
+/* print properties of cameras out to a file. */
+void rkglCameraArrayFPrintZTK(FILE *fp, rkglCameraArray *cameraarray)
+{
+  ZTKPrp *prp;
+  size_t prpnum;
+
+  prpnum = _ZTKPrpNum( __ztk_prp_cameraarray );
+  if( !( prp = ZTKPrpDup( __ztk_prp_cameraarray, prpnum ) ) ){
+    ZALLOCERROR();
+    return;
+  }
+  ZTKPrpSetNum( prp, prpnum, ZTK_TAG_ROKIGL_CAMERA, zArraySize(cameraarray) );
+  ZTKPrpTagFPrint( fp, cameraarray, prp, prpnum );
+  free( prp );
+}
+
+/* read multiple cameras from a ZTK format file. */
+rkglCameraArray *rkglCameraArrayReadZTK(rkglCameraArray *cameraarray, const char filename[])
+{
+  ZTK ztk;
+
+  ZTKInit( &ztk );
+  ZTKParse( &ztk, filename );
+  if( !rkglCameraArrayFromZTK( cameraarray, &ztk ) ) cameraarray = NULL;
+  ZTKDestroy( &ztk );
+  return cameraarray;
+}
+
+/* write multiple cameras to a ZTK format file. */
+bool rkglCameraArrayWriteZTK(rkglCameraArray *cameraarray, const char filename[])
+{
+  FILE *fp;
+
+  if( !( fp = zOpenZTKFile( filename, "w" ) ) ){
+    ZOPENERROR( filename );
+    return false;
+  }
+  rkglCameraArrayFPrintZTK( fp, cameraarray );
+  fclose( fp );
+  return true;
 }

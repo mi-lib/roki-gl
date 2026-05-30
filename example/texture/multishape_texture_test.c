@@ -3,25 +3,26 @@
 rkglCamera cam;
 rkglLight light;
 
-zMShape3D ms;
+zMultiShape3D ms;
 
 void display(void)
 {
   rkglClear();
-  rkglCALoad( &cam );
+  rkglCameraPut( &cam );
   rkglLightPut( &light );
   glPushMatrix();
-  rkglMShape( &ms, RKGL_FACE, &light );
+  rkglMultiShape( &ms, RKGL_FACE, &light );
   glPopMatrix();
   glutSwapBuffers();
 }
 
 void init(void)
 {
-  rkglSetDefaultCallbackParam( &cam, 2.0, 2, 60, 1.0, 5.0 );
-
-  rkglBGSet( &cam, 0.5, 0.5, 0.5 );
-  rkglCASet( &cam, 10, 0, 5, 0, -30, 0 );
+  rkglCameraInit( &cam );
+  rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
+  rkglCameraLookAt( &cam, 10, 0, 3, 0, 0, 0, 0, 0, 1 );
+  rkglCameraSetViewvolumeZFovy( &cam, 1, 100, 30.0 );
+  rkglSetDefaultCamera( &cam );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
@@ -29,21 +30,14 @@ void init(void)
 
   /* following calls are mandatory. */
   rkglTextureEnable();
-  zMShape3DReadZTK( &ms, "lena_cube.ztk" );
+  zMultiShape3DReadZTK( &ms, "lena_cube.ztk" );
 }
 
 int main(int argc, char *argv[])
 {
   rkglInitGLUT( &argc, argv );
   rkglWindowCreateGLUT( 0, 0, 640, 480, argv[0] );
-
   glutDisplayFunc( display );
-  glutVisibilityFunc( rkglVisFuncGLUT );
-  glutReshapeFunc( rkglReshapeFuncGLUT );
-  glutKeyboardFunc( rkglKeyFuncGLUT );
-  glutSpecialFunc( rkglSpecialFuncGLUT );
-  glutMouseFunc( rkglMouseFuncGLUT );
-  glutMotionFunc( rkglMouseDragFuncGLUT );
   init();
   glutMainLoop();
   return 0;

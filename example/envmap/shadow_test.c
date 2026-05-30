@@ -19,20 +19,6 @@ void display(void)
   glutSwapBuffers();
 }
 
-void reshape(int w, int h)
-{
-#if 0
-  double x, y;
-
-  rkglVPCreate( &cam, 0, 0, w, h );
-  x = 0.5 * 5.0;
-  y = x / rkglVPAspect(&cam);
-  rkglFrustum( &cam, -x, x, -y, y, 5.0, 40.0 );
-#else
-  rkglFrustumFit2VP( &cam, w, h, 5.0, 5.0, 40.0 );
-#endif
-}
-
 /* 1024x1024 texture only available with framebuffer */
 #define TEXWIDTH  1024
 #define TEXHEIGHT 1024
@@ -46,9 +32,11 @@ void init(void)
   zBox3D box3d;
   zVec3D c1, c2;
 
-  rkglSetDefaultCallbackParam( &cam, 5.0, 5, 40, 1.0, 5.0 );
-  rkglBGSet( &cam, 0.5, 0.5, 0.5 );
-  rkglCASet( &cam, 10, 0, 4, 0, -30, 0 );
+  rkglCameraInit( &cam );
+  rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
+  rkglCameraSetViewframe( &cam, 15, 0, 6, 0, -30, 0 );
+  rkglCameraSetViewvolumeZFovy( &cam, 1, 40, 30 );
+  rkglSetDefaultCamera( &cam );
   rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
   rkglLightMove( &light, 3, 6, 20 );
   rkglShadowInit( &shadow, TEXWIDTH, TEXHEIGHT, 6.0, 0.2, 0 );
@@ -93,14 +81,7 @@ int main(int argc, char *argv[])
 {
   rkglInitGLUT( &argc, argv );
   rkglWindowCreateGLUT( 0, 0, 480, 320, argv[0] );
-
   glutDisplayFunc( display );
-  glutVisibilityFunc( rkglVisFuncGLUT );
-  glutReshapeFunc( reshape );
-  glutKeyboardFunc( rkglKeyFuncGLUT );
-  glutSpecialFunc( rkglSpecialFuncGLUT );
-  glutMouseFunc( rkglMouseFuncGLUT );
-  glutMotionFunc( rkglMouseDragFuncGLUT );
   init();
   glutMainLoop();
   return 0;

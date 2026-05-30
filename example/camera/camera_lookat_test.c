@@ -31,16 +31,14 @@ GLdouble color[][4] = {
 
 rkglCamera cam;
 
-double r = 0;
 double eyex, eyey, eyez, centerx, centery, centerz;
 
 void display(void)
 {
   int i, j;
 
-  rkglCALoad( &cam );
+  rkglCameraPut( &cam );
   glPushMatrix();
-  glRotated( r, 0, 1, 0 );
   rkglClear();
   glBegin( GL_TRIANGLE_STRIP );
   for( i=0; i<6; i++ ){
@@ -55,8 +53,9 @@ void display(void)
 
 void resize(int w, int h)
 {
-  rkglVPCreate( &cam, 0, 0, w, h );
-  rkglFrustumScaleH( &cam, 1.0/160, 1, 10 );
+  rkglCameraSetViewport( &cam, 0, 0, w, h );
+  rkglCameraAdjustViewvolumePerspective( &cam );
+  rkglCameraPutViewvolume( &cam );
 }
 
 void keyboard(unsigned char key, int x, int y)
@@ -70,33 +69,33 @@ void keyboard(unsigned char key, int x, int y)
   case 'J': centerz -= 0.5; break;
   case 'K': centerz += 0.5; break;
   case 'L': centery += 0.5; break;
-  case ' ':
-    r += 10; break;
   case 'q': case 'Q': case '\033':
     exit( EXIT_SUCCESS );
   default: ;
   }
-  rkglCALookAt( &cam, eyex, eyey, eyez, centerx, centery, centerz, 0, 0, 1 );
+  rkglCameraLookAt( &cam, eyex, eyey, eyez, centerx, centery, centerz, 0, 0, 1 );
 }
 
 void init(void)
 {
   glCullFace( GL_FRONT );
-  rkglBGSet( &cam, 0.5, 0.5, 0.5 );
-  eyex = 6; eyey = 0; eyez = 3;
+  rkglCameraInit( &cam );
+  rkglCameraSetBackground( &cam, 0.5, 0.5, 0.5 );
+  rkglCameraSetViewvolumeZFovy( &cam, 1, 30, 30 );
+  eyex = 10; eyey = 0; eyez = 3;
   centerx = centery = centerz = 0;
-  rkglCALookAt( &cam, eyex, eyey, eyez, centerx, centery, centerz, 0, 0, 1 );
+  rkglCameraLookAt( &cam, eyex, eyey, eyez, centerx, centery, centerz, 0, 0, 1 );
 }
 
 int main(int argc, char *argv[])
 {
   rkglInitGLUT( &argc, argv );
   rkglWindowCreateGLUT( 0, 0, 320, 240, argv[0] );
-
   glutDisplayFunc( display );
   glutReshapeFunc( resize );
   glutKeyboardFunc( keyboard );
-  glutIdleFunc( rkglIdleFuncGLUT );
+  glutMouseFunc( NULL );
+  glutMotionFunc( NULL );
   init();
   glutMainLoop();
   return 0;

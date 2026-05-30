@@ -18,12 +18,13 @@ int rkglInitGLFW(int *argc, char **argv)
   return 0;
 }
 
-void rkglWindowOpenGLFW(GLFWwindow* window, int x, int y)
+void rkglWindowOpenGLFW(GLFWwindow *window, int x, int y)
 {
   /* Create window by calling glfwCreateWindow() before calling this function. */
   glfwSetWindowPos( window, x, y );
   glfwShowWindow( window );
   glfwMakeContextCurrent( window );
+  rkglSetDefaultFuncGLFW( window );
 
 #ifdef __ROKI_GL_USE_GLEW
   rkglInitGLEW();
@@ -48,18 +49,20 @@ GLFWwindow *rkglWindowCreateAndOpenGLFW(int x, int y, int width, int height, con
 
 void rkglReshapeFuncGLFW(GLFWwindow* window, int w, int h)
 {
-  rkglFrustumFit2VP( rkgl_default_cam, w, h, rkgl_default_vv_width, rkgl_default_vv_near, rkgl_default_vv_far );
+  rkglCameraSetViewport( rkgl_default_camera, 0, 0, w, h );
+  rkglCameraAdjustViewvolumePerspective( rkgl_default_camera );
+  rkglCameraPutViewvolume( rkgl_default_camera );
 }
 
 void rkglCharFuncGLFW(GLFWwindow* window, unsigned int codepoint)
 {
   switch( codepoint ){
-  case 'h': rkglCARelMoveLeft(  rkgl_default_cam, rkgl_default_key_delta_trans ); break;
-  case 'l': rkglCARelMoveRight( rkgl_default_cam, rkgl_default_key_delta_trans ); break;
-  case 'k': rkglCARelMoveUp(    rkgl_default_cam, rkgl_default_key_delta_trans ); break;
-  case 'j': rkglCARelMoveDown(  rkgl_default_cam, rkgl_default_key_delta_trans ); break;
-  case 'z': rkglCAZoomIn(       rkgl_default_cam, rkgl_default_key_delta_trans ); break;
-  case 'Z': rkglCAZoomOut(      rkgl_default_cam, rkgl_default_key_delta_trans ); break;
+  case 'h': rkglKeyDefaultCameraMoveLeft();  break;
+  case 'l': rkglKeyDefaultCameraMoveRight(); break;
+  case 'k': rkglKeyDefaultCameraMoveUp();    break;
+  case 'j': rkglKeyDefaultCameraMoveDown();  break;
+  case 'z': rkglKeyDefaultCameraZoomIn();    break;
+  case 'Z': rkglKeyDefaultCameraZoomOut();   break;
   case 'q': case 'Q': case '\033':
     raise( SIGTERM );
     exit( EXIT_SUCCESS );
@@ -70,15 +73,12 @@ void rkglCharFuncGLFW(GLFWwindow* window, unsigned int codepoint)
 
 void rkglKeyFuncGLFW(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
-  int c;
-
   if( action == GLFW_PRESS){
-    c = ( mods & GLFW_MOD_CONTROL );
     switch( key ){
-    case GLFW_KEY_UP:    rkglKeyCARotateUp(    rkgl_default_cam, rkgl_default_key_delta_angle, c ); break;
-    case GLFW_KEY_DOWN:  rkglKeyCARotateDown(  rkgl_default_cam, rkgl_default_key_delta_angle, c ); break;
-    case GLFW_KEY_LEFT:  rkglKeyCARotateLeft(  rkgl_default_cam, rkgl_default_key_delta_angle, c ); break;
-    case GLFW_KEY_RIGHT: rkglKeyCARotateRight( rkgl_default_cam, rkgl_default_key_delta_angle, c ); break;
+    case GLFW_KEY_UP:    rkglKeyDefaultCameraTiltUp();   break;
+    case GLFW_KEY_DOWN:  rkglKeyDefaultCameraTiltDown(); break;
+    case GLFW_KEY_LEFT:  rkglKeyDefaultCameraPanLeft();  break;
+    case GLFW_KEY_RIGHT: rkglKeyDefaultCameraPanRight(); break;
     default: ;
     }
     glfwPostEmptyEvent();
@@ -98,10 +98,10 @@ void rkglMouseWheelFuncGLFW(GLFWwindow* window, double xoffset, double yoffset)
 {
   /* if yoffset == 0, nothing happens. */
   if ( yoffset < 0 ){
-    rkglCAZoomIn(  rkgl_default_cam, rkgl_default_key_delta_trans );
+    rkglKeyDefaultCameraZoomIn();
   } else
   if ( yoffset > 0 ){
-    rkglCAZoomOut( rkgl_default_cam, rkgl_default_key_delta_trans );
+    rkglKeyDefaultCameraZoomOut();
   }
 }
 
@@ -112,11 +112,11 @@ void rkglMouseDragFuncGLFW(GLFWwindow* window, double x, double y)
 
   px = floor( x );
   py = floor( y );
-  rkglMouseDragGetIncrementer( rkgl_default_cam, px, py, &dx, &dy );
+  rkglMouseDragGetIncrementer( rkgl_default_camera, px, py, &dx, &dy );
   switch( rkgl_mouse_button ){
-  case GLFW_MOUSE_BUTTON_LEFT:   rkglMouseDragCARotate(    rkgl_default_cam, dx, dy, GLFW_KEY_LEFT_CONTROL ); break;
-  case GLFW_MOUSE_BUTTON_RIGHT:  rkglMouseDragCATranslate( rkgl_default_cam, dx, dy, GLFW_KEY_LEFT_CONTROL ); break;
-  case GLFW_MOUSE_BUTTON_MIDDLE: rkglMouseDragCAZoom(      rkgl_default_cam, dx, dy, GLFW_KEY_LEFT_CONTROL ); break;
+  case GLFW_MOUSE_BUTTON_LEFT:   rkglMouseDragDefaultCameraRotate( dx, dy, GLFW_KEY_LEFT_CONTROL ); break;
+  case GLFW_MOUSE_BUTTON_RIGHT:  rkglMouseDragDefaultCameraTranslate( dx, dy ); break;
+  case GLFW_MOUSE_BUTTON_MIDDLE: rkglMouseDragDefaultCameraZoom( dx, dy ); break;
   default: ;
   }
   rkglMouseStoreXY( px, py );
@@ -128,4 +128,15 @@ void rkglVisFuncGLFW(GLFWwindow* window)
   /* glfw doesn't have a function corresponding to glutIdleFunc() & callback */
   if( glfwGetWindowAttrib( window, GLFW_VISIBLE ) == GLFW_TRUE )
     glfwPostEmptyEvent();
+}
+
+/* set all callback functions for default functions. */
+void rkglSetDefaultFuncGLFW(GLFWwindow *window)
+{
+  glfwSetWindowSizeCallback( window, rkglReshapeFuncGLFW );
+  glfwSetCharCallback( window, rkglCharFuncGLFW );
+  glfwSetKeyCallback( window, rkglKeyFuncGLFW );
+  glfwSetMouseButtonCallback( window, rkglMouseFuncGLFW );
+  glfwSetScrollCallback( window, rkglMouseWheelFuncGLFW );
+  glfwSetCursorPosCallback( window, rkglMouseDragFuncGLFW );
 }

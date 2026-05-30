@@ -62,7 +62,7 @@ void main (void)\
 }"
 
 #define rkglShaderSetShadowMap( shader, i )   glUniform1i( glGetUniformLocation( shader, "shadow_map" ), i )
-#define rkglShaderSetShadowRatio( shader, f ) glUniform1f( glGetUniformLocation( shader, "shadow_ratio" ), f )
+#define rkglShaderSetShadowDarknessRatio( shader, f ) glUniform1f( glGetUniformLocation( shader, "shadow_ratio" ), f )
 #define rkglShaderSetShadowBlur( shader, f )  glUniform1f( glGetUniformLocation( shader, "shadow_blur" ), f )
 
 #define rkglShaderCreateShadow() rkglShaderCreate( RKGL_SHADER_VERT_SHADOW, RKGL_SHADER_FRAG_SHADOW )

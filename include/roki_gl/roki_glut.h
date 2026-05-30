@@ -31,6 +31,9 @@ __ROKI_GL_EXPORT void rkglMouseFuncGLUT(int button, int event, int x, int y);
 __ROKI_GL_EXPORT void rkglMouseDragFuncGLUT(int x, int y);
 __ROKI_GL_EXPORT void rkglVisFuncGLUT(int visible);
 
+/*! \brief set all callback functions for default functions. */
+__ROKI_GL_EXPORT void rkglSetDefaultFuncGLUT(void);
+
 __END_DECLS
 
 #endif /* __RKGL_GLUT_H__ */

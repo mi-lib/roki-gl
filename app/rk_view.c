@@ -11,10 +11,12 @@ enum{
   OPT_PAN, OPT_TILT, OPT_ROLL, OPT_OX, OPT_OY, OPT_OZ, OPT_AUTO,
   OPT_WIDTH, OPT_HEIGHT,
   OPT_SCALE,
+  OPT_NONFACE,
   OPT_WIREFRAME,
   OPT_BG,
   OPT_LX, OPT_LY, OPT_LZ,
   OPT_SMOOTH, OPT_SHADOW,
+  OPT_PCD_NORMAL,
   OPT_CAPTURE,
   OPT_HELP,
   OPT_INVALID
@@ -23,20 +25,22 @@ zOption opt[] = {
   { "pan", NULL, "<pan value>", "set camera pan angle", (char *)"0", false },
   { "tilt", NULL, "<tilt value>", "set camera tilt angle", (char *)"0", false },
   { "roll", NULL, "<roll value>", "set camera roll angle", (char *)"0", false },
-  { "x", NULL, "<value>", "camera position in x axis", (char *)"5", false },
+  { "x", NULL, "<value>", "camera position in x axis", (char *)"2", false },
   { "y", NULL, "<value>", "camera position in y axis", (char *)"0", false },
   { "z", NULL, "<value>", "camera position in z axis", (char *)"0", false },
   { "auto", NULL, NULL, "automatic allocation of camera", NULL, false },
   { "width", NULL, "<width>", "set window width", (char *)"500", false },
   { "height", NULL, "<height>", "set window height", (char *)"500", false },
   { "scale", NULL, "<scale>", "set scale factor", (char *)"1.0", false },
-  { "wireframe", NULL, NULL, "draw objects as wireframe models", NULL, false },
+  { "nonface", NULL, NULL, "undraw solid model of the kinematic chain", NULL, false },
+  { "wireframe", NULL, "<color name>", "draw wireframes of objects", (char *)"white", false },
   { "bg", NULL, "<RGB#hex>", "set background color", (char *)"#010101", false },
   { "lx", NULL, "<value>", "light position in x axis", (char *)"3", false },
   { "ly", NULL, "<value>", "light position in y axis", (char *)"0", false },
   { "lz", NULL, "<value>", "light position in z axis", (char *)"3", false },
   { "smooth", NULL, NULL, "enable antialias", NULL, false },
   { "shadow", NULL, NULL, "enable shadow", NULL, false },
+  { "normal", NULL, "<radius of vicinity>", "enable normal vector estimation (only available for pointcloud)", (char *)"0.003", false },
   { "xwd", NULL, "<suf>", "output image format suffix", (char *)"png", false },
   { "help", NULL, NULL, "show this message", NULL, false },
   { NULL, NULL, NULL, NULL, NULL, false },
@@ -53,7 +57,6 @@ int model = -1;
 
 /* view volume */
 zSphere3D boundingsphere;
-double vv_width, vv_near, vv_far;
 
 void rk_viewUsage(void)
 {
@@ -88,30 +91,30 @@ int rk_viewReturnDir(char *cwd)
   return 0;
 }
 
-void rk_viewReadPH(zMShape3D *ms, const char *filename, char *sfx)
+void rk_viewReadPH(zMultiShape3D *ms, const char *filename, const char *sfx)
 {
-  zMShape3DInit( ms );
-  zArrayAlloc( &ms->optic, zOpticalInfo, 1 );
-  zArrayAlloc( &ms->shape, zShape3D, 1 );
-  if( zMShape3DOpticNum(ms) != 1 || zMShape3DShapeNum(ms) != 1 ){
+  zMultiShape3DInit( ms );
+  zMultiShape3DAllocOpticArray( ms, 1 );
+  zMultiShape3DAllocShapeArray( ms, 1 );
+  if( zMultiShape3DOpticNum(ms) != 1 || zMultiShape3DShapeNum(ms) != 1 ){
     ZALLOCERROR();
     exit( EXIT_FAILURE );
   }
-  zOpticalInfoInit( zMShape3DOptic(ms,0) );
+  zOpticalInfoInit( zMultiShape3DOptic(ms,0) );
   if( strcmp( sfx, "dae" ) == 0 || strcmp( sfx, "DAE" ) == 0 ){
-    if( !zShape3DReadFileDAE( zMShape3DShape(ms,0), filename ) ) exit( EXIT_FAILURE );
+    if( !zShape3DReadFileDAE( zMultiShape3DShape(ms,0), filename ) ) exit( EXIT_FAILURE );
     return;
   }
   if( strcmp( sfx, "stl" ) == 0 || strcmp( sfx, "STL" ) == 0 ){
-    if( !zShape3DReadFileSTL( zMShape3DShape(ms,0), filename ) ) exit( EXIT_FAILURE );
+    if( !zShape3DReadFileSTL( zMultiShape3DShape(ms,0), filename ) ) exit( EXIT_FAILURE );
     return;
   }
   if( strcmp( sfx, "obj" ) == 0 || strcmp( sfx, "OBJ" ) == 0 ){
-    if( !zShape3DReadFileOBJ( zMShape3DShape(ms,0), filename ) ) exit( EXIT_FAILURE );
+    if( !zShape3DReadFileOBJ( zMultiShape3DShape(ms,0), filename ) ) exit( EXIT_FAILURE );
     return;
   }
   if( strcmp( sfx, "ply" ) == 0 || strcmp( sfx, "PLY" ) == 0 ){
-    if( !zShape3DReadFilePLY( zMShape3DShape(ms,0), filename ) ) exit( EXIT_FAILURE );
+    if( !zShape3DReadFilePLY( zMultiShape3DShape(ms,0), filename ) ) exit( EXIT_FAILURE );
     return;
   }
   ZRUNERROR( "unknown format %s", sfx );
@@ -122,10 +125,11 @@ void rk_viewReadModel(zStrAddrList *modellist)
 {
   zStrListCell *cp;
   zVec3DList pointlist_all;
-  zVec3DData pointdata, pointdata_all;
-  char *sfx;
+  zVec3DData pointdata, normaldata, pointdata_all;
+  const char *sfx;
   double scale;
-  zMShape3D ms;
+  zMultiShape3D ms;
+  ubyte disptype;
   char dirname[BUFSIZ], filename[BUFSIZ], cwd[BUFSIZ];
   int i;
 
@@ -139,15 +143,24 @@ void rk_viewReadModel(zStrAddrList *modellist)
         ZOPENERROR( cp->data );
         rk_viewUsage();
       }
-      rkglPointCloud( &pointdata, ZVEC3DZERO, 1 );
+      rkglRGBByStr( "white" ); /* for point cloud */
+      glPointSize( 1.0 );
+      rkglPointCloud( &pointdata );
+      if( opt[OPT_PCD_NORMAL].flag ){
+        zVec3DDataNormalVec_Octree( &pointdata, atof( opt[OPT_PCD_NORMAL].arg ), &normaldata );
+        rkglRGBByStr( "green" ); /* for normal vectors */
+        glLineWidth( 0.5 );
+        rkglPointCloudNormal( &pointdata, &normaldata, 0.01 );
+        zVec3DDataDestroy( &normaldata );
+      }
       if( opt[OPT_AUTO].flag )
-        zVec3DListAppendArray( &pointlist_all, &pointdata.data.array );
+        zVec3DListAppendArray( &pointlist_all, pointdata.data.array );
       else
         zVec3DDataDestroy( &pointdata );
       continue;
     }
     if( strcmp( sfx, "ztk" ) == 0 ){
-      if( !zMShape3DReadZTK( &ms, filename ) ){
+      if( !zMultiShape3DReadZTK( &ms, filename ) ){
         ZOPENERROR( cp->data );
         rk_viewUsage();
       }
@@ -157,15 +170,20 @@ void rk_viewReadModel(zStrAddrList *modellist)
 
     if( opt[OPT_SCALE].flag ){
       scale = atof( opt[OPT_SCALE].arg );
-      for( i=0; i<zMShape3DShapeNum(&ms); i++ )
-        zPH3DScale( zShape3DPH(zMShape3DShape(&ms,i)), scale );
+      for( i=0; i<zMultiShape3DShapeNum(&ms); i++ )
+        zPH3DScaleDRC( zShape3DPH(zMultiShape3DShape(&ms,i)), scale );
     }
-    rkglMShape( &ms, opt[OPT_WIREFRAME].flag ? RKGL_WIREFRAME : RKGL_FACE, &light );
+    disptype = opt[OPT_NONFACE].flag ? 0 : RKGL_FACE;
+    if( opt[OPT_WIREFRAME].flag ){
+      disptype |= RKGL_WIREFRAME;
+      rkglRGBByStr( opt[OPT_WIREFRAME].arg );
+    }
+    rkglMultiShape( &ms, disptype, &light );
     if( opt[OPT_AUTO].flag ){
-      zMShape3DVertData( &ms, &pointdata );
-      zListAppend( &pointlist_all, &pointdata.data.list );
+      zMultiShape3DVertData( &ms, &pointdata );
+      zListSpliceAndMoveZ( &pointlist_all, pointdata.data.list );
     }
-    zMShape3DDestroy( &ms );
+    zMultiShape3DDestroy( &ms );
   }
   glEndList();
   if( opt[OPT_AUTO].flag ){
@@ -179,40 +197,49 @@ void rk_viewReadModel(zStrAddrList *modellist)
 
 void rk_viewResetCamera(void)
 {
+  double vv_fovy, vv_near, vv_far;
+
   if( opt[OPT_AUTO].flag ){
-    rkglCALookAt( &cam,
+    rkglCameraLookAt( &cam,
       zSphere3DCenter(&boundingsphere)->c.x+zSphere3DRadius(&boundingsphere)*18, zSphere3DCenter(&boundingsphere)->c.y, zSphere3DCenter(&boundingsphere)->c.z,
       zSphere3DCenter(&boundingsphere)->c.x, zSphere3DCenter(&boundingsphere)->c.y, zSphere3DCenter(&boundingsphere)->c.z,
       0, 0, 1 );
-    vv_width = zSphere3DRadius(&boundingsphere) / 8;
+    vv_fovy = 2 * zRad2Deg( asin( 1.0/18 ) );
     vv_near = zSphere3DRadius(&boundingsphere);
     vv_far = 1000*zSphere3DRadius(&boundingsphere);
   } else{
-    rkglCASet( &cam,
+    rkglCameraSetViewframe( &cam,
       atof(opt[OPT_OX].arg), atof(opt[OPT_OY].arg), atof(opt[OPT_OZ].arg),
       atof(opt[OPT_PAN].arg), atof(opt[OPT_TILT].arg), atof(opt[OPT_ROLL].arg) );
-    vv_width = 0.2;
+    vv_fovy = 30.0;
     vv_near = 1;
     vv_far = 200;
   }
+  rkglCameraSetViewvolumeZFovy( &cam, vv_near, vv_far, vv_fovy );
+  rkglSetDefaultCamera( &cam );
 }
 
 void rk_viewResetLight(void)
 {
-  double x, y, z;
+  glEnable( GL_LIGHTING );
+  rkglLightCreate( &light, 0.5, 0.5, 0.5, 0.8, 0.8, 0.8, 0, 0, 0 );
+  rkglShadowInit( &shadow, 512, 512, 1.5, 0.2, 0.1 );
+}
+
+void rk_viewPutLight(void)
+{
+  double x, y, z, ratio;
 
   x = atof(opt[OPT_LX].arg);
   y = atof(opt[OPT_LY].arg);
   z = atof(opt[OPT_LZ].arg);
-  glEnable( GL_LIGHTING );
-  rkglLightCreate( &light, 0.5, 0.5, 0.5, 0.8, 0.8, 0.8, 0, 0, 0 );
   if( opt[OPT_AUTO].flag ){
-    if( !opt[OPT_LX].flag ) x = 0;
-    if( !opt[OPT_LY].flag ) y = 0;
-    if( !opt[OPT_LZ].flag ) z = zSphere3DRadius(&boundingsphere)*3;
+    ratio = zSphere3DRadius(&boundingsphere) * 10 / sqrt( x*x + y*y + z*z );
+    x *= ratio;
+    y *= ratio;
+    z *= ratio;
   }
   rkglLightMove( &light, x, y, z );
-  rkglShadowInit( &shadow, 512, 512, 1.5, 0.2, 0.1 );
 }
 
 void rk_viewInit(void)
@@ -224,13 +251,12 @@ void rk_viewInit(void)
   rkglWindowMouseEnableGLX( win );
   rkglWindowOpenGLX( win );
 
-  zRGBDec( &rgb, opt[OPT_BG].arg );
-  rkglBGSet( &cam, rgb.r, rgb.g, rgb.b );
-  rkglVPCreate( &cam, 0, 0, atoi(opt[OPT_WIDTH].arg), atoi(opt[OPT_HEIGHT].arg) );
-  rkglVPCreate( &cam, 0, 0, atoi( opt[OPT_WIDTH].arg ), atoi( opt[OPT_HEIGHT].arg ) );
+  zRGBDecodeStr( &rgb, opt[OPT_BG].arg );
+  rkglCameraInit( &cam );
+  rkglCameraSetBackground( &cam, rgb.r, rgb.g, rgb.b );
+  rkglCameraSetViewport( &cam, 0, 0, atoi(opt[OPT_WIDTH].arg), atoi(opt[OPT_HEIGHT].arg) );
 
   rkglTextureEnable();
-
   if( opt[OPT_SMOOTH].flag ) glEnable( GL_LINE_SMOOTH );
 }
 
@@ -248,9 +274,10 @@ bool rk_viewCommandArgs(int argc, char *argv[])
   }
   zPH3DEchoOn();
   rk_viewInit();
-  rk_viewReadModel( &modellist );
-  rk_viewResetCamera();
   rk_viewResetLight();
+  rk_viewReadModel( &modellist );
+  rk_viewPutLight();
+  rk_viewResetCamera();
   zStrAddrListDestroy( &modellist );
   return true;
 }
@@ -277,7 +304,7 @@ void rk_viewDisplay(void)
   } else{
     /* non-shadowed rendering */
     rkglClear();
-    rkglCALoad( &cam );
+    rkglCameraPut( &cam );
     rkglLightPut( &light );
     rk_viewDraw();
   }
@@ -288,13 +315,11 @@ void rk_viewDisplay(void)
 void rk_viewReshape(void)
 {
   zxRegion reg;
-  double x, y;
 
   zxGetGeometry( win, &reg );
-  rkglVPCreate( &cam, 0, 0, reg.width, reg.height );
-  x = vv_width / 2;
-  y = x / rkglVPAspect(&cam);
-  rkglFrustum( &cam, -x, x, -y, y, vv_near, vv_far );
+  rkglCameraSetViewport( &cam, 0, 0, reg.width, reg.height );
+  rkglCameraAdjustViewvolumePerspective( &cam );
+  rkglCameraPutViewvolume( &cam );
 }
 
 void rk_viewCapture(void)
@@ -320,9 +345,8 @@ int rk_viewKeyPress(void)
   switch( zxKeySymbol() ){
   case XK_l: /* toggle viewpoint to light/camera */
     if( ( from_light = 1 - from_light ) ){
-      rkglCALookAt( &cam,
-        atof(opt[OPT_LX].arg), atof(opt[OPT_LY].arg), atof(opt[OPT_LZ].arg),
-        0, 0, 0, -1, 0, 1 );
+      rkglCameraLookAt( &cam,
+        atof(opt[OPT_LX].arg), atof(opt[OPT_LY].arg), atof(opt[OPT_LZ].arg), 0, 0, 0, -1, 0, 1 );
     } else
       rk_viewResetCamera();
     break;
@@ -346,7 +370,7 @@ int rk_viewEvent(void)
   case Expose:
   case ConfigureNotify: rk_viewReshape();             break;
   case ButtonPress:
-  case ButtonRelease:   rkglMouseFuncGLX( &cam, event, 1.0 ); break;
+  case ButtonRelease:   rkglMouseFuncGLX( &cam, event ); break;
   case MotionNotify:    rkglMouseDragFuncGLX( &cam ); break;
   case KeyPress:        if( rk_viewKeyPress() >= 0 )  break; return -1;
   case KeyRelease:      zxModkeyOff( zxKeySymbol() ); break;

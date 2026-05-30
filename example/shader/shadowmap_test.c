@@ -6,12 +6,6 @@ rkglCamera cam;
 rkglLight light;
 rkglShadow shadow;
 
-void resize(int w, int h)
-{
-  rkglVPCreate( &cam, 0, 0, w, h );
-  rkglFrustumScaleH( &cam, 1.0/160, 2, 100 );
-}
-
 void draw(void)
 {
   static zVec3D cs0 = { { 0.0, 0.0, 4.0 } };
@@ -47,18 +41,6 @@ void display(void)
 void keyboard(unsigned char key, int x, int y)
 {
   switch( key ){
-  case 'u': rkglCALockonPTR( &cam, 5, 0, 0 ); break;
-  case 'U': rkglCALockonPTR( &cam,-5, 0, 0 ); break;
-  case 'i': rkglCALockonPTR( &cam, 0, 5, 0 ); break;
-  case 'I': rkglCALockonPTR( &cam, 0,-5, 0 ); break;
-  case 'o': rkglCALockonPTR( &cam, 0, 0, 5 ); break;
-  case 'O': rkglCALockonPTR( &cam, 0, 0,-5 ); break;
-  case '8': rkglCARelMove( &cam, 0.05, 0, 0 ); break;
-  case '*': rkglCARelMove( &cam,-0.05, 0, 0 ); break;
-  case '9': rkglCARelMove( &cam, 0, 0.05, 0 ); break;
-  case '(': rkglCARelMove( &cam, 0,-0.05, 0 ); break;
-  case '0': rkglCARelMove( &cam, 0, 0, 0.05 ); break;
-  case ')': rkglCARelMove( &cam, 0, 0,-0.05 ); break;
   case 'q': case 'Q': case '\033':
     rkglShadowDeleteGLSL( &shadow );
     exit( EXIT_SUCCESS );
@@ -71,16 +53,17 @@ void init(void)
   zVec3D pc0, pc1, pc2;
   zOpticalInfo oi, oi2;
 
-  rkglSetDefaultCallbackParam( &cam, 0, 0, 0, 0, 0 );
-
-  rkglBGSet( &cam, 0.5, 1.0, 1.0 );
+  rkglCameraInit( &cam );
+  rkglCameraSetBackground( &cam, 0.5, 1.0, 1.0 );
+  rkglCameraSetViewvolumeZFovy( &cam, 1, 100, 90.0 );
+  rkglSetDefaultCamera( &cam );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.3, 0.3, 0.3, 1.0, 1.0, 1.0, 0, 0, 0 );
   rkglLightMove( &light, 5, -8, 20 );
   rkglLightSetAttenuationConst( &light, 1.0 );
 
-  rkglCASet( &cam, 8, 0, 8, 0, -30, 0 );
+  rkglCameraSetViewframe( &cam, 8, 0, 8, 0, -30, 0 );
 
   room_id = rkglBeginList();
   zOpticalInfoCreateSimple( &oi,  0.0, 0.0, 1.0, NULL );
@@ -91,20 +74,15 @@ void init(void)
   rkglCheckerBoard( &pc0, &pc1, &pc2, 10, 10, &oi, &oi2 );
   glEndList();
 
-  rkglShadowInitGLSL( &shadow, 256, 256, 10.0, 0.2, 0.2 );
+  rkglShadowInitGLSL( &shadow, 256, 256, 50.0, 0.2, 0.2 );
 }
 
 int main(int argc, char *argv[])
 {
   rkglInitGLUT( &argc, argv );
   rkglWindowCreateGLUT( 0, 0, 640, 480, argv[0] );
-
   glutDisplayFunc( display );
-  glutIdleFunc( rkglIdleFuncGLUT );
-  glutReshapeFunc( resize );
   glutKeyboardFunc( keyboard );
-  glutMouseFunc( rkglMouseFuncGLUT );
-  glutMotionFunc( rkglMouseDragFuncGLUT );
   init();
   glutMainLoop();
   return 0;

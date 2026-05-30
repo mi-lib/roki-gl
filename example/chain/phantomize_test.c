@@ -28,7 +28,7 @@ void draw_scene(void)
 
 void display(GLFWwindow* window)
 {
-  rkglCALoad( &g_cam );
+  rkglCameraPut( &g_cam );
   rkglLightPut( &g_light );
   rkglClear();
   draw_scene();
@@ -76,25 +76,29 @@ void create_phantom_all(void)
 
 void mouse_wheel(GLFWwindow* window, double xoffset, double yoffset)
 {
-  if ( yoffset < 0 ) {
-    g_scale -= 0.0001; rkglOrthoScaleH( &g_cam, g_scale, g_znear, g_zfar );
-  } else if ( yoffset > 0 ) {
-    g_scale += 0.0001; rkglOrthoScaleH( &g_cam, g_scale, g_znear, g_zfar );
+  if( yoffset != 0 ){
+    g_scale += yoffset > 0 ? 0.0001 : -0.0001;
+    rkglCameraSetViewvolumeZ( &g_cam, g_znear, g_zfar );
+    rkglCameraSetViewvolumeXYToScaleHeight( &g_cam, g_scale );
+    rkglCameraPutViewvolume( &g_cam );
   }
 }
 
 void resize(GLFWwindow* window, int w, int h)
 {
-  rkglVPCreate( &g_cam, 0, 0, w, h );
-  rkglOrthoScaleH( &g_cam, g_scale, g_znear, g_zfar );
+  rkglCameraSetViewport( &g_cam, 0, 0, w, h );
+  rkglCameraSetViewvolumeXYToScaleHeight( &g_cam, g_scale );
+  rkglCameraPutViewvolume( &g_cam );
 }
 
 void init(void)
 {
-  rkglSetDefaultCallbackParam( &g_cam, 1.0, 1.0, 20.0, 1.0, 5.0 );
-
-  rkglBGSet( &g_cam, 0.5, 0.5, 0.5 );
-  rkglCASet( &g_cam, 1, 1, 1, 45.0, -30.0, 0.0 );
+  rkglCameraInit( &g_cam );
+  rkglCameraSetBackground( &g_cam, 0.5, 0.5, 0.5 );
+  rkglCameraSetViewframe( &g_cam, 1, 1, 1, 45.0, -30.0, 0.0 );
+  rkglCameraSetViewvolumeZFovy( &g_cam, 1, 20, 30 );
+  rkglCameraSetOrtho( &g_cam );
+  rkglSetDefaultCamera( &g_cam );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &g_light, 0.8, 0.8, 0.8, 1.0, 1.0, 1.0, 0.2, 0.2, 0.2 );
@@ -117,7 +121,7 @@ void terminate(void)
 
 int main(int argc, char *argv[])
 {
-  GLFWwindow* window;
+  GLFWwindow *window;
   const int width = 640, height = 480;
 
   if( rkglInitGLFW( &argc, argv ) < 0 )
@@ -127,12 +131,7 @@ int main(int argc, char *argv[])
     return 1;
 
   glfwSetWindowSizeCallback( window, resize );
-  glfwSetCharCallback( window, rkglCharFuncGLFW );
-  glfwSetKeyCallback( window, rkglKeyFuncGLFW );
-  glfwSetMouseButtonCallback( window, rkglMouseFuncGLFW );
   glfwSetScrollCallback( window, mouse_wheel );
-  glfwSetCursorPosCallback( window, rkglMouseDragFuncGLFW );
-
   init();
   resize( window, width, height );
   glfwSwapInterval( 1 );

@@ -10,7 +10,7 @@ void display(void)
   static GLfloat yellow[] = { 1.0, 1.0, 0.2, 1.0 };
   static GLfloat red[] = { 1.0, 0.0, 0.0, 1.0 };
 
-  rkglCALoad( &cam );
+  rkglCameraPut( &cam );
   rkglLightPut( &light );
   rkglClear();
   glMaterialfv( GL_FRONT, GL_DIFFUSE, yellow );
@@ -45,12 +45,6 @@ void mouse(int button, int state, int x, int y)
   }
 }
 
-void resize(int w, int h)
-{
-  rkglVPCreate( &cam, 0, 0, w, h );
-  rkglPerspective( &cam, 30.0, (double)w / (double)h, 0.5, 20.0 );
-}
-
 void keyboard(unsigned char key, int x, int y)
 {
   switch( key ){
@@ -62,8 +56,11 @@ void keyboard(unsigned char key, int x, int y)
 
 void init(void)
 {
-  rkglBGSet( &cam, 0.0, 0.0, 0.4 );
-  rkglCALookAt( &cam, 5.0, 4.0, 6.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0 );
+  rkglCameraInit( &cam );
+  rkglCameraSetBackground( &cam, 0.0, 0.0, 0.4 );
+  rkglCameraLookAt( &cam, 5.0, 4.0, 6.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0 );
+  rkglCameraSetViewvolumeZFovy( &cam, 1, 100, 30.0 );
+  rkglSetDefaultCamera( &cam );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
@@ -74,12 +71,10 @@ int main(int argc, char *argv[])
 {
   rkglInitGLUT( &argc, argv );
   rkglWindowCreateGLUT( 0, 0, 320, 320, argv[0] );
-
   glutDisplayFunc( display );
   glutMouseFunc( mouse );
-  glutReshapeFunc( resize );
+  glutMotionFunc( NULL );
   glutKeyboardFunc( keyboard );
-  glutIdleFunc( rkglIdleFuncGLUT );
   init();
   glutMainLoop();
   return 0;

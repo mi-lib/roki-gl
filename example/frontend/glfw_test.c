@@ -17,7 +17,7 @@ void display(GLFWwindow* window)
   zOpticalInfo oi;
 
   rkglClear();
-  rkglCALoad( &g_cam );
+  rkglCameraPut( &g_cam );
   rkglLightPut( &g_light );
   glPushMatrix();
   zOpticalInfoCreateSimple( &oi, 0.2, 0.4, 0.9, NULL );
@@ -31,10 +31,11 @@ void init(void)
 {
   zVec3D center;
 
-  rkglSetDefaultCallbackParam( &g_cam, 1.0, 1.0, 20.0, 1.0, 5.0 );
-
-  rkglBGSet( &g_cam, 0.5, 0.5, 0.5 );
-  rkglCASet( &g_cam, 10.0, 0.0, 0.0, 0.0, 0.0, 0.0 );
+  rkglCameraInit( &g_cam );
+  rkglCameraSetBackground( &g_cam, 0.5, 0.5, 0.5 );
+  rkglCameraSetViewframe( &g_cam, 10.0, 0.0, 0.0, 0.0, 0.0, 0.0 );
+  rkglCameraSetViewvolumeZFovy( &g_cam, 1, 200.0, 30.0 );
+  rkglSetDefaultCamera( &g_cam );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &g_light, 0.8, 0.8, 0.8, 1, 1, 1, 0, 0, 0 );
@@ -46,7 +47,7 @@ void init(void)
 
 int main(int argc, char *argv[])
 {
-  GLFWwindow* window;
+  GLFWwindow *window;
   int width, height;
 
   if( rkglInitGLFW( &argc, argv ) < 0 )
@@ -56,13 +57,6 @@ int main(int argc, char *argv[])
   height = 480;
   if( !( window = rkglWindowCreateAndOpenGLFW( 0, 0, width, height, argv[0] ) ) )
     return 1;
-
-  glfwSetWindowSizeCallback( window, rkglReshapeFuncGLFW );
-  glfwSetCharCallback( window, rkglCharFuncGLFW );
-  glfwSetKeyCallback( window, rkglKeyFuncGLFW );
-  glfwSetMouseButtonCallback( window, rkglMouseFuncGLFW );
-  glfwSetScrollCallback( window, rkglMouseWheelFuncGLFW );
-  glfwSetCursorPosCallback( window, rkglMouseDragFuncGLFW );
 
   init();
   rkglReshapeFuncGLFW( window, width, height );

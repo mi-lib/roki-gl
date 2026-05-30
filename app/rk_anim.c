@@ -13,6 +13,7 @@ enum{
   OPT_PAN, OPT_TILT, OPT_ROLL, OPT_OX, OPT_OY, OPT_OZ,
   OPT_WINX, OPT_WINY,
   OPT_WIDTH, OPT_HEIGHT,
+  OPT_DRAW_NONFACE,
   OPT_DRAW_WIREFRAME,
   OPT_DRAW_BB,
   OPT_DRAW_BONE,
@@ -33,18 +34,19 @@ enum{
 };
 zOption opt[] = {
   { "title", NULL, "<title name>", "title of sequence", (char *)"robot_animation", false },
-  { "env", NULL, "<.ztk file>", "environment model file", NULL, false },
+  { "env", NULL, "<.ztk/.urdf file>", "environment model file", NULL, false },
   { "pan", NULL, "<pan value>", "set camera pan angle", (char *)"0", false },
   { "tilt", NULL, "<tilt value>", "set camera tilt angle", (char *)"0", false },
   { "roll", NULL, "<roll value>", "set camera roll angle", (char *)"0", false },
-  { "x", NULL, "<value>", "camera position in x axis", (char *)"5", false },
+  { "x", NULL, "<value>", "camera position in x axis", (char *)"2", false },
   { "y", NULL, "<value>", "camera position in y axis", (char *)"0", false },
   { "z", NULL, "<value>", "camera position in z axis", (char *)"0", false },
   { "winx", NULL, "<winx>", "set window init x position", (char *)"0", false },
   { "winy", NULL, "<winy>", "set window init y position", (char *)"0", false },
   { "width", NULL, "<width>", "set window width", (char *)"500", false },
   { "height", NULL, "<height>", "set window height", (char *)"500", false },
-  { "wireframe", NULL, NULL, "draw kinematic chain as wireframe model", NULL, false },
+  { "nonface", NULL, NULL, "undraw solid model of the kinematic chain", NULL, false },
+  { "wireframe", NULL, "<color name>", "draw kinematic chain as wireframe model", (char *)"white", false },
   { "bb", NULL, NULL, "draw kinematic chain bounding box", NULL, false },
   { "bone", NULL, "<value>", "draw kinematic chain as bone model with specified radius", (char *)"0.006", false },
   { "coord", NULL, "<value>", "draw cascaded coordinate frameschained of kinematic chain with specified length of arrows of axes", (char *)"0.1", false },
@@ -58,7 +60,7 @@ zOption opt[] = {
   { "shadow", NULL, NULL, "enable shadow", NULL, false },
   { "shadowsize", NULL, "<value>", "shadow map size", (char *)"1024", false },
   { "shadowarea", NULL, "<value>", "radius of shadowing area", (char *)"3.0", false },
-  { "shadowblur", NULL, "<value>", "edge blur of shadow", (char *)"0.1", false },
+  { "shadowblur", NULL, "<value>", "edge blur of shadow", (char *)"0.001", false },
   { "k", NULL, NULL, "wait key-in at each step", NULL, false },
   { "capture", NULL, "<suf>", "output image format (suffix)", (char *)"bmp", false },
   { "captureserial", NULL, "<suf>", "output images with serial numbers", (char *)"bmp", false },
@@ -91,8 +93,6 @@ static rkglLight light;
 static rkglShadow shadow;
 static void (* shadow_draw_func)(rkglShadow*,rkglCamera*,rkglLight*,void (*)(void));
 
-static bool from_light = false;
-
 static zxWindow win;
 static Window glwin;
 
@@ -107,7 +107,7 @@ typedef struct{
   void (* kf)(rkChain*,zVec);
   double t_now;
 } rkAnimSet;
-zListClass( rkAnimCellList, rkAnimCell, rkAnimSet );
+ZEDA_DEF_LIST_CLASS( rkAnimCellList, rkAnimCell, rkAnimSet );
 
 static rkAnimCellList anim_cell_list;
 
@@ -138,22 +138,22 @@ int rkAnimReturnDir(char *cwd)
   return 0;
 }
 
-rkChain *rkAnimChainReadZTK(rkChain *chain, char *pathname)
+rkChain *rkAnimReadChainFile(rkChain *chain, char *pathname)
 {
   char dirname[BUFSIZ], filename[BUFSIZ], cwd[BUFSIZ];
 
   rkAnimChangeDir( pathname, dirname, filename, cwd, BUFSIZ );
-  chain = rkChainReadZTK( chain, filename );
+  chain = rkChainReadFile( chain, filename );
   rkAnimReturnDir( cwd );
   return chain;
 }
 
-zMShape3D *rkAnimMShapeReadZTK(zMShape3D *ms, char *pathname)
+zMultiShape3D *rkAnimReadMultiShapeFile(zMultiShape3D *ms, char *pathname)
 {
   char dirname[BUFSIZ], filename[BUFSIZ], cwd[BUFSIZ];
 
   rkAnimChangeDir( pathname, dirname, filename, cwd, BUFSIZ );
-  ms = zMShape3DReadZTK( ms, filename );
+  ms = zMultiShape3DReadZTK( ms, filename );
   rkAnimReturnDir( cwd );
   return ms;
 }
@@ -168,7 +168,7 @@ bool rkAnimCellLoadChain(char chainfile[], rkglChainAttr *attr)
     ZALLOCERROR();
     return false;
   }
-  if( !rkAnimChainReadZTK( &cell->data.chain, chainfile ) ||
+  if( !rkAnimReadChainFile( &cell->data.chain, chainfile ) ||
       !rkglChainLoad( &cell->data.gc, &cell->data.chain, attr, &light ) ){
     ZOPENERROR( chainfile );
     zFree( cell );
@@ -225,8 +225,9 @@ void rkAnimCellListDestroy(void)
 /* ************************************************************************* */
 void rkAnimUsage(void)
 {
-  eprintf( "Usage: rk_anim <.ztk file> <.zvs/.zkcs file> [options]\n" );
-  eprintf( "<.ztk file>\tkinematic chain model file\n" );
+  eprintf( "Usage: rk_anim <.ztk/.urdf file> <.zvs/.zkcs file> [options]\n" );
+  eprintf( "<.ztk file>\tZTK file that describes a kinematic chain model\n" );
+  eprintf( "<.urdf file>\tURDF file that describes a kinematic chain model\n" );
   eprintf( "<.zvs file>\tjoint displacement sequence file\n" );
   eprintf( "<.zkcs file>\tfull configuration sequence file\n" );
   eprintf( "[options]\n" );
@@ -249,20 +250,24 @@ void rkAnimUsage(void)
 void rkAnimCreateChainAttr(rkglChainAttr *attr)
 {
   rkglChainAttrInit( attr );
-  if( opt[OPT_DRAW_WIREFRAME].flag ) attr->disptype = RKGL_WIREFRAME;
-  if( opt[OPT_DRAW_BB].flag )        attr->disptype = RKGL_BB;
-  if( opt[OPT_DRAW_BONE].flag ){
-    attr->disptype = RKGL_STICK;
-    attr->bone_r = atof( opt[OPT_DRAW_BONE].arg );
+  if( opt[OPT_DRAW_NONFACE].flag ) attr->disptype &= ~RKGL_FACE;
+  if( opt[OPT_DRAW_WIREFRAME].flag ){
+    attr->disptype |= RKGL_WIREFRAME;
+    rkglRGBByStr( opt[OPT_DRAW_WIREFRAME].arg );
   }
-  if( opt[OPT_DRAW_COORD].flag ) attr->disptype = RKGL_FRAME;
+  if( opt[OPT_DRAW_BB].flag ) attr->disptype |= RKGL_BB;
+  if( opt[OPT_DRAW_BONE].flag ){
+    attr->disptype |= RKGL_STICK;
+    attr->bone_radius = atof( opt[OPT_DRAW_BONE].arg );
+  }
+  if( opt[OPT_DRAW_COORD].flag ) attr->disptype |= RKGL_FRAME;
   if( opt[OPT_DRAW_COM].flag ){
-    attr->disptype = RKGL_COM;
-    attr->com_r = atof( opt[OPT_DRAW_COM].arg );
+    attr->disptype |= RKGL_COM;
+    attr->com_radius = atof( opt[OPT_DRAW_COM].arg );
   }
   if( opt[OPT_DRAW_ELLIPS].flag ){
-    attr->disptype = RKGL_ELLIPS;
-    attr->ellips_mag = atof( opt[OPT_DRAW_ELLIPS].arg );
+    attr->disptype |= RKGL_ELLIPS;
+    attr->ellips_scale = atof( opt[OPT_DRAW_ELLIPS].arg );
   }
 }
 
@@ -391,9 +396,7 @@ void rkAnimRewind(int sig)
 
 /**********************************************************/
 
-static zVec3D *_zMat3DToPTR(zMat3D *m, zVec3D *angle);
-static void _rkAnimCamOptWrite(char *name, double val);
-zVec3D *_zMat3DToPTR(zMat3D *m, zVec3D *angle)
+static zVec3D *_zMat3DToPTR(zMat3D *m, zVec3D *angle)
 {
   double azim, ca, sa;
 
@@ -405,7 +408,7 @@ zVec3D *_zMat3DToPTR(zMat3D *m, zVec3D *angle)
   return angle;
 }
 
-void _rkAnimCamOptWrite(char *name, double val)
+static void _rkAnimCamOptWrite(const char *name, double val)
 {
   printf( "-%s %s%f ", name, val<0.0?"-- ":"", val );
 }
@@ -423,14 +426,12 @@ void rkAnimCamOptWrite(zVec3D *v, zVec3D *ptr)
 
 void rkAnimGetCamFrame(void)
 {
-  zFrame3D f;
   zVec3D ptr;
 
-  rkglCALoad( &cam );
-  rkglCAGetFrame3D( &cam, &f );
+  rkglCameraPut( &cam );
   /* pan, tilt and roll angle */
-  _zMat3DToPTR( zFrame3DAtt(&f), &ptr );
-  rkAnimCamOptWrite( zFrame3DPos(&f), &ptr );
+  _zMat3DToPTR( zFrame3DAtt(&cam.viewframe), &ptr );
+  rkAnimCamOptWrite( zFrame3DPos(&cam.viewframe), &ptr );
 }
 
 /**********************************************************/
@@ -456,8 +457,8 @@ void rkAnimDisplay(void)
   } else{
     /* non-shadowed rendering */
     rkglClear();
-    rkglCALoad( &cam );
     rkglLightPut( &light );
+    rkglCameraPut( &cam );
     rkAnimDraw();
   }
   rkglWindowSwapBuffersGLX( glwin );
@@ -479,23 +480,25 @@ void rkAnimLoadEnv(void)
 {
   rkglChainAttr attr;
   rkChain chain_env;
-  zMShape3D ms_env;
+  zMultiShape3D ms_env;
 
   rkglChainAttrInit( &attr );
-  if( opt[OPT_DRAW_WIREFRAME].flag ) attr.disptype = RKGL_WIREFRAME;
-  if( opt[OPT_DRAW_BB].flag )        attr.disptype = RKGL_BB;
+  if( opt[OPT_DRAW_NONFACE].flag )   attr.disptype &= ~RKGL_FACE;
+  if( opt[OPT_DRAW_WIREFRAME].flag ) attr.disptype |= RKGL_WIREFRAME;
+  if( opt[OPT_DRAW_BB].flag )        attr.disptype |= RKGL_BB;
+  if( opt[OPT_DRAW_COORD].flag )     attr.disptype |= RKGL_FRAME;
 
   rkChainInit( &chain_env );
-  if( rkAnimChainReadZTK( &chain_env, opt[OPT_ENVFILE].arg ) ){
+  if( rkAnimReadChainFile( &chain_env, opt[OPT_ENVFILE].arg ) ){
     if( !rkglChainLoad( &g_env, &chain_env, &attr, &light ) ) exit( 1 );
     env = rkglBeginList();
     rkglChainDraw( &g_env );
     glEndList();
     rkChainDestroy( &chain_env );
   } else
-  if( rkAnimMShapeReadZTK( &ms_env, opt[OPT_ENVFILE].arg ) ){
-    env = rkglEntryMShape( &ms_env, attr.disptype, &light );
-    zMShape3DDestroy( &ms_env );
+  if( rkAnimReadMultiShapeFile( &ms_env, opt[OPT_ENVFILE].arg ) ){
+    env = rkglEntryMultiShape( &ms_env, attr.disptype, &light );
+    zMultiShape3DDestroy( &ms_env );
   } else{
     ZOPENERROR( opt[OPT_ENVFILE].arg );
     exit( 1 );
@@ -536,13 +539,15 @@ void rkAnimInit(void)
   rkglWindowMouseEnableGLX( glwin );
   rkglWindowOpenGLX( glwin );
 
-  zRGBDec( &rgb, opt[OPT_BG].arg );
-  rkglBGSet( &cam, rgb.r, rgb.g, rgb.b );
-  rkglVPCreate( &cam, 0, 0,
-    atoi(opt[OPT_WIDTH].arg), atoi(opt[OPT_HEIGHT].arg) );
-  rkglCASet( &cam,
+  zRGBDecodeStr( &rgb, opt[OPT_BG].arg );
+  rkglCameraInit( &cam );
+  rkglCameraSetBackground( &cam, rgb.r, rgb.g, rgb.b );
+  rkglCameraSetViewport( &cam, 0, 0, atoi(opt[OPT_WIDTH].arg), atoi(opt[OPT_HEIGHT].arg) );
+  rkglCameraSetViewvolumeZFovy( &cam, 1.0, 200, 30.0 );
+  rkglCameraSetViewframe( &cam,
     atof(opt[OPT_OX].arg), atof(opt[OPT_OY].arg), atof(opt[OPT_OZ].arg),
     atof(opt[OPT_PAN].arg), atof(opt[OPT_TILT].arg), atof(opt[OPT_ROLL].arg) );
+  rkglSetDefaultCamera( &cam );
 
   glEnable( GL_LIGHTING );
   rkglLightCreate( &light, 0.3, 0.3, 0.3, 1.0, 1.0, 1.0, 0, 0, 0 );
@@ -611,38 +616,15 @@ void rkAnimReshape(void)
     }
   }
   zxGetGeometry( glwin, &reg );
-  rkglVPCreate( &cam, 0, 0, reg.width, reg.height );
-  if( from_light ){
-    double d;
-    rkglVVInit();
-    d = sqrt( zSqr(light.pos[0])+zSqr(light.pos[1])+zSqr(light.pos[2]) );
-    gluPerspective( 2*zRad2Deg(asin(shadow.radius/d)),
-      (GLdouble)shadow.width/(GLdouble)shadow.height,
-      d > shadow.radius ? d-shadow.radius : d*0.9, d+shadow.radius );
-  } else{
-    double x, y;
-    x = 0.1;
-    y = x / rkglVPAspect(&cam);
-    rkglFrustum( &cam, -x, x, -y, y, 1, 200 );
-  }
+  rkglCameraSetViewport( &cam, 0, 0, reg.width, reg.height );
+  rkglCameraAdjustViewvolumePerspective( &cam );
+  rkglCameraPutViewvolume( &cam );
 }
 
 int rkAnimKeyPress(void)
 {
   zxModkeyOn( zxKeySymbol() );
   switch( zxKeySymbol() ){
-  case XK_l: case XK_L: /* toggle viewpoint to light/camera */
-    if( ( from_light = 1 - from_light ) ){
-      rkglCALookAt( &cam,
-        light.pos[0], light.pos[1], light.pos[2], 0, 0, 0, -1, 0, 1 );
-    } else{
-      rkglCASet( &cam,
-        atof(opt[OPT_OX].arg), atof(opt[OPT_OY].arg), atof(opt[OPT_OZ].arg),
-        atof(opt[OPT_PAN].arg), atof(opt[OPT_TILT].arg), atof(opt[OPT_ROLL].arg) );
-    }
-    rkAnimReshape();
-    rkAnimDisplay();
-    break;
   case XK_p: case XK_P: case XK_space:
     pa.is_running ? liwPActionStop( &pa ) : liwPActionStart( &pa );  break;
   case XK_f: case XK_F: rkAnimForward( 0 );   break;
@@ -663,7 +645,7 @@ int rkAnimEvent(void)
   case Expose:
   case ConfigureNotify: rkAnimReshape();              break;
   case ButtonPress:
-  case ButtonRelease:   rkglMouseFuncGLX( &cam, event, 1.0 ); break;
+  case ButtonRelease:   rkglMouseFuncGLX( &cam, event ); break;
   case MotionNotify:    rkglMouseDragFuncGLX( &cam ); break;
   case KeyPress:        if( rkAnimKeyPress() >= 0 )   break; return -1;
   case KeyRelease:      zxModkeyOff( zxKeySymbol() ); break;

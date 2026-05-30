@@ -29,18 +29,19 @@ GLdouble color[][4] = {
   { 0, 1, 1 },
 };
 
-rkglCamera cam;
+rkglCamera cam1, cam2;
 
-void display(void)
+void draw(rkglCamera *c, double r)
 {
-  static double r = 0;
   int i, j;
 
+  rkglCameraLoadViewport( c );
+  rkglCameraAdjustViewvolumePerspective( c );
+  rkglCameraPutViewvolume( c );
   glMatrixMode( GL_MODELVIEW );
   glLoadIdentity();
   gluLookAt( 3.0, 4.0, 5.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0 );
   glRotated( r, 0, 1, 0 );
-
   rkglClear();
   glBegin( GL_TRIANGLE_STRIP );
   for( i=0; i<6; i++ ){
@@ -49,6 +50,14 @@ void display(void)
       glVertex3dv( vertex[face[i][j]] );
   }
   glEnd();
+}
+
+void display(void)
+{
+  static double r = 0;
+
+  draw( &cam1, r );
+  draw( &cam2, r+90 );
   glutSwapBuffers();
   if( ( r+=0.1 ) >= 360 ) r = 0;
 }
@@ -60,13 +69,16 @@ void idle(void)
 
 void resize(int w, int h)
 {
-  glClearColor( 1, 1, 1, 1 );
   glViewport( 0, 0, w, h );
   glScissor( 0, 0, w, h );
+  glClearColor( 1, 1, 1, 1 );
   rkglClear();
-  rkglBGSet( &cam, 0.3, 0.3, 0.3 );
-  rkglVPCreate( &cam, 10, 10, w-20, h-20 );
-  rkglFrustumScaleH( &cam, 1.0/320, 1.0, 10.0 );
+
+  rkglCameraSetBackground( &cam1, 0.2, 0, 0 );
+  rkglCameraSetViewport( &cam1, 10,    10, w-20, h/2-15 );
+
+  rkglCameraSetBackground( &cam2, 0, 0.2, 0 );
+  rkglCameraSetViewport( &cam2, 10, h/2+5, w-20, h/2-15 );
 }
 
 void keyboard(unsigned char key, int x, int y)
@@ -80,6 +92,10 @@ void keyboard(unsigned char key, int x, int y)
 void init(void)
 {
   glCullFace( GL_FRONT );
+  rkglCameraInit( &cam1 );
+  rkglCameraSetViewvolumeZFovy( &cam1, 1, 30, 30 );
+  rkglCameraInit( &cam2 );
+  rkglCameraSetViewvolumeZFovy( &cam1, 2, 30, 30 );
 }
 
 int main(int argc, char *argv[])
