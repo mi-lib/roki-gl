@@ -1,3 +1,4 @@
+2026.10.27. Added const qualifiers to _rkgl*FPrintZTK (thanks to Daishi Kaneta). [rkgl_camera]
 2026.05.28. Modified types of an argument name of rkglFrameHandleCreate from int to uint. [rkgl_framehandle]
 2026.05.28. Added methods of rkglFrameHandle for C++. [rkgl_framehandle]
 2026.05.28. Applied ZDEF_STRUCT. [rkgl_envmap, rkgl_framehandle]
