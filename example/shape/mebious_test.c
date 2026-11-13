@@ -41,7 +41,7 @@ void make_mebious(void)
     t2 = 2 * t;
     zVec3DCreate( &p, R * cos( t ), R * sin( t ), H * sin( t2 ) );
     zVec3DCreate( &d, -R*sin( t ), R*cos( t ), 2*H*cos( t2 ) );
-    zVec3DNormalizeDRC( &d );
+    zVec3DNormalizeDRC( &d, 0 );
     zVec3DCreate( &r, D*cos(t), D*sin(t), 0 );
     zVec3DMulDRC( &d, 0.5 * t );
     zVec3DRot( &r, &d, &r );

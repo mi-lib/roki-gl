@@ -1,3 +1,5 @@
+2026.11.13. Removed a redundant normalization of the outer product of two orthogonal unit vectors in rkglTorus. [rkgl_shape]
+2026.11.12. Reflected new specification of zVec3DNormalize and zVec3DNormalizeDRC. [rkgl_shape, example]
 2026.10.27. Added const qualifiers to _rkgl*FPrintZTK (thanks to Daishi Kaneta). [rkgl_camera]
 2026.05.28. Modified types of an argument name of rkglFrameHandleCreate from int to uint. [rkgl_framehandle]
 2026.05.28. Added methods of rkglFrameHandle for C++. [rkgl_framehandle]

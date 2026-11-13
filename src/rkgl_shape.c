@@ -89,7 +89,7 @@ static void _rkglQuad(zVec3D vert[], int i1, int i2, int i3, int i4)
   zVec3DSub( &vert[i2], &vert[i1], &e1 );
   zVec3DSub( &vert[i4], &vert[i1], &e2 );
   zVec3DOuterProd( &e1, &e2, &norm );
-  zVec3DNormalizeDRC( &norm );
+  zVec3DNormalizeDRC( &norm, 0 );
   glBegin( GL_TRIANGLE_STRIP );
     rkglNormal( &norm );
     rkglVertex( &vert[i1] );
@@ -184,7 +184,7 @@ static int _rkglHemisphereVertNorm(zSphere3D *sphere, zVec3D *dir, zMesh3D *vert
   zMesh3DAlloc( vert, n1+1, zSphere3DDiv(sphere)+1 );
   zMesh3DAlloc( norm, n1+1, zSphere3DDiv(sphere)+1 );
   if( zArray2RowSize(vert) == 0 || zArray2RowSize(norm) == 0 ) return -1;
-  zVec3DNormalize( dir, &a );
+  zVec3DNormalize( dir, 0, &a );
   zVec3DMul( &a, zSphere3DRadius(sphere), &d );
   _zVec3DCreate( &s, a.c.y-a.c.z, a.c.z-a.c.x, a.c.x-a.c.y );
   zVec3DMulDRC( &s, zSphere3DRadius(sphere)/zVec3DNorm(&s) );
@@ -350,7 +350,7 @@ static zVec3D *_rkglEllipsNormal(zEllips3D *ellips, zVec3D *v, zVec3D *n)
     v->e[zY]/zEllips3DRadiusY(ellips),
     v->e[zZ]/zEllips3DRadiusZ(ellips) );
   zMulMat3DVec3D( zFrame3DAtt(&ellips->f), &tmp, n );
-  zVec3DNormalizeDRC( n );
+  zVec3DNormalizeDRC( n, 0 );
   return n;
 }
 
@@ -726,7 +726,7 @@ static int _rkglConeVertNorm(zCone3D *cone, zVec3D *axis, zVec3DArray *vert, zVe
     zVec3DAdd( zCone3DCenter(cone), &v, zArrayElemNC(vert,i) );
     /* normal vector at each vertex */
     zVec3DSub( zArrayElemNC(vert,i), zCone3DVert(cone), &tmp );
-    zVec3DNormalizeDRC( &tmp );
+    zVec3DNormalizeDRC( &tmp, 0 );
     zVec3DMulDRC( &tmp, zVec3DInnerProd( &v, &tmp ) );
     zVec3DSub( &v, &tmp, zArrayElem(norm,i) );
   }
@@ -809,14 +809,13 @@ static int _rkglTorusVertNorm(zVec3D *c, zVec3D *n, double r1, double r2, int di
   if( r1 > r2 ) zSwap( double, r1, r2 ); /* always r2 >= r1 */
   rm = 0.5 * ( r1 + r2 );
   r  = 0.5 * ( r2 - r1 );
-  zVec3DNormalize( n, &d );
+  zVec3DNormalize( n, 0, &d );
   zVec3DOrthonormal( &d, &s );
   for( i=0; i<=div1; i++ ){
     zVec3DMul( &d, 2*zPI*i/div1, &aa1 );
     zVec3DRot( &s, &aa1, &tmp );
     zVec3DMul( &tmp, rm, &sr );
-    zVec3DOuterProd( &tmp, &d, &t );
-    zVec3DNormalizeDRC( &t ); /* no need in ideal case */
+    zVec3DOuterProd( &tmp, &d, &t ); /* the outer product of the two orthogonal unit vectors */
     for( j=0; j<=div2; j++ ){
       zVec3DMul( &t, 2*zPI*j/div2, &aa2 );
       zVec3DRot( &tmp, &aa2, zArray2ElemNC(norm,i,j) );
@@ -1331,7 +1330,7 @@ void rkglArrow(zVec3D *bot, zVec3D *vec, double mag)
   zVec3D tip, neck;
 
   zVec3DAdd( bot, vec, &tip );
-  if( !zVec3DNormalize( vec, &neck ) ) return;
+  if( !zVec3DNormalize( vec, 0, &neck ) ) return;
   zVec3DMulDRC( &neck,-RKGL_ARROW_TIP_LEN * mag );
   zVec3DAddDRC( &neck, &tip );
   zCyl3DCreate( &cyl, bot, &neck, RKGL_ARROW_BOTTOM_RAD * mag, RKGL_ARROW_DIV );
@@ -1433,7 +1432,7 @@ void rkglCheckerBoard(zVec3D *pc0, zVec3D *pc1, zVec3D *pc2, int div1, int div2,
   zVec3DSub( pc1, pc0, &d1 );
   zVec3DSub( pc2, pc0, &d2 );
   zVec3DOuterProd( &d1, &d2, &n );
-  zVec3DNormalizeDRC( &n );
+  zVec3DNormalizeDRC( &n, 0 );
 
   zVec3DZero( &d12 );
   for( i=1; i<=div1; i++ ){
